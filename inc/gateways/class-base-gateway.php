@@ -563,9 +563,12 @@ abstract class Base_Gateway {
 	 * @since 2.0.0
 	 *
 	 * @param string $gateway_payment_id The gateway payment id.
-	 * @return void|string
+	 * @return string
 	 */
-	public function get_payment_url_on_gateway($gateway_payment_id) {}
+	public function get_payment_url_on_gateway($gateway_payment_id): string {
+
+		return '';
+	}
 
 	/**
 	 * Returns the external link to view the membership on the membership gateway.
@@ -575,9 +578,12 @@ abstract class Base_Gateway {
 	 * @since 2.0.0
 	 *
 	 * @param string $gateway_subscription_id The gateway subscription id.
-	 * @return void|string.
+	 * @return string
 	 */
-	public function get_subscription_url_on_gateway($gateway_subscription_id) {}
+	public function get_subscription_url_on_gateway($gateway_subscription_id): string {
+
+		return '';
+	}
 
 	/**
 	 * Returns the external link to view the membership on the membership gateway.
@@ -587,9 +593,12 @@ abstract class Base_Gateway {
 	 * @since 2.0.0
 	 *
 	 * @param string $gateway_customer_id The gateway customer id.
-	 * @return void|string.
+	 * @return string
 	 */
-	public function get_customer_url_on_gateway($gateway_customer_id) {}
+	public function get_customer_url_on_gateway($gateway_customer_id): string {
+
+		return '';
+	}
 
 	/**
 	 * Reflects membership changes on the gateway.
