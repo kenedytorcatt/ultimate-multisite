@@ -798,6 +798,16 @@ final class WP_Ultimo {
 	 */
 	protected function load_managers(): void {
 		/*
+		 * Loads the Integration Registry.
+		 *
+		 * This must be loaded before the Domain Manager so that
+		 * its plugins_loaded hooks fire at the correct priority.
+		 *
+		 * @since 2.5.0
+		 */
+		WP_Ultimo\Integrations\Integration_Registry::get_instance()->init();
+
+		/*
 		 * Loads the Event manager.
 		 */
 		WP_Ultimo\Managers\Event_Manager::get_instance();
