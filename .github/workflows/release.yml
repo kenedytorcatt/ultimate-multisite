@@ -42,7 +42,10 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install PHP dependencies
+        run: composer install
+
+      - name: Install Node dependencies
         run: npm ci
 
       - name: Verify version matches
