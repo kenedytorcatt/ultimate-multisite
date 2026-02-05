@@ -724,6 +724,18 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 			130
 		);
 
+		$this->add_field(
+			'general',
+			'enable_beta_updates',
+			[
+				'title'   => __('Beta Updates', 'ultimate-multisite'),
+				'desc'    => __('Opt in to receive pre-release versions of Ultimate Multisite and its add-ons. Beta versions may contain bugs or incomplete features.', 'ultimate-multisite'),
+				'type'    => 'toggle',
+				'default' => 0,
+			],
+			135
+		);
+
 		/*
 		 * Login & Registration
 		 * This section holds the Login & Registration settings of the Ultimate Multisite Plugin.

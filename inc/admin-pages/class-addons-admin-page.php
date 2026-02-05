@@ -292,8 +292,10 @@ class Addons_Admin_Page extends Wizard_Admin_Page {
 		/*
 		 * Check for local cache.
 		 */
+		$transient_key = wu_get_setting('enable_beta_updates', false) ? 'wu-addons-list-beta' : 'wu-addons-list';
+
 		if (! wu_is_debug()) {
-			$addons_list = get_site_transient('wu-addons-list');
+			$addons_list = get_site_transient($transient_key);
 
 			if (is_array($addons_list) && ! empty($addons_list)) {
 				$this->addons = $addons_list;
@@ -323,7 +325,7 @@ class Addons_Admin_Page extends Wizard_Admin_Page {
 
 		$this->addons = $data;
 
-		set_transient('wu-addons-list', $this->addons, 2 * DAY_IN_SECONDS);
+		set_transient($transient_key, $this->addons, 2 * DAY_IN_SECONDS);
 
 		return $this->addons;
 	}

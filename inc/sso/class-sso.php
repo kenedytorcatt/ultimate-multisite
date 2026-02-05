@@ -459,6 +459,8 @@ class SSO {
 		}
 
 		if ('jsonp' === $response_type) {
+			header('Content-Type: application/javascript; charset=utf-8');
+
 			printf(
 				'wu.sso(%s, %d);',
 				wp_json_encode(
@@ -519,7 +521,14 @@ class SSO {
 
 		if ($verify_code) {
 			if ('invalid' === $verify_code) {
-				return;
+				setcookie('wu_sso_denied', '1', time() + 300, COOKIEPATH, COOKIE_DOMAIN);
+				$_COOKIE['wu_sso_denied'] = '1';
+
+				$return_url = $this->input('return_url', get_home_url());
+
+				wp_safe_redirect($return_url, 302, 'WP-Ultimo-SSO');
+
+				exit;
 			}
 			$broker->verify($verify_code);
 
@@ -556,6 +565,8 @@ class SSO {
 		}
 
 		if ('jsonp' === $response_type) {
+			header('Content-Type: application/javascript; charset=utf-8');
+
 			echo '// Nothing to see here.';
 
 			exit;

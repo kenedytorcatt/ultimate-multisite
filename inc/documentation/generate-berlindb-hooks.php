@@ -51,23 +51,23 @@ $query_php_absolute = $plugin_root . '/' . $query_php_relative;
  */
 function find_line_number(string $file, string $pattern): int {
 
-    static $cache = [];
+	static $cache = [];
 
-    if (! is_readable($file)) {
-        return 0;
-    }
+	if (! is_readable($file)) {
+		return 0;
+	}
 
-    if (! isset($cache[$file])) {
-        $cache[$file] = file($file, FILE_IGNORE_NEW_LINES);
-    }
+	if (! isset($cache[ $file ])) {
+		$cache[ $file ] = file($file, FILE_IGNORE_NEW_LINES);
+	}
 
-    foreach ($cache[$file] as $i => $line) {
-        if (preg_match($pattern, $line)) {
-            return $i + 1;
-        }
-    }
+	foreach ($cache[ $file ] as $i => $line) {
+		if (preg_match($pattern, $line)) {
+			return $i + 1;
+		}
+	}
 
-    return 0;
+	return 0;
 }
 
 // ── Discover query classes ──────────────────────────────────────────────────

@@ -31,7 +31,7 @@ final class WP_Ultimo {
 	 * @since 2.1.0
 	 * @var string
 	 */
-	const VERSION = '2.4.10';
+	const VERSION = '2.4.11-beta.1';
 
 	/**
 	 * Core log handle for Ultimate Multisite.
@@ -214,6 +214,10 @@ final class WP_Ultimo {
 		add_action('init', [$this, 'after_init']);
 
 		add_filter('user_has_cap', [$this, 'grant_customer_capabilities'], 10, 4);
+
+		add_filter('http_request_args', [$this, 'maybe_add_beta_param_to_update_url'], 10, 2);
+
+		add_filter('site_transient_update_plugins', [$this, 'maybe_inject_beta_update']);
 	}
 
 	/**
@@ -694,8 +698,12 @@ final class WP_Ultimo {
 		 * The remaining admin pages only register admin menu items,
 		 * admin-only forms, and wp_ajax_ handlers. They are not needed
 		 * on frontend requests.
+		 *
+		 * Note: We also check for wu-ajax requests because Light_Ajax
+		 * defines DOING_AJAX only after process_light_ajax() runs,
+		 * which happens after this code executes.
 		 */
-		if (is_admin() || wp_doing_ajax()) {
+		if (is_admin() || wp_doing_ajax() || isset($_REQUEST['wu-ajax'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$this->load_admin_only_pages();
 		}
 
@@ -973,5 +981,177 @@ final class WP_Ultimo {
 		}
 
 		return $allcaps;
+	}
+
+	/**
+	 * Append beta=1 to addon update checker requests when beta updates are enabled.
+	 *
+	 * @param array  $args HTTP request arguments.
+	 * @param string $url  The request URL.
+	 * @return array Modified arguments.
+	 */
+	public function maybe_add_beta_param_to_update_url(array $args, string $url): array {
+
+		if ( ! defined('MULTISITE_ULTIMATE_UPDATE_URL')) {
+			return $args;
+		}
+
+		// Only apply to update metadata requests to our server
+		if (strpos($url, MULTISITE_ULTIMATE_UPDATE_URL) === false || strpos($url, 'update_action=get_metadata') === false) {
+			return $args;
+		}
+
+		// Only apply when beta updates are enabled
+		if ( ! wu_get_setting('enable_beta_updates', false)) {
+			return $args;
+		}
+
+		// Don't add if already present
+		if (strpos($url, 'beta=1') !== false) {
+			return $args;
+		}
+
+		// PUC builds the URL from metadataUrl + query args, then passes it to wp_remote_get.
+		// We can't modify the URL through http_request_args, so we use a one-time
+		// pre_http_request filter to intercept and re-issue the request with beta=1.
+		add_filter(
+			'pre_http_request',
+			$redirect = function ($pre, $r, $request_url) use ($url, $args, &$redirect) {
+
+				remove_filter('pre_http_request', $redirect, 9);
+
+				if ($request_url !== $url) {
+					return $pre;
+				}
+
+				$beta_url = add_query_arg('beta', '1', $request_url);
+
+				return wp_remote_get($beta_url, $args);
+			},
+			9,
+			3
+		);
+
+		return $args;
+	}
+
+	/**
+	 * Inject a beta update from GitHub pre-releases into the plugin update transient.
+	 *
+	 * Only runs when the user has opted into beta updates. Checks GitHub releases
+	 * API for pre-releases and offers them as updates if newer than installed version.
+	 *
+	 * @param object $transient The update_plugins transient data.
+	 * @return object Modified transient data.
+	 */
+	public function maybe_inject_beta_update($transient) {
+
+		if (! is_object($transient)) {
+			return $transient;
+		}
+
+		if (! wu_get_setting('enable_beta_updates', false)) {
+			return $transient;
+		}
+
+		$plugin_file     = plugin_basename(WP_ULTIMO_PLUGIN_FILE);
+		$plugin_data     = get_plugin_data(WP_ULTIMO_PLUGIN_FILE);
+		$current_version = $plugin_data['Version'] ?? '0.0.0';
+
+		$release = $this->get_latest_github_release(true);
+
+		if (! $release) {
+			return $transient;
+		}
+
+		$release_version = ltrim($release['tag_name'], 'v');
+
+		if (version_compare($release_version, $current_version, '<=')) {
+			return $transient;
+		}
+
+		// Find the ZIP asset in the release
+		$package_url = '';
+
+		foreach ($release['assets'] as $asset) {
+			if (preg_match('/\.zip($|[?&#])/i', $asset['browser_download_url'])) {
+				$package_url = $asset['browser_download_url'];
+				break;
+			}
+		}
+
+		if (empty($package_url)) {
+			return $transient;
+		}
+
+		$transient->response[ $plugin_file ] = (object) [
+			'slug'        => 'ultimate-multisite',
+			'plugin'      => $plugin_file,
+			'new_version' => $release_version,
+			'url'         => $release['html_url'],
+			'package'     => $package_url,
+			'tested'      => '',
+			'requires'    => '5.3',
+		];
+
+		return $transient;
+	}
+
+	/**
+	 * Fetch the latest GitHub release, optionally including pre-releases.
+	 *
+	 * Results are cached in a transient for 6 hours.
+	 *
+	 * @param bool $include_prerelease Whether to include pre-releases.
+	 * @return array|null Release data or null on failure.
+	 */
+	private function get_latest_github_release(bool $include_prerelease = false): ?array {
+
+		$cache_key = 'wu_github_release_' . ($include_prerelease ? 'beta' : 'stable');
+		$cached    = get_site_transient($cache_key);
+
+		if (false !== $cached) {
+			return $cached ?: null;
+		}
+
+		$url = $include_prerelease
+			? 'https://api.github.com/repos/Multisite-Ultimate/ultimate-multisite/releases?per_page=5'
+			: 'https://api.github.com/repos/Multisite-Ultimate/ultimate-multisite/releases/latest';
+
+		$response = wp_remote_get(
+			$url,
+			[
+				'headers' => [
+					'Accept'     => 'application/vnd.github.v3+json',
+					'User-Agent' => 'Ultimate-Multisite/' . self::VERSION,
+				],
+				'timeout' => 10,
+			]
+		);
+
+		if (is_wp_error($response) || 200 !== wp_remote_retrieve_response_code($response)) {
+			set_site_transient($cache_key, '', 2 * HOUR_IN_SECONDS);
+
+			return null;
+		}
+
+		$body = json_decode(wp_remote_retrieve_body($response), true);
+
+		if ($include_prerelease) {
+			// Find the first release (pre-release or stable, whichever is newest)
+			$release = ! empty($body) ? $body[0] : null;
+		} else {
+			$release = $body;
+		}
+
+		if (! $release || empty($release['tag_name'])) {
+			set_site_transient($cache_key, '', 2 * HOUR_IN_SECONDS);
+
+			return null;
+		}
+
+		set_site_transient($cache_key, $release, 6 * HOUR_IN_SECONDS);
+
+		return $release;
 	}
 }

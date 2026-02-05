@@ -1,52 +1,38 @@
 # Copyright (C) 2026 Ultimate Multisite Community
-# This file is distributed under the GPL2.
+# This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Ultimate Multisite 2.4.10\n"
+"Project-Id-Version: Ultimate Multisite – WordPress Multisite SaaS & WaaS Platform 2.4.10\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ultimate-multisite\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-02-03T18:06:12+00:00\n"
+"POT-Creation-Date: 2026-02-05T19:55:33+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ultimate-multisite\n"
 
 #. Plugin Name of the plugin
 #: ultimate-multisite.php
-#: inc/admin-pages/class-dashboard-admin-page.php:551
-#: inc/admin-pages/class-migration-alert-admin-page.php:103
-#: inc/admin-pages/class-setup-wizard-admin-page.php:310
-#: inc/admin-pages/class-setup-wizard-admin-page.php:675
-#: inc/admin-pages/class-top-admin-nav-menu.php:55
-#: inc/class-credits.php:156
-#: inc/class-credits.php:200
-#: inc/development/query-monitor/panel/class-overview.php:46
-#: inc/development/query-monitor/panel/class-overview.php:108
-#: inc/managers/class-block-manager.php:59
-msgid "Ultimate Multisite"
+msgid "Ultimate Multisite – WordPress Multisite SaaS & WaaS Platform"
 msgstr ""
 
 #. Plugin URI of the plugin
+#. Author URI of the plugin
 #: ultimate-multisite.php
 msgid "https://ultimatemultisite.com"
 msgstr ""
 
 #. Description of the plugin
 #: ultimate-multisite.php
-msgid "Transform your WordPress Multisite into a Website as a Service (WaaS) platform supporting site cloning, re-selling, and domain mapping integrations with many hosting providers."
+msgid "Ultimate Multisite is a WordPress Multisite plugin that turns your network into a complete Website-as-a-Service (WaaS) platform with subscriptions, site provisioning, domain mapping, and customer management. Formerly WP Ultimo."
 msgstr ""
 
 #. Author of the plugin
 #: ultimate-multisite.php
 msgid "Ultimate Multisite Community"
-msgstr ""
-
-#. Author URI of the plugin
-#: ultimate-multisite.php
-msgid "https://github.com/Multisite-Ultimate/ultimate-multisite"
 msgstr ""
 
 #: data/translatable-strings.php:13
@@ -359,7 +345,7 @@ msgstr ""
 #: inc/admin-pages/class-broadcast-edit-admin-page.php:370
 #: inc/admin-pages/class-edit-admin-page.php:489
 #: inc/admin-pages/class-tax-rates-admin-page.php:193
-#: inc/checkout/class-checkout.php:1812
+#: inc/checkout/class-checkout.php:1827
 #: views/base/edit/widget-tabs.php:106
 #: views/dashboard-statistics/filter.php:28
 #: views/dashboard-statistics/widget-mrr-growth.php:16
@@ -411,7 +397,7 @@ msgstr ""
 #: inc/admin-pages/class-event-view-admin-page.php:253
 #: inc/admin-pages/class-membership-edit-admin-page.php:997
 #: inc/admin-pages/class-payment-edit-admin-page.php:1225
-#: inc/admin-pages/class-product-edit-admin-page.php:1091
+#: inc/admin-pages/class-product-edit-admin-page.php:1093
 #: inc/admin-pages/class-site-edit-admin-page.php:678
 #: inc/admin-pages/class-view-logs-admin-page.php:281
 #: inc/admin-pages/class-webhook-edit-admin-page.php:343
@@ -1410,8 +1396,8 @@ msgstr ""
 #: inc/database/memberships/class-membership-status.php:68
 #: inc/database/payments/class-payment-status.php:94
 #: inc/database/sites/class-site-type.php:71
-#: inc/installers/class-core-installer.php:71
-#: inc/installers/class-core-installer.php:81
+#: inc/installers/class-core-installer.php:69
+#: inc/installers/class-core-installer.php:79
 #: inc/installers/class-default-content-installer.php:152
 #: inc/installers/class-default-content-installer.php:163
 #: inc/installers/class-default-content-installer.php:174
@@ -1549,6 +1535,7 @@ msgstr ""
 #: inc/models/class-checkout-form.php:736
 #: inc/ui/class-login-form-element.php:230
 #: views/checkout/partials/inline-login-prompt.php:31
+#: views/wizards/host-integrations/cpanel-instructions.php:12
 msgid "Password"
 msgstr ""
 
@@ -1683,6 +1670,19 @@ msgstr ""
 #: views/dashboard-statistics/widget-most-visited-sites.php:81
 #: views/dashboard-statistics/widget-most-visited-sites.php:84
 msgid "Dashboard"
+msgstr ""
+
+#: inc/admin-pages/class-dashboard-admin-page.php:551
+#: inc/admin-pages/class-migration-alert-admin-page.php:103
+#: inc/admin-pages/class-setup-wizard-admin-page.php:310
+#: inc/admin-pages/class-setup-wizard-admin-page.php:675
+#: inc/admin-pages/class-top-admin-nav-menu.php:55
+#: inc/class-credits.php:156
+#: inc/class-credits.php:200
+#: inc/development/query-monitor/panel/class-overview.php:46
+#: inc/development/query-monitor/panel/class-overview.php:108
+#: inc/managers/class-block-manager.php:59
+msgid "Ultimate Multisite"
 msgstr ""
 
 #: inc/admin-pages/class-dashboard-admin-page.php:620
@@ -2242,17 +2242,17 @@ msgstr ""
 msgid "Register and Add Domain (soon)"
 msgstr ""
 
-#: inc/admin-pages/class-domain-list-admin-page.php:268
+#: inc/admin-pages/class-domain-list-admin-page.php:279
 msgid "Domains removed successfully."
 msgstr ""
 
-#: inc/admin-pages/class-domain-list-admin-page.php:269
+#: inc/admin-pages/class-domain-list-admin-page.php:280
 msgid "Search Domains"
 msgstr ""
 
-#: inc/admin-pages/class-domain-list-admin-page.php:281
 #: inc/admin-pages/class-domain-list-admin-page.php:292
 #: inc/admin-pages/class-domain-list-admin-page.php:303
+#: inc/admin-pages/class-domain-list-admin-page.php:314
 #: inc/debug/class-debug.php:229
 #: inc/list-tables/class-domain-list-table.php:42
 #: inc/list-tables/class-site-list-table.php:275
@@ -2263,7 +2263,7 @@ msgstr ""
 msgid "Domains"
 msgstr ""
 
-#: inc/admin-pages/class-domain-list-admin-page.php:316
+#: inc/admin-pages/class-domain-list-admin-page.php:327
 #: inc/ui/class-domain-mapping-element.php:361
 #: inc/ui/class-domain-mapping-element.php:751
 #: views/dashboard-widgets/domain-mapping.php:29
@@ -2861,43 +2861,50 @@ msgstr ""
 msgid "Delete Event"
 msgstr ""
 
-#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:112
+#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:122
 msgid "Integration Setup"
 msgstr ""
 
-#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:123
+#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:133
 msgid "Host Provider Integration"
 msgstr ""
 
-#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:136
+#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:146
 msgid "Activation"
 msgstr ""
 
-#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:141
+#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:151
 #: inc/ui/class-domain-mapping-element.php:304
 #: views/wizards/host-integrations/cloudflare-instructions.php:10
+#: views/wizards/host-integrations/cpanel-instructions.php:9
 #: views/wizards/host-integrations/gridpane-instructions.php:9
 #: views/wizards/host-integrations/rocket-instructions.php:9
 #: views/wizards/host-integrations/runcloud-instructions.php:9
 msgid "Instructions"
 msgstr ""
 
-#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:145
-#: inc/integrations/host-providers/class-base-host-provider.php:209
+#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:155
+#: inc/integrations/class-integration-registry.php:354
 msgid "Configuration"
 msgstr ""
 
-#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:150
+#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:160
 msgid "Testing Integration"
 msgstr ""
 
-#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:154
+#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:164
 #: inc/admin-pages/class-setup-wizard-admin-page.php:511
 #: views/dashboard-widgets/thank-you.php:281
 msgid "Ready!"
 msgstr ""
 
-#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:393
+#. translators: %s is the constant name, e.g. WU_CLOUDWAYS_API_KEY
+#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:275
+#, php-format
+msgid "Defined as <code>%s</code> in wp-config.php. Edit your wp-config.php to change this value."
+msgstr ""
+
+#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:423
 #: views/wizards/host-integrations/test.php:39
 msgid "Waiting for results..."
 msgstr ""
@@ -3053,7 +3060,7 @@ msgstr ""
 #: inc/admin-pages/class-product-list-admin-page.php:98
 #: inc/admin-pages/class-product-list-admin-page.php:109
 #: inc/admin-pages/class-top-admin-nav-menu.php:103
-#: inc/checkout/class-checkout.php:2178
+#: inc/checkout/class-checkout.php:2194
 #: inc/checkout/signup-fields/class-signup-field-pricing-table.php:170
 #: inc/checkout/signup-fields/class-signup-field-products.php:149
 #: inc/checkout/signup-fields/class-signup-field-products.php:150
@@ -3290,7 +3297,7 @@ msgstr ""
 
 #: inc/admin-pages/class-membership-edit-admin-page.php:993
 #: inc/admin-pages/class-payment-edit-admin-page.php:1221
-#: inc/admin-pages/class-product-edit-admin-page.php:1087
+#: inc/admin-pages/class-product-edit-admin-page.php:1089
 msgid "This name will be used on pricing tables, invoices, and more."
 msgstr ""
 
@@ -4315,12 +4322,12 @@ msgstr ""
 
 #: inc/admin-pages/class-product-edit-admin-page.php:1035
 #: inc/admin-pages/class-product-edit-admin-page.php:1046
-#: inc/admin-pages/class-product-edit-admin-page.php:1083
+#: inc/admin-pages/class-product-edit-admin-page.php:1085
 msgid "Edit Product"
 msgstr ""
 
 #: inc/admin-pages/class-product-edit-admin-page.php:1035
-#: inc/admin-pages/class-product-edit-admin-page.php:1084
+#: inc/admin-pages/class-product-edit-admin-page.php:1086
 #: views/memberships/product-list.php:17
 #: views/memberships/product-list.php:21
 msgid "Add new Product"
@@ -4330,19 +4337,19 @@ msgstr ""
 msgid "Click to copy Shareable Link"
 msgstr ""
 
-#: inc/admin-pages/class-product-edit-admin-page.php:1085
+#: inc/admin-pages/class-product-edit-admin-page.php:1087
 msgid "Product updated with success!"
 msgstr ""
 
-#: inc/admin-pages/class-product-edit-admin-page.php:1086
+#: inc/admin-pages/class-product-edit-admin-page.php:1088
 msgid "Enter Product Name"
 msgstr ""
 
-#: inc/admin-pages/class-product-edit-admin-page.php:1088
+#: inc/admin-pages/class-product-edit-admin-page.php:1090
 msgid "Save Product"
 msgstr ""
 
-#: inc/admin-pages/class-product-edit-admin-page.php:1090
+#: inc/admin-pages/class-product-edit-admin-page.php:1092
 msgid "Delete Product"
 msgstr ""
 
@@ -4647,7 +4654,7 @@ msgid "WordPress Cron"
 msgstr ""
 
 #: inc/admin-pages/class-setup-wizard-admin-page.php:683
-#: inc/integrations/host-providers/class-base-host-provider.php:200
+#: inc/integrations/class-integration-registry.php:344
 msgid "Activated"
 msgstr ""
 
@@ -5234,7 +5241,7 @@ msgstr ""
 #: inc/admin-pages/class-view-logs-admin-page.php:103
 #: inc/admin-pages/class-webhook-edit-admin-page.php:103
 #: inc/admin-pages/class-webhook-list-admin-page.php:77
-#: inc/class-tracker.php:774
+#: inc/class-tracker.php:779
 msgid "Copied!"
 msgstr ""
 
@@ -6764,158 +6771,190 @@ msgstr ""
 msgid "The date when this webhook last fail."
 msgstr ""
 
-#: inc/apis/trait-mcp-abilities.php:93
+#: inc/apis/trait-mcp-abilities.php:101
 msgid "Multisite Ultimate"
 msgstr ""
 
-#: inc/apis/trait-mcp-abilities.php:94
+#: inc/apis/trait-mcp-abilities.php:102
 msgid "CRUD operations for Multisite Ultimate entities including customers, sites, products, memberships, and more."
 msgstr ""
 
-#: inc/apis/trait-mcp-abilities.php:115
+#: inc/apis/trait-mcp-abilities.php:123
 msgid "You do not have permission to access this resource."
 msgstr ""
 
 #. translators: %s: entity name (e.g., Customer, Site, Product)
-#: inc/apis/trait-mcp-abilities.php:180
+#: inc/apis/trait-mcp-abilities.php:188
 #, php-format
 msgid "Get %s by ID"
 msgstr ""
 
 #. translators: %s: entity name (e.g., customer, site, product)
-#: inc/apis/trait-mcp-abilities.php:182
+#: inc/apis/trait-mcp-abilities.php:190
 #, php-format
-msgid "Retrieve a single %s by its ID"
+msgid "Retrieve a single %1$s by its ID. Returns all fields for the %2$s."
 msgstr ""
 
 #. translators: %s: entity name (e.g., customer, site, product)
-#: inc/apis/trait-mcp-abilities.php:191
+#: inc/apis/trait-mcp-abilities.php:199
 #, php-format
-msgid "The ID of the %s to retrieve"
+msgid "The ID of the %s to retrieve."
 msgstr ""
 
 #. translators: %s: entity name (e.g., customer, site, product)
-#: inc/apis/trait-mcp-abilities.php:202
+#: inc/apis/trait-mcp-abilities.php:211
 #, php-format
 msgid "The %s object"
 msgstr ""
 
+#: inc/apis/trait-mcp-abilities.php:244
+msgid "Number of items to retrieve per page (max 100)."
+msgstr ""
+
+#: inc/apis/trait-mcp-abilities.php:249
+msgid "Page number to retrieve."
+msgstr ""
+
+#: inc/apis/trait-mcp-abilities.php:254
+msgid "Search term to filter results by searchable fields."
+msgstr ""
+
+#: inc/apis/trait-mcp-abilities.php:258
+msgid "Field to order results by."
+msgstr ""
+
+#: inc/apis/trait-mcp-abilities.php:262
+msgid "Sort direction."
+msgstr ""
+
 #. translators: %s: entity name (e.g., Customer, Site, Product)
-#: inc/apis/trait-mcp-abilities.php:231
+#: inc/apis/trait-mcp-abilities.php:277
 #, php-format
 msgid "List %s"
 msgstr ""
 
-#. translators: %s: entity name (e.g., customer, site, product)
-#: inc/apis/trait-mcp-abilities.php:233
+#. translators: %1$s: entity name, %2$s: filter list
+#: inc/apis/trait-mcp-abilities.php:279
 #, php-format
-msgid "Retrieve a list of %s with optional filters"
-msgstr ""
-
-#: inc/apis/trait-mcp-abilities.php:241
-msgid "Number of items to retrieve per page"
-msgstr ""
-
-#: inc/apis/trait-mcp-abilities.php:246
-msgid "Page number to retrieve"
+msgid "Retrieve a paginated list of %1$s with optional filters.%2$s"
 msgstr ""
 
 #. translators: %s: entity name (e.g., customer, site, product)
-#: inc/apis/trait-mcp-abilities.php:257
+#: inc/apis/trait-mcp-abilities.php:292
 #, php-format
 msgid "Array of %s objects"
 msgstr ""
 
-#: inc/apis/trait-mcp-abilities.php:264
+#: inc/apis/trait-mcp-abilities.php:299
 msgid "Total number of items"
 msgstr ""
 
 #. translators: %s: entity name (e.g., Customer, Site, Product)
-#: inc/apis/trait-mcp-abilities.php:289
+#: inc/apis/trait-mcp-abilities.php:337
 #, php-format
 msgid "Create %s"
 msgstr ""
 
-#. translators: %s: entity name (e.g., customer, site, product)
-#. translators: %s is the singular value of the model, such as Product, or Payment.
-#: inc/apis/trait-mcp-abilities.php:291
-#: inc/list-tables/class-base-list-table.php:511
+#. translators: %1$s: entity name, %2$s: required fields hint
+#: inc/apis/trait-mcp-abilities.php:339
 #, php-format
-msgid "Create a new %s"
+msgid "Create a new %1$s.%2$s"
 msgstr ""
 
 #. translators: %s: entity name (e.g., customer, site, product)
-#: inc/apis/trait-mcp-abilities.php:301
+#: inc/apis/trait-mcp-abilities.php:349
 #, php-format
 msgid "The created %s object"
 msgstr ""
 
 #. translators: %s: entity name (e.g., customer, site, product)
-#: inc/apis/trait-mcp-abilities.php:325
+#: inc/apis/trait-mcp-abilities.php:379
 #, php-format
-msgid "The ID of the %s to update"
+msgid "The ID of the %s to update."
 msgstr ""
 
 #. translators: %s: entity name (e.g., Customer, Site, Product)
-#: inc/apis/trait-mcp-abilities.php:339
+#: inc/apis/trait-mcp-abilities.php:390
 #, php-format
 msgid "Update %s"
 msgstr ""
 
 #. translators: %s: entity name (e.g., customer, site, product)
-#: inc/apis/trait-mcp-abilities.php:341
+#: inc/apis/trait-mcp-abilities.php:392
 #, php-format
-msgid "Update an existing %s"
+msgid "Update an existing %s by ID. Only the fields provided will be changed; omitted fields remain unchanged."
 msgstr ""
 
 #. translators: %s: entity name (e.g., customer, site, product)
-#: inc/apis/trait-mcp-abilities.php:351
+#: inc/apis/trait-mcp-abilities.php:402
 #, php-format
 msgid "The updated %s object"
 msgstr ""
 
 #. translators: %s: entity name (e.g., Customer, Site, Product)
-#: inc/apis/trait-mcp-abilities.php:374
+#: inc/apis/trait-mcp-abilities.php:434
 #, php-format
 msgid "Delete %s"
 msgstr ""
 
 #. translators: %s: entity name (e.g., customer, site, product)
-#: inc/apis/trait-mcp-abilities.php:376
+#: inc/apis/trait-mcp-abilities.php:436
 #, php-format
-msgid "Delete a %s by its ID"
+msgid "Permanently delete a %s by its ID. This action cannot be undone."
 msgstr ""
 
 #. translators: %s: entity name (e.g., customer, site, product)
-#: inc/apis/trait-mcp-abilities.php:385
+#: inc/apis/trait-mcp-abilities.php:445
 #, php-format
-msgid "The ID of the %s to delete"
+msgid "The ID of the %s to delete."
 msgstr ""
 
-#: inc/apis/trait-mcp-abilities.php:395
+#: inc/apis/trait-mcp-abilities.php:456
 msgid "Whether the deletion was successful"
 msgstr ""
 
-#: inc/apis/trait-mcp-abilities.php:464
-#: inc/apis/trait-mcp-abilities.php:566
-#: inc/apis/trait-mcp-abilities.php:623
+#. translators: %s: column name
+#: inc/apis/trait-mcp-abilities.php:633
+#, php-format
+msgid "Filter by %s."
+msgstr ""
+
+#: inc/apis/trait-mcp-abilities.php:726
+#: inc/apis/trait-mcp-abilities.php:836
+#: inc/apis/trait-mcp-abilities.php:915
 msgid "ID is required"
 msgstr ""
 
-#. translators: %s: entity name (e.g., Customer, Site, Product)
-#: inc/apis/trait-mcp-abilities.php:474
-#: inc/apis/trait-mcp-abilities.php:579
-#: inc/apis/trait-mcp-abilities.php:633
+#. translators: %1$s: entity name, %2$d: ID
+#: inc/apis/trait-mcp-abilities.php:736
+#: inc/apis/trait-mcp-abilities.php:849
+#: inc/apis/trait-mcp-abilities.php:925
 #, php-format
-msgid "%s not found"
+msgid "%1$s with ID %2$d not found."
 msgstr ""
 
-#: inc/apis/trait-mcp-abilities.php:547
-msgid "Failed to save item"
+#. translators: %s: entity name
+#: inc/apis/trait-mcp-abilities.php:815
+#, php-format
+msgid "Failed to create %s. The save operation returned false without a specific error."
 msgstr ""
 
-#: inc/apis/trait-mcp-abilities.php:604
-msgid "Failed to update item"
+#. translators: %1$s: entity name, %2$s: field names
+#: inc/apis/trait-mcp-abilities.php:875
+#, php-format
+msgid "Unknown fields for %1$s: %2$s. These fields do not have setter methods and were not applied."
+msgstr ""
+
+#. translators: %1$s: entity name, %2$d: ID
+#: inc/apis/trait-mcp-abilities.php:893
+#, php-format
+msgid "Failed to update %1$s with ID %2$d. The save operation returned false without a specific error."
+msgstr ""
+
+#. translators: %1$d: error count, %2$s: combined messages
+#: inc/apis/trait-mcp-abilities.php:975
+#, php-format
+msgid "Validation failed with %1$d error(s): %2$s"
 msgstr ""
 
 #: inc/apis/trait-rest-api.php:174
@@ -7042,43 +7081,43 @@ msgid "The code %s does not exist or is no longer valid."
 msgstr ""
 
 #. translators: two intervals
-#: inc/checkout/class-cart.php:1450
+#: inc/checkout/class-cart.php:1456
 #, php-format
 msgid "Interval %1$s and %2$s do not match."
 msgstr ""
 
-#: inc/checkout/class-cart.php:1613
+#: inc/checkout/class-cart.php:1640
 msgid "The product you are trying to add does not exist."
 msgstr ""
 
-#: inc/checkout/class-cart.php:1632
+#: inc/checkout/class-cart.php:1660
 msgid "The product you are trying to add does not exist for the selected duration."
 msgstr ""
 
-#: inc/checkout/class-cart.php:1647
+#: inc/checkout/class-cart.php:1675
 msgid "There's already a plan in this membership."
 msgstr ""
 
 #. translators: respectively, product name, duration, and duration unit.
-#: inc/checkout/class-cart.php:1714
+#: inc/checkout/class-cart.php:1742
 #, php-format
 msgid "%1$s does not have a valid price variation for that billing period (every %2$s %3$s(s)) and was not added to the cart."
 msgstr ""
 
 #. translators: %1$s is the product name, %2$s is the minimum amount formatted as currency
-#: inc/checkout/class-cart.php:1739
+#: inc/checkout/class-cart.php:1767
 #, php-format
 msgid "The amount for %1$s must be at least %2$s."
 msgstr ""
 
 #. translators: placeholder is the product name.
-#: inc/checkout/class-cart.php:1836
+#: inc/checkout/class-cart.php:1864
 #, php-format
 msgid "Signup Fee for %s"
 msgstr ""
 
 #. translators: placeholder is the product name.
-#: inc/checkout/class-cart.php:1836
+#: inc/checkout/class-cart.php:1864
 #, php-format
 msgid "Signup Credit for %s"
 msgstr ""
@@ -7096,7 +7135,7 @@ msgid "<strong>Error:</strong> The password you entered is incorrect."
 msgstr ""
 
 #: inc/checkout/class-checkout-pages.php:229
-#: inc/integrations/host-providers/class-closte-host-provider.php:292
+#: inc/integrations/providers/closte/class-closte-integration.php:74
 msgid "Something went wrong"
 msgstr ""
 
@@ -7132,112 +7171,112 @@ msgstr ""
 
 #: inc/checkout/class-checkout.php:754
 #: inc/checkout/class-checkout.php:762
-#: inc/checkout/class-checkout.php:2402
-#: inc/checkout/class-checkout.php:2408
+#: inc/checkout/class-checkout.php:2418
+#: inc/checkout/class-checkout.php:2424
 msgid "Payment gateway not registered."
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1069
+#: inc/checkout/class-checkout.php:1084
 msgid "The email address you entered is already in use."
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1119
+#: inc/checkout/class-checkout.php:1134
 msgid "Something wrong happened while attempting to save the customer billing address"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1676
+#: inc/checkout/class-checkout.php:1691
 msgid "Invalid request"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1688
+#: inc/checkout/class-checkout.php:1703
 msgid "Too many requests. Please try again later."
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1730
+#: inc/checkout/class-checkout.php:1745
 msgid "Please provide both username/email and password."
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1743
+#: inc/checkout/class-checkout.php:1758
 msgid "Too many login attempts. Please try again in a few minutes."
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1772
+#: inc/checkout/class-checkout.php:1787
 msgid "Invalid username or password."
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1790
+#: inc/checkout/class-checkout.php:1805
 msgid "Login successful!"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1813
+#: inc/checkout/class-checkout.php:1828
 msgid "The item was added!"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1814
+#: inc/checkout/class-checkout.php:1829
 msgid "The Password entered is too weak."
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1815
+#: inc/checkout/class-checkout.php:1830
 msgid "Password is required"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1816
+#: inc/checkout/class-checkout.php:1831
 msgid "Login failed. Please try again."
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1817
+#: inc/checkout/class-checkout.php:1832
 msgid "Logging in..."
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1818
+#: inc/checkout/class-checkout.php:1833
 #: views/checkout/partials/inline-login-prompt.php:17
 msgid "Already have an account?"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1819
+#: inc/checkout/class-checkout.php:1834
 #: views/checkout/partials/inline-login-prompt.php:59
 msgid "Sign in"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1820
+#: inc/checkout/class-checkout.php:1835
 #: views/checkout/partials/inline-login-prompt.php:51
 msgid "Forgot password?"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:1821
+#: inc/checkout/class-checkout.php:1836
 #: inc/list-tables/class-payment-list-table.php:111
 #: views/dashboard-widgets/current-membership.php:315
 msgid "Cancel"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:2174
+#: inc/checkout/class-checkout.php:2190
 msgid "Password confirmation"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:2175
+#: inc/checkout/class-checkout.php:2191
 msgid "Email confirmation"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:2176
+#: inc/checkout/class-checkout.php:2192
 msgid "Template ID"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:2177
+#: inc/checkout/class-checkout.php:2193
 msgid "Valid password"
 msgstr ""
 
-#: inc/checkout/class-checkout.php:2179
+#: inc/checkout/class-checkout.php:2195
 msgid "Payment Gateway"
 msgstr ""
 
 #. translators: %s payment id.
-#: inc/checkout/class-checkout.php:2371
+#: inc/checkout/class-checkout.php:2387
 #, php-format
 msgid "Payment (%s) not found."
 msgstr ""
 
 #. translators: %s is the membership ID
-#: inc/checkout/class-checkout.php:2506
+#: inc/checkout/class-checkout.php:2522
 #, php-format
 msgid "Checkout failed for customer %s: "
 msgstr ""
@@ -8226,7 +8265,7 @@ msgid "API URL"
 msgstr ""
 
 #: inc/class-api.php:199
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:170
+#: inc/integrations/providers/cloudflare/class-cloudflare-integration.php:87
 #: views/wizards/host-integrations/cloudflare-instructions.php:14
 msgid "API Key"
 msgstr ""
@@ -9395,6 +9434,18 @@ msgstr ""
 
 #: inc/class-settings.php:1510
 #: inc/class-settings.php:1511
+#: inc/integrations/providers/closte/class-closte-domain-mapping.php:48
+#: inc/integrations/providers/cloudflare/class-cloudflare-domain-mapping.php:47
+#: inc/integrations/providers/cloudways/class-cloudways-domain-mapping.php:47
+#: inc/integrations/providers/cpanel/class-cpanel-domain-mapping.php:49
+#: inc/integrations/providers/enhance/class-enhance-domain-mapping.php:46
+#: inc/integrations/providers/gridpane/class-gridpane-domain-mapping.php:46
+#: inc/integrations/providers/hestia/class-hestia-domain-mapping.php:38
+#: inc/integrations/providers/rocket/class-rocket-domain-mapping.php:47
+#: inc/integrations/providers/runcloud/class-runcloud-domain-mapping.php:46
+#: inc/integrations/providers/serverpilot/class-serverpilot-domain-mapping.php:49
+#: inc/integrations/providers/wpengine/class-wpengine-domain-mapping.php:38
+#: inc/integrations/providers/wpmudev/class-wpmudev-domain-mapping.php:48
 msgid "Domain Mapping"
 msgstr ""
 
@@ -9544,61 +9595,62 @@ msgstr ""
 msgid "Sunrise upgrade attempt succeeded."
 msgstr ""
 
-#: inc/class-tracker.php:478
+#: inc/class-tracker.php:483
 msgid "There has been a critical error on this site."
 msgstr ""
 
-#: inc/class-tracker.php:481
+#: inc/class-tracker.php:486
 msgid "Please contact your network administrator for assistance."
 msgstr ""
 
 #. translators: %s is the admin email address
-#: inc/class-tracker.php:490
+#: inc/class-tracker.php:495
 #, php-format
 msgid "You can reach them at %s."
 msgstr ""
 
-#: inc/class-tracker.php:528
+#: inc/class-tracker.php:533
+#: inc/integrations/providers/enhance/class-enhance-integration.php:83
 msgid "Unknown error"
 msgstr ""
 
-#: inc/class-tracker.php:529
+#: inc/class-tracker.php:534
 msgid "Unknown file"
 msgstr ""
 
-#: inc/class-tracker.php:551
-#: inc/class-tracker.php:583
-#: inc/class-tracker.php:779
+#: inc/class-tracker.php:556
+#: inc/class-tracker.php:588
+#: inc/class-tracker.php:784
 msgid "Unknown"
 msgstr ""
 
 #. translators: %1$s is the type of error message, %2$s is the source plugin
-#: inc/class-tracker.php:742
+#: inc/class-tracker.php:747
 #, php-format
 msgid "[%1$s] in %2$s"
 msgstr ""
 
-#: inc/class-tracker.php:752
+#: inc/class-tracker.php:757
 msgid "Please describe what you were doing when this error occurred:"
 msgstr ""
 
-#: inc/class-tracker.php:772
+#: inc/class-tracker.php:777
 msgid "Show Technical Details"
 msgstr ""
 
-#: inc/class-tracker.php:773
+#: inc/class-tracker.php:778
 msgid "Copy to Clipboard"
 msgstr ""
 
-#: inc/class-tracker.php:775
+#: inc/class-tracker.php:780
 msgid "Get Support from Ultimate Multisite"
 msgstr ""
 
-#: inc/class-tracker.php:776
+#: inc/class-tracker.php:781
 msgid "Source:"
 msgstr ""
 
-#: inc/class-tracker.php:836
+#: inc/class-tracker.php:841
 msgid "Return to the main site"
 msgstr ""
 
@@ -15766,8 +15818,8 @@ msgid "Result is not a PNG file."
 msgstr ""
 
 #: inc/helpers/class-screenshot.php:125
-#: inc/installers/class-core-installer.php:73
-#: inc/installers/class-core-installer.php:83
+#: inc/installers/class-core-installer.php:71
+#: inc/installers/class-core-installer.php:81
 #: inc/installers/class-default-content-installer.php:154
 #: inc/installers/class-default-content-installer.php:165
 #: inc/installers/class-default-content-installer.php:176
@@ -15879,6 +15931,7 @@ msgstr ""
 #: views/base/filter.php:123
 #: views/base/filter.php:131
 #: views/wizards/host-integrations/cloudflare-instructions.php:14
+#: views/wizards/host-integrations/cpanel-instructions.php:12
 #: views/wizards/host-integrations/rocket-instructions.php:12
 #: views/wizards/host-integrations/runcloud-instructions.php:12
 msgid "and"
@@ -15887,6 +15940,7 @@ msgstr ""
 #: inc/helpers/class-validator.php:98
 #: views/base/filter.php:124
 #: views/base/filter.php:132
+#: views/wizards/host-integrations/cpanel-instructions.php:12
 msgid "or"
 msgstr ""
 
@@ -15902,7 +15956,7 @@ msgstr ""
 
 #. translators: %s is the file name.
 #: inc/helpers/class-wp-config.php:40
-#: inc/helpers/class-wp-config.php:183
+#: inc/helpers/class-wp-config.php:191
 #, php-format
 msgid "The file %s is not writable"
 msgstr ""
@@ -15952,37 +16006,37 @@ msgid "A customer with the same email address or username already exists."
 msgstr ""
 
 #. translators: %1$s opening a tag, %2$s closing a tag.
-#: inc/installers/class-core-installer.php:44
+#: inc/installers/class-core-installer.php:42
 #, php-format
 msgid "You are using Closte and they prevent the wp-config.php file from being written to. %1$s Follow these instructions to do it manually %2$s."
 msgstr ""
 
-#: inc/installers/class-core-installer.php:69
+#: inc/installers/class-core-installer.php:67
 msgid "Create Database Tables"
 msgstr ""
 
-#: inc/installers/class-core-installer.php:70
+#: inc/installers/class-core-installer.php:68
 msgid "Ultimate Multisite uses custom tables for performance reasons. We need to create those tables and make sure they are setup properly before we can activate the plugin."
 msgstr ""
 
-#: inc/installers/class-core-installer.php:72
+#: inc/installers/class-core-installer.php:70
 msgid "Creating default tables..."
 msgstr ""
 
-#: inc/installers/class-core-installer.php:79
+#: inc/installers/class-core-installer.php:77
 msgid "Install <code>sunrise.php</code> File"
 msgstr ""
 
-#: inc/installers/class-core-installer.php:80
+#: inc/installers/class-core-installer.php:78
 msgid "We need to add our own sunrise.php file to the wp-content folder in order to be able to control access to sites and plugins before anything else happens on WordPress. "
 msgstr ""
 
-#: inc/installers/class-core-installer.php:82
+#: inc/installers/class-core-installer.php:80
 msgid "Installing sunrise file..."
 msgstr ""
 
 #. translators: %s is the name of a database table, e.g. wu_memberships.
-#: inc/installers/class-core-installer.php:118
+#: inc/installers/class-core-installer.php:116
 #, php-format
 msgid "Installation of the table %s failed"
 msgstr ""
@@ -16262,571 +16316,643 @@ msgid "Plugin not found."
 msgstr ""
 
 #. translators: %s is the name of a host provider (e.g. Cloudways, WPMUDev, Closte...).
-#: inc/integrations/host-providers/class-base-host-provider.php:212
+#: inc/integrations/class-integration-registry.php:357
 #, php-format
 msgid "%s Integration"
 msgstr ""
 
-#: inc/integrations/host-providers/class-base-host-provider.php:216
+#: inc/integrations/class-integration-registry.php:361
 msgid "Go to the setup wizard to setup this integration."
 msgstr ""
 
 #. translators: %1$s will be replaced with the integration title. E.g. RunCloud
-#: inc/integrations/host-providers/class-base-host-provider.php:243
+#: inc/integrations/class-integration-registry.php:393
 #, php-format
 msgid "It looks like you are using %1$s as your hosting provider, yet the %1$s integration module is not active. In order for the domain mapping integration to work with %1$s, you might want to activate that module."
 msgstr ""
 
 #. translators: %s is the integration name.
-#: inc/integrations/host-providers/class-base-host-provider.php:250
+#: inc/integrations/class-integration-registry.php:398
 #, php-format
 msgid "Activate %s"
 msgstr ""
 
-#. translators: %1$s will be replaced with the integration title. E.g. RunCloud.
-#: inc/integrations/host-providers/class-base-host-provider.php:276
+#. translators: %s is the integration name.
+#: inc/integrations/class-integration-registry.php:411
 #, php-format
-msgid "It looks like you are using %1$s as your hosting provider, yet the %1$s integration module was not properly setup. In order for the domain mapping integration to work with %1$s, you need to configure that module."
+msgid "The %s integration module is active but not properly configured. Please complete the setup."
 msgstr ""
 
-#. translators: %s is the integration name
-#: inc/integrations/host-providers/class-base-host-provider.php:283
+#. translators: %s is the integration name.
+#: inc/integrations/class-integration-registry.php:416
 #, php-format
 msgid "Setup %s"
 msgstr ""
 
-#. translators: %s is the name of the integration e.g. RunCloud
-#: inc/integrations/host-providers/class-base-host-provider.php:560
-#, php-format
-msgid "Send API calls to %s servers with domain names added to this network"
-msgstr ""
-
-#. translators: %s is the name of the integration e.g. RunCloud
-#: inc/integrations/host-providers/class-base-host-provider.php:568
-#, php-format
-msgid "Fetch and install a SSL certificate on %s platform after the domain is added."
-msgstr ""
-
-#. translators: %s is the name of the integration e.g. RunCloud
-#: inc/integrations/host-providers/class-base-host-provider.php:572
-#, php-format
-msgid "Fetch and install a SSL certificate on %s platform after the domain is added. This needs to be done manually."
-msgstr ""
-
-#: inc/integrations/host-providers/class-base-host-provider.php:643
-msgid "No description provided."
-msgstr ""
-
-#: inc/integrations/host-providers/class-closte-host-provider.php:287
-msgid "Access Authorized"
-msgstr ""
-
-#: inc/integrations/host-providers/class-closte-host-provider.php:407
-msgid "Closte is not just another web hosting who advertise their services as a cloud hosting while still provides fixed plans like in 1995."
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:119
-msgid "Proxied"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:119
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:121
-msgid "Cloudflare"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:121
-msgid "Not Proxied"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:166
-#: views/wizards/host-integrations/cloudflare-instructions.php:14
-msgid "Zone ID"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:167
-msgid "e.g. 644c7705723d62e31f700bb798219c75"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:171
-msgid "e.g. xKGbxxVDpdcUv9dUzRf4i4ngv0QNf1wCtbehiec_o"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:433
-msgid "Cloudflare secures and ensures the reliability of your external-facing resources such as websites, APIs, and applications. It protects your internal resources such as behind-the-firewall applications, teams, and devices. And it is your platform for developing globally-scalable applications."
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:461
-msgid "Add a new proxied subdomain to the configured CloudFlare zone whenever a new site gets created"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:463
-msgid "Do nothing! The CloudFlare integration has no effect in subdirectory multisite installs such as this one"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudflare-host-provider.php:466
-msgid "Add domain mappings as new CloudFlare zones"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:147
-msgid "Cloudways Account Email"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:148
-msgid "Your Cloudways account email address."
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:149
-msgid "e.g. me@gmail.com"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:152
-msgid "Cloudways API Key"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:153
-#: inc/integrations/host-providers/class-serverpilot-host-provider.php:98
-msgid "The API Key retrieved in the previous step."
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:154
-#: inc/integrations/host-providers/class-serverpilot-host-provider.php:99
-msgid "e.g. eYP0Jo3Fzzm5SOZCi5nLR0Mki2lbYZ"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:157
-msgid "Cloudways Server ID"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:158
-msgid "The Server ID retrieved in the previous step."
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:159
-msgid "e.g. 11667"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:162
-msgid "Cloudways App ID"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:163
-#: inc/integrations/host-providers/class-serverpilot-host-provider.php:103
-msgid "The App ID retrieved in the previous step."
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:164
-#: inc/integrations/host-providers/class-serverpilot-host-provider.php:104
-msgid "e.g. 940288"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:167
-msgid "Cloudways Extra Domains"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:168
-msgid "The Cloudways API is a bit strange in that it doesn’t offer a way to add or remove just one domain, only a way to update the whole domain list. That means that Ultimate Multisite will replace all domains you might have there with the list of mapped domains of the network every time a new domain is added."
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:169
-msgid "Comma-separated list of additional domains to add to Cloudways."
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:170
-msgid "e.g. *.test.com, test.com"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cloudways-host-provider.php:531
-msgid "Focus on your business and avoid all the web hosting hassles. Our managed hosting guarantees unmatched performance, reliability and choice with 24/7 support that acts as your extended team, making Cloudways an ultimate choice for growing agencies and e-commerce businesses."
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:114
-msgid "cPanel Username"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:115
-msgid "e.g. username"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:119
-msgid "cPanel Password"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:120
-msgid "password"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:123
-msgid "cPanel Host"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:124
-msgid "e.g. yourdomain.com"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:127
-msgid "cPanel Port"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:128
-msgid "Defaults to 2083"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:132
-msgid "Root Directory"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:133
-msgid "Defaults to /public_html"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:303
-msgid "Unexpected error ocurred trying to sync domains with CPanel"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:318
-msgid "cPanel is the management panel being used on a large number of shared and dedicated hosts across the globe."
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:363
-msgid "Add a new Addon Domain on cPanel whenever a new domain mapping gets created on your network"
-msgstr ""
-
-#: inc/integrations/host-providers/class-cpanel-host-provider.php:369
-msgid "Add a new SubDomain on cPanel whenever a new site gets created on your network"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:105
-msgid "Enhance API Token"
-msgstr ""
-
-#. translators: %s is the link to the API token documentation
-#: inc/integrations/host-providers/class-enhance-host-provider.php:108
-#, php-format
-msgid "Generate an API token in your Enhance Control Panel under Settings &rarr; API Tokens. <a href=\"%s\" target=\"_blank\">Learn more</a>"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:111
-msgid "Your bearer token"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:114
-msgid "Enhance API URL"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:115
-msgid "The API URL of your Enhance Control Panel (e.g., https://your-enhance-server.com/api)."
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:116
-msgid "e.g. https://your-enhance-server.com/api"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:122
-msgid "Organization ID"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:123
-msgid "The UUID of your organization. You can find this in your Enhance Control Panel URL when viewing the organization (e.g., /org/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)."
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:124
-#: inc/integrations/host-providers/class-enhance-host-provider.php:131
-msgid "e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:130
-msgid "Website ID"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:132
-msgid "The UUID of the website where domains should be added. You can find this in your Enhance Control Panel URL when viewing a website (e.g., /websites/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)."
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:283
-msgid "Organization ID is not configured"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:289
-msgid "Website ID is not configured"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:303
-msgid "Connection successful"
-msgstr ""
-
-#. Translators: %s the full error message.
-#: inc/integrations/host-providers/class-enhance-host-provider.php:308
-#, php-format
-msgid "Failed to connect to Enhance API: %s"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:432
-msgid "Enhance is a modern control panel that provides powerful hosting automation and management capabilities."
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:456
-msgid "Add domains to Enhance Control Panel whenever a new domain mapping gets created on your network"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:457
-msgid "SSL certificates will be automatically provisioned via LetsEncrypt when DNS resolves"
-msgstr ""
-
-#: inc/integrations/host-providers/class-enhance-host-provider.php:463
-msgid "Add subdomains to Enhance Control Panel whenever a new site gets created on your network"
-msgstr ""
-
-#: inc/integrations/host-providers/class-gridpane-host-provider.php:212
-#: inc/integrations/host-providers/class-gridpane-host-provider.php:220
-msgid "We were not able to successfully establish a connection."
-msgstr ""
-
-#: inc/integrations/host-providers/class-gridpane-host-provider.php:227
-msgid "Connection successfully established."
-msgstr ""
-
-#: inc/integrations/host-providers/class-gridpane-host-provider.php:251
-msgid "GridPane is the world's first hosting control panel built exclusively for serious WordPress professionals."
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:98
-msgid "Hestia API URL"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:99
-msgid "Base API endpoint, typically https://your-hestia:8083/api/"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:100
-msgid "e.g. https://server.example.com:8083/api/"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:103
-msgid "Hestia API Username"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:104
-msgid "Hestia user for API calls (often admin)"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:105
-#: inc/integrations/host-providers/class-hestia-host-provider.php:121
-msgid "e.g. admin"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:109
-msgid "Hestia API Password"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:110
-msgid "Optional if using API hash authentication."
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:111
-msgid "••••••••"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:114
-msgid "Hestia API Hash (Token)"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:115
-msgid "Optional: API hash/token alternative to password. Provide either this OR a password."
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:116
-msgid "e.g. 1a2b3c4d..."
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:119
-msgid "Hestia Account (Owner)"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:120
-msgid "The Hestia user that owns the web domain (first argument to v-add-web-domain-alias)."
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:124
-msgid "Base Web Domain"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:125
-msgid "Existing Hestia web domain that your WordPress is served from. Aliases will be attached to this."
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:126
-msgid "e.g. network.example.com"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:129
-msgid "Restart Web Service"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:130
-msgid "Whether to restart/reload services after alias changes (yes/no). Defaults to yes."
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:131
-msgid "yes"
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:150
-msgid "Missing WU_HESTIA_ACCOUNT or WU_HESTIA_WEB_DOMAIN; cannot add alias."
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:177
-msgid "Missing WU_HESTIA_ACCOUNT or WU_HESTIA_WEB_DOMAIN; cannot remove alias."
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:229
-msgid "Integrates with Hestia Control Panel to add and remove web domain aliases automatically when domains are mapped or removed."
-msgstr ""
-
-#: inc/integrations/host-providers/class-hestia-host-provider.php:272
-msgid "Missing WU_HESTIA_API_URL"
-msgstr ""
-
-#. translators: %1$d: HTTP status code, %2$s: Response body
-#: inc/integrations/host-providers/class-hestia-host-provider.php:323
-#, php-format
-msgid "HTTP %1$d from Hestia API: %2$s"
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:92
-msgid "Rocket.net Account Email"
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:93
-msgid "Your Rocket.net account email address."
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:94
-msgid "e.g. me@example.com"
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:98
-msgid "Rocket.net Password"
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:99
-msgid "Your Rocket.net account password."
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:100
-#: views/checkout/partials/inline-login-prompt.php:38
-msgid "Enter your password"
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:104
-msgid "Rocket.net Site ID"
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:105
-msgid "The Site ID from your Rocket.net control panel."
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:106
-msgid "e.g. 12345"
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:230
-msgid "Successfully connected to Rocket.net API!"
-msgstr ""
-
-#. translators: %1$d: HTTP response code.
-#: inc/integrations/host-providers/class-rocket-host-provider.php:239
-#, php-format
-msgid "Connection failed with HTTP code %1$d: %2$s"
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:337
-msgid "Failed to authenticate with Rocket.net API"
-msgstr ""
-
-#: inc/integrations/host-providers/class-rocket-host-provider.php:416
-msgid "Rocket.net is a fully API-driven managed WordPress hosting platform built for speed, security, and scalability. With edge-first private cloud infrastructure and automatic SSL management, Rocket.net makes it easy to deploy and manage WordPress sites at scale."
-msgstr ""
-
-#: inc/integrations/host-providers/class-runcloud-host-provider.php:82
-msgid "It looks like you are using V2 of the Runcloud API which has been discontinued. You must setup a API token to use V3 of the API for the Runcloud integration to work."
-msgstr ""
-
-#: inc/integrations/host-providers/class-runcloud-host-provider.php:86
-msgid "Configure Runcloud API Token"
-msgstr ""
-
-#: inc/integrations/host-providers/class-serverpilot-host-provider.php:92
-msgid "ServerPilot Client ID"
-msgstr ""
-
-#: inc/integrations/host-providers/class-serverpilot-host-provider.php:93
-msgid "Your ServerPilot Client ID."
-msgstr ""
-
-#: inc/integrations/host-providers/class-serverpilot-host-provider.php:94
-msgid "e.g. cid_lSmjevkdoSOpasYVqm"
-msgstr ""
-
-#: inc/integrations/host-providers/class-serverpilot-host-provider.php:97
-msgid "ServerPilot API Key"
-msgstr ""
-
-#: inc/integrations/host-providers/class-serverpilot-host-provider.php:102
-msgid "ServerPilot App ID"
-msgstr ""
-
-#. translators: %s is the wp_json_encode of the error.
-#: inc/integrations/host-providers/class-serverpilot-host-provider.php:281
-#, php-format
-msgid "An error occurred while trying to get the current list of domains: %s"
-msgstr ""
-
-#: inc/integrations/host-providers/class-serverpilot-host-provider.php:322
-msgid "ServerPilot is a cloud service for hosting WordPress and other PHP websites on servers at DigitalOcean, Amazon, Google, or any other server provider. You can think of ServerPilot as a modern, centralized hosting control panel."
-msgstr ""
-
-#: inc/integrations/host-providers/class-wpengine-host-provider.php:180
-msgid "WP Engine drives your business forward faster with the first and only WordPress Digital Experience Platform. We offer the best WordPress hosting and developer experience on a proven, reliable architecture that delivers unparalleled speed, scalability, and security for your sites."
-msgstr ""
-
-#: inc/integrations/host-providers/class-wpengine-host-provider.php:182
-msgid "We recommend to enter in contact with WP Engine support to ask for a Wildcard domain if you are using a subdomain install."
-msgstr ""
-
-#: inc/integrations/host-providers/class-wpengine-host-provider.php:206
-msgid "Class WPE_API is not installed."
-msgstr ""
-
-#. translators: The %s placeholder will be replaced with the domain name.
-#: inc/integrations/host-providers/class-wpmudev-host-provider.php:161
-#, php-format
-msgid "An error occurred while trying to add the custom domain %s to WPMU Dev hosting."
-msgstr ""
-
-#. translators: The %1$s will be replaced with the domain name and %2$s is the error message.
-#: inc/integrations/host-providers/class-wpmudev-host-provider.php:169
-#, php-format
-msgid "An error occurred while trying to add the custom domain %1$s to WPMU Dev hosting: %2$s"
-msgstr ""
-
-#. translators: The %s placeholder will be replaced with the domain name.
-#: inc/integrations/host-providers/class-wpmudev-host-provider.php:173
-#, php-format
-msgid "Domain %s added to WPMU Dev hosting successfully."
-msgstr ""
-
-#: inc/integrations/host-providers/class-wpmudev-host-provider.php:257
-msgid "WPMU DEV is one of the largest companies in the WordPress space. Founded in 2004, it was one of the first companies to scale the Website as a Service model with products such as Edublogs and CampusPress."
-msgstr ""
-
 #. translators: %s is the error.
-#: inc/integrations/host-providers/cpanel-api/class-cpanel-api.php:154
+#: inc/integrations/host-providers/cpanel-api/class-cpanel-api.php:170
+#: inc/integrations/host-providers/cpanel-api/class-cpanel-api.php:253
 #, php-format
 msgid "cPanel API Error: %s"
 msgstr ""
 
-#: inc/integrations/host-providers/cpanel-api/class-cpanel-api.php:226
+#: inc/integrations/host-providers/cpanel-api/class-cpanel-api.php:291
 msgid "Cannot connect to your cPanel server : Invalid Credentials"
+msgstr ""
+
+#. translators: %s is the hosting provider name (e.g. Closte)
+#. translators: %s: hosting provider name.
+#. translators: %s is the hosting provider name
+#: inc/integrations/providers/closte/class-closte-domain-mapping.php:59
+#: inc/integrations/providers/cloudways/class-cloudways-domain-mapping.php:58
+#: inc/integrations/providers/gridpane/class-gridpane-domain-mapping.php:57
+#: inc/integrations/providers/hestia/class-hestia-domain-mapping.php:49
+#: inc/integrations/providers/rocket/class-rocket-domain-mapping.php:58
+#: inc/integrations/providers/runcloud/class-runcloud-domain-mapping.php:57
+#: inc/integrations/providers/serverpilot/class-serverpilot-domain-mapping.php:60
+#: inc/integrations/providers/wpengine/class-wpengine-domain-mapping.php:49
+#: inc/integrations/providers/wpmudev/class-wpmudev-domain-mapping.php:59
+#, php-format
+msgid "Send API calls to %s servers with domain names added to this network"
+msgstr ""
+
+#. translators: %s is the hosting provider name (e.g. Closte)
+#. translators: %s: hosting provider name.
+#. translators: %s is the hosting provider name
+#: inc/integrations/providers/closte/class-closte-domain-mapping.php:61
+#: inc/integrations/providers/cloudways/class-cloudways-domain-mapping.php:60
+#: inc/integrations/providers/gridpane/class-gridpane-domain-mapping.php:59
+#: inc/integrations/providers/rocket/class-rocket-domain-mapping.php:60
+#: inc/integrations/providers/runcloud/class-runcloud-domain-mapping.php:59
+#: inc/integrations/providers/serverpilot/class-serverpilot-domain-mapping.php:62
+#: inc/integrations/providers/wpmudev/class-wpmudev-domain-mapping.php:61
+#, php-format
+msgid "Fetch and install a SSL certificate on %s platform after the domain is added."
+msgstr ""
+
+#: inc/integrations/providers/closte/class-closte-integration.php:44
+msgid "Closte serverless hosting integration with automatic domain mapping and SSL."
+msgstr ""
+
+#: inc/integrations/providers/closte/class-closte-integration.php:91
+msgid "Closte API Key not found."
+msgstr ""
+
+#: inc/integrations/providers/cloudflare/class-cloudflare-domain-mapping.php:61
+msgid "Add a new proxied subdomain to the configured CloudFlare zone whenever a new site gets created"
+msgstr ""
+
+#: inc/integrations/providers/cloudflare/class-cloudflare-domain-mapping.php:63
+msgid "Do nothing! The CloudFlare integration has no effect in subdirectory multisite installs such as this one"
+msgstr ""
+
+#: inc/integrations/providers/cloudflare/class-cloudflare-domain-mapping.php:66
+msgid "Add domain mappings as new CloudFlare zones"
+msgstr ""
+
+#: inc/integrations/providers/cloudflare/class-cloudflare-domain-mapping.php:315
+msgid "Proxied"
+msgstr ""
+
+#: inc/integrations/providers/cloudflare/class-cloudflare-domain-mapping.php:316
+#: inc/integrations/providers/cloudflare/class-cloudflare-domain-mapping.php:322
+msgid "Cloudflare"
+msgstr ""
+
+#: inc/integrations/providers/cloudflare/class-cloudflare-domain-mapping.php:321
+msgid "Not Proxied"
+msgstr ""
+
+#: inc/integrations/providers/cloudflare/class-cloudflare-integration.php:35
+msgid "Cloudflare secures and ensures the reliability of your external-facing resources such as websites, APIs, and applications. It protects your internal resources such as behind-the-firewall applications, teams, and devices. And it is your platform for developing globally-scalable applications."
+msgstr ""
+
+#: inc/integrations/providers/cloudflare/class-cloudflare-integration.php:83
+#: views/wizards/host-integrations/cloudflare-instructions.php:14
+msgid "Zone ID"
+msgstr ""
+
+#: inc/integrations/providers/cloudflare/class-cloudflare-integration.php:84
+msgid "e.g. 644c7705723d62e31f700bb798219c75"
+msgstr ""
+
+#: inc/integrations/providers/cloudflare/class-cloudflare-integration.php:88
+msgid "e.g. xKGbxxVDpdcUv9dUzRf4i4ngv0QNf1wCtbehiec_o"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:32
+msgid "Focus on your business and avoid all the web hosting hassles. Our managed hosting guarantees unmatched performance, reliability and choice with 24/7 support that acts as your extended team, making Cloudways an ultimate choice for growing agencies and e-commerce businesses."
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:80
+msgid "Cloudways Account Email"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:81
+msgid "Your Cloudways account email address."
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:82
+msgid "e.g. me@gmail.com"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:85
+msgid "Cloudways API Key"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:86
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:84
+msgid "The API Key retrieved in the previous step."
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:87
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:85
+msgid "e.g. eYP0Jo3Fzzm5SOZCi5nLR0Mki2lbYZ"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:90
+msgid "Cloudways Server ID"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:91
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:82
+msgid "The Server ID retrieved in the previous step."
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:92
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:83
+msgid "e.g. 11667"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:95
+msgid "Cloudways App ID"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:96
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:87
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:89
+msgid "The App ID retrieved in the previous step."
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:97
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:88
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:90
+msgid "e.g. 940288"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:100
+msgid "Cloudways Extra Domains"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:101
+msgid "The Cloudways API is a bit strange in that it doesn't offer a way to add or remove just one domain, only a way to update the whole domain list. That means that Ultimate Multisite will replace all domains you might have there with the list of mapped domains of the network every time a new domain is added."
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:102
+msgid "Comma-separated list of additional domains to add to Cloudways."
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:103
+msgid "e.g. *.test.com, test.com"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-domain-mapping.php:59
+msgid "Add a new Addon Domain on cPanel whenever a new domain mapping gets created on your network"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-domain-mapping.php:65
+msgid "Add a new SubDomain on cPanel whenever a new site gets created on your network"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-domain-mapping.php:235
+msgid "Unexpected error occurred trying to sync domains with cPanel: Invalid response structure"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-domain-mapping.php:241
+#: inc/integrations/providers/cpanel/class-cpanel-domain-mapping.php:253
+msgid "Unknown response from cPanel"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-domain-mapping.php:248
+msgid "Unexpected error occurred trying to sync domains with cPanel"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:45
+msgid "cPanel is the management panel being used on a large number of shared and dedicated hosts across the globe."
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:81
+msgid "Could not connect to cPanel."
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:94
+#: views/wizards/host-integrations/cpanel-instructions.php:12
+msgid "cPanel Username"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:95
+msgid "Your cPanel account username. Check your hosting welcome email or contact your host if you use SSO."
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:96
+msgid "e.g. username"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:100
+msgid "cPanel API Token (Recommended)"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:101
+msgid "Create in cPanel → Security → Manage API Tokens. More secure than password authentication."
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:102
+msgid "e.g. U7HMR63FHY282DQZ4H5BIH16JLYSO01M"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:106
+msgid "cPanel Password (Alternative)"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:107
+msgid "Only required if not using an API token above. If you use SSO to access cPanel, you may need to request direct credentials from your host."
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:108
+msgid "password"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:111
+msgid "cPanel Host"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:112
+msgid "Your server hostname, typically your domain or a server address like server123.hostingprovider.com."
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:113
+msgid "e.g. yourdomain.com"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:116
+msgid "cPanel Port"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:117
+msgid "The cPanel port. Standard is 2083 for HTTPS connections."
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:118
+msgid "Defaults to 2083"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:122
+msgid "Root Directory"
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:123
+msgid "The web root directory where your WordPress installation is located."
+msgstr ""
+
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:124
+msgid "Defaults to /public_html"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-domain-mapping.php:56
+msgid "Add domains to Enhance Control Panel whenever a new domain mapping gets created on your network"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-domain-mapping.php:57
+msgid "SSL certificates will be automatically provisioned via LetsEncrypt when DNS resolves"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-domain-mapping.php:63
+msgid "Add subdomains to Enhance Control Panel whenever a new site gets created on your network"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:32
+msgid "Enhance is a modern control panel that provides powerful hosting automation and management capabilities."
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:63
+msgid "Organization ID is not configured"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:67
+msgid "Website ID is not configured"
+msgstr ""
+
+#. translators: %s is the error message from the API
+#: inc/integrations/providers/enhance/class-enhance-integration.php:82
+#, php-format
+msgid "Failed to connect to Enhance API: %s"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:97
+msgid "Enhance API Token"
+msgstr ""
+
+#. translators: %s is the link to the API token documentation
+#: inc/integrations/providers/enhance/class-enhance-integration.php:100
+#, php-format
+msgid "Generate an API token in your Enhance Control Panel under Settings &rarr; API Tokens. <a href=\"%s\" target=\"_blank\">Learn more</a>"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:103
+msgid "Your bearer token"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:106
+msgid "Enhance API URL"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:107
+msgid "The API URL of your Enhance Control Panel (e.g., https://your-enhance-server.com/api)."
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:108
+msgid "e.g. https://your-enhance-server.com/api"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:114
+msgid "Organization ID"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:115
+msgid "The UUID of your organization. You can find this in your Enhance Control Panel URL when viewing the organization (e.g., /org/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)."
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:116
+#: inc/integrations/providers/enhance/class-enhance-integration.php:123
+msgid "e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:122
+msgid "Website ID"
+msgstr ""
+
+#: inc/integrations/providers/enhance/class-enhance-integration.php:124
+msgid "The UUID of the website where domains should be added. You can find this in your Enhance Control Panel URL when viewing a website (e.g., /websites/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)."
+msgstr ""
+
+#: inc/integrations/providers/gridpane/class-gridpane-integration.php:35
+msgid "GridPane is the world's first hosting control panel built exclusively for serious WordPress professionals."
+msgstr ""
+
+#: inc/integrations/providers/gridpane/class-gridpane-integration.php:83
+#: inc/integrations/providers/gridpane/class-gridpane-integration.php:87
+msgid "We were not able to successfully establish a connection."
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-domain-mapping.php:94
+msgid "Missing WU_HESTIA_ACCOUNT or WU_HESTIA_WEB_DOMAIN; cannot add alias."
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-domain-mapping.php:125
+msgid "Missing WU_HESTIA_ACCOUNT or WU_HESTIA_WEB_DOMAIN; cannot remove alias."
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:32
+msgid "Integrates with Hestia Control Panel to add and remove web domain aliases automatically when domains are mapped or removed."
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:79
+msgid "Hestia API URL"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:80
+msgid "Base API endpoint, typically https://your-hestia:8083/api/"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:81
+msgid "e.g. https://server.example.com:8083/api/"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:84
+msgid "Hestia API Username"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:85
+msgid "Hestia user for API calls (often admin)"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:86
+#: inc/integrations/providers/hestia/class-hestia-integration.php:102
+msgid "e.g. admin"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:90
+msgid "Hestia API Password"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:91
+msgid "Optional if using API hash authentication."
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:92
+msgid "••••••••"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:95
+msgid "Hestia API Hash (Token)"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:96
+msgid "Optional: API hash/token alternative to password. Provide either this OR a password."
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:97
+msgid "e.g. 1a2b3c4d..."
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:100
+msgid "Hestia Account (Owner)"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:101
+msgid "The Hestia user that owns the web domain (first argument to v-add-web-domain-alias)."
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:105
+msgid "Base Web Domain"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:106
+msgid "Existing Hestia web domain that your WordPress is served from. Aliases will be attached to this."
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:107
+msgid "e.g. network.example.com"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:110
+msgid "Restart Web Service"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:111
+msgid "Whether to restart/reload services after alias changes (yes/no). Defaults to yes."
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:112
+msgid "yes"
+msgstr ""
+
+#: inc/integrations/providers/hestia/class-hestia-integration.php:132
+msgid "Missing WU_HESTIA_API_URL"
+msgstr ""
+
+#. translators: %1$d: HTTP status code, %2$s: Response body
+#: inc/integrations/providers/hestia/class-hestia-integration.php:186
+#, php-format
+msgid "HTTP %1$d from Hestia API: %2$s"
+msgstr ""
+
+#: inc/integrations/providers/rocket/class-rocket-integration.php:35
+msgid "Rocket.net is a fully API-driven managed WordPress hosting platform built for speed, security, and scalability. With edge-first private cloud infrastructure and automatic SSL management, Rocket.net makes it easy to deploy and manage WordPress sites at scale."
+msgstr ""
+
+#. translators: %1$d: HTTP response code, %2$s: response body.
+#: inc/integrations/providers/rocket/class-rocket-integration.php:71
+#: inc/integrations/providers/wpmudev/class-wpmudev-integration.php:81
+#, php-format
+msgid "Connection failed with HTTP code %1$d: %2$s"
+msgstr ""
+
+#: inc/integrations/providers/rocket/class-rocket-integration.php:85
+msgid "Rocket.net Account Email"
+msgstr ""
+
+#: inc/integrations/providers/rocket/class-rocket-integration.php:86
+msgid "Your Rocket.net account email address."
+msgstr ""
+
+#: inc/integrations/providers/rocket/class-rocket-integration.php:87
+msgid "e.g. me@example.com"
+msgstr ""
+
+#: inc/integrations/providers/rocket/class-rocket-integration.php:91
+msgid "Rocket.net Password"
+msgstr ""
+
+#: inc/integrations/providers/rocket/class-rocket-integration.php:92
+msgid "Your Rocket.net account password."
+msgstr ""
+
+#: inc/integrations/providers/rocket/class-rocket-integration.php:93
+#: views/checkout/partials/inline-login-prompt.php:38
+msgid "Enter your password"
+msgstr ""
+
+#: inc/integrations/providers/rocket/class-rocket-integration.php:97
+msgid "Rocket.net Site ID"
+msgstr ""
+
+#: inc/integrations/providers/rocket/class-rocket-integration.php:98
+msgid "The Site ID from your Rocket.net control panel."
+msgstr ""
+
+#: inc/integrations/providers/rocket/class-rocket-integration.php:99
+msgid "e.g. 12345"
+msgstr ""
+
+#: inc/integrations/providers/rocket/class-rocket-integration.php:203
+msgid "Failed to authenticate with Rocket.net API"
+msgstr ""
+
+#: inc/integrations/providers/runcloud/class-runcloud-domain-mapping.php:141
+msgid "Domain not found: "
+msgstr ""
+
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:32
+msgid "With RunCloud, you don't need to be a Linux expert to build a website powered by DigitalOcean, AWS, or Google Cloud. Use our graphical interface and build a business on the cloud affordably."
+msgstr ""
+
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:76
+msgid "RunCloud API Token"
+msgstr ""
+
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:77
+msgid "The API Token generated in RunCloud."
+msgstr ""
+
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:78
+msgid "e.g. your-api-token-here"
+msgstr ""
+
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:81
+msgid "RunCloud Server ID"
+msgstr ""
+
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:86
+msgid "RunCloud App ID"
+msgstr ""
+
+#. translators: %s is the wp_json_encode of the error.
+#: inc/integrations/providers/serverpilot/class-serverpilot-domain-mapping.php:201
+#, php-format
+msgid "An error occurred while trying to get the current list of domains: %s"
+msgstr ""
+
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:36
+msgid "ServerPilot is a cloud service for hosting WordPress and other PHP websites on servers at DigitalOcean, Amazon, Google, or any other server provider. You can think of ServerPilot as a modern, centralized hosting control panel."
+msgstr ""
+
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:62
+msgid "Could not connect to ServerPilot."
+msgstr ""
+
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:78
+msgid "ServerPilot Client ID"
+msgstr ""
+
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:79
+msgid "Your ServerPilot Client ID."
+msgstr ""
+
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:80
+msgid "e.g. cid_lSmjevkdoSOpasYVqm"
+msgstr ""
+
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:83
+msgid "ServerPilot API Key"
+msgstr ""
+
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:88
+msgid "ServerPilot App ID"
+msgstr ""
+
+#: inc/integrations/providers/wpengine/class-wpengine-integration.php:35
+msgid "WP Engine drives your business forward faster with the first and only WordPress Digital Experience Platform. We offer the best WordPress hosting and developer experience on a proven, reliable architecture that delivers unparalleled speed, scalability, and security for your sites."
+msgstr ""
+
+#: inc/integrations/providers/wpengine/class-wpengine-integration.php:37
+msgid "We recommend to enter in contact with WP Engine support to ask for a Wildcard domain if you are using a subdomain install."
+msgstr ""
+
+#: inc/integrations/providers/wpengine/class-wpengine-integration.php:62
+msgid "Class WPE_API is not installed."
+msgstr ""
+
+#. translators: %s: domain name.
+#: inc/integrations/providers/wpmudev/class-wpmudev-domain-mapping.php:132
+#, php-format
+msgid "An error occurred while trying to add the custom domain %s to WPMU Dev hosting."
+msgstr ""
+
+#. translators: %1$s: domain name, %2$s: error message.
+#: inc/integrations/providers/wpmudev/class-wpmudev-domain-mapping.php:145
+#, php-format
+msgid "An error occurred while trying to add the custom domain %1$s to WPMU Dev hosting: %2$s"
+msgstr ""
+
+#. translators: %s: domain name.
+#: inc/integrations/providers/wpmudev/class-wpmudev-domain-mapping.php:152
+#, php-format
+msgid "Domain %s added to WPMU Dev hosting successfully."
+msgstr ""
+
+#: inc/integrations/providers/wpmudev/class-wpmudev-integration.php:35
+msgid "WPMU DEV is one of the largest companies in the WordPress space. Founded in 2004, it was one of the first companies to scale the Website as a Service model with products such as Edublogs and CampusPress."
 msgstr ""
 
 #: inc/internal/class-memory-trap.php:100
@@ -16919,6 +17045,12 @@ msgstr ""
 
 #: inc/list-tables/class-base-list-table.php:509
 msgid "...but you will see them here once they get created."
+msgstr ""
+
+#. translators: %s is the singular value of the model, such as Product, or Payment.
+#: inc/list-tables/class-base-list-table.php:511
+#, php-format
+msgid "Create a new %s"
 msgstr ""
 
 #: inc/list-tables/class-base-list-table.php:610
@@ -17980,53 +18112,76 @@ msgstr ""
 msgid "Not able to fetch DNS entries."
 msgstr ""
 
-#: inc/managers/class-domain-manager.php:925
-msgid "Invalid Integration ID"
+#. translators: %1$s is a comma-separated list of IPs, %2$s is the network IP
+#: inc/managers/class-domain-manager.php:889
+#, php-format
+msgid "This domain has multiple A records (%1$s). Only one A record pointing to your network IP (%2$s) is expected. The extra records may cause intermittent connectivity issues."
+msgstr ""
+
+#. translators: %s is the network IP
+#: inc/managers/class-domain-manager.php:899
+#, php-format
+msgid "None of the A records point to your network IP (%s). The domain will not resolve to your network."
+msgstr ""
+
+#. translators: %s is the network IP
+#: inc/managers/class-domain-manager.php:926
+#, php-format
+msgid "The www subdomain DNS records do not match the non-www records. Both should point to %s."
 msgstr ""
 
 #. translators: %s is the name of the missing constant
-#: inc/managers/class-domain-manager.php:938
+#: inc/managers/class-domain-manager.php:990
+#: inc/managers/class-domain-manager.php:1025
 #, php-format
 msgid "The necessary constants were not found on your wp-config.php file: %s"
 msgstr ""
 
+#: inc/managers/class-domain-manager.php:1003
+msgid "Access Authorized"
+msgstr ""
+
+#: inc/managers/class-domain-manager.php:1012
+msgid "Invalid Integration ID"
+msgstr ""
+
 #. translators: %1$s: Protocol label (HTTPS with SSL verification, HTTPS without SSL verification, HTTP), %2$s: URL being tested
-#: inc/managers/class-domain-manager.php:1060
+#: inc/managers/class-domain-manager.php:1088
 #, php-format
 msgid "Testing domain verification via Loopback using %1$s: %2$s"
 msgstr ""
 
 #. translators: %1$s: Protocol label (HTTPS with SSL verification, HTTPS without SSL verification, HTTP), %2$s: Error Message
-#: inc/managers/class-domain-manager.php:1083
+#: inc/managers/class-domain-manager.php:1111
 #, php-format
 msgid "Failed to connect via %1$s: %2$s"
 msgstr ""
 
 #. translators: %1$s: Protocol label (HTTPS with SSL verification, HTTPS without SSL verification, HTTP), %2$s: HTTP Response Code
-#: inc/managers/class-domain-manager.php:1101
+#: inc/managers/class-domain-manager.php:1129
 #, php-format
 msgid "Loopback request via %1$s returned HTTP %2$d"
 msgstr ""
 
 #. translators: %1$s: Protocol label (HTTPS with SSL verification, HTTPS without SSL verification, HTTP), %2$s: Json error, %3$s part of the response
-#: inc/managers/class-domain-manager.php:1118
+#: inc/managers/class-domain-manager.php:1146
 #, php-format
 msgid "Loopback response via %1$s is not valid JSON: %2$s : %3$s"
 msgstr ""
 
 #. translators: %1$s: Protocol label (HTTPS with SSL verification, HTTPS without SSL verification, HTTP), %2$s: Domain ID number
-#: inc/managers/class-domain-manager.php:1134
+#: inc/managers/class-domain-manager.php:1162
 #, php-format
 msgid "Domain verification successful via Loopback using %1$s. Domain ID %2$d confirmed."
 msgstr ""
 
 #. translators: %1$s: Protocol label (HTTPS with SSL verification, HTTPS without SSL verification, HTTP), %2$s: Domain ID number, %3$s Domain ID number
-#: inc/managers/class-domain-manager.php:1147
+#: inc/managers/class-domain-manager.php:1175
 #, php-format
 msgid "Loopback response via %1$s did not contain expected domain ID. Expected: %2$d, Got: %3$s"
 msgstr ""
 
-#: inc/managers/class-domain-manager.php:1158
+#: inc/managers/class-domain-manager.php:1186
 msgid "Domain verification failed via loopback on all protocols (HTTPS with SSL, HTTPS without SSL, HTTP)."
 msgstr ""
 
@@ -18680,7 +18835,7 @@ msgstr ""
 msgid "You can only use numeric fields to generate hashes."
 msgstr ""
 
-#: inc/models/class-base-model.php:762
+#: inc/models/class-base-model.php:759
 msgid "This method expects an array as argument."
 msgstr ""
 
@@ -18971,7 +19126,7 @@ msgstr ""
 msgid "Subsite"
 msgstr ""
 
-#: inc/sso/class-sso.php:965
+#: inc/sso/class-sso.php:976
 msgid "SSO secret creation failed."
 msgstr ""
 
@@ -20290,7 +20445,7 @@ msgid "Close"
 msgstr ""
 
 #. translators: 1: is a link to a support document. 2: closing link
-#: ultimate-multisite.php:94
+#: ultimate-multisite.php:93
 #, php-format
 msgid "Your installation of Ultimate Multisite is incomplete. If you installed from GitHub, %1$splease refer to this document%2$s to set up your development environment or download a pre-packaged ZIP release."
 msgstr ""
@@ -21287,6 +21442,10 @@ msgstr ""
 msgid "Your Network IP"
 msgstr ""
 
+#: views/domain/dns-table.php:84
+msgid "www Subdomain Records"
+msgstr ""
+
 #: views/domain/log.php:12
 msgid "Loading log contents..."
 msgstr ""
@@ -21689,6 +21848,8 @@ msgid "Tax Category Name"
 msgstr ""
 
 #: views/taxes/list.php:56
+#: views/wizards/host-integrations/cpanel-instructions.php:33
+#: views/wizards/host-integrations/cpanel-instructions.php:35
 msgid "Create"
 msgstr ""
 
@@ -21937,11 +22098,255 @@ msgid "Test Integration &rarr;"
 msgstr ""
 
 #: views/wizards/host-integrations/configuration.php:43
-msgid "Add manually"
+msgid "Test Configuration &rarr;"
 msgstr ""
 
-#: views/wizards/host-integrations/configuration.php:47
-msgid "Add automatically"
+#: views/wizards/host-integrations/cpanel-instructions.php:12
+msgid "You'll need your"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:12
+#: views/wizards/host-integrations/runcloud-instructions.php:12
+#: views/wizards/host-integrations/runcloud-instructions.php:35
+msgid "API Token"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:12
+msgid "(recommended)"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:12
+msgid "Host URL"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:12
+msgid "to enable automatic domain mapping."
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:17
+msgid "Recommended:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:18
+msgid "Use an API Token instead of your password for better security. API tokens can be created, scoped, and revoked independently without changing your main password."
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:23
+msgid "Creating an API Token (Recommended)"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:27
+msgid "API tokens provide secure, password-free authentication. Follow these steps to create one:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:31
+msgid "Log in to your cPanel account"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:32
+msgid "Navigate to"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:32
+msgid "Security"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:32
+msgid "Manage API Tokens"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:33
+#: views/wizards/host-integrations/cpanel-instructions.php:35
+msgid "Click"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:34
+msgid "Enter a name for the token (e.g., \"Ultimate Multisite\")"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:36
+msgid "Copy the generated token immediately - it won't be shown again!"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:41
+#: views/wizards/host-integrations/rocket-instructions.php:25
+msgid "Note:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:42
+msgid "The API Token option may not be available on all cPanel installations. If you don't see it, use password authentication instead."
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:48
+msgid "Important:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:49
+msgid "Many hosting providers use SSO (Single Sign-On) to access cPanel. If you normally access cPanel through your hosting dashboard without entering separate credentials, you may need to contact your host to get direct cPanel login credentials or enable API access."
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:54
+msgid "Finding Your cPanel Access"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:58
+msgid "Option 1: Direct URL Access"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:62
+msgid "Try accessing cPanel directly at:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:71
+msgid "Option 2: Through Your Hosting Dashboard"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:75
+msgid "Most hosting providers have a \"cPanel\" or \"Control Panel\" link in their customer portal."
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:79
+msgid "Option 3: Check Your Welcome Email"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:83
+msgid "Your hosting provider typically sends cPanel credentials in your account setup email. Search your email for \"cPanel\" or \"control panel\"."
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:87
+msgid "Getting Your Credentials"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:91
+msgid "Username:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:95
+msgid "Your cPanel username is usually shown when logged into cPanel (top right corner)"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:96
+msgid "Check your hosting welcome email for the username"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:97
+msgid "If you use SSO, contact your host to request direct cPanel credentials"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:101
+msgid "Password (Alternative to API Token):"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:105
+msgid "Only needed if you're not using an API token"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:106
+msgid "Some hosts allow you to set a cPanel password in their control panel"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:107
+msgid "Look for \"cPanel Access\" or \"Technical Settings\" in your hosting dashboard"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:111
+msgid "Host URL:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:115
+msgid "Usually your primary domain or server hostname. Common formats:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:124
+msgid "Popular cPanel Hosting Providers"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:129
+msgid "If you're hosted with one of these providers and need help finding your credentials:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:132
+msgid "Bluehost, HostGator, GoDaddy:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:132
+msgid "Look for \"cPanel\" in your hosting dashboard"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:133
+msgid "SiteGround:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:133
+msgid "Use Site Tools or contact support for cPanel credentials"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:134
+msgid "A2 Hosting, InMotion:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:134
+msgid "Check your welcome email or client area"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:135
+msgid "Others:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:135
+msgid "Contact your hosting provider's support"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:140
+msgid "Configure the Integration"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:144
+#: views/wizards/host-integrations/rocket-instructions.php:71
+msgid "In the next step, you will enter:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:148
+#: views/wizards/host-integrations/rocket-instructions.php:85
+msgid "What This Integration Does"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:152
+#: views/wizards/host-integrations/rocket-instructions.php:89
+msgid "Once configured, this integration will:"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:156
+msgid "Automatically add custom domains to your cPanel account when mapped in Ultimate Multisite"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:157
+msgid "Automatically remove domains from cPanel when unmapped"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:158
+msgid "Enable automatic SSL certificate provisioning via AutoSSL"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:159
+msgid "Keep your server configuration in sync with your WordPress multisite network"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:163
+#: views/wizards/host-integrations/rocket-instructions.php:100
+msgid "Additional Resources"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:169
+msgid "cPanel API Tokens Guide"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:174
+msgid "cPanel Login Guide"
+msgstr ""
+
+#: views/wizards/host-integrations/cpanel-instructions.php:179
+msgid "cPanel Domain Management"
 msgstr ""
 
 #: views/wizards/host-integrations/gridpane-instructions.php:11
@@ -22012,10 +22417,6 @@ msgstr ""
 
 #: views/wizards/host-integrations/rocket-instructions.php:20
 msgid "Rocket.net is one of the few Managed WordPress platforms that is 100% API-driven. The same API that powers their control panel is available to you for managing domains, SSL certificates, and more."
-msgstr ""
-
-#: views/wizards/host-integrations/rocket-instructions.php:25
-msgid "Note:"
 msgstr ""
 
 #: views/wizards/host-integrations/rocket-instructions.php:26
@@ -22091,10 +22492,6 @@ msgstr ""
 msgid "Step 3: Configure the Integration"
 msgstr ""
 
-#: views/wizards/host-integrations/rocket-instructions.php:71
-msgid "In the next step, you will enter:"
-msgstr ""
-
 #: views/wizards/host-integrations/rocket-instructions.php:75
 msgid "WU_ROCKET_EMAIL:"
 msgstr ""
@@ -22119,14 +22516,6 @@ msgstr ""
 msgid "These values will be added to your wp-config.php file as PHP constants for secure storage."
 msgstr ""
 
-#: views/wizards/host-integrations/rocket-instructions.php:85
-msgid "What This Integration Does"
-msgstr ""
-
-#: views/wizards/host-integrations/rocket-instructions.php:89
-msgid "Once configured, this integration will:"
-msgstr ""
-
 #: views/wizards/host-integrations/rocket-instructions.php:93
 msgid "Automatically add custom domains to your Rocket.net site when mapped in Ultimate Multisite"
 msgstr ""
@@ -22143,10 +22532,6 @@ msgstr ""
 msgid "Keep your Rocket.net configuration in sync with your WordPress multisite network"
 msgstr ""
 
-#: views/wizards/host-integrations/rocket-instructions.php:100
-msgid "Additional Resources"
-msgstr ""
-
 #: views/wizards/host-integrations/rocket-instructions.php:104
 msgid "For more information about the Rocket.net API:"
 msgstr ""
@@ -22157,11 +22542,6 @@ msgstr ""
 
 #: views/wizards/host-integrations/rocket-instructions.php:115
 msgid "Rocket.net API Documentation"
-msgstr ""
-
-#: views/wizards/host-integrations/runcloud-instructions.php:12
-#: views/wizards/host-integrations/runcloud-instructions.php:35
-msgid "API Token"
 msgstr ""
 
 #: views/wizards/host-integrations/runcloud-instructions.php:12

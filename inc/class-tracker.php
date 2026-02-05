@@ -414,14 +414,19 @@ class Tracker implements \WP_Ultimo\Interfaces\Singleton {
 	 * Maybe send error data if tracking is enabled.
 	 *
 	 * @since 2.5.0
-	 * @param string $handle The log handle.
-	 * @param string $message The error message.
-	 * @param string $log_level The PSR-3 log level.
+	 * @param string|null $handle The log handle.
+	 * @param string|null $message The error message.
+	 * @param string      $log_level The PSR-3 log level.
 	 * @return void
 	 */
-	public function maybe_send_error(string $handle, string $message, string $log_level = ''): void {
+	public function maybe_send_error(?string $handle, ?string $message, string $log_level = ''): void {
 
 		if ( ! $this->is_tracking_enabled()) {
+			return;
+		}
+
+		// Bail if handle or message is empty
+		if (empty($handle) || empty($message)) {
 			return;
 		}
 

@@ -230,17 +230,28 @@ class CPanel_Domain_Mapping extends Base_Capability_Module implements Domain_Map
 	 */
 	public function log_calls($results): void {
 
-		if (is_object($results->cpanelresult->data)) {
-			wu_log_add('integration-cpanel', $results->cpanelresult->data->reason);
-
-			return;
-		} elseif ( ! isset($results->cpanelresult->data[0])) {
-			wu_log_add('integration-cpanel', __('Unexpected error ocurred trying to sync domains with CPanel', 'ultimate-multisite'), LogLevel::ERROR);
+		// Bail early if results structure is invalid
+		if ( ! isset($results->cpanelresult->data)) {
+			wu_log_add('integration-cpanel', __('Unexpected error occurred trying to sync domains with cPanel: Invalid response structure', 'ultimate-multisite'), LogLevel::ERROR);
 
 			return;
 		}
 
-		wu_log_add('integration-cpanel', $results->cpanelresult->data[0]->reason);
+		if (is_object($results->cpanelresult->data)) {
+			$reason = $results->cpanelresult->data->reason ?? __('Unknown response from cPanel', 'ultimate-multisite');
+			wu_log_add('integration-cpanel', $reason);
+
+			return;
+		}
+
+		if ( ! isset($results->cpanelresult->data[0])) {
+			wu_log_add('integration-cpanel', __('Unexpected error occurred trying to sync domains with cPanel', 'ultimate-multisite'), LogLevel::ERROR);
+
+			return;
+		}
+
+		$reason = $results->cpanelresult->data[0]->reason ?? __('Unknown response from cPanel', 'ultimate-multisite');
+		wu_log_add('integration-cpanel', $reason);
 	}
 
 	/**

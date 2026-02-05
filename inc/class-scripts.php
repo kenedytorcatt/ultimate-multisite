@@ -310,6 +310,7 @@ class Scripts {
 				'close'            => __('Close'), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'noiframes'        => __('This feature requires inline frames. You have iframes disabled or your browser does not support them.'), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'loadingAnimation' => includes_url('js/thickbox/loadingAnimation.gif'),
+				'server_error'     => __('An unexpected error occurred. Please try again or contact support if the problem persists.', 'ultimate-multisite'),
 			]
 		);
 
@@ -416,6 +417,9 @@ class Scripts {
 	public function enqueue_default_admin_styles(): void {
 
 		wp_enqueue_style('wu-admin');
+
+		// Password field styles for AJAX-loaded modals (e.g., Add Customer).
+		wp_enqueue_style('wu-password');
 	}
 
 	/**
@@ -427,6 +431,9 @@ class Scripts {
 	public function enqueue_default_admin_scripts(): void {
 
 		wp_enqueue_script('wu-admin');
+
+		// Password toggle for AJAX-loaded modals (e.g., Add Customer).
+		wp_enqueue_script('wu-password-toggle');
 	}
 
 	/**
