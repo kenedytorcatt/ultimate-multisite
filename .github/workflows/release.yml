@@ -84,10 +84,10 @@ jobs:
           MU_CLIENT_ID: ${{ secrets.MU_CLIENT_ID }}
           MU_CLIENT_SECRET: ${{ secrets.MU_CLIENT_SECRET }}
 
-      - name: Create ZIP file
+      - name: Rename archive for release
         run: |
           mkdir -p build
-          zip -r build/ultimate-multisite-${{ env.VERSION }}.zip . -x "*.git*" "node_modules/*" "tests/*" "build/*" "*.zip" "*.log"
+          mv ultimate-multisite.zip build/ultimate-multisite-${{ env.VERSION }}.zip
 
       - name: Create Release
         id: create_release
