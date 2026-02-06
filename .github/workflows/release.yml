@@ -77,6 +77,9 @@ jobs:
 
       - name: Run build process
         run: npm run build
+        env:
+          MU_CLIENT_ID: ${{ secrets.MU_CLIENT_ID }}
+          MU_CLIENT_SECRET: ${{ secrets.MU_CLIENT_SECRET }}
 
       - name: Create ZIP file
         run: |
