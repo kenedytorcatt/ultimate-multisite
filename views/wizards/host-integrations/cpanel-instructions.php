@@ -1,6 +1,6 @@
 <?php
 /**
- * cPanel instructions view.
+ * CPanel instructions view.
  *
  * @since 2.5.0
  */
@@ -131,7 +131,7 @@ defined('ABSPATH') || exit;
 	<ul class="wu-list-disc wu-ml-6 wu-text-sm wu-mt-2 wu-mb-0">
 		<li><strong><?php esc_html_e('Bluehost, HostGator, GoDaddy:', 'ultimate-multisite'); ?></strong> <?php esc_html_e('Look for "cPanel" in your hosting dashboard', 'ultimate-multisite'); ?></li>
 		<li><strong><?php esc_html_e('SiteGround:', 'ultimate-multisite'); ?></strong> <?php esc_html_e('Use Site Tools or contact support for cPanel credentials', 'ultimate-multisite'); ?></li>
-		<li><strong><?php esc_html_e('A2 Hosting, InMotion:', 'ultimate-multisite'); ?></strong> <?php esc_html_e('Check your welcome email or client area', 'ultimate-multisite'); ?></li>
+		<li><strong><?php esc_html_e('Hosting.com, InMotion:', 'ultimate-multisite'); ?></strong> <?php esc_html_e('Check your welcome email or client area', 'ultimate-multisite'); ?></li>
 		<li><strong><?php esc_html_e('Others:', 'ultimate-multisite'); ?></strong> <?php esc_html_e('Contact your hosting provider\'s support', 'ultimate-multisite'); ?></li>
 	</ul>
 </div>

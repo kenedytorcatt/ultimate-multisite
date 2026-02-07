@@ -338,7 +338,8 @@ class Integration_Registry {
 	public function register_settings_fields(): void {
 
 		foreach ($this->integrations as $integration) {
-			$slug = $integration->get_id();
+			$slug       = $integration->get_id();
+			$field_slug = str_replace('-', '_', $slug);
 
 			$html = $integration->is_enabled()
 				? sprintf('<div class="wu-self-center wu-text-green-800 wu-mr-4"><span class="dashicons-wu-check"></span> %s</div>', __('Activated', 'ultimate-multisite'))
@@ -363,7 +364,7 @@ class Integration_Registry {
 
 			wu_register_settings_field(
 				'integrations',
-				"integration_{$slug}",
+				"integration_{$field_slug}",
 				[
 					'type'  => 'note',
 					'title' => $title,

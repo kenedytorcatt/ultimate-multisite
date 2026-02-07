@@ -173,7 +173,7 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 	public function get_all_with_defaults($check_caps = false) {
 		$all_settings = $this->get_all($check_caps);
 		foreach ($this->get_sections() as $section_slug => $section) {
-			foreach ($section['fields'] as $field_slug => $field_atts) {
+			foreach ($section['fields'] ?? [] as $field_slug => $field_atts) {
 				if (is_callable($field_atts['value'])) {
 					$value = $field_atts['value']();
 					if (isset($all_settings[ $field_slug ]) && $value !== $all_settings[ $field_slug ]) {
@@ -258,7 +258,7 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 		do_action('wu_before_save_settings', $settings_to_save);
 
 		foreach ($sections as $section_slug => $section) {
-			foreach ($section['fields'] as $field_slug => $field_atts) {
+			foreach ($section['fields'] ?? [] as $field_slug => $field_atts) {
 				$existing_value = $saved_settings[ $field_slug ] ?? false;
 
 				$field = new Field($field_slug, $field_atts);
