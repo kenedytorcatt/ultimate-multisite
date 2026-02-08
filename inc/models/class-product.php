@@ -26,6 +26,71 @@ class Product extends Base_Model implements Limitable {
 	use \WP_Ultimo\Traits\WP_Ultimo_Plan_Deprecated;
 
 	/**
+	 * Meta key for featured image ID.
+	 */
+	const META_FEATURED_IMAGE_ID = 'wu_featured_image_id';
+
+	/**
+	 * Meta key for taxable status.
+	 */
+	const META_TAXABLE = 'taxable';
+
+	/**
+	 * Meta key for tax category.
+	 */
+	const META_TAX_CATEGORY = 'tax_category';
+
+	/**
+	 * Meta key for contact us label.
+	 */
+	const META_CONTACT_US_LABEL = 'wu_contact_us_label';
+
+	/**
+	 * Meta key for contact us link.
+	 */
+	const META_CONTACT_US_LINK = 'wu_contact_us_link';
+
+	/**
+	 * Meta key for feature list.
+	 */
+	const META_FEATURE_LIST = 'feature_list';
+
+	/**
+	 * Meta key for price variations.
+	 */
+	const META_PRICE_VARIATIONS = 'price_variations';
+
+	/**
+	 * Meta key for limitations.
+	 */
+	const META_LIMITATIONS = 'wu_limitations';
+
+	/**
+	 * Meta key for available addons.
+	 */
+	const META_AVAILABLE_ADDONS = 'wu_available_addons';
+
+	/**
+	 * Meta key for legacy options.
+	 */
+	const META_LEGACY_OPTIONS = 'legacy_options';
+
+	/**
+	 * Meta key for PWYW minimum amount.
+	 */
+	const META_PWYW_MINIMUM_AMOUNT = 'wu_pwyw_minimum_amount';
+
+	/**
+	 * Meta key for PWYW suggested amount.
+	 */
+	const META_PWYW_SUGGESTED_AMOUNT = 'wu_pwyw_suggested_amount';
+
+	/**
+	 * Meta key for PWYW recurring mode.
+	 */
+	const META_PWYW_RECURRING_MODE = 'wu_pwyw_recurring_mode';
+
+	/**
 	 * The product name.
 	 *
 	 * @since 2.0.0
@@ -270,6 +335,32 @@ class Product extends Base_Model implements Limitable {
 	protected $legacy_options;
 
 	/**
+	 * PWYW minimum amount.
+	 *
+	 * @since 2.0.0
+	 * @var float
+	 */
+	protected $pwyw_minimum_amount;
+
+	/**
+	 * PWYW suggested amount.
+	 *
+	 * @since 2.0.0
+	 * @var float
+	 */
+	protected $pwyw_suggested_amount;
+
+	/**
+	 * PWYW recurring mode.
+	 *
+	 * Can be 'customer_choice', 'force_recurring', or 'force_one_time'.
+	 *
+	 * @since 2.0.0
+	 * @var string
+	 */
+	protected $pwyw_recurring_mode;
+
+	/**
 	 * Query Class to the static query methods.
 	 *
 	 * @since 2.0.0
@@ -310,28 +401,31 @@ class Product extends Base_Model implements Limitable {
 		$currency = wu_get_setting('currency_symbol', 'USD');
 
 		return [
-			'featured_image_id'   => 'integer',
-			'currency'            => "required|default:{$currency}",
-			'pricing_type'        => 'required|in:free,paid,contact_us',
-			'trial_duration'      => 'integer',
-			'trial_duration_unit' => 'in:day,week,month,year|default:month',
-			'parent_id'           => 'integer',
-			'amount'              => 'numeric|default:0',
-			'recurring'           => 'default:0',
-			'setup_fee'           => 'numeric',
-			'duration'            => 'numeric|default:1',
-			'duration_unit'       => 'in:day,week,month,year|default:month',
-			'billing_cycles'      => 'integer|default:0',
-			'active'              => 'default:1',
-			'price_variations'    => "price_variations:{$duration},{$duration_unit}",
-			'type'                => "required|default:plan|in:{$allowed_types}",
-			'slug'                => "required|unique:\WP_Ultimo\Models\Product,slug,{$id}|min:2",
-			'taxable'             => 'boolean|default:0',
-			'tax_category'        => 'default:',
-			'contact_us_label'    => 'default:',
-			'contact_us_link'     => 'url:http,https',
-			'customer_role'       => 'alpha_dash',
-			'network_id'          => 'integer|nullable',
+			'featured_image_id'     => 'integer',
+			'currency'              => "required|default:{$currency}",
+			'pricing_type'          => 'required|in:free,paid,contact_us,pay_what_you_want',
+			'trial_duration'        => 'integer',
+			'trial_duration_unit'   => 'in:day,week,month,year|default:month',
+			'parent_id'             => 'integer',
+			'amount'                => 'numeric|default:0',
+			'recurring'             => 'default:0',
+			'setup_fee'             => 'numeric',
+			'duration'              => 'numeric|default:1',
+			'duration_unit'         => 'in:day,week,month,year|default:month',
+			'billing_cycles'        => 'integer|default:0',
+			'active'                => 'default:1',
+			'price_variations'      => "price_variations:{$duration},{$duration_unit}",
+			'type'                  => "required|default:plan|in:{$allowed_types}",
+			'slug'                  => "required|unique:\WP_Ultimo\Models\Product,slug,{$id}|min:2",
+			'taxable'               => 'boolean|default:0',
+			'tax_category'          => 'default:',
+			'contact_us_label'      => 'default:',
+			'contact_us_link'       => 'url:http,https',
+			'customer_role'         => 'alpha_dash',
+			'network_id'            => 'integer|nullable',
+			'pwyw_minimum_amount'   => 'numeric|default:0',
+			'pwyw_suggested_amount' => 'numeric|default:0',
+			'pwyw_recurring_mode'   => 'in:customer_choice,force_recurring,force_one_time|default:customer_choice',
 		];
 	}
 
@@ -357,7 +451,7 @@ class Product extends Base_Model implements Limitable {
 	public function get_featured_image_id() {
 
 		if (null === $this->featured_image_id) {
-			$this->featured_image_id = $this->get_meta('wu_featured_image_id');
+			$this->featured_image_id = $this->get_meta(self::META_FEATURED_IMAGE_ID);
 		}
 
 		return $this->featured_image_id;
@@ -390,7 +484,7 @@ class Product extends Base_Model implements Limitable {
 	 */
 	public function set_featured_image_id($image_id): void {
 
-		$this->meta['wu_featured_image_id'] = $image_id;
+		$this->meta[ self::META_FEATURED_IMAGE_ID ] = $image_id;
 
 		$this->featured_image_id = $image_id;
 	}
@@ -498,11 +592,11 @@ class Product extends Base_Model implements Limitable {
 	}
 
 	/**
-	 * Set pricing type can be one of 'free', 'paid', and 'contact_us'.
+	 * Set pricing type can be one of 'free', 'paid', 'contact_us', and 'pay_what_you_want'.
 	 *
 	 * @since 2.0.0
-	 * @param string $pricing_type The pricing type can be 'free', 'paid' or 'contact_us'.
-	 * @options free,paid,contact_us
+	 * @param string $pricing_type The pricing type can be 'free', 'paid', 'contact_us', or 'pay_what_you_want'.
+	 * @options free,paid,contact_us,pay_what_you_want
 	 * @return void
 	 */
 	public function set_pricing_type($pricing_type): void {
@@ -514,6 +608,9 @@ class Product extends Base_Model implements Limitable {
 
 			$this->set_recurring(false);
 		}
+
+		// For PWYW, we don't force amount to 0 - it uses suggested_amount as default
+		// and recurring is determined by pwyw_recurring_mode
 	}
 
 	/**
@@ -617,7 +714,7 @@ class Product extends Base_Model implements Limitable {
 	/**
 	 * Get the product amount.
 	 *
-	 * @return int
+	 * @return int|float
 	 */
 	public function get_amount() {
 
@@ -627,6 +724,11 @@ class Product extends Base_Model implements Limitable {
 
 		if ($this->get_pricing_type() === 'contact_us') {
 			return 0;
+		}
+
+		// For PWYW, return the suggested amount as the default
+		if ($this->is_pay_what_you_want()) {
+			return $this->get_pwyw_suggested_amount();
 		}
 
 		return $this->amount;
@@ -647,6 +749,17 @@ class Product extends Base_Model implements Limitable {
 
 		if ($this->get_pricing_type() === 'contact_us') {
 			return $this->get_contact_us_label() ?: __('Contact Us', 'ultimate-multisite');
+		}
+
+		if ($this->is_pay_what_you_want()) {
+			$minimum = $this->get_pwyw_minimum_amount();
+
+			if ($minimum > 0) {
+				// translators: %s is the minimum amount formatted as currency
+				return sprintf(__('From %s', 'ultimate-multisite'), wu_format_currency($minimum, $this->get_currency()));
+			}
+
+			return __('Name Your Price', 'ultimate-multisite');
 		}
 
 		return wu_format_currency($this->get_amount(), $this->get_currency());
@@ -909,12 +1022,39 @@ class Product extends Base_Model implements Limitable {
 	/**
 	 * Get is this product recurring?
 	 *
+	 * For PWYW products, recurring is determined by pwyw_recurring_mode:
+	 * - 'force_recurring': always recurring
+	 * - 'force_one_time': never recurring
+	 * - 'customer_choice': depends on customer selection (treated as potentially recurring)
+	 *
 	 * @since 2.0.0
 	 * @return boolean
 	 */
 	public function is_recurring() {
 
-		return (bool) $this->recurring && (float) $this->get_amount() > 0;
+		$is_recurring = (bool) $this->recurring && (float) $this->get_amount() > 0;
+
+		// PWYW products determine recurring status via pwyw_recurring_mode
+		if ($this->is_pay_what_you_want()) {
+			$pwyw_mode = $this->get_pwyw_recurring_mode();
+
+			if ('force_recurring' === $pwyw_mode) {
+				$is_recurring = true;
+			} elseif ('force_one_time' === $pwyw_mode) {
+				$is_recurring = false;
+			}
+			// 'customer_choice' uses the base $is_recurring value
+		}
+
+		/**
+		 * Filter whether a product is considered recurring.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param bool    $is_recurring Whether the product is recurring.
+		 * @param Product $product      The product instance.
+		 */
+		return apply_filters('wu_product_is_recurring', $is_recurring, $this);
 	}
 
 	/**
@@ -1049,7 +1189,7 @@ class Product extends Base_Model implements Limitable {
 	 */
 	public function is_taxable() {
 
-		$is_taxable = (bool) $this->get_meta('taxable', true);
+		$is_taxable = (bool) $this->get_meta(self::META_TAXABLE, true);
 
 		return apply_filters('wu_product_is_taxable', $is_taxable, $this);
 	}
@@ -1064,9 +1204,9 @@ class Product extends Base_Model implements Limitable {
 	 */
 	public function set_taxable($is_taxable): void {
 
-		$this->meta['taxable'] = (bool) $is_taxable;
+		$this->meta[ self::META_TAXABLE ] = (bool) $is_taxable;
 
-		$this->taxable = $this->meta['taxable'];
+		$this->taxable = $this->meta[ self::META_TAXABLE ];
 	}
 
 	/**
@@ -1078,7 +1218,7 @@ class Product extends Base_Model implements Limitable {
 	public function get_tax_category() {
 
 		if (null === $this->tax_category) {
-			$this->tax_category = $this->get_meta('tax_category', 'default');
+			$this->tax_category = $this->get_meta(self::META_TAX_CATEGORY, 'default');
 		}
 
 		return apply_filters('wu_product_tax_category', $this->tax_category, $this);
@@ -1094,9 +1234,9 @@ class Product extends Base_Model implements Limitable {
 	 */
 	public function set_tax_category($tax_category): void {
 
-		$this->meta['tax_category'] = $tax_category;
+		$this->meta[ self::META_TAX_CATEGORY ] = $tax_category;
 
-		$this->tax_category = $this->meta['tax_category'];
+		$this->tax_category = $this->meta[ self::META_TAX_CATEGORY ];
 	}
 
 	/**
@@ -1108,7 +1248,7 @@ class Product extends Base_Model implements Limitable {
 	public function get_contact_us_label() {
 
 		if (null === $this->contact_us_label) {
-			$this->contact_us_label = $this->get_meta('wu_contact_us_label', '');
+			$this->contact_us_label = $this->get_meta(self::META_CONTACT_US_LABEL, '');
 		}
 
 		return $this->contact_us_label;
@@ -1123,9 +1263,9 @@ class Product extends Base_Model implements Limitable {
 	 */
 	public function set_contact_us_label($contact_us_label): void {
 
-		$this->meta['wu_contact_us_label'] = $contact_us_label;
+		$this->meta[ self::META_CONTACT_US_LABEL ] = $contact_us_label;
 
-		$this->contact_us_label = $this->meta['wu_contact_us_label'];
+		$this->contact_us_label = $this->meta[ self::META_CONTACT_US_LABEL ];
 	}
 
 	/**
@@ -1137,7 +1277,7 @@ class Product extends Base_Model implements Limitable {
 	public function get_contact_us_link() {
 
 		if (null === $this->contact_us_link) {
-			$this->contact_us_link = $this->get_meta('wu_contact_us_link', '');
+			$this->contact_us_link = $this->get_meta(self::META_CONTACT_US_LINK, '');
 		}
 
 		return $this->contact_us_link;
@@ -1152,9 +1292,9 @@ class Product extends Base_Model implements Limitable {
 	 */
 	public function set_contact_us_link($contact_us_link): void {
 
-		$this->meta['wu_contact_us_link'] = $contact_us_link;
+		$this->meta[ self::META_CONTACT_US_LINK ] = $contact_us_link;
 
-		$this->contact_us_link = $this->meta['wu_contact_us_link'];
+		$this->contact_us_link = $this->meta[ self::META_CONTACT_US_LINK ];
 	}
 
 	/**
@@ -1166,7 +1306,7 @@ class Product extends Base_Model implements Limitable {
 	public function get_feature_list() {
 
 		if (null === $this->feature_list) {
-			$this->feature_list = $this->get_meta('feature_list');
+			$this->feature_list = $this->get_meta(self::META_FEATURE_LIST);
 		}
 
 		return $this->feature_list;
@@ -1181,9 +1321,9 @@ class Product extends Base_Model implements Limitable {
 	 */
 	public function set_feature_list($feature_list): void {
 
-		$this->meta['feature_list'] = $feature_list;
+		$this->meta[ self::META_FEATURE_LIST ] = $feature_list;
 
-		$this->feature_list = $this->meta['feature_list'];
+		$this->feature_list = $this->meta[ self::META_FEATURE_LIST ];
 	}
 
 	/**
@@ -1271,7 +1411,7 @@ class Product extends Base_Model implements Limitable {
 
 					return $price_variation;
 				},
-				$this->get_meta('price_variations', [])
+				$this->get_meta(self::META_PRICE_VARIATIONS, [])
 			);
 		}
 
@@ -1298,9 +1438,9 @@ class Product extends Base_Model implements Limitable {
 			$price_variations ?? []
 		);
 
-		$this->meta['price_variations'] = $price_variations;
+		$this->meta[ self::META_PRICE_VARIATIONS ] = $price_variations;
 
-		$this->price_variations = $this->meta['price_variations'];
+		$this->price_variations = $this->meta[ self::META_PRICE_VARIATIONS ];
 	}
 
 	/**
@@ -1379,7 +1519,7 @@ class Product extends Base_Model implements Limitable {
 	 */
 	public function duplicate() {
 
-		$this->meta['wu_limitations'] = $this->get_limitations(false);
+		$this->meta[ self::META_LIMITATIONS ] = $this->get_limitations(false);
 
 		$new_product = parent::duplicate();
 
@@ -1395,11 +1535,7 @@ class Product extends Base_Model implements Limitable {
 	public function get_available_addons() {
 
 		if (null === $this->available_addons) {
-			$this->available_addons = $this->get_meta(
-				'wu_
-			available_addons',
-				[]
-			);
+			$this->available_addons = $this->get_meta(self::META_AVAILABLE_ADDONS, []);
 
 			if (is_string($this->available_addons)) {
 				$this->available_addons = explode(',', $this->available_addons);
@@ -1418,9 +1554,9 @@ class Product extends Base_Model implements Limitable {
 	 */
 	public function set_available_addons($available_addons): void {
 
-		$this->meta['wu_available_addons'] = $available_addons;
+		$this->meta[ self::META_AVAILABLE_ADDONS ] = $available_addons;
 
-		$this->available_addons = $this->meta['wu_available_addons'];
+		$this->available_addons = $this->meta[ self::META_AVAILABLE_ADDONS ];
 	}
 
 	/**
@@ -1467,7 +1603,7 @@ class Product extends Base_Model implements Limitable {
 	public function get_legacy_options() {
 
 		if (null === $this->legacy_options) {
-			$this->legacy_options = $this->get_meta('legacy_options', false);
+			$this->legacy_options = $this->get_meta(self::META_LEGACY_OPTIONS, false);
 		}
 
 		return $this->legacy_options;
@@ -1482,9 +1618,124 @@ class Product extends Base_Model implements Limitable {
 	 */
 	public function set_legacy_options($legacy_options): void {
 
-		$this->meta['legacy_options'] = $legacy_options;
+		$this->meta[ self::META_LEGACY_OPTIONS ] = $legacy_options;
 
-		$this->legacy_options = $this->meta['legacy_options'];
+		$this->legacy_options = $this->meta[ self::META_LEGACY_OPTIONS ];
+	}
+
+	/**
+	 * Checks if this product uses Pay What You Want pricing.
+	 *
+	 * @since 2.0.0
+	 * @return bool
+	 */
+	public function is_pay_what_you_want(): bool {
+
+		return 'pay_what_you_want' === $this->get_pricing_type();
+	}
+
+	/**
+	 * Checks if this PWYW product allows customer to choose recurring.
+	 *
+	 * @since 2.0.0
+	 * @return bool
+	 */
+	public function allows_customer_recurring_choice(): bool {
+
+		return $this->is_pay_what_you_want() && 'customer_choice' === $this->get_pwyw_recurring_mode();
+	}
+
+	/**
+	 * Get the PWYW minimum amount.
+	 *
+	 * @since 2.0.0
+	 * @return float
+	 */
+	public function get_pwyw_minimum_amount(): float {
+
+		if (null === $this->pwyw_minimum_amount) {
+			$this->pwyw_minimum_amount = (float) $this->get_meta(self::META_PWYW_MINIMUM_AMOUNT, 0);
+		}
+
+		return (float) $this->pwyw_minimum_amount;
+	}
+
+	/**
+	 * Set the PWYW minimum amount.
+	 *
+	 * @since 2.0.0
+	 * @param float $amount The minimum amount customers can pay.
+	 * @return void
+	 */
+	public function set_pwyw_minimum_amount($amount): void {
+
+		$this->meta[ self::META_PWYW_MINIMUM_AMOUNT ] = wu_to_float($amount);
+
+		$this->pwyw_minimum_amount = $this->meta[ self::META_PWYW_MINIMUM_AMOUNT ];
+	}
+
+	/**
+	 * Get the PWYW suggested amount.
+	 *
+	 * @since 2.0.0
+	 * @return float
+	 */
+	public function get_pwyw_suggested_amount(): float {
+
+		if (null === $this->pwyw_suggested_amount) {
+			$this->pwyw_suggested_amount = (float) $this->get_meta(self::META_PWYW_SUGGESTED_AMOUNT, 0);
+		}
+
+		return (float) $this->pwyw_suggested_amount;
+	}
+
+	/**
+	 * Set the PWYW suggested amount.
+	 *
+	 * @since 2.0.0
+	 * @param float $amount The suggested price shown as the default value.
+	 * @return void
+	 */
+	public function set_pwyw_suggested_amount($amount): void {
+
+		$this->meta[ self::META_PWYW_SUGGESTED_AMOUNT ] = wu_to_float($amount);
+
+		$this->pwyw_suggested_amount = $this->meta[ self::META_PWYW_SUGGESTED_AMOUNT ];
+	}
+
+	/**
+	 * Get the PWYW recurring mode.
+	 *
+	 * @since 2.0.0
+	 * @return string One of 'customer_choice', 'force_recurring', or 'force_one_time'.
+	 */
+	public function get_pwyw_recurring_mode(): string {
+
+		if (null === $this->pwyw_recurring_mode) {
+			$this->pwyw_recurring_mode = $this->get_meta(self::META_PWYW_RECURRING_MODE, 'customer_choice');
+		}
+
+		return $this->pwyw_recurring_mode ?: 'customer_choice';
+	}
+
+	/**
+	 * Set the PWYW recurring mode.
+	 *
+	 * @since 2.0.0
+	 * @param string $mode The recurring mode: 'customer_choice', 'force_recurring', or 'force_one_time'.
+	 * @return void
+	 */
+	public function set_pwyw_recurring_mode($mode): void {
+
+		$valid_modes = ['customer_choice', 'force_recurring', 'force_one_time'];
+
+		if ( ! in_array($mode, $valid_modes, true)) {
+			$mode = 'customer_choice';
+		}
+
+		$this->meta[ self::META_PWYW_RECURRING_MODE ] = $mode;
+
+		$this->pwyw_recurring_mode = $this->meta[ self::META_PWYW_RECURRING_MODE ];
 	}
 
 	/**

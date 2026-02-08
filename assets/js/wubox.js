@@ -192,6 +192,18 @@ const createInlineBox = (boxWindow, boxOverlay, loaded, caption, params) => {
   setBoxPosition(boxWindow, params.width, params.height);
   loaded();
 };
+const showFormErrors = (form, errors) => {
+  const formId = form.getAttribute("id");
+  const errorApp = window["wu_" + formId + "_errors"];
+  if (errorApp) {
+    errorApp.errors = errors;
+  }
+  const formAppEl = document.querySelector('[data-wu-app="' + formId + '_errors"]');
+  if (formAppEl) {
+    formAppEl.setAttribute("tabindex", "-1");
+    formAppEl.focus();
+  }
+};
 const formSubmit = (form) => async (event) => {
   event.preventDefault();
   const textArea = form.querySelector("textarea[data-editor]");
@@ -206,13 +218,26 @@ const formSubmit = (form) => async (event) => {
   const submitButton = event.submitter.value;
   const formData = new FormData(form);
   formData.append("submit", submitButton);
-  const response = await fetch(form.getAttribute("action"), {
-    method: "POST",
-    body: formData,
-    headers: {
-      "X-Requested-With": "XMLHttpRequest"
+  let response;
+  try {
+    const fetchResponse = await fetch(form.getAttribute("action"), {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    });
+    const txt = await fetchResponse.text();
+    if (!fetchResponse.ok) {
+      throw new Error(fetchResponse.status + " " + fetchResponse.statusText);
     }
-  }).then((response2) => response2.text()).then((txt) => txt ? JSON.parse(txt) : null);
+    response = txt ? JSON.parse(txt) : null;
+  } catch (error) {
+    blocked_form.unblock();
+    const message = (typeof wuboxL10n !== "undefined" && wuboxL10n.server_error) ? wuboxL10n.server_error : "An unexpected error occurred. Please try again or contact support if the problem persists.";
+    showFormErrors(form, [{ code: "server-error", message }]);
+    return;
+  }
   if (response === null || response.data === null) {
     blocked_form.unblock();
     removeBox();
@@ -220,13 +245,7 @@ const formSubmit = (form) => async (event) => {
   }
   if (!response.success) {
     blocked_form.unblock();
-    const formId = form.getAttribute("id");
-    if (window["wu_" + formId + "_errors"]) {
-      window["wu_" + formId + "_errors"].errors = response.data;
-    }
-    const formApp = document.querySelector('[data-wu-app="' + formId + '_errors"]');
-    formApp == null ? void 0 : formApp.setAttribute("tabindex", "-1");
-    formApp == null ? void 0 : formApp.focus();
+    showFormErrors(form, response.data);
   }
   if (typeof response.data.tables === "object") {
     blocked_form.unblock();

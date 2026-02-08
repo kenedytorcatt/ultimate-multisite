@@ -1,6 +1,11 @@
 <?php
+/**
+ * Handle access to addons.
+ */
 
 namespace WP_Ultimo;
+
+use Psr\Log\LogLevel;
 
 /**
  * Addon Repository class for handling addon downloads and updates.
@@ -93,13 +98,15 @@ class Addon_Repository {
 				$message = wp_remote_retrieve_response_message($request);
 
 				if (200 === absint($code) && 'OK' === $message) {
-					$response     = json_decode($body, true);
-					$access_token = $response['access_token'];
-					set_transient('wu-access-token', $response['access_token'], $response['expires_in']);
+					$response = json_decode($body, true);
+					if ( ! empty($response['access_token'])) {
+						$access_token = $response['access_token'];
+						set_transient('wu-access-token', $response['access_token'], $response['expires_in']);
+					}
 				}
 			}
 		}
-		return $access_token;
+		return $access_token ?: '';
 	}
 
 	/**
@@ -139,7 +146,8 @@ class Addon_Repository {
 			$code    = wp_remote_retrieve_response_code($request);
 			$message = wp_remote_retrieve_response_message($request);
 			if (is_wp_error($request)) {
-				throw new \Exception(esc_html($request->get_error_message()), (int) $request->get_error_code());
+				wu_log_add('api-calls', $request->get_error_message(), LogLevel::ERROR);
+				$this->delete_tokens();
 			}
 			if (200 === absint($code) && 'OK' === $message) {
 				$user = json_decode($body, true);

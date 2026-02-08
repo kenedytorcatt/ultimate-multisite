@@ -73,7 +73,7 @@ class Domain extends Base_Model {
 	 * @since 2.0.0
 	 * @var string
 	 */
-	protected $stage = 'checking-dns';
+	protected $stage = Domain_Stage::CHECKING_DNS;
 
 	/**
 	 * Date when this was created.
@@ -90,9 +90,10 @@ class Domain extends Base_Model {
 	 * @var array
 	 */
 	const INACTIVE_STAGES = [
-		'checking-dns',
-		'checking-ssl-cert',
-		'failed',
+		Domain_Stage::CHECKING_DNS,
+		Domain_Stage::CHECKING_SSL,
+		Domain_Stage::FAILED,
+		Domain_Stage::SSL_FAILED,
 	];
 
 	/**
@@ -127,7 +128,7 @@ class Domain extends Base_Model {
 		return [
 			'blog_id'        => 'required|integer',
 			'domain'         => "required|domain|unique:\WP_Ultimo\Models\Domain,domain,{$id}",
-			'stage'          => 'required|in:checking-dns,checking-ssl-cert,done-without-ssl,done,failed|default:checking-dns',
+			'stage'          => 'required|in:checking-dns,checking-ssl-cert,done-without-ssl,done,failed,ssl-failed|default:checking-dns',
 			'active'         => 'default:1',
 			'secure'         => 'default:0',
 			'primary_domain' => 'default:0',
@@ -542,6 +543,21 @@ class Domain extends Base_Model {
 				);
 
 				do_action('wu_async_remove_old_primary_domains', $old_primary_domains);
+
+				/**
+				 * Fires when a domain becomes the primary domain for a site.
+				 *
+				 * This action is triggered when a domain's primary_domain flag is set to true,
+				 * either when creating a new primary domain or when updating an existing domain
+				 * to become primary.
+				 *
+				 * @since 2.0.0
+				 *
+				 * @param \WP_Ultimo\Models\Domain $domain  The domain that became primary.
+				 * @param int                      $blog_id The blog ID of the affected site.
+				 * @param bool                     $was_new Whether this is a newly created domain.
+				 */
+				do_action('wu_domain_became_primary', $this, $this->blog_id, $was_new);
 			}
 		}
 

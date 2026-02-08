@@ -72,7 +72,7 @@ class Site_Template_Limits {
 
 			[$plan, $additional_products] = wu_segregate_products($products);
 
-			$products = array_merge([$plan], $additional_products);
+			$products = array_filter(array_merge([$plan], $additional_products));
 
 			foreach ($products as $product) {
 				$limits = $limits->merge($product->get_limitations());
@@ -87,8 +87,11 @@ class Site_Template_Limits {
 			} else {
 				$site_list = wu_get_isset($attributes, 'sites', explode(',', ($attributes['template_selection_sites'] ?? '')));
 
-				$available_templates = $limits->site_templates->get_available_site_templates();
-				$attributes['sites'] = array_intersect($site_list, $available_templates);
+				// Ensure consistent type comparison by casting to integers.
+				$site_list           = array_map('intval', $site_list);
+				$available_templates = array_map('intval', $limits->site_templates->get_available_site_templates());
+
+				$attributes['sites'] = array_values(array_intersect($site_list, $available_templates));
 			}
 		}
 
@@ -165,7 +168,7 @@ class Site_Template_Limits {
 
 			[$plan, $additional_products] = wu_segregate_products($products);
 
-			$products = array_merge([$plan], $additional_products);
+			$products = array_filter(array_merge([$plan], $additional_products));
 
 			foreach ($products as $product) {
 				$limits = $limits->merge($product->get_limitations());

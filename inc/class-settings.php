@@ -173,7 +173,7 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 	public function get_all_with_defaults($check_caps = false) {
 		$all_settings = $this->get_all($check_caps);
 		foreach ($this->get_sections() as $section_slug => $section) {
-			foreach ($section['fields'] as $field_slug => $field_atts) {
+			foreach ($section['fields'] ?? [] as $field_slug => $field_atts) {
 				if (is_callable($field_atts['value'])) {
 					$value = $field_atts['value']();
 					if (isset($all_settings[ $field_slug ]) && $value !== $all_settings[ $field_slug ]) {
@@ -258,7 +258,7 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 		do_action('wu_before_save_settings', $settings_to_save);
 
 		foreach ($sections as $section_slug => $section) {
-			foreach ($section['fields'] as $field_slug => $field_atts) {
+			foreach ($section['fields'] ?? [] as $field_slug => $field_atts) {
 				$existing_value = $saved_settings[ $field_slug ] ?? false;
 
 				$field = new Field($field_slug, $field_atts);
@@ -708,6 +708,34 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 			120
 		);
 
+		$this->add_field(
+			'general',
+			'enable_error_reporting',
+			[
+				'title'   => __('Help Improve Ultimate Multisite', 'ultimate-multisite'),
+				'desc'    => sprintf(
+				/* translators: %s is a link to the privacy policy */
+					__('Allow Ultimate Multisite to collect anonymous usage data and error reports to help us improve the plugin. We collect: PHP version, WordPress version, plugin version, network type (subdomain/subdirectory), aggregate counts (sites, memberships), active gateways, and error logs. We never collect personal data, customer information, or domain names. <a href="%s" target="_blank" rel="noopener noreferrer">Learn more</a>.', 'ultimate-multisite'),
+					esc_url('https://ultimatemultisite.com/privacy-policy/')
+				),
+				'type'    => 'toggle',
+				'default' => 0,
+			],
+			130
+		);
+
+		$this->add_field(
+			'general',
+			'enable_beta_updates',
+			[
+				'title'   => __('Beta Updates', 'ultimate-multisite'),
+				'desc'    => __('Opt in to receive pre-release versions of Ultimate Multisite and its add-ons. Beta versions may contain bugs or incomplete features.', 'ultimate-multisite'),
+				'type'    => 'toggle',
+				'default' => 0,
+			],
+			135
+		);
+
 		/*
 		 * Login & Registration
 		 * This section holds the Login & Registration settings of the Ultimate Multisite Plugin.
@@ -856,10 +884,36 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 			'login-and-registration',
 			'force_publish_sites_sync',
 			[
-				'title'   => __('Force Synchronous Site Publication ', 'ultimate-multisite'),
+				'title'   => __('Force Synchronous Site Publication', 'ultimate-multisite'),
 				'desc'    => __('By default, when a new pending site needs to be converted into a real network site, the publishing process happens via Job Queue, asynchronously. Enable this option to force the publication to happen in the same request as the signup. Be careful, as this can cause timeouts depending on the size of the site templates being copied.', 'ultimate-multisite'),
 				'type'    => 'toggle',
 				'default' => 0,
+			]
+		);
+
+		$this->add_field(
+			'login-and-registration',
+			'password_strength_header',
+			[
+				'title' => __('Password Strength', 'ultimate-multisite'),
+				'desc'  => __('Configure password strength requirements for user registration.', 'ultimate-multisite'),
+				'type'  => 'header',
+			]
+		);
+
+		$this->add_field(
+			'login-and-registration',
+			'minimum_password_strength',
+			[
+				'title'   => __('Minimum Password Strength', 'ultimate-multisite'),
+				'desc'    => __('Set the minimum password strength required during registration and password reset. "Super Strong" requires at least 12 characters, including uppercase, lowercase, numbers, and special characters.', 'ultimate-multisite'),
+				'type'    => 'select',
+				'default' => 'strong',
+				'options' => [
+					'medium'       => __('Medium', 'ultimate-multisite'),
+					'strong'       => __('Strong', 'ultimate-multisite'),
+					'super_strong' => __('Super Strong (12+ chars, mixed case, numbers, symbols)', 'ultimate-multisite'),
+				],
 			]
 		);
 
@@ -1701,17 +1755,6 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 					'errors'   => __('Errors Only', 'ultimate-multisite'),
 					'all'      => __('Everything', 'ultimate-multisite'),
 				],
-			]
-		);
-
-		$this->add_field(
-			'other',
-			'enable_error_reporting',
-			[
-				'title'   => __('Send Error Data to Ultimate Multisite Developers', 'ultimate-multisite'),
-				'desc'    => __('With this option enabled, every time your installation runs into an error related to Ultimate Multisite, that error data will be sent to us. No sensitive data gets collected, only environmental stuff (e.g. if this is this is a subdomain network, etc).', 'ultimate-multisite'),
-				'type'    => 'toggle',
-				'default' => 1,
 			]
 		);
 

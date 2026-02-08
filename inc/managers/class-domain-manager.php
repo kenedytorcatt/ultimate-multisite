@@ -13,6 +13,7 @@
 namespace WP_Ultimo\Managers;
 
 use Psr\Log\LogLevel;
+use WP_Ultimo\Database\Domains\Domain_Stage;
 use WP_Ultimo\Domain_Mapping\Helper;
 use WP_Ultimo\Models\Domain;
 
@@ -106,7 +107,7 @@ class Domain_Manager extends Base_Manager {
 	 * @since 2.0.0
 	 *
 	 * @param string $id The id of the integration. e.g. runcloud.
-	 * @return \WP_Ultimo\Integrations\Host_Providers\Base_Host_Provider|false
+	 * @return mixed|false
 	 */
 	public function get_integration_instance($id) {
 
@@ -664,9 +665,9 @@ class Domain_Manager extends Base_Manager {
 		// translators: %s is the domain name
 		wu_log_add("domain-{$domain_url}", sprintf(__('Starting Check for %s', 'ultimate-multisite'), $domain_url));
 
-		if ('checking-dns' === $stage) {
+		if (Domain_Stage::CHECKING_DNS === $stage) {
 			if ($domain->has_correct_dns()) {
-				$domain->set_stage('checking-ssl-cert');
+				$domain->set_stage(Domain_Stage::CHECKING_SSL);
 
 				$domain->save();
 
@@ -692,7 +693,7 @@ class Domain_Manager extends Base_Manager {
 				 * Max attempts
 				 */
 				if ($tries > $max_tries) {
-					$domain->set_stage('failed');
+					$domain->set_stage(Domain_Stage::FAILED);
 
 					$domain->save();
 
@@ -723,9 +724,9 @@ class Domain_Manager extends Base_Manager {
 
 				return;
 			}
-		} elseif ('checking-ssl-cert' === $stage) {
+		} elseif (Domain_Stage::CHECKING_SSL === $stage) {
 			if ($domain->has_valid_ssl_certificate()) {
-				$domain->set_stage('done');
+				$domain->set_stage(Domain_Stage::DONE);
 
 				$domain->set_secure(true);
 
@@ -742,10 +743,11 @@ class Domain_Manager extends Base_Manager {
 				 * Max attempts
 				 */
 				if ($tries > $max_tries) {
-					$domain->set_stage('done-without-ssl');
+					// We use SSL FAILED instead of done-without-ssl since ssl is pretty much required
+					// and we don't want to redirect to a domain with certificate errors.
+					$domain->set_stage(Domain_Stage::SSL_FAILED);
 
 					$domain->save();
-
 					wu_log_add(
 						"domain-{$domain_url}",
 						// translators: %d is the number of minutes to try again.
@@ -872,12 +874,70 @@ class Domain_Manager extends Base_Manager {
 			wp_send_json_error(new \WP_Error('error', __('Not able to fetch DNS entries.', 'ultimate-multisite')));
 		}
 
+		$network_ip = Helper::get_network_public_ip();
+		$warnings   = [];
+		$www_result = [];
+
+		// Get A records for the bare domain.
+		$a_records = array_filter($result, fn($r) => 'A' === $r['type'] && $domain === $r['host']);
+		$a_ips     = array_column($a_records, 'data');
+
+		// Warning: multiple A records.
+		if (count($a_ips) > 1) {
+			$warnings[] = sprintf(
+				/* translators: %1$s is a comma-separated list of IPs, %2$s is the network IP */
+				__('This domain has multiple A records (%1$s). Only one A record pointing to your network IP (%2$s) is expected. The extra records may cause intermittent connectivity issues.', 'ultimate-multisite'),
+				implode(', ', $a_ips),
+				$network_ip
+			);
+		}
+
+		// Warning: no A record matches network IP.
+		if ( ! empty($a_ips) && ! in_array($network_ip, $a_ips, true)) {
+			$warnings[] = sprintf(
+				/* translators: %s is the network IP */
+				__('None of the A records point to your network IP (%s). The domain will not resolve to your network.', 'ultimate-multisite'),
+				$network_ip
+			);
+		}
+
+		// Fetch www subdomain records and compare.
+		if (strpos($domain, 'www.') !== 0) {
+			try {
+				$www_result = self::dns_get_record('www.' . $domain);
+
+				if (false === $www_result) {
+					$www_result = [];
+				}
+			} catch (\Throwable $e) {
+				$www_result = [];
+			}
+
+			$www_a_records = array_filter($www_result, fn($r) => 'A' === $r['type']);
+			$www_a_ips     = array_column($www_a_records, 'data');
+
+			if ( ! empty($www_a_ips)) {
+				sort($a_ips);
+				sort($www_a_ips);
+
+				if ($a_ips !== $www_a_ips) {
+					$warnings[] = sprintf(
+						/* translators: %s is the network IP */
+						__('The www subdomain DNS records do not match the non-www records. Both should point to %s.', 'ultimate-multisite'),
+						$network_ip
+					);
+				}
+			}
+		}
+
 		wp_send_json_success(
 			[
-				'entries'    => $result,
-				'auth'       => $auth_ns,
-				'additional' => $additional,
-				'network_ip' => Helper::get_network_public_ip(),
+				'entries'     => $result,
+				'www_entries' => $www_result,
+				'auth'        => $auth_ns,
+				'additional'  => $additional,
+				'network_ip'  => $network_ip,
+				'warnings'    => $warnings,
 			]
 		);
 	}
@@ -908,6 +968,8 @@ class Domain_Manager extends Base_Manager {
 	/**
 	 * Tests the integration in the Wizard context.
 	 *
+	 * Supports both legacy host providers and new Integration objects.
+	 *
 	 * @since 2.0.0
 	 * @return void
 	 */
@@ -915,6 +977,33 @@ class Domain_Manager extends Base_Manager {
 
 		$integration_id = wu_request('integration', 'none');
 
+		// Try the new Integration Registry first
+		$registry        = \WP_Ultimo\Integrations\Integration_Registry::get_instance();
+		$new_integration = $registry->get($integration_id);
+
+		if ($new_integration) {
+			if ( ! $new_integration->is_setup()) {
+				wp_send_json_error(
+					[
+						'message' => sprintf(
+							// translators: %s is the name of the missing constant
+							__('The necessary constants were not found on your wp-config.php file: %s', 'ultimate-multisite'),
+							implode(', ', $new_integration->get_missing_constants())
+						),
+					]
+				);
+			}
+
+			$result = $new_integration->test_connection();
+
+			if (is_wp_error($result)) {
+				wp_send_json_error(['message' => $result->get_error_message()]);
+			}
+
+			wp_send_json_success(['message' => __('Access Authorized', 'ultimate-multisite')]);
+		}
+
+		// Fall back to legacy integration
 		$integration = $this->get_integration_instance($integration_id);
 
 		if ( ! $integration) {
@@ -950,65 +1039,6 @@ class Domain_Manager extends Base_Manager {
 	 * @return void
 	 */
 	public function load_integrations(): void {
-		/*
-		* Loads our RunCloud integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\Runcloud_Host_Provider::get_instance();
-
-		/*
-		* Loads our Closte integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\Closte_Host_Provider::get_instance();
-
-		/*
-		* Loads our WP Engine integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\WPEngine_Host_Provider::get_instance();
-
-		/*
-		* Loads our Gridpane integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\Gridpane_Host_Provider::get_instance();
-
-		/*
-		* Loads our WPMU DEV integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\WPMUDEV_Host_Provider::get_instance();
-
-		/*
-		* Loads our Cloudways integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\Cloudways_Host_Provider::get_instance();
-
-		/*
-		* Loads our ServerPilot integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\ServerPilot_Host_Provider::get_instance();
-
-		/*
-		* Loads our cPanel integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\CPanel_Host_Provider::get_instance();
-
-		/*
-		* Loads our Cloudflare integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\Cloudflare_Host_Provider::get_instance();
-
-		/*
-		* Loads our Hestia integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\Hestia_Host_Provider::get_instance();
-
-		/*
-		* Loads our Enhance integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\Enhance_Host_Provider::get_instance();
-
-		/*
-		* Loads our Rocket.net integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\Rocket_Host_Provider::get_instance();
 
 		/**
 		 * Allow developers to add their own host provider integrations via wp plugins.

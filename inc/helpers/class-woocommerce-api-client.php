@@ -120,6 +120,7 @@ class WooCommerce_API_Client {
 			'downloadable' => true,
 			'type'         => 'subscription',
 			'tag'          => 'addon',
+			'beta'         => wu_get_setting('enable_beta_updates', false) ? '1' : '0',
 		];
 
 		return $this->execute_request('products', $params);

@@ -31,7 +31,7 @@ final class WP_Ultimo {
 	 * @since 2.1.0
 	 * @var string
 	 */
-	const VERSION = '2.4.9';
+	const VERSION = '2.4.11-beta.4';
 
 	/**
 	 * Core log handle for Ultimate Multisite.
@@ -40,6 +40,8 @@ final class WP_Ultimo {
 	 * @var string
 	 */
 	const LOG_HANDLE = 'ultimate-multisite-core';
+
+	const NETWORK_OPTION_SETUP_FINISHED = 'wu_setup_finished';
 
 	/**
 	 * Version of the Plugin.
@@ -212,6 +214,10 @@ final class WP_Ultimo {
 		add_action('init', [$this, 'after_init']);
 
 		add_filter('user_has_cap', [$this, 'grant_customer_capabilities'], 10, 4);
+
+		add_filter('http_request_args', [$this, 'maybe_add_beta_param_to_update_url'], 10, 2);
+
+		add_filter('site_transient_update_plugins', [$this, 'maybe_inject_beta_update']);
 	}
 
 	/**
@@ -506,6 +512,7 @@ final class WP_Ultimo {
 		\WP_Ultimo\UI\Domain_Mapping_Element::get_instance();
 		\WP_Ultimo\UI\Site_Maintenance_Element::get_instance();
 		\WP_Ultimo\UI\Template_Switching_Element::get_instance();
+		\WP_Ultimo\UI\Magic_Link_Url_Element::get_instance();
 
 		/*
 		 * Loads our Light Ajax implementation
@@ -536,6 +543,11 @@ final class WP_Ultimo {
 		 * Loads API registration endpoint.
 		 */
 		\WP_Ultimo\API\Register_Endpoint::get_instance();
+
+		/*
+		 * Loads API settings endpoint.
+		 */
+		\WP_Ultimo\API\Settings_Endpoint::get_instance();
 
 		/*
 		 * Loads Documentation
@@ -611,6 +623,11 @@ final class WP_Ultimo {
 		\WP_Ultimo\Compat\Honeypot_Compat::get_instance();
 
 		/*
+		 * WooCommerce Subscriptions compatibility
+		 */
+		\WP_Ultimo\Compat\WooCommerce_Subscriptions_Compat::get_instance();
+
+		/*
 		 * Loads Basic White-labeling
 		 */
 		\WP_Ultimo\Whitelabel::get_instance();
@@ -646,6 +663,11 @@ final class WP_Ultimo {
 		 */
 		\WP_Ultimo\Cron::get_instance();
 
+		/*
+		 * Usage Tracker (opt-in telemetry)
+		 */
+		\WP_Ultimo\Tracker::get_instance();
+
 		\WP_Ultimo\MCP_Adapter::get_instance();
 	}
 
@@ -657,162 +679,123 @@ final class WP_Ultimo {
 	 */
 	protected function load_admin_pages(): void {
 		/*
-		 * Migration Wizard Alert
-		 */
-		new WP_Ultimo\Admin_Pages\Migration_Alert_Admin_Page();
-
-		/*
-		 * Loads the Dashboard admin page.
-		 */
-		new WP_Ultimo\Admin_Pages\Dashboard_Admin_Page();
-
-		/*
-		 * The top admin navigation bar.
+		 * These classes register hooks that fire on both frontend and admin
+		 * (admin bar menus, nav menu filters), so they must always be loaded.
 		 */
 		new WP_Ultimo\Admin_Pages\Top_Admin_Nav_Menu();
 
-		/*
-		 * Initialize magic links for admin bar My Sites menu.
-		 */
 		\WP_Ultimo\SSO\Admin_Bar_Magic_Links::get_instance();
 
+		\WP_Ultimo\SSO\Nav_Menu_Subsite_Links::get_instance();
+
 		/*
-		 * Loads the Checkout Form admin page.
+		 * My_Sites registers an admin_bar_menu hook for customer-owned sites,
+		 * which fires on frontend for logged-in users.
 		 */
+		new WP_Ultimo\Admin_Pages\Customer_Panel\My_Sites_Admin_Page();
+
+		/*
+		 * The remaining admin pages only register admin menu items,
+		 * admin-only forms, and wp_ajax_ handlers. They are not needed
+		 * on frontend requests.
+		 *
+		 * Note: We also check for wu-ajax requests because Light_Ajax
+		 * defines DOING_AJAX only after process_light_ajax() runs,
+		 * which happens after this code executes.
+		 */
+		if (is_admin() || wp_doing_ajax() || isset($_REQUEST['wu-ajax'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$this->load_admin_only_pages();
+		}
+
+		do_action('wp_ultimo_admin_pages');
+	}
+
+	/**
+	 * Loads admin pages that are only needed on admin or AJAX requests.
+	 *
+	 * @since 2.5.0
+	 * @return void
+	 */
+	protected function load_admin_only_pages(): void {
+
+		new WP_Ultimo\Admin_Pages\Migration_Alert_Admin_Page();
+
+		new WP_Ultimo\Admin_Pages\Dashboard_Admin_Page();
+
 		new WP_Ultimo\Admin_Pages\Checkout_Form_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Checkout_Form_Edit_Admin_Page();
 
-		/*
-		 * Loads the Product Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Product_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Product_Edit_Admin_Page();
 
-		/*
-		 * Loads the Memberships Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Membership_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Membership_Edit_Admin_Page();
 
-		/*
-		 * Loads the Payments Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Payment_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Payment_Edit_Admin_Page();
 
-		/*
-		 * Loads the Customers Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Customer_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Customer_Edit_Admin_Page();
 
-		/*
-		 * Loads the Site Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Site_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Site_Edit_Admin_Page();
 
-		/*
-		 * Loads the Domain Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Domain_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Domain_Edit_Admin_Page();
 
-		/*
-		 * Loads the Discount Code Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Discount_Code_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Discount_Code_Edit_Admin_Page();
 
-		/*
-		 * Loads the Broadcast Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Broadcast_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Broadcast_Edit_Admin_Page();
 
-		/*
-		 * Loads the Broadcast Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Email_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Email_Edit_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Email_Template_Customize_Admin_Page();
 
-		/*
-		 * Loads the Settings
-		 */
 		new WP_Ultimo\Admin_Pages\Settings_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Invoice_Template_Customize_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Template_Previewer_Customize_Admin_Page();
 
-		/*
-		 * Loads the Hosting Integration
-		 */
 		new WP_Ultimo\Admin_Pages\Hosting_Integration_Wizard_Admin_Page();
 
-		/*
-		 * Loads the Events Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Event_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Event_View_Admin_Page();
 
-		/*
-		 * Loads the Webhooks Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Webhook_List_Admin_Page();
 
 		new WP_Ultimo\Admin_Pages\Webhook_Edit_Admin_Page();
 
-		/*
-		 * Loads the Jobs Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Jobs_List_Admin_Page();
 
-		/*
-		 * Loads the System Info Pages
-		 */
 		new WP_Ultimo\Admin_Pages\System_Info_Admin_Page();
 
-		/*
-		 * Loads the Shortcodes Page
-		 */
 		new WP_Ultimo\Admin_Pages\Shortcodes_Admin_Page();
 
-		/*
-		 * Loads the View Logs Pages
-		 */
 		new WP_Ultimo\Admin_Pages\View_Logs_Admin_Page();
 
-		/*
-		 * Loads the View Logs Pages
-		 */
 		new WP_Ultimo\Admin_Pages\Customer_Panel\Account_Admin_Page();
-		new WP_Ultimo\Admin_Pages\Customer_Panel\My_Sites_Admin_Page();
 		new WP_Ultimo\Admin_Pages\Customer_Panel\Add_New_Site_Admin_Page();
 		new WP_Ultimo\Admin_Pages\Customer_Panel\Checkout_Admin_Page();
 		new WP_Ultimo\Admin_Pages\Customer_Panel\Template_Switching_Admin_Page();
 
-		/*
-		 * Loads the Tax Pages
-		 */
 		new WP_Ultimo\Tax\Dashboard_Taxes_Tab();
 
 		new WP_Ultimo\Admin_Pages\Addons_Admin_Page();
-
-		do_action('wp_ultimo_admin_pages');
 	}
 
 	/**
@@ -822,6 +805,16 @@ final class WP_Ultimo {
 	 * @return void
 	 */
 	protected function load_managers(): void {
+		/*
+		 * Loads the Integration Registry.
+		 *
+		 * This must be loaded before the Domain Manager so that
+		 * its plugins_loaded hooks fire at the correct priority.
+		 *
+		 * @since 2.5.0
+		 */
+		WP_Ultimo\Integrations\Integration_Registry::get_instance()->init();
+
 		/*
 		 * Loads the Event manager.
 		 */
@@ -929,6 +922,11 @@ final class WP_Ultimo {
 		WP_Ultimo\Orphaned_Tables_Manager::get_instance();
 		WP_Ultimo\Orphaned_Users_Manager::get_instance();
 
+		/*
+		 * Loads the Rating Notice manager.
+		 */
+		WP_Ultimo\Managers\Rating_Notice_Manager::get_instance();
+
 		/**
 		 * Loads views overrides
 		 */
@@ -983,5 +981,177 @@ final class WP_Ultimo {
 		}
 
 		return $allcaps;
+	}
+
+	/**
+	 * Append beta=1 to addon update checker requests when beta updates are enabled.
+	 *
+	 * @param array  $args HTTP request arguments.
+	 * @param string $url  The request URL.
+	 * @return array Modified arguments.
+	 */
+	public function maybe_add_beta_param_to_update_url(array $args, string $url): array {
+
+		if ( ! defined('MULTISITE_ULTIMATE_UPDATE_URL')) {
+			return $args;
+		}
+
+		// Only apply to update metadata requests to our server
+		if (strpos($url, MULTISITE_ULTIMATE_UPDATE_URL) === false || strpos($url, 'update_action=get_metadata') === false) {
+			return $args;
+		}
+
+		// Only apply when beta updates are enabled
+		if ( ! wu_get_setting('enable_beta_updates', false)) {
+			return $args;
+		}
+
+		// Don't add if already present
+		if (strpos($url, 'beta=1') !== false) {
+			return $args;
+		}
+
+		// PUC builds the URL from metadataUrl + query args, then passes it to wp_remote_get.
+		// We can't modify the URL through http_request_args, so we use a one-time
+		// pre_http_request filter to intercept and re-issue the request with beta=1.
+		add_filter(
+			'pre_http_request',
+			$redirect = function ($pre, $r, $request_url) use ($url, $args, &$redirect) {
+
+				remove_filter('pre_http_request', $redirect, 9);
+
+				if ($request_url !== $url) {
+					return $pre;
+				}
+
+				$beta_url = add_query_arg('beta', '1', $request_url);
+
+				return wp_remote_get($beta_url, $args);
+			},
+			9,
+			3
+		);
+
+		return $args;
+	}
+
+	/**
+	 * Inject a beta update from GitHub pre-releases into the plugin update transient.
+	 *
+	 * Only runs when the user has opted into beta updates. Checks GitHub releases
+	 * API for pre-releases and offers them as updates if newer than installed version.
+	 *
+	 * @param object $transient The update_plugins transient data.
+	 * @return object Modified transient data.
+	 */
+	public function maybe_inject_beta_update($transient) {
+
+		if (! is_object($transient)) {
+			return $transient;
+		}
+
+		if (! wu_get_setting('enable_beta_updates', false)) {
+			return $transient;
+		}
+
+		$plugin_file     = plugin_basename(WP_ULTIMO_PLUGIN_FILE);
+		$plugin_data     = get_plugin_data(WP_ULTIMO_PLUGIN_FILE);
+		$current_version = $plugin_data['Version'] ?? '0.0.0';
+
+		$release = $this->get_latest_github_release(true);
+
+		if (! $release) {
+			return $transient;
+		}
+
+		$release_version = ltrim($release['tag_name'], 'v');
+
+		if (version_compare($release_version, $current_version, '<=')) {
+			return $transient;
+		}
+
+		// Find the ZIP asset in the release
+		$package_url = '';
+
+		foreach ($release['assets'] as $asset) {
+			if (preg_match('/\.zip($|[?&#])/i', $asset['browser_download_url'])) {
+				$package_url = $asset['browser_download_url'];
+				break;
+			}
+		}
+
+		if (empty($package_url)) {
+			return $transient;
+		}
+
+		$transient->response[ $plugin_file ] = (object) [
+			'slug'        => 'ultimate-multisite',
+			'plugin'      => $plugin_file,
+			'new_version' => $release_version,
+			'url'         => $release['html_url'],
+			'package'     => $package_url,
+			'tested'      => '',
+			'requires'    => '5.3',
+		];
+
+		return $transient;
+	}
+
+	/**
+	 * Fetch the latest GitHub release, optionally including pre-releases.
+	 *
+	 * Results are cached in a transient for 6 hours.
+	 *
+	 * @param bool $include_prerelease Whether to include pre-releases.
+	 * @return array|null Release data or null on failure.
+	 */
+	private function get_latest_github_release(bool $include_prerelease = false): ?array {
+
+		$cache_key = 'wu_github_release_' . ($include_prerelease ? 'beta' : 'stable');
+		$cached    = get_site_transient($cache_key);
+
+		if (false !== $cached) {
+			return $cached ?: null;
+		}
+
+		$url = $include_prerelease
+			? 'https://api.github.com/repos/Multisite-Ultimate/ultimate-multisite/releases?per_page=5'
+			: 'https://api.github.com/repos/Multisite-Ultimate/ultimate-multisite/releases/latest';
+
+		$response = wp_remote_get(
+			$url,
+			[
+				'headers' => [
+					'Accept'     => 'application/vnd.github.v3+json',
+					'User-Agent' => 'Ultimate-Multisite/' . self::VERSION,
+				],
+				'timeout' => 10,
+			]
+		);
+
+		if (is_wp_error($response) || 200 !== wp_remote_retrieve_response_code($response)) {
+			set_site_transient($cache_key, '', 2 * HOUR_IN_SECONDS);
+
+			return null;
+		}
+
+		$body = json_decode(wp_remote_retrieve_body($response), true);
+
+		if ($include_prerelease) {
+			// Find the first release (pre-release or stable, whichever is newest)
+			$release = ! empty($body) ? $body[0] : null;
+		} else {
+			$release = $body;
+		}
+
+		if (! $release || empty($release['tag_name'])) {
+			set_site_transient($cache_key, '', 2 * HOUR_IN_SECONDS);
+
+			return null;
+		}
+
+		set_site_transient($cache_key, $release, 6 * HOUR_IN_SECONDS);
+
+		return $release;
 	}
 }

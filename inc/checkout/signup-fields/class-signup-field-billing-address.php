@@ -267,7 +267,9 @@ class Signup_Field_Billing_Address extends Base_Signup_Field {
 		}
 
 		foreach ($fields as &$field) {
-			$field['wrapper_classes'] = trim(wu_get_isset($field, 'wrapper_classes', '') . ' ' . $attributes['element_classes']);
+			$field['wrapper_classes']              = trim(wu_get_isset($field, 'wrapper_classes', '') . ' ' . $attributes['element_classes']);
+			$field['wrapper_html_attr']['v-show']  = 'order.should_collect_payment';
+			$field['wrapper_html_attr']['v-cloak'] = 1;
 
 			/*
 			 * When zip_and_country is enabled (showing only ZIP + country),
@@ -279,12 +281,6 @@ class Signup_Field_Billing_Address extends Base_Signup_Field {
 			 * with server-rendered in-DOM templates.
 			 */
 			if ($zip_only) {
-				// Ensure wrapper_html_attr array exists
-				if ( ! isset($field['wrapper_html_attr'])) {
-					$field['wrapper_html_attr'] = [];
-				}
-
-				// Use :style binding to hide element when any Stripe gateway is selected
 				$field['wrapper_html_attr'][':style'] = "{ display: gateway && gateway.startsWith('stripe') ? 'none' : '' }";
 			}
 		}

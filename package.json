@@ -1,5 +1,5 @@
 {
-  "version": "2.4.9",
+  "version": "2.4.11-beta.4",
   "name": "ultimate-multisite",
   "title": "Ultimate Multisite",
   "homepage": "https://ultimatemultisite.com/",
@@ -23,6 +23,7 @@
     "cypress-mailpit": "^1.4.0",
     "eslint": "^8.57.1",
     "globals": "^16.5.0",
+    "lint-staged": "^16.2.7",
     "npm-run-all": "^4.1.5",
     "stylelint": "^16.26.1",
     "stylelint-config-standard": "^39.0.1",
@@ -35,11 +36,12 @@
     "prebuild": "npm run makepot && composer install -o --no-dev",
     "prebuild:dev": "composer install",
     "copylibs": "node scripts/copy-libs.js",
-    "build": "npm-run-all --parallel copylibs uglify cleancss",
+    "build": "npm-run-all --parallel copylibs uglify cleancss generate:hooks",
     "postbuild": "npm run archive",
-    "build:dev": "npm run copylibs && npm run uglify && npm run cleancss && npm run makepot",
+    "generate:hooks": "php inc/documentation/generate-berlindb-hooks.php",
+    "build:dev": "npm run copylibs && npm run uglify && npm run cleancss && npm run makepot && npm run generate:hooks",
     "build:translate": "npm run copylibs && npm run uglify && npm run cleancss && npm run makepot && npm run translate",
-    "prearchive": "php encrypt-sectrets.php",
+    "prearchive": "php encrypt-secrets.php",
     "archive": "node scripts/archive.js",
     "preuglify": "node scripts/clean-js.js",
     "uglify": "node scripts/uglify.js",
@@ -47,7 +49,7 @@
     "cleancss": "node scripts/cleancss.js",
     "makepot": "node scripts/makepot.js",
     "test": "vendor/bin/phpunit",
-    "test:coverage": "vendor/bin/phpunit --coverage-html=coverage-html --coverage-clover=coverage.xml",
+    "test:coverage": "php -d zend_extension=xdebug -d xdebug.mode=coverage vendor/bin/phpunit --coverage-html=coverage-html --coverage-clover=coverage.xml --coverage-text",
     "test:watch": "vendor/bin/phpunit --watch",
     "lint": "run-p lint:php lint:js lint:css",
     "lint:php": "vendor/bin/phpcs",
@@ -72,7 +74,8 @@
     "clean:cache": "rm -f .phpunit.result.cache && rm -rf node_modules/.cache",
     "translate": "php scripts/translate.php",
     "translate:force": "php scripts/translate.php --force",
-    "env:start": "wp-env start",
+    "env:fix-perms": "docker run --rm -v \"$HOME/.wp-env:/wp-env\" alpine chown -R \"$(id -u):$(id -g)\" /wp-env || true",
+    "env:start": "npm run env:fix-perms && wp-env start",
     "env:stop": "wp-env stop",
     "env:clean": "wp-env clean all",
     "env:destroy": "wp-env destroy all",
@@ -92,5 +95,13 @@
   "dependencies": {
     "apexcharts": "^5.2.0",
     "shepherd.js": "^14.5.0"
+  },
+  "lint-staged": {
+    "assets/js/**/*.js": [
+      "eslint --fix --ignore-pattern '*.min.js'"
+    ],
+    "assets/css/**/*.css": [
+      "stylelint --fix --ignore-pattern '*.min.css'"
+    ]
   }
 }
