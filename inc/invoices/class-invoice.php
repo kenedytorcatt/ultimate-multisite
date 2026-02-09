@@ -174,6 +174,29 @@ class Invoice {
 	}
 
 	/**
+	 * Returns the PDF content as a string.
+	 *
+	 * @since 2.3.0
+	 * @return string
+	 */
+	public function get_content(): string {
+
+		wu_setup_memory_limit_trap();
+
+		wu_try_unlimited_server_limits();
+
+		$this->pdf_setup();
+
+		if ( ! defined('WU_GENERATING_PDF')) {
+			define('WU_GENERATING_PDF', true);
+		}
+
+		$this->printer->WriteHTML($this->render());
+
+		return $this->printer->Output('', Destination::STRING_RETURN);
+	}
+
+	/**
 	 * Handles the PDF generation.
 	 *
 	 * @since 2.0.0

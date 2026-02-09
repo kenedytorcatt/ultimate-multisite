@@ -826,7 +826,6 @@ class Payment extends Base_Model implements Notable {
 		$url_atts = [
 			'action'    => 'invoice',
 			'reference' => $this->get_hash(),
-			'key'       => wp_create_nonce('see_invoice'),
 		];
 
 		return add_query_arg($url_atts, get_site_url(wu_get_main_site_id()));

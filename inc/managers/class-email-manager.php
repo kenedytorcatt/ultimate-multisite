@@ -161,10 +161,14 @@ class Email_Manager extends Base_Manager {
 			/*
 			 * Add the invoice attachment, if need be.
 			 */
-			if (wu_get_isset($payload, 'payment_invoice_url') && wu_get_setting('attach_invoice_pdf', true)) {
-				$file_name = 'invoice-' . $payload['payment_reference_code'] . '.pdf';
+			if (wu_get_isset($payload, 'payment_id') && wu_get_setting('attach_invoice_pdf', true)) {
+				$invoice_payment = wu_get_payment($payload['payment_id']);
 
-				$this->attach_file_by_url($payload['payment_invoice_url'], $file_name, $args['subject']);
+				if ($invoice_payment) {
+					$file_name = 'invoice-' . $invoice_payment->get_hash() . '.pdf';
+
+					$this->attach_invoice_pdf($invoice_payment, $file_name, $args['subject']);
+				}
 			}
 
 			$when_to_send = $email->get_when_to_send();
@@ -178,43 +182,28 @@ class Email_Manager extends Base_Manager {
 	}
 
 	/**
-	 * Attach a file by a URL
+	 * Attach an invoice PDF generated directly from the payment model.
 	 *
-	 * @since 2.0.0
+	 * @since 2.3.0
 	 *
-	 * @param string $file_url The URL of the file to attach.
-	 * @param string $file_name The name to save the file with.
-	 * @param string $email_subject The email subject, to avoid attaching a file to the wrong email.
+	 * @param \WP_Ultimo\Models\Payment $payment The payment to generate the invoice for.
+	 * @param string                    $file_name The name to save the file with.
+	 * @param string                    $email_subject The email subject, to avoid attaching a file to the wrong email.
 	 * @return void
 	 */
-	public function attach_file_by_url($file_url, $file_name, $email_subject = ''): void {
+	public function attach_invoice_pdf($payment, string $file_name, string $email_subject = ''): void {
 
 		add_action(
 			'phpmailer_init',
-			function ($mail) use ($file_url, $file_name, $email_subject) {
+			function ($mail) use ($payment, $file_name, $email_subject) {
 
-			if ($email_subject && $mail->Subject !== $email_subject) { // phpcs:ignore
-
+				if ($email_subject && $mail->Subject !== $email_subject) { // phpcs:ignore
 					return;
 				}
 
-				$response = wp_remote_get(
-					$file_url,
-					[
-						'timeout' => 50,
-					]
-				);
+				$invoice = new \WP_Ultimo\Invoices\Invoice($payment);
 
-				if (is_wp_error($response)) {
-					return;
-				}
-
-				$file = wp_remote_retrieve_body($response);
-
-				/*
-				* Use the default PHPMailer APIs to attach the file.
-				*/
-				$mail->addStringAttachment($file, $file_name);
+				$mail->addStringAttachment($invoice->get_content(), $file_name);
 			}
 		);
 	}

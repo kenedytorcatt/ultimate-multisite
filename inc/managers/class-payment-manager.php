@@ -290,18 +290,26 @@ class Payment_Manager extends Base_Manager {
 	 */
 	public function invoice_viewer(): void {
 
-		if (wu_request('action') === 'invoice' && wu_request('reference') && wu_request('key')) {
-			/*
-			 * Validates nonce.
-			 */
-			if ( ! wp_verify_nonce(wu_request('key'), 'see_invoice')) {
-				wp_die(esc_html__('You do not have permissions to access this file.', 'ultimate-multisite'));
-			}
-
+		if (wu_request('action') === 'invoice' && wu_request('reference')) {
 			$payment = wu_get_payment_by_hash(wu_request('reference'));
 
 			if ( ! $payment) {
 				wp_die(esc_html__('This invoice does not exist.', 'ultimate-multisite'));
+			}
+
+			/*
+			 * Validates access: must be a network admin or the customer who owns this payment.
+			 */
+			$has_access = current_user_can('manage_network');
+
+			if ( ! $has_access) {
+				$current_customer = wu_get_current_customer();
+
+				$has_access = $current_customer && $current_customer->get_id() === $payment->get_customer_id();
+			}
+
+			if ( ! $has_access) {
+				wp_die(esc_html__('You do not have permissions to access this file.', 'ultimate-multisite'));
 			}
 
 			$invoice = new Invoice($payment);
