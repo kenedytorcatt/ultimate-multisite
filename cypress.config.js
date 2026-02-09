@@ -9,6 +9,7 @@ module.exports = defineConfig({
   screenshotsFolder: "tests/e2e/cypress/screenshots",
   videosFolder: "tests/e2e/cypress/videos",
   video: true,
+  chromeWebSecurity: false,
   retries: {
     runMode: 1,
     openMode: 0,
@@ -21,7 +22,12 @@ module.exports = defineConfig({
     requestTimeout: 30000,
     responseTimeout: 30000,
     pageLoadTimeout: 60000,
-    setupNodeEvents(on, config) {},
+    setupNodeEvents(on, config) {
+      // Forward Stripe test keys from process.env to Cypress.env
+      config.env.STRIPE_TEST_PK_KEY = process.env.STRIPE_TEST_PK_KEY || "";
+      config.env.STRIPE_TEST_SK_KEY = process.env.STRIPE_TEST_SK_KEY || "";
+      return config;
+    },
   },
   env: {
     MAILPIT_URL: "http://localhost:8025",

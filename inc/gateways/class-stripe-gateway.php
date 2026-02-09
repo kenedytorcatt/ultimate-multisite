@@ -592,7 +592,7 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 
 			$payment_intent = $this->get_stripe_client()->setupIntents->retrieve($payment_intent_id);
 		} else {
-			$payment_intent = $this->get_stripe_client()->paymentIntents->retrieve($payment_intent_id);
+			$payment_intent = $this->get_stripe_client()->paymentIntents->retrieve($payment_intent_id, ['expand' => ['latest_charge']]);
 		}
 
 		/*
@@ -636,7 +636,7 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 		 */
 		$payment_method = $this->save_payment_method($payment_intent, $s_customer);
 
-		$payment_completed = $is_setup_intent || (! empty($payment_intent->charges->data[0]['id']) && 'succeeded' === $payment_intent->charges->data[0]['status']);
+		$payment_completed = $is_setup_intent || ('succeeded' === $payment_intent->status && ! empty($payment_intent->latest_charge));
 
 		$subscription = false;
 
@@ -652,7 +652,8 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 		}
 
 		if ($payment_completed) {
-			$payment_id = $is_setup_intent ? $payment_intent->id : sanitize_text_field($payment_intent->charges->data[0]['id']);
+			$charge_id  = is_object($payment_intent->latest_charge) ? $payment_intent->latest_charge->id : $payment_intent->latest_charge;
+			$payment_id = $is_setup_intent ? $payment_intent->id : sanitize_text_field($charge_id);
 
 			$payment->set_status(Payment_Status::COMPLETED);
 			$payment->set_gateway($this->get_id());

@@ -50,6 +50,10 @@ module.exports = defineConfig({
                 return launchOptions;
             });
 
+            // Forward Stripe test keys from process.env to Cypress.env
+            config.env.STRIPE_TEST_PK_KEY = process.env.STRIPE_TEST_PK_KEY || '';
+            config.env.STRIPE_TEST_SK_KEY = process.env.STRIPE_TEST_SK_KEY || '';
+
             return config;
         }
     }

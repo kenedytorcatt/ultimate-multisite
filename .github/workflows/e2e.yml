@@ -11,7 +11,7 @@ on:
 jobs:
   cypress:
     runs-on: ubuntu-latest
-    timeout-minutes: 30  # Increased timeout for setup wizard
+    timeout-minutes: 45  # Increased for setup wizard + Stripe test clock advancement
     strategy:
       matrix:
         php: ["8.1", "8.2"]  # Reduced PHP versions for faster CI
@@ -166,6 +166,48 @@ jobs:
           fi
 
           echo "✅ All checkout tests passed!"
+
+      - name: Run Stripe Tests (After Setup)
+        id: stripe-tests
+        if: ${{ secrets.STRIPE_TEST_SK_KEY != '' }}
+        env:
+          STRIPE_TEST_PK_KEY: ${{ secrets.STRIPE_TEST_PK_KEY }}
+          STRIPE_TEST_SK_KEY: ${{ secrets.STRIPE_TEST_SK_KEY }}
+        run: |
+          set +e
+          echo "=== Starting Stripe Tests ==="
+
+          STRIPE_TESTS=(
+            "tests/e2e/cypress/integration/030-stripe-checkout-flow.spec.js"
+            "tests/e2e/cypress/integration/040-stripe-renewal-flow.spec.js"
+          )
+
+          TOTAL_FAILURES=0
+
+          for TEST_SPEC in "${STRIPE_TESTS[@]}"; do
+            echo "Running: $TEST_SPEC"
+
+            npx cypress run \
+              --config-file cypress.config.test.js \
+              --spec "$TEST_SPEC" \
+              --browser ${{ matrix.browser }}
+
+            CYPRESS_EXIT_CODE=$?
+
+            if [ $CYPRESS_EXIT_CODE -eq 0 ]; then
+              echo "✅ $TEST_SPEC passed"
+            else
+              echo "❌ $TEST_SPEC failed with exit code $CYPRESS_EXIT_CODE"
+              TOTAL_FAILURES=$((TOTAL_FAILURES + 1))
+            fi
+          done
+
+          if [ $TOTAL_FAILURES -gt 0 ]; then
+            echo "❌ $TOTAL_FAILURES Stripe test(s) failed"
+            exit 1
+          fi
+
+          echo "✅ All Stripe tests passed!"
 
       - name: Fix permissions for Cypress output
         if: always()

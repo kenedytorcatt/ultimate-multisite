@@ -543,7 +543,7 @@ class Gateway_Manager extends Base_Manager {
 
 		add_action("wu_{$gateway_id}_process_webhooks", [$gateway, 'process_webhooks']);
 
-		add_action("wu_{$gateway_id}_remote_payment_url", [$gateway, 'get_payment_url_on_gateway']);
+		add_action("wu_{$gateway_id}_remote_payment_url", [$gateway, 'get_payment_url_on_gateway']); // @phpstan-ignore-line Used as filter via apply_filters.
 
 		add_action("wu_{$gateway_id}_remote_subscription_url", [$gateway, 'get_subscription_url_on_gateway']);
 
@@ -556,7 +556,7 @@ class Gateway_Manager extends Base_Manager {
 			'wu_checkout_gateway_fields',
 			function () use ($gateway) {
 
-				$field_content = call_user_func([$gateway, 'fields']);
+				$field_content = call_user_func([$gateway, 'fields']); // @phpstan-ignore-line Subclass implementations return string.
 
 				ob_start();
 
@@ -636,7 +636,7 @@ class Gateway_Manager extends Base_Manager {
 		}
 
 		// Get the gateway instance and verify
-		$gateway = $this->get_gateway($gateway_id);
+		$gateway = wu_get_gateway($gateway_id);
 
 		if (! $gateway || ! method_exists($gateway, 'verify_and_complete_payment')) {
 			wp_send_json_success(
@@ -716,7 +716,7 @@ class Gateway_Manager extends Base_Manager {
 			return;
 		}
 
-		$gateway = $this->get_gateway($gateway_id);
+		$gateway = wu_get_gateway($gateway_id);
 
 		if (! $gateway || ! method_exists($gateway, 'verify_and_complete_payment')) {
 			wu_log_add('stripe', sprintf('Scheduled payment verification: Gateway %s not found or does not support verification', $gateway_id), LogLevel::WARNING);
@@ -761,7 +761,7 @@ class Gateway_Manager extends Base_Manager {
 			return;
 		}
 
-		$gateway = $this->get_gateway($gateway_id);
+		$gateway = wu_get_gateway($gateway_id);
 
 		if (! $gateway || ! method_exists($gateway, 'schedule_payment_verification')) {
 			return;
