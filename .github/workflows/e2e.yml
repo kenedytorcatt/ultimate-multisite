@@ -56,9 +56,9 @@ jobs:
       - name: Install Composer dependencies
         run: composer install
 
-      - name: Set PHP version for wp-env
+      - name: Configure wp-env for CI
         run: |
-          echo "{\"config\": {\"phpVersion\": \"${{ matrix.php }}\"}}" > .wp-env.override.json
+          echo '{"config":{"phpVersion":"${{ matrix.php }}"},"env":{"tests":{"plugins":["."],"mappings":{}}}}' > .wp-env.override.json
 
       - name: Start WordPress Test Environment
         run: npm run env:start:test
