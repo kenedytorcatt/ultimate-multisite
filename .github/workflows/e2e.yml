@@ -58,7 +58,20 @@ jobs:
 
       - name: Configure wp-env for CI
         run: |
-          echo '{"config":{"phpVersion":"${{ matrix.php }}"},"env":{"tests":{"plugins":["."],"mappings":{}}}}' > .wp-env.override.json
+          node -e "
+            const fs = require('fs');
+            const cfg = JSON.parse(fs.readFileSync('.wp-env.json', 'utf8'));
+            // Remove addons and mappings that don't exist in CI
+            for (const env of Object.values(cfg.env || {})) {
+              env.plugins = (env.plugins || []).filter(p => !p.includes('addons/'));
+              env.mappings = {};
+              // Remove SUNRISE config since sunrise.php mapping is gone
+              if (env.config) delete env.config.SUNRISE;
+            }
+            cfg.config = { ...(cfg.config || {}), phpVersion: '${{ matrix.php }}' };
+            fs.writeFileSync('.wp-env.json', JSON.stringify(cfg, null, 2));
+          "
+          cat .wp-env.json
 
       - name: Start WordPress Test Environment
         run: npm run env:start:test
