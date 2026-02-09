@@ -107,6 +107,7 @@ class Stripe_Gateway_Process_Checkout_Test extends \WP_UnitTestCase {
 				'status'         => 'succeeded',
 				'customer'       => 'cus_123',
 				'payment_method' => 'pm_123',
+				'latest_charge'  => 'ch_123',
 				'charges'        => [
 					'object' => 'list',
 					'data'   => [
