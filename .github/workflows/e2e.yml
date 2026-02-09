@@ -169,11 +169,15 @@ jobs:
 
       - name: Run Stripe Tests (After Setup)
         id: stripe-tests
-        if: ${{ secrets.STRIPE_TEST_SK_KEY != '' }}
         env:
           STRIPE_TEST_PK_KEY: ${{ secrets.STRIPE_TEST_PK_KEY }}
           STRIPE_TEST_SK_KEY: ${{ secrets.STRIPE_TEST_SK_KEY }}
         run: |
+          if [ -z "$STRIPE_TEST_SK_KEY" ]; then
+            echo "⏭️  Skipping Stripe tests: STRIPE_TEST_SK_KEY secret not configured"
+            exit 0
+          fi
+
           set +e
           echo "=== Starting Stripe Tests ==="
 
