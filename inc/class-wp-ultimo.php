@@ -153,7 +153,11 @@ final class WP_Ultimo {
 		/*
 		 * Multisite Setup for non-multisite installations
 		 */
-		new WP_Ultimo\Admin_Pages\Multisite_Setup_Admin_Page();
+		if ( ! is_multisite()) {
+			add_action('init', function() {
+				new WP_Ultimo\Admin_Pages\Multisite_Setup_Admin_Page();
+			});
+		}
 
 		/*
 		 * Loads the Ultimate Multisite settings helper class.

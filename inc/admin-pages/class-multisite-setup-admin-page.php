@@ -474,8 +474,8 @@ RewriteRule . index.php [L]';
 			return false;
 		}
 
-		// Check if WP_ALLOW_MULTISITE is already defined
-		if (strpos($config_content, 'WP_ALLOW_MULTISITE') !== false) {
+		// Check if WP_ALLOW_MULTISITE is already actively defined (not commented out)
+		if (preg_match('/^\s*define\s*\(\s*[\'"]WP_ALLOW_MULTISITE[\'"]/m', $config_content)) {
 			return true; // Already configured
 		}
 
@@ -563,8 +563,8 @@ RewriteRule . index.php [L]';
 			return false;
 		}
 
-		// Check if MULTISITE is already defined
-		if (strpos($config_content, 'MULTISITE') !== false) {
+		// Check if MULTISITE is already actively defined (not commented out)
+		if (preg_match('/^\s*define\s*\(\s*[\'"]MULTISITE[\'"]/m', $config_content)) {
 			return true; // Already configured
 		}
 

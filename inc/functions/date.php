@@ -88,11 +88,15 @@ function wu_get_days_ago($date_1, $date_2 = false) {
  */
 function wu_get_current_time($type = 'mysql', $gmt = false) {
 
-	switch_to_blog(wu_get_main_site_id());
+	if (is_multisite()) {
+		switch_to_blog(wu_get_main_site_id());
+	}
 
 	$time = current_time($type, $gmt); // phpcs:ignore
 
-	restore_current_blog();
+	if (is_multisite()) {
+		restore_current_blog();
+	}
 
 	return $time;
 }

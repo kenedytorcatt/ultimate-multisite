@@ -146,6 +146,7 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 		 * Redirect on activation
 		 */
 		add_action('wu_activation', [$this, 'redirect_to_wizard']);
+		add_action('admin_init', [$this, 'redirect_to_wizard']);
 
 		add_action('admin_init', [$this, 'alert_incomplete_installation']);
 	}

@@ -123,8 +123,8 @@ class Signup_Field_Username extends Base_Signup_Field {
 	public function defaults() {
 
 		return [
-			'auto_generate_username' => false,
-			'enable_inline_login_username'    => false,
+			'auto_generate_username'       => false,
+			'enable_inline_login_username' => false,
 		];
 	}
 
@@ -166,7 +166,7 @@ class Signup_Field_Username extends Base_Signup_Field {
 	public function get_fields() {
 
 		return [
-			'auto_generate_username' => [
+			'auto_generate_username'       => [
 				'type'      => 'toggle',
 				'title'     => __('Auto-generate', 'ultimate-multisite'),
 				'desc'      => __('Check this option to auto-generate this field based on the email address of the customer.', 'ultimate-multisite'),

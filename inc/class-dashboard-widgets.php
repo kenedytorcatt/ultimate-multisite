@@ -186,7 +186,7 @@ class Dashboard_Widgets implements \WP_Ultimo\Interfaces\Singleton {
 				'desc'         => __('Go through the initial Setup Wizard to configure the basic settings of your network.', 'ultimate-multisite'),
 				'action_label' => __('Finish the Setup Wizard', 'ultimate-multisite'),
 				'action_link'  => wu_network_admin_url('wp-ultimo-setup'),
-				'done'         => wu_string_to_bool($initial_setup_done),
+				'done'         => ! empty($initial_setup_done),
 			],
 			'payment-method'      => [
 				'title'        => __('Payment Method', 'ultimate-multisite'),

@@ -17,6 +17,10 @@ defined('ABSPATH') || exit;
  */
 function wu_get_current_site() {
 
+	if ( ! is_multisite()) {
+		return null;
+	}
+
 	static $sites = array();
 	$blog_id      = get_current_blog_id();
 
