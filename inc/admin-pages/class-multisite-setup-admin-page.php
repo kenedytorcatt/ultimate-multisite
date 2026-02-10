@@ -133,6 +133,7 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 				),
 				'next_label'  => __('Get Started &rarr;', 'multisite-ultimate'),
 				'back'        => false,
+				'view'        => [$this, 'section_welcome'],
 			],
 			'configure' => [
 				'title'       => __('Network Configuration', 'multisite-ultimate'),
@@ -216,7 +217,7 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 	public function get_network_configuration_fields() {
 
 		$home_url    = get_option('home');
-		$base_domain = parse_url($home_url, PHP_URL_HOST);
+		$base_domain = wp_parse_url($home_url, PHP_URL_HOST);
 		$user        = wp_get_current_user();
 
 		return [
@@ -230,10 +231,8 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 				'title'   => __('Site Structure', 'multisite-ultimate'),
 				'desc'    => __('Choose between subdirectories or subdomains for your network sites.', 'multisite-ultimate'),
 				'options' => [
-					'sub0' => sprintf(__('Sites will use sub-directories like %s (Recommended)', 'multisite-ultimate'), '<code>' . esc_html($base_domain) . '/site1</code>'),
-					
-					'sub1'  => sprintf(__('Sites will use sub-domains like %s (Requires wildcard DNS)', 'multisite-ultimate'), '<code>site1.' . esc_html($base_domain) . '</code>'),
-
+					'0' => sprintf(__('Sites will use sub-directories like %s (Recommended)', 'multisite-ultimate'), '<code>' . esc_html($base_domain) . '/site1</code>'),
+					'1' => sprintf(__('Sites will use sub-domains like %s (Requires wildcard DNS)', 'multisite-ultimate'), '<code>site1.' . esc_html($base_domain) . '</code>'),
 				],
 				'default' => '0',
 			],
@@ -281,10 +280,10 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 	public function handle_configure(): void {
 
 		if (! current_user_can('manage_options')) {
-			wp_die(__('Permission denied.', 'multisite-ultimate'));
+			wp_die(esc_html__('Permission denied.', 'multisite-ultimate'));
 		}
 
-		$subdomain_install = (bool) wu_request('subdomain_install', 0);
+		$subdomain_install = wu_request('subdomain_install', '0') === '1';
 		$sitename          = sanitize_text_field(wu_request('sitename', ''));
 		$email             = sanitize_email(wu_request('email', ''));
 
@@ -368,7 +367,7 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 	protected function display_manual_instructions(): void {
 
 		$home_url          = get_option('home');
-		$base_domain       = parse_url($home_url, PHP_URL_HOST);
+		$base_domain       = wp_parse_url($home_url, PHP_URL_HOST);
 		$subdomain_install = get_transient('wu_multisite_subdomain_install');
 
 		$wp_config_constants = "define( 'WP_ALLOW_MULTISITE', true );
@@ -379,7 +378,25 @@ define( 'PATH_CURRENT_SITE', '/' );
 define( 'SITE_ID_CURRENT_SITE', 1 );
 define( 'BLOG_ID_CURRENT_SITE', 1 );";
 
-		$htaccess_rules = 'RewriteEngine On
+		if ($subdomain_install) {
+			$htaccess_rules = 'RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+
+# add a trailing slash to /wp-admin
+RewriteRule ^wp-admin$ wp-admin/ [R=301,L]
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+RewriteRule ^(wp-(content|admin|includes).*) $1 [L]
+RewriteRule ^(.*\.php)$ $1 [L]
+RewriteRule . index.php [L]';
+		} else {
+			$htaccess_rules = 'RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
 RewriteRule ^index\.php$ - [L]
 
 # add a trailing slash to /wp-admin
@@ -391,6 +408,7 @@ RewriteRule ^ - [L]
 RewriteRule ^([_0-9a-zA-Z-]+/)?(wp-(content|admin|includes).*) $2 [L]
 RewriteRule ^([_0-9a-zA-Z-]+/)?(.*\.php)$ $2 [L]
 RewriteRule . index.php [L]';
+		}
 
 		?>
 		<div class="wu-mb-6">
@@ -455,6 +473,30 @@ RewriteRule . index.php [L]';
 	}
 
 	/**
+	 * Resolves the wp-config.php path, checking both ABSPATH and one level above.
+	 *
+	 * @since 2.0.0
+	 * @return string|false The path to wp-config.php, or false if not found/writable.
+	 */
+	protected function get_wp_config_path() {
+
+		$wp_config_path = ABSPATH . 'wp-config.php';
+
+		if (file_exists($wp_config_path) && is_writable($wp_config_path)) {
+			return $wp_config_path;
+		}
+
+		// WordPress supports wp-config.php one level above ABSPATH
+		$wp_config_path = trailingslashit(dirname(ABSPATH)) . 'wp-config.php';
+
+		if (file_exists($wp_config_path) && is_writable($wp_config_path)) {
+			return $wp_config_path;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Attempts to modify wp-config.php to enable multisite.
 	 *
 	 * @since 2.0.0
@@ -462,15 +504,15 @@ RewriteRule . index.php [L]';
 	 */
 	protected function modify_wp_config(): bool {
 
-		$wp_config_path = ABSPATH . 'wp-config.php';
+		$wp_config_path = $this->get_wp_config_path();
 
-		if (! file_exists($wp_config_path) || ! is_writable($wp_config_path)) {
+		if (false === $wp_config_path) {
 			return false;
 		}
 
 		$config_content = file_get_contents($wp_config_path);
 
-		if ($config_content === false) {
+		if (false === $config_content) {
 			return false;
 		}
 
@@ -483,13 +525,13 @@ RewriteRule . index.php [L]';
 		$search          = "/* That's all, stop editing! Happy publishing. */";
 		$insert_position = strpos($config_content, $search);
 
-		if ($insert_position === false) {
+		if (false === $insert_position) {
 			// Fallback: look for the wp-settings.php include
 			$search          = "require_once ABSPATH . 'wp-settings.php';";
 			$insert_position = strpos($config_content, $search);
 		}
 
-		if ($insert_position === false) {
+		if (false === $insert_position) {
 			return false; // Can't find a safe place to insert
 		}
 
@@ -522,8 +564,8 @@ RewriteRule . index.php [L]';
 			// Create network tables
 			install_network();
 
-			$base   = parse_url(trailingslashit(get_option('home')), PHP_URL_PATH);
-			$domain = parse_url(get_option('home'), PHP_URL_HOST);
+			$base   = wp_parse_url(trailingslashit(get_option('home')), PHP_URL_PATH);
+			$domain = wp_parse_url(get_option('home'), PHP_URL_HOST);
 
 			// Populate network
 			$result = populate_network(1, $domain, $email, $sitename, $base, $subdomain_install);
@@ -533,10 +575,8 @@ RewriteRule . index.php [L]';
 			}
 
 			// Add final multisite constants to wp-config.php
-			$this->add_final_multisite_constants($subdomain_install, $domain);
-
-			return true;
-		} catch (Exception $e) {
+			return $this->add_final_multisite_constants($subdomain_install, $domain);
+		} catch (\Exception $e) {
 			return false;
 		}
 	}
@@ -551,15 +591,15 @@ RewriteRule . index.php [L]';
 	 */
 	protected function add_final_multisite_constants(bool $subdomain_install, string $domain): bool {
 
-		$wp_config_path = ABSPATH . 'wp-config.php';
+		$wp_config_path = $this->get_wp_config_path();
 
-		if (! file_exists($wp_config_path) || ! is_writable($wp_config_path)) {
+		if (false === $wp_config_path) {
 			return false;
 		}
 
 		$config_content = file_get_contents($wp_config_path);
 
-		if ($config_content === false) {
+		if (false === $config_content) {
 			return false;
 		}
 
@@ -576,13 +616,21 @@ RewriteRule . index.php [L]';
 		$constants_to_add .= "define( 'SITE_ID_CURRENT_SITE', 1 );\n";
 		$constants_to_add .= "define( 'BLOG_ID_CURRENT_SITE', 1 );\n\n";
 
-		// Find the location to insert the constants (after WP_ALLOW_MULTISITE)
-		$search          = "define( 'WP_ALLOW_MULTISITE', true );";
+		// Find the location to insert the constants (after WP_ALLOW_MULTISITE) using regex for flexible spacing
+		if (preg_match('/define\s*\(\s*[\'"]WP_ALLOW_MULTISITE[\'"]\s*,\s*true\s*\)\s*;/i', $config_content, $matches, PREG_OFFSET_CAPTURE)) {
+			$insert_position = $matches[0][1] + strlen($matches[0][0]);
+			$new_content     = substr_replace($config_content, $constants_to_add, $insert_position, 0);
+
+			return file_put_contents($wp_config_path, $new_content) !== false;
+		}
+
+		// Fallback: insert before "That's all" comment
+		$search          = "/* That's all, stop editing! Happy publishing. */";
 		$insert_position = strpos($config_content, $search);
 
-		if ($insert_position !== false) {
-			$insert_position += strlen($search);
-			$new_content      = substr_replace($config_content, $constants_to_add, $insert_position, 0);
+		if (false !== $insert_position) {
+			$new_content = substr_replace($config_content, $constants_to_add, $insert_position, 0);
+
 			return file_put_contents($wp_config_path, $new_content) !== false;
 		}
 
@@ -602,7 +650,7 @@ RewriteRule . index.php [L]';
 		}
 
 		wp_add_inline_script(
-			'wp-admin',
+			'jquery',
 			'
 			// Copy to clipboard functionality
 			document.addEventListener("DOMContentLoaded", function() {
