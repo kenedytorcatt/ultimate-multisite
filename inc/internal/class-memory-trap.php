@@ -78,8 +78,7 @@ class Memory_Trap {
 
 				$err = error_get_last();
 
-			if ((!is_null($err)) && (!in_array($err['type'], [E_NOTICE, E_WARNING, E_DEPRECATED, E_USER_DEPRECATED]))) { // phpcs:ignore
-
+				if ( ! is_null($err) && E_ERROR === $err['type'] && str_contains($err['message'], 'Allowed memory size')) {
 					$this->memory_limit_error_handler($err);
 				}
 			}
