@@ -1,6 +1,6 @@
 <?php
 /**
- * Multisite Ultimate class to hold current objects
+ * Ultimate Multisite class to hold current objects
  *
  * @package WP_Ultimo
  * @subpackage Current
@@ -13,11 +13,11 @@ namespace WP_Ultimo;
 defined('ABSPATH') || exit;
 
 /**
- * Multisite Ultimate class to hold current objects
+ * Ultimate Multisite class to hold current objects
  *
  * @since 2.0.0
  */
-class Current {
+class Current implements \WP_Ultimo\Interfaces\Singleton {
 
 	use \WP_Ultimo\Traits\Singleton;
 
@@ -221,6 +221,13 @@ class Current {
 	 * @return void
 	 */
 	public function load_currents(): void {
+
+		// On the wp hook, only re-run if we're on the frontend
+		// (query var overrides from pretty URLs only work there).
+		// On admin or AJAX, the init run already set everything.
+		if (did_action('init') && $this->site && (is_admin() || wp_doing_ajax())) {
+			return;
+		}
 
 		$site = false;
 

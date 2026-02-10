@@ -183,7 +183,7 @@ abstract class Base_Model implements \JsonSerializable {
 		$value = call_user_func([$this, "get_{$field}"]);
 
 		if ( ! is_numeric($value)) {
-			_doing_it_wrong(__METHOD__, esc_html__('You can only use numeric fields to generate hashes.', 'multisite-ultimate'), '2.0.0');
+			_doing_it_wrong(__METHOD__, esc_html__('You can only use numeric fields to generate hashes.', 'ultimate-multisite'), '2.0.0');
 
 			return false;
 		}
@@ -292,7 +292,6 @@ abstract class Base_Model implements \JsonSerializable {
 	 *
 	 * @since 2.0.0
 	 * @return Schema
-	 * @throws \ReflectionException
 	 */
 	public static function get_schema() {
 
@@ -300,13 +299,7 @@ abstract class Base_Model implements \JsonSerializable {
 
 		$query_class = new $instance->query_class();
 
-		$reflector = new \ReflectionObject($query_class);
-
-		$method = $reflector->getMethod('get_columns');
-
-		$method->setAccessible(true);
-
-		$columns = $method->invoke($query_class);
+		$columns = $query_class->get_columns();
 
 		return array_map(
 			fn($column) => $column->to_array(),
@@ -374,7 +367,7 @@ abstract class Base_Model implements \JsonSerializable {
 	 *
 	 * @param string $column The name of the column to query for.
 	 * @param string $value Value to search for.
-	 * @return Base_Model|false
+	 * @return static|false
 	 */
 	public static function get_by($column, $value) {
 
@@ -643,7 +636,7 @@ abstract class Base_Model implements \JsonSerializable {
 	public function delete() {
 
 		if ( ! $this->get_id()) {
-			return new \WP_Error("wu_{$this->model}_delete_unsaved_item", __('Item not found.', 'multisite-ultimate'));
+			return new \WP_Error("wu_{$this->model}_delete_unsaved_item", __('Item not found.', 'ultimate-multisite'));
 		}
 
 		/**
@@ -717,12 +710,12 @@ abstract class Base_Model implements \JsonSerializable {
 
 		if ( ! $this->get_meta_table_name()) {
 
-			// _doing_it_wrong(__METHOD__, __('This model does not support metadata.', 'multisite-ultimate'), '2.0.0');
+			// _doing_it_wrong(__METHOD__, __('This model does not support metadata.', 'ultimate-multisite'), '2.0.0');
 
 			return false;
 		}
 
-		// _doing_it_wrong(__METHOD__, __('Model metadata only works for already saved models.', 'multisite-ultimate'), '2.0.0');
+		// _doing_it_wrong(__METHOD__, __('Model metadata only works for already saved models.', 'ultimate-multisite'), '2.0.0');
 		return ! (! $this->get_id() && ! $this->_mocked);
 	}
 
@@ -743,12 +736,9 @@ abstract class Base_Model implements \JsonSerializable {
 		}
 
 		$meta_type = $this->get_meta_type_name();
+		$value     = get_metadata_raw($meta_type, $this->get_id(), $key, $single);
 
-		if (metadata_exists($meta_type, $this->get_id(), $key)) {
-			return get_metadata($meta_type, $this->get_id(), $key, $single);
-		}
-
-		return $default_value;
+		return ! is_null($value) ? $value : $default_value;
 	}
 
 	/**
@@ -766,7 +756,7 @@ abstract class Base_Model implements \JsonSerializable {
 		}
 
 		if ( ! is_array($meta)) {
-			_doing_it_wrong(__METHOD__, esc_html__('This method expects an array as argument.', 'multisite-ultimate'), '2.0.0');
+			_doing_it_wrong(__METHOD__, esc_html__('This method expects an array as argument.', 'ultimate-multisite'), '2.0.0');
 
 			return false;
 		}

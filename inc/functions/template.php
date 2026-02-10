@@ -41,7 +41,7 @@ function wu_get_template($view, $args = [], $default_view = false) {
 	 * Allows developers to add additional folders to the replaceable list.
 	 *
 	 * Be careful, as allowing additional folders might cause
-	 * out-of-date copies to be loaded instead of the Multisite Ultimate versions.
+	 * out-of-date copies to be loaded instead of the Ultimate Multisite versions.
 	 *
 	 * @since 2.0.0
 	 * @param array $replaceable_views List of allowed folders.
@@ -58,8 +58,8 @@ function wu_get_template($view, $args = [], $default_view = false) {
 	);
 
 	/*
-		* Only allow template for emails and signup for now
-		*/
+	* Only allow template for emails and signup for now
+	*/
 	if (preg_match('/(' . implode('\/?|', $replaceable_views) . '\/?)\w+/', $view)) {
 		$template = apply_filters('wu_view_override', $template, $view, $default_view);
 	}

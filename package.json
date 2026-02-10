@@ -1,42 +1,81 @@
 {
-  "version": "2.4.3",
-  "name": "multisite-ultimate",
-  "title": "Multisite Ultimate",
-  "homepage": "https://multisiteultimate.com/",
-  "authors": [{
-    "name": "David Stone",
-    "email": "david@multisiteultimate.com"
-  }],
+  "version": "2.4.11-beta.4",
+  "name": "ultimate-multisite",
+  "title": "Ultimate Multisite",
+  "homepage": "https://ultimatemultisite.com/",
+  "authors": [
+    {
+      "name": "David Stone",
+      "email": "david@ultimatemultisite.com"
+    }
+  ],
   "repository": {
     "type": "git",
     "url": "git://github.com/superdav/wp-multisite-waas.git"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@wordpress/env": "^10.27.0",
+    "@wordpress/eslint-plugin": "^23.0.0",
+    "@wordpress/stylelint-config": "^23.29.0",
     "clean-css-cli": "^5.6.3",
     "cypress": "^14.5.4",
     "cypress-mailpit": "^1.4.0",
+    "eslint": "^8.57.1",
+    "globals": "^16.5.0",
+    "lint-staged": "^16.2.7",
     "npm-run-all": "^4.1.5",
+    "stylelint": "^16.26.1",
+    "stylelint-config-standard": "^39.0.1",
     "uglify-js": "^3.19.3"
   },
   "config": {
     "translate": true
   },
   "scripts": {
-    "prebuild": "npm run makepot &&composer install -o --no-dev",
+    "prebuild": "npm run makepot && composer install -o --no-dev",
     "prebuild:dev": "composer install",
     "copylibs": "node scripts/copy-libs.js",
-    "build": "npm run copylibs && npm run uglify && npm run cleancss && npm run archive",
-    "build:dev": "npm run copylibs && npm run uglify && npm run cleancss && npm run makepot",
-    "prearchive": "php encrypt-sectrets.php",
+    "build": "npm-run-all --parallel copylibs uglify cleancss generate:hooks",
+    "postbuild": "npm run archive",
+    "generate:hooks": "php inc/documentation/generate-berlindb-hooks.php",
+    "build:dev": "npm run copylibs && npm run uglify && npm run cleancss && npm run makepot && npm run generate:hooks",
+    "build:translate": "npm run copylibs && npm run uglify && npm run cleancss && npm run makepot && npm run translate",
+    "prearchive": "php encrypt-secrets.php",
     "archive": "node scripts/archive.js",
-    "postarchive": "node scripts/post-archive.js",
     "preuglify": "node scripts/clean-js.js",
     "uglify": "node scripts/uglify.js",
     "precleancss": "node scripts/clean-css.js",
     "cleancss": "node scripts/cleancss.js",
     "makepot": "node scripts/makepot.js",
-    "env:start": "wp-env start",
+    "test": "vendor/bin/phpunit",
+    "test:coverage": "php -d zend_extension=xdebug -d xdebug.mode=coverage vendor/bin/phpunit --coverage-html=coverage-html --coverage-clover=coverage.xml --coverage-text",
+    "test:watch": "vendor/bin/phpunit --watch",
+    "lint": "run-p lint:php lint:js lint:css",
+    "lint:php": "vendor/bin/phpcs",
+    "lint:php:fix": "vendor/bin/phpcbf",
+    "lint:js": "eslint assets/js --ext .js --ignore-pattern '*.min.js'",
+    "lint:js:fix": "eslint assets/js --ext .js --ignore-pattern '*.min.js' --fix",
+    "lint:css": "stylelint 'assets/css/**/*.css' --ignore-pattern '*.min.css'",
+    "lint:css:fix": "stylelint 'assets/css/**/*.css' --ignore-pattern '*.min.css' --fix",
+    "lint:fix": "run-p lint:php:fix lint:js:fix lint:css:fix",
+    "stan": "vendor/bin/phpstan analyse",
+    "quality": "run-s lint stan",
+    "quality:fix": "run-s lint:fix stan",
+    "check": "run-s lint stan test",
+    "dev:install": "run-s install:deps setup:hooks",
+    "install:deps": "run-p install:composer install:npm",
+    "install:composer": "composer install",
+    "install:npm": "npm install",
+    "setup:hooks": "bash bin/setup-hooks.sh",
+    "dev:setup": "run-s install:deps setup:hooks",
+    "clean": "run-p clean:coverage clean:cache",
+    "clean:coverage": "rm -rf coverage-html coverage.xml",
+    "clean:cache": "rm -f .phpunit.result.cache && rm -rf node_modules/.cache",
+    "translate": "php scripts/translate.php",
+    "translate:force": "php scripts/translate.php --force",
+    "env:fix-perms": "docker run --rm -v \"$HOME/.wp-env:/wp-env\" alpine chown -R \"$(id -u):$(id -g)\" /wp-env || true",
+    "env:start": "npm run env:fix-perms && wp-env start",
     "env:stop": "wp-env stop",
     "env:clean": "wp-env clean all",
     "env:destroy": "wp-env destroy all",
@@ -56,5 +95,13 @@
   "dependencies": {
     "apexcharts": "^5.2.0",
     "shepherd.js": "^14.5.0"
+  },
+  "lint-staged": {
+    "assets/js/**/*.js": [
+      "eslint --fix --ignore-pattern '*.min.js'"
+    ],
+    "assets/css/**/*.css": [
+      "stylelint --fix --ignore-pattern '*.min.css'"
+    ]
   }
 }

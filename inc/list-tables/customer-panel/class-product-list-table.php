@@ -31,7 +31,7 @@ class Product_List_Table extends Parent_Product_List_Table {
 		parent::__construct();
 
 		$this->modes = [
-			'grid' => __('Grid View', 'multisite-ultimate'),
+			'grid' => __('Grid View', 'ultimate-multisite'),
 		];
 
 		$this->current_mode = 'grid';
@@ -46,19 +46,6 @@ class Product_List_Table extends Parent_Product_List_Table {
 	public function get_columns() {
 
 		return [];
-	}
-
-	/**
-	 * Resets the filters.
-	 *
-	 * @since 2.0.0
-	 */
-	public function get_filters(): array {
-
-		return [
-			'filters'      => [],
-			'date_filters' => [],
-		];
 	}
 
 	/**

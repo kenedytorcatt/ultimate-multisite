@@ -1,6 +1,8 @@
 <?php
-/** global $themes */
-defined( 'ABSPATH' ) || exit;
+/** Global $themes */
+defined('ABSPATH') || exit;
+
+use WP_Ultimo\Limitations\Limit_Site_Templates;
 ?>
 
 <ul data-columns="1" class='items wu--mx-1 wu-overflow-hidden wu-multiselect-content wu-static wu-my-2'>
@@ -23,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 
 			<div class="wu-w-1/6 wu-mr-4">
 
-			<img class="wu-rounded wu-w-full wu-image-preview" src="<?php echo esc_url($site_template->get_featured_image('thumb')); ?>" data-image="<?php echo esc_url($site_template->get_featured_image()); ?>">
+			<img class="wu-rounded wu-w-full wu-image-preview" src="<?php echo esc_url($site_template->get_featured_image('thumb')); ?>" data-image="<?php echo esc_url($site_template->get_featured_image()); ?>" alt="<?php esc_attr_e('Template Site Thumbnail', 'ultimate-multisite'); ?>">
 
 			</div>
 
@@ -43,41 +45,41 @@ defined( 'ABSPATH' ) || exit;
 
 			<span class="wu-mt-2 wu-block wu-text-xs">
 
-				<?php echo ! $site_template->get_categories() ? esc_html__('No categories', 'multisite-ultimate') : esc_html(implode(', ', $site_template->get_categories())); ?>
+				<?php echo ! $site_template->get_categories() ? esc_html__('No categories', 'ultimate-multisite') : esc_html(implode(', ', $site_template->get_categories())); ?>
 
 			</span>
 
-			</div> 
+			</div>
 
-			<div class="sm:wu-ml-4 sm:wu-w-1/3 wu-mt-4 sm:wu--mt-1" v-if="site_template_selection_mode === 'choose_available_templates'">
+			<div class="sm:wu-ml-4 sm:wu-w-1/3 wu-mt-4 sm:wu--mt-1" v-if="site_template_selection_mode === '<?php echo esc_attr(Limit_Site_Templates::MODE_CHOOSE_AVAILABLE_TEMPLATES); ?>'">
 
 			<h3 class="wu-my-1 wu-text-2xs wu-uppercase wu-text-gray-600">
 
-				<?php esc_html_e('Behavior', 'multisite-ultimate'); ?>
+				<?php esc_html_e('Behavior', 'ultimate-multisite'); ?>
 
 			</h3>
 
-			<select 
-				v-on:change="pre_selected_template = ($event.target.value === 'pre_selected' ? '<?php echo esc_attr($site_template->get_id()); ?>' : '')" 
+			<select
+				v-on:change="pre_selected_template = ($event.target.value === 'pre_selected' ? '<?php echo esc_attr($site_template->get_id()); ?>' : '')"
 				name="modules[site_templates][limit][<?php echo esc_attr($site_template->get_id()); ?>][behavior]"
 				class="wu-w-full"
 			>
-				<option <?php selected('available' === $template_settings->behavior); ?> value="available"><?php esc_html_e('Available', 'multisite-ultimate'); ?></option>
-				<option <?php selected('not_available' === $template_settings->behavior); ?> value="not_available"><?php esc_html_e('Not Available', 'multisite-ultimate'); ?></option>
-				<option :disabled="pre_selected_template !== '' && pre_selected_template !== false && pre_selected_template != '<?php echo esc_attr($site_template->get_id()); ?>'" <?php selected('pre_selected' === $template_settings->behavior); ?> value="pre_selected"><?php esc_html_e('Pre-Selected', 'multisite-ultimate'); ?></option>
+				<option <?php selected('not_available' === $template_settings->behavior); ?> value="not_available"><?php esc_html_e('Not Available', 'ultimate-multisite'); ?></option>
+				<option <?php selected('available' === $template_settings->behavior); ?> value="available"><?php esc_html_e('Available', 'ultimate-multisite'); ?></option>
+				<option :disabled="pre_selected_template !== '' && pre_selected_template !== false && pre_selected_template != '<?php echo esc_attr($site_template->get_id()); ?>'" <?php selected('pre_selected' === $template_settings->behavior); ?> value="pre_selected"><?php esc_html_e('Pre-Selected', 'ultimate-multisite'); ?></option>
 			</select>
 
 			</div>
 
-			<div class="sm:wu-ml-4 wu-flex-shrink wu-mt-4 sm:wu-mt-0" v-if="site_template_selection_mode === 'assign_template'">
+			<div class="sm:wu-ml-4 wu-flex-shrink wu-mt-4 sm:wu-mt-0" v-if="site_template_selection_mode === '<?php echo esc_attr(Limit_Site_Templates::MODE_ASSIGN_TEMPLATE); ?>'">
 
 			<div class="wu-toggle wu-mt-1">
 
-				<input 
+				<input
 				<?php checked((int) $site_template->get_id() === (int) $product->get_limitations()->site_templates->get_pre_selected_site_template()); ?>
-				class="wu-tgl wu-tgl-ios" 
-				value="pre_selected" 
-				id="wu-tg-<?php echo esc_attr($site_template->get_id()); ?>" 
+				class="wu-tgl wu-tgl-ios"
+				value="pre_selected"
+				id="wu-tg-<?php echo esc_attr($site_template->get_id()); ?>"
 				type="checkbox"
 				v-on:click="pre_selected_template = <?php echo esc_attr($site_template->get_id()); ?>"
 				v-bind:checked="pre_selected_template == <?php echo esc_attr($site_template->get_id()); ?>"

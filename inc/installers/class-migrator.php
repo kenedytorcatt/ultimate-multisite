@@ -1,6 +1,6 @@
 <?php
 /**
- * Multisite Ultimate 1.X to 2.X migrator.
+ * Ultimate Multisite 1.X to 2.X migrator.
  *
  * @package WP_Ultimo
  * @subpackage Installers
@@ -15,6 +15,7 @@ use Ifsnop\Mysqldump\Mysqldump;
 use WP_Error;
 use WP_Ultimo\Async_Calls;
 use WP_Ultimo\Contracts\Session;
+use WP_Ultimo\Limitations\Limit_Site_Templates;
 use WP_Ultimo\Traits\Singleton;
 use WP_Ultimo\UI\Template_Previewer;
 use WP_Ultimo\Models\Checkout_Form;
@@ -32,7 +33,7 @@ defined('ABSPATH') || exit;
 // phpcs:disable WordPress.DB.DirectDatabaseQuery
 
 /**
- * Multisite Ultimate 1.X to 2.X migrator.
+ * Ultimate Multisite 1.X to 2.X migrator.
  *
  * @since 2.0.0
  */
@@ -259,12 +260,12 @@ class Migrator extends Base_Installer {
 
 		if ($dry_run && ! $force_all) {
 			$steps['dry_run_check'] = [
-				'title'       => __('Pre-Migration Check', 'multisite-ultimate'),
-				'description' => __('Runs all migrations in a sand-boxed environment to see if it hits an error.', 'multisite-ultimate'),
+				'title'       => __('Pre-Migration Check', 'ultimate-multisite'),
+				'description' => __('Runs all migrations in a sand-boxed environment to see if it hits an error.', 'ultimate-multisite'),
 				'help'        => wu_get_documentation_url('migration-errors'),
-				'pending'     => __('Pending', 'multisite-ultimate'),
-				'installing'  => __('Checking...', 'multisite-ultimate'),
-				'success'     => __('Success!', 'multisite-ultimate'),
+				'pending'     => __('Pending', 'ultimate-multisite'),
+				'installing'  => __('Checking...', 'ultimate-multisite'),
+				'success'     => __('Success!', 'ultimate-multisite'),
 				'done'        => false,
 			];
 
@@ -273,105 +274,105 @@ class Migrator extends Base_Installer {
 
 		if ( ! $dry_run) {
 			$steps['backup'] = [
-				'title'       => __('Prepare for Migration', 'multisite-ultimate'),
-				'description' => __('Verifies the data before going forward with the migration.', 'multisite-ultimate'),
-				'pending'     => __('Pending', 'multisite-ultimate'),
-				'installing'  => __('Preparing...', 'multisite-ultimate'),
-				'success'     => __('Success!', 'multisite-ultimate'),
+				'title'       => __('Prepare for Migration', 'ultimate-multisite'),
+				'description' => __('Verifies the data before going forward with the migration.', 'ultimate-multisite'),
+				'pending'     => __('Pending', 'ultimate-multisite'),
+				'installing'  => __('Preparing...', 'ultimate-multisite'),
+				'success'     => __('Success!', 'ultimate-multisite'),
 				'help'        => wu_get_documentation_url('migration-errors'),
 				'done'        => false,
 			];
 		}
 
 		$steps['settings'] = [
-			'title'       => __('Settings', 'multisite-ultimate'),
-			'description' => __('Migrates the settings from the older version.', 'multisite-ultimate'),
+			'title'       => __('Settings', 'ultimate-multisite'),
+			'description' => __('Migrates the settings from the older version.', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['products'] = [
-			'title'       => __('Plans to Products', 'multisite-ultimate'),
-			'description' => __('Converts the old plans into products.', 'multisite-ultimate'),
+			'title'       => __('Plans to Products', 'ultimate-multisite'),
+			'description' => __('Converts the old plans into products.', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['customers'] = [
-			'title'       => __('Users to Customers', 'multisite-ultimate'),
-			'description' => __('Creates customers based on the existing users.', 'multisite-ultimate'),
+			'title'       => __('Users to Customers', 'ultimate-multisite'),
+			'description' => __('Creates customers based on the existing users.', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['memberships'] = [
-			'title'       => __('Subscriptions to Memberships', 'multisite-ultimate'),
-			'description' => __('Converts subscriptions into Memberships.', 'multisite-ultimate'),
+			'title'       => __('Subscriptions to Memberships', 'ultimate-multisite'),
+			'description' => __('Converts subscriptions into Memberships.', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['transactions'] = [
-			'title'       => __('Transactions to Payments & Events', 'multisite-ultimate'),
-			'description' => __('Converts transactions into payments and events.', 'multisite-ultimate'),
+			'title'       => __('Transactions to Payments & Events', 'ultimate-multisite'),
+			'description' => __('Converts transactions into payments and events.', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['discount_codes'] = [
-			'title'       => __('Coupons to Discount Codes', 'multisite-ultimate'),
-			'description' => __('Converts coupons into discount codes.', 'multisite-ultimate'),
+			'title'       => __('Coupons to Discount Codes', 'ultimate-multisite'),
+			'description' => __('Converts coupons into discount codes.', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['sites'] = [
-			'title'       => __('Customer Sites', 'multisite-ultimate'),
-			'description' => __('Adjusts existing customer sites.', 'multisite-ultimate'),
-			'installing'  => __('Making Adjustments...', 'multisite-ultimate'),
+			'title'       => __('Customer Sites', 'ultimate-multisite'),
+			'description' => __('Adjusts existing customer sites.', 'ultimate-multisite'),
+			'installing'  => __('Making Adjustments...', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['site_templates'] = [
-			'title'       => __('Sites Templates', 'multisite-ultimate'),
-			'description' => __('Adjusts existing site templates.', 'multisite-ultimate'),
-			'installing'  => __('Making Adjustments...', 'multisite-ultimate'),
+			'title'       => __('Sites Templates', 'ultimate-multisite'),
+			'description' => __('Adjusts existing site templates.', 'ultimate-multisite'),
+			'installing'  => __('Making Adjustments...', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['domains'] = [
-			'title'       => __('Mapped Domains', 'multisite-ultimate'),
-			'description' => __('Converts mapped domains.', 'multisite-ultimate'),
+			'title'       => __('Mapped Domains', 'ultimate-multisite'),
+			'description' => __('Converts mapped domains.', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['forms'] = [
-			'title'       => __('Checkout Forms', 'multisite-ultimate'),
-			'description' => __('Creates a checkout form based on the existing signup flow.', 'multisite-ultimate'),
+			'title'       => __('Checkout Forms', 'ultimate-multisite'),
+			'description' => __('Creates a checkout form based on the existing signup flow.', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['emails'] = [
-			'title'       => __('Emails & Broadcasts', 'multisite-ultimate'),
-			'description' => __('Converts the emails and broadcasts.', 'multisite-ultimate'),
+			'title'       => __('Emails & Broadcasts', 'ultimate-multisite'),
+			'description' => __('Converts the emails and broadcasts.', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['webhooks'] = [
-			'title'       => __('Webhooks', 'multisite-ultimate'),
-			'description' => __('Migrates existing webhooks.', 'multisite-ultimate'),
+			'title'       => __('Webhooks', 'ultimate-multisite'),
+			'description' => __('Migrates existing webhooks.', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
 
 		$steps['other'] = [
-			'title'       => __('Other Migrations', 'multisite-ultimate'),
-			'description' => __('Other migrations that don\'t really fit anywhere else.', 'multisite-ultimate'),
+			'title'       => __('Other Migrations', 'ultimate-multisite'),
+			'description' => __('Other migrations that don\'t really fit anywhere else.', 'ultimate-multisite'),
 			'help'        => wu_get_documentation_url('migration-errors'),
 			'done'        => false,
 		];
@@ -380,9 +381,9 @@ class Migrator extends Base_Installer {
 			fn($item) => wp_parse_args(
 				$item,
 				[
-					'pending'    => __('Pending', 'multisite-ultimate'),
-					'installing' => __('Migrating...', 'multisite-ultimate'),
-					'success'    => __('Success!', 'multisite-ultimate'),
+					'pending'    => __('Pending', 'ultimate-multisite'),
+					'installing' => __('Migrating...', 'ultimate-multisite'),
+					'success'    => __('Success!', 'ultimate-multisite'),
 				]
 			),
 			$steps
@@ -393,7 +394,7 @@ class Migrator extends Base_Installer {
 		 *
 		 * @since 2.0.0
 		 * @param array $steps The list of steps.
-		 * @param \WP_Ultimo\Installers\Migrator $this This class.
+		 * @param \WP_Ultimo\Installers\Migrator $migrator The Migrator class.
 		 */
 		$steps = apply_filters('wu_get_migration_steps', $steps, $this);
 
@@ -459,7 +460,7 @@ class Migrator extends Base_Installer {
 	 * @param string        $installer The installer name.
 	 * @param object        $wizard Wizard class.
 	 *
-	 * @return bool|WP_Error
+	 * @return void
 	 */
 	public function handle($status, $installer, $wizard) {
 
@@ -478,7 +479,7 @@ class Migrator extends Base_Installer {
 		* No installer on this class.
 		*/
 		if ( ! is_callable($callable)) {
-			return $status;
+			return;
 		}
 
 		/*
@@ -534,8 +535,6 @@ class Migrator extends Base_Installer {
 			 * Log errors to later reference.
 			 */
 			wu_log_add(self::LOG_FILE_NAME, $e->__toString(), LogLevel::ERROR);
-
-			return $this->handle_error_messages($e, $session, $this->dry_run, $installer);
 		}
 
 		/*
@@ -559,8 +558,6 @@ class Migrator extends Base_Installer {
 
 			$session->set('back_traces', []);
 		}
-
-		return $status;
 	}
 
 	/**
@@ -569,7 +566,7 @@ class Migrator extends Base_Installer {
 	 * @since 2.0.7
 	 *
 	 * @param \Throwable|null $e The exception thrown.
-	 * @param Session         $session THe Multisite Ultimate session object.
+	 * @param Session         $session THe Ultimate Multisite session object.
 	 * @param boolean         $dry_run If we are on a dry run or not.
 	 * @param string          $installer The name of the installer.
 	 * @return WP_Error
@@ -581,7 +578,7 @@ class Migrator extends Base_Installer {
 		$caller = $dry_run ? $wu_migrator_current_installer : $installer;
 
 		// Translators: %s is the name of the installer.
-		$error_nice_message = sprintf(__('Critical error found when migrating "%s".', 'multisite-ultimate'), $caller);
+		$error_nice_message = sprintf(__('Critical error found when migrating "%s".', 'ultimate-multisite'), $caller);
 
 		if ($session) {
 			$errors = (array) $session->get('errors');
@@ -915,7 +912,7 @@ class Migrator extends Base_Installer {
 			'preview_url_parameter'       => 'template-preview',
 			'bg_color'                    => $this->get_old_setting('top-bar-bg-color', '#f9f9f9'),
 			'button_bg_color'             => $this->get_old_setting('top-bar-button-bg-color', '#00a1ff'),
-			'button_text'                 => $this->get_old_setting('top-bar-button-text', __('Use this Template', 'multisite-ultimate')),
+			'button_text'                 => $this->get_old_setting('top-bar-button-text', __('Use this Template', 'ultimate-multisite')),
 			'display_responsive_controls' => $this->get_old_setting('top-bar-enable-resize', true),
 			'use_custom_logo'             => $this->get_old_setting('top-bar-use-logo'),
 			'custom_logo'                 => $this->get_old_setting('top-bar-logo'),
@@ -1162,12 +1159,12 @@ class Migrator extends Base_Installer {
 				$force_template = get_post_meta($plan->ID, 'wpu_site_template', true);
 
 				if ($force_template && wu_get_site($force_template)) {
-					$site_template_mode = 'assign_template';
+					$site_template_mode = Limit_Site_Templates::MODE_ASSIGN_TEMPLATE;
 				}
 
 				$has_custom_template_list = false;
 			} elseif ($has_custom_template_list) {
-				$site_template_mode = 'choose_available_templates';
+				$site_template_mode = Limit_Site_Templates::MODE_CHOOSE_AVAILABLE_TEMPLATES;
 
 				if (empty($templates)) {
 					$site_template_enabled = false;
@@ -2302,7 +2299,7 @@ class Migrator extends Base_Installer {
 		}
 
 		$checkout_form = [
-			'name'              => __('Signup Form', 'multisite-ultimate'),
+			'name'              => __('Signup Form', 'ultimate-multisite'),
 			'slug'              => 'main-form',
 			'allowed_countries' => $this->get_old_setting('allowed_countries', []),
 			'settings'          => [],
@@ -2339,7 +2336,7 @@ class Migrator extends Base_Installer {
 		 */
 		$post_details = [
 			'post_name'    => $page_slug,
-			'post_title'   => __('Signup', 'multisite-ultimate'),
+			'post_title'   => __('Signup', 'ultimate-multisite'),
 			'post_status'  => 'publish',
 			'post_type'    => 'page',
 			'post_content' => sprintf($post_content, $status->get_slug()),
@@ -2379,7 +2376,7 @@ class Migrator extends Base_Installer {
 		 */
 		$login_post_details = [
 			'post_name'    => $login_page_slug,
-			'post_title'   => __('Login', 'multisite-ultimate'),
+			'post_title'   => __('Login', 'ultimate-multisite'),
 			'post_status'  => 'publish',
 			'post_type'    => 'page',
 			'post_content' => '',

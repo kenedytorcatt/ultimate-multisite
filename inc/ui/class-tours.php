@@ -30,11 +30,12 @@ class Tours {
 	protected $tours = [];
 
 	/**
-	 * Element construct.
+	 * Initialize the singleton.
 	 *
 	 * @since 2.0.0
+	 * @return void
 	 */
-	public function __construct() {
+	public function init(): void {
 
 		add_action('wp_ajax_wu_mark_tour_as_finished', [$this, 'mark_as_finished']);
 
@@ -97,8 +98,8 @@ class Tours {
 					'ajaxurl' => wu_ajax_url(),
 					'nonce'   => wp_create_nonce('wu_tour_finished'),
 					'i18n'    => [
-						'next'   => __('Next', 'multisite-ultimate'),
-						'finish' => __('Close', 'multisite-ultimate'),
+						'next'   => __('Next', 'ultimate-multisite'),
+						'finish' => __('Close', 'ultimate-multisite'),
 					],
 				]
 			);

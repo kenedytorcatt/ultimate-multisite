@@ -1,8 +1,18 @@
-<?php
-defined( 'ABSPATH' ) || exit;
+<?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
+/**
+ * Files class from MUCD.
+ */
+
+defined('ABSPATH') || exit;
 
 if ( ! class_exists('MUCD_Files') ) {
 
+	/**
+	 * Multisite Ultimate Clone Duplicator Files class.
+	 *
+	 * Handles file operations for site duplication, including copying
+	 * uploads and other media files between sites.
+	 */
 	class MUCD_Files {
 
 		/**
@@ -102,6 +112,9 @@ if ( ! class_exists('MUCD_Files') ) {
 		 * @return boolean True on success, False on failure
 		 */
 		public static function init_dir($path) {
+			if ( ! function_exists('WP_Filesystem')) {
+				require_once ABSPATH . 'wp-admin/includes/file.php';
+			}
 			/** @var $wp_filesystem WP_Filesystem_Base */
 			global $wp_filesystem;
 			WP_Filesystem();
@@ -120,6 +133,9 @@ if ( ! class_exists('MUCD_Files') ) {
 		 * @param string $dir the path.
 		 */
 		public static function rrmdir($dir): void {
+			if ( ! function_exists('WP_Filesystem')) {
+				require_once ABSPATH . 'wp-admin/includes/file.php';
+			}
 			/** @var $wp_filesystem WP_Filesystem_Base */
 			global $wp_filesystem;
 			WP_Filesystem();

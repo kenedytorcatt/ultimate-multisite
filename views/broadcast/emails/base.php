@@ -4,7 +4,7 @@
  *
  * This template can be overridden by copying it to yourtheme/wp-ultimo/emails/base.php.
  *
- * HOWEVER, on occasion Multisite Ultimate will need to update template files and you
+ * HOWEVER, on occasion Ultimate Multisite will need to update template files and you
  * (the theme developer) will need to copy the new files to your theme to
  * maintain compatibility. We try to do this as little as possible, but it does
  * happen. When this occurs the version of the template file will be bumped and
@@ -14,7 +14,7 @@
  * @package     WP_Ultimo/Views
  * @version     1.4.0
  */
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 if ( ! defined('ABSPATH')) {
 	exit; // Exit if accessed directly
@@ -41,6 +41,7 @@ if ( ! defined('ABSPATH')) {
 				<td style="line-height: 1.6em; clear: both !important; display: block !important; max-width: 600px !important; margin: 0 auto; padding: 20px; border: 1px solid #f0f0f0;background-color:#FFFFFF">
 					<div style="line-height: 1.6em; display: block; max-width: 600px; margin: 0 auto; padding: 0;">
 						<table style="line-height: 1.6em; width: 100%; margin: 0; padding: 0;">
+							<?php if (empty($template_settings['hide_logo'])) : ?>
 							<tr>
 								<td style="background: <?php echo esc_attr($template_settings['background_color']); ?>; text-align: center; padding: 20px 40px; /* margin: -20px; */">
 									<a style="" href="<?php echo esc_attr($site_url); ?>">
@@ -56,9 +57,10 @@ if ( ! defined('ABSPATH')) {
 									</a>
 								</td>
 							</tr>
+							<?php endif; ?>
 							<tr style="">
 								<td style="">
-									<span style="font-family: <?php echo esc_attr($template_settings['content_font']); ?>; font-size: 14px; line-height: 1.6em; color: <?php echo esc_attr($template_settings['content_color']); ?>; font-weight: normal; margin: 0 0 10px; padding: 0; text-align: <?php echo esc_attr($template_settings['content_align']); ?>;"><?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+									<span style="font-family: <?php echo esc_attr($template_settings['content_font']); ?>; font-size: 14px; line-height: 1.6em; color: <?php echo esc_attr($template_settings['content_color']); ?>; font-weight: normal; margin: 0 0 10px; padding: 0; text-align: <?php echo esc_attr($template_settings['content_align']); ?>;"><?php echo wp_kses($content, wu_kses_allowed_html()); ?></span>
 									<br>
 								</td>
 							</tr>
@@ -92,7 +94,10 @@ if ( ! defined('ABSPATH')) {
 								<td style=" text-align: center;">
 									<p style="font-family: <?php echo esc_attr($template_settings['footer_font']); ?>; font-size: 12px; line-height: 1.6em; color: <?php echo esc_attr($template_settings['footer_color']); ?>; font-weight: normal; margin: 0 0 10px; padding: 0; text-align: <?php echo esc_attr($template_settings['footer_align']); ?>">
 										<strong><?php echo esc_html(wu_get_setting('company_name')); ?></strong><br>
-										<?php echo nl2br(esc_html(wu_get_setting('company_address', []))); ?>
+										<?php
+										$company_address = wu_get_setting('company_address', '');
+										echo is_string($company_address) ? nl2br(esc_html($company_address)) : '';
+										?>
 									</p>
 								</td>
 							</tr>

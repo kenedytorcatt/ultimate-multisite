@@ -170,6 +170,66 @@ function wu_get_product_groups(): array {
 }
 
 /**
+ * Checks if a product type should be treated as a plan.
+ *
+ * By default, only 'plan' type products are considered plans.
+ * Addons can extend this via the 'wu_plan_product_types' filter
+ * to add additional types (e.g., 'network' for multinetwork addon).
+ *
+ * @since 2.3.0
+ *
+ * @param string $type The product type to check.
+ * @return bool Whether the type should be treated as a plan.
+ */
+function wu_is_plan_type(string $type): bool {
+
+	/**
+	 * Filter the product types that should be treated as plans.
+	 *
+	 * This filter allows addons to register additional product types
+	 * that should be recognized as plans in validation and segregation.
+	 *
+	 * @since 2.3.0
+	 * @param array $plan_types Array of product types to treat as plans.
+	 * @return array
+	 */
+	$plan_types = apply_filters('wu_plan_product_types', ['plan']);
+
+	return in_array($type, $plan_types, true);
+}
+
+/**
+ * Checks if a product type has an independent billing cycle.
+ *
+ * Products with independent billing cycles keep their own duration
+ * and duration unit regardless of the plan's billing period.
+ * They are not subject to price variation lookups in the cart.
+ *
+ * @since 2.5.0
+ *
+ * @param string $type The product type to check.
+ * @return bool
+ */
+function wu_has_independent_billing_cycle(string $type): bool {
+
+	/**
+	 * Filter the product types that have independent billing cycles.
+	 *
+	 * Products with independent billing cycles are not forced to match the
+	 * plan's billing period in the cart. This is useful for products like
+	 * domain registrations that always bill yearly regardless of whether
+	 * the plan is monthly or annual.
+	 *
+	 * @since 2.5.0
+	 * @param array $types Array of product types with independent billing cycles.
+	 * @return array
+	 */
+	$types = apply_filters('wu_independent_billing_cycle_product_types', []);
+
+	return in_array($type, $types, true);
+}
+
+/**
  * Takes a list of product objects and separates them into plan and addons.
  *
  * @since 2.0.0
@@ -190,7 +250,7 @@ function wu_segregate_products($products) {
 			}
 		}
 
-		if ($product->get_type() === 'plan' && false === $results[0]) {
+		if (wu_is_plan_type($product->get_type()) && false === $results[0]) {
 			$results[0] = $product;
 		} else {
 			$results[1][] = $product;

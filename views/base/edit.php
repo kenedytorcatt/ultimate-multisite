@@ -4,7 +4,7 @@
  *
  * @since 2.0.0
  */
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 ?>
 <div id="wp-ultimo-wrap" class="<?php wu_wrap_use_container(); ?> wrap">
@@ -13,7 +13,19 @@ defined( 'ABSPATH' ) || exit;
 		<?php echo esc_html($page->edit ? $labels['edit_label'] : $labels['add_new_label']); ?>
 
 		<?php foreach ($page->get_title_links() as $action_link) : ?>
-			<a title="<?php echo esc_attr($action_link['label']); ?>" href="<?php echo esc_url($action_link['url']); ?>" class="page-title-action <?php echo esc_attr($action_link['classes'] ?? ''); ?>" <?php echo esc_attr($action_link['attrs'] ?? ''); ?>>
+			<a title="<?php echo esc_attr($action_link['label']); ?>" href="<?php echo esc_url($action_link['url']); ?>" class="page-title-action <?php echo esc_attr($action_link['classes'] ?? ''); ?>"
+			<?php
+			if (! empty($action_link['attrs'])) {
+				if (is_array($action_link['attrs'])) {
+					foreach ($action_link['attrs'] as $attr_name => $attr_value) {
+						printf(' %s="%s"', esc_attr($attr_name), esc_attr($attr_value));
+					}
+				} else {
+					echo ' ' . $action_link['attrs']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pre-escaped attributes
+				}
+			}
+			?>
+		>
 				<?php if ($action_link['icon']) : ?>
 					<span class="dashicons dashicons-<?php echo esc_attr($action_link['icon']); ?> wu-text-sm wu-align-middle wu-h-4 wu-w-4">&nbsp;</span>
 				<?php endif; ?>
@@ -78,8 +90,8 @@ defined( 'ABSPATH' ) || exit;
 				 * Allow plugin developers to add additional information below the text input
 				 *
 				 * @since 1.8.2
-				 * @param object  Object holding the information
-				 * @param WU_Page Multisite Ultimate Page instance
+				 * @param object  $object Object holding the information
+				 * @param WU_Page $page Ultimate Multisite Page instance
 				 */
 				do_action('wu_edit_page_after_title_input', $object, $page);
 				?>
@@ -124,7 +136,7 @@ defined( 'ABSPATH' ) || exit;
 			 * Allow plugin developers to add new metaboxes
 			 *
 			 * @since 1.8.2
-			 * @param object Object being edited right now
+			 * @param object $object Object being edited right now
 			 */
 			do_meta_boxes($screen->id, 'side', $object);
 			?>
@@ -136,7 +148,7 @@ defined( 'ABSPATH' ) || exit;
 			 * Allow plugin developers to add new metaboxes
 			 *
 			 * @since 1.8.2
-			 * @param object Object being edited right now
+			 * @param object $object Object being edited right now
 			 */
 			do_meta_boxes($screen->id, 'side-bottom', $object);
 			?>
@@ -153,7 +165,7 @@ defined( 'ABSPATH' ) || exit;
 			 * Allow plugin developers to add new metaboxes
 			 *
 			 * @since 1.8.2
-			 * @param object Object being edited right now
+			 * @param object $object Object being edited right now
 			 */
 			do_meta_boxes($screen->id, 'normal', $object);
 
@@ -161,7 +173,7 @@ defined( 'ABSPATH' ) || exit;
 			 * Allow developers to add additional elements after the modals are printed.
 			 *
 			 * @since 2.0.0
-			 * @param object Object being edited right now
+			 * @param object $object Object being edited right now
 			 */
 			do_action("wu_edit_{$screen->id}_after_normal", $object);
 
@@ -171,7 +183,7 @@ defined( 'ABSPATH' ) || exit;
 			 * Allow plugin developers to add new metaboxes
 			 *
 			 * @since 1.8.2
-			 * @param object Object being edited right now
+			 * @param object $object Object being edited right now
 			 */
 			do_meta_boxes($screen->id, 'advanced', $object);
 
@@ -212,8 +224,8 @@ defined( 'ABSPATH' ) || exit;
 	 * Allow plugin developers to add scripts to the bottom of the page
 	 *
 	 * @since 1.8.2
-	 * @param object  Object holding the information
-	 * @param WU_Page Multisite Ultimate Page instance
+	 * @param object  $object Object holding the information
+	 * @param WU_Page $page Ultimate Multisite Page instance
 	 */
 	do_action('wu_page_edit_footer', $object, $page);
 	?>

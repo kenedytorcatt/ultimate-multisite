@@ -31,6 +31,36 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	use \WP_Ultimo\Traits\WP_Ultimo_Subscription_Deprecated;
 
 	/**
+	 * Meta key for swap order.
+	 */
+	const META_SWAP_ORDER = 'wu_swap_order';
+
+	/**
+	 * Meta key for swap scheduled date.
+	 */
+	const META_SWAP_SCHEDULED_DATE = 'wu_swap_scheduled_date';
+
+	/**
+	 * Meta key for cancellation reason.
+	 */
+	const META_CANCELLATION_REASON = 'cancellation_reason';
+
+	/**
+	 * Meta key for discount code.
+	 */
+	const META_DISCOUNT_CODE = 'discount_code';
+
+	/**
+	 * Meta key for verified payment discount.
+	 */
+	const META_VERIFIED_PAYMENT_DISCOUNT = 'verified_payment_discount';
+
+	/**
+	 * Meta key for pending site.
+	 */
+	const META_PENDING_SITE = 'pending_site';
+
+	/**
 	 * ID of the customer attached to this membership.
 	 *
 	 * @since 2.0.0
@@ -277,6 +307,14 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	protected $cancellation_reason;
 
 	/**
+	 * Network ID for multinetwork support.
+	 *
+	 * @since 2.3.0
+	 * @var int|null
+	 */
+	protected $network_id;
+
+	/**
 	 * Keep original list of products.
 	 *
 	 * If the products are changed for some reason,
@@ -290,7 +328,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 * @since 2.0.10
 	 * @var array
 	 */
-	protected $_compiled_product_list = [];
+	protected $compiled_product_list = [];
 
 	/**
 	 * Keep original gateway info.
@@ -302,7 +340,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 * @since 2.0.15
 	 * @var array
 	 */
-	protected $_gateway_info = [];
+	protected $gateway_info = [];
 
 	/**
 	 * Query Class to the static query methods.
@@ -323,14 +361,14 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 
 		parent::__construct($object_model);
 
-		$this->_gateway_info = [
+		$this->gateway_info = [
 			'gateway'                 => $this->get_gateway(),
 			'gateway_customer_id'     => $this->get_gateway_customer_id(),
 			'gateway_subscription_id' => $this->get_gateway_subscription_id(),
 		];
 
 		if (did_action('plugins_loaded')) {
-			$this->_compiled_product_list = $this->get_all_products();
+			$this->compiled_product_list = $this->get_all_products();
 		}
 	}
 
@@ -371,6 +409,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			'signup_method'       => 'default:',
 			'disabled'            => 'default:0',
 			'recurring'           => 'default:0',
+			'network_id'          => 'integer|nullable',
 		];
 	}
 
@@ -626,13 +665,14 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 * @return array
 	 */
 	public function get_all_products() {
-
-		$products = [
-			[
+		$product  = $this->get_plan();
+		$products = [];
+		if ($product) {
+			$products[] = [
 				'quantity' => 1,
 				'product'  => $this->get_plan(),
-			],
-		];
+			];
+		}
 
 		return array_merge($products, $this->get_addon_products());
 	}
@@ -670,7 +710,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	public function swap($order) {
 
 		if ( ! is_a($order, Cart::class)) {
-			return new \WP_Error('invalid-date', __('Swap Cart is invalid.', 'multisite-ultimate'));
+			return new \WP_Error('invalid-date', __('Swap Cart is invalid.', 'ultimate-multisite'));
 		}
 
 		// clear the current addons.
@@ -743,11 +783,11 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		}
 
 		if ( ! wu_validate_date($schedule_date)) {
-			return new \WP_Error('invalid-date', __('Schedule date is invalid.', 'multisite-ultimate'));
+			return new \WP_Error('invalid-date', __('Schedule date is invalid.', 'ultimate-multisite'));
 		}
 
 		if ( ! is_a($order, Cart::class)) {
-			return new \WP_Error('invalid-date', __('Swap Cart is invalid.', 'multisite-ultimate'));
+			return new \WP_Error('invalid-date', __('Swap Cart is invalid.', 'ultimate-multisite'));
 		}
 
 		$date_instance = wu_date($schedule_date);
@@ -786,16 +826,16 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 * Returns the scheduled swap, if any.
 	 *
 	 * @since 2.0.0
-	 * @return object
+	 * @return object|false
 	 */
 	public function get_scheduled_swap() {
 
-		$order          = $this->get_meta('wu_swap_order');
-		$scheduled_date = $this->get_meta('wu_swap_scheduled_date');
+		$order          = $this->get_meta(self::META_SWAP_ORDER);
+		$scheduled_date = $this->get_meta(self::META_SWAP_SCHEDULED_DATE);
 
 		if ( ! $scheduled_date || ! $order) {
-			$this->delete_meta('wu_swap_order');
-			$this->delete_meta('wu_swap_scheduled_date');
+			$this->delete_meta(self::META_SWAP_ORDER);
+			$this->delete_meta(self::META_SWAP_SCHEDULED_DATE);
 
 			return false;
 		}
@@ -814,9 +854,9 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 */
 	public function delete_scheduled_swap(): void {
 
-		$this->delete_meta('wu_swap_order');
+		$this->delete_meta(self::META_SWAP_ORDER);
 
-		$this->delete_meta('wu_swap_scheduled_date');
+		$this->delete_meta(self::META_SWAP_SCHEDULED_DATE);
 
 		do_action('wu_membership_delete_scheduled_swap', $this);
 	}
@@ -831,7 +871,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 
 		$description = sprintf(
 			// translators: %1$s the duration, and %2$s the duration unit (day, week, month, etc)
-			_n('every %2$s', 'every %1$s %2$s', $this->get_duration(), 'multisite-ultimate'), // phpcs:ignore
+			_n('every %2$s', 'every %1$s %2$s', $this->get_duration(), 'ultimate-multisite'), // phpcs:ignore
 			$this->get_duration(),
 			wu_get_translatable_string(($this->get_duration() <= 1 ? $this->get_duration_unit() : $this->get_duration_unit() . 's'))
 		);
@@ -847,12 +887,12 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	public function get_times_billed_description(): string {
 
 		// translators: times billed / subscription duration in cycles. e.g. 1/12 cycles
-		$description = __('%1$s / %2$s cycles', 'multisite-ultimate');
+		$description = __('%1$s / %2$s cycles', 'ultimate-multisite');
 
 		if ($this->is_forever_recurring()) {
 
 			// translators: the place holder is the number of times the membership was billed.
-			$description = __('%1$s / until cancelled', 'multisite-ultimate');
+			$description = __('%1$s / until cancelled', 'ultimate-multisite');
 		}
 
 		return sprintf($description, $this->get_times_billed(), $this->get_billing_cycles());
@@ -872,7 +912,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 
 			$message = sprintf(
 				// translators: %1$s is the formatted price, %2$s the duration, and %3$s the duration unit (day, week, month, etc)
-				_n('%1$s every %3$s', '%1$s every %2$s %3$s', $duration, 'multisite-ultimate'), // phpcs:ignore
+				_n('%1$s every %3$s', '%1$s every %2$s %3$s', $duration, 'ultimate-multisite'), // phpcs:ignore
 				wu_format_currency($this->get_amount(), $this->get_currency()),
 				$duration,
 				wu_get_translatable_string($duration <= 1 ? $this->get_duration_unit() : $this->get_duration_unit() . 's')
@@ -883,7 +923,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			if ( ! $this->is_forever_recurring()) {
 				$billing_cycles_message = sprintf(
 					// translators: %s is the number of billing cycles.
-					_n('for %s cycle', 'for %s cycles', $this->get_billing_cycles(), 'multisite-ultimate'),
+					_n('for %s cycle', 'for %s cycles', $this->get_billing_cycles(), 'ultimate-multisite'),
 					$this->get_billing_cycles()
 				);
 
@@ -892,13 +932,13 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		} else {
 			$pricing['subscription'] = sprintf(
 				// translators: %1$s is the formatted price of the product
-				__('%1$s one time payment', 'multisite-ultimate'),
+				__('%1$s one time payment', 'ultimate-multisite'),
 				wu_format_currency($this->get_initial_amount(), $this->get_currency())
 			);
 		}
 
 		if ($this->is_free()) {
-			$pricing['subscription'] = __('Free!', 'multisite-ultimate');
+			$pricing['subscription'] = __('Free!', 'ultimate-multisite');
 		}
 
 		return implode(' + ', $pricing);
@@ -1157,7 +1197,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		}
 
 		if (null === $this->cancellation_reason) {
-			$this->cancellation_reason = $this->get_meta('cancellation_reason');
+			$this->cancellation_reason = $this->get_meta(self::META_CANCELLATION_REASON);
 		}
 
 		return (string) $this->cancellation_reason;
@@ -1172,8 +1212,8 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 */
 	public function set_cancellation_reason($reason): void {
 
-		$this->meta['cancellation_reason'] = $reason;
-		$this->cancellation_reason         = $reason;
+		$this->meta[ self::META_CANCELLATION_REASON ] = $reason;
+		$this->cancellation_reason                    = $reason;
 	}
 
 	/**
@@ -1231,11 +1271,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		}
 
 		if ($this->get_duration() > 0) {
-			if (false && $this->trial_duration > 0 && $trial) {
-				$expire_timestamp = strtotime('+' . $this->get_trial_duration() . ' ' . $this->trial_duration_unit . ' 23:59:59', $base_timestamp);
-			} else {
-				$expire_timestamp = strtotime('+' . $this->get_duration() . ' ' . $this->get_duration_unit() . ' 23:59:59', $base_timestamp);
-			}
+			$expire_timestamp = strtotime('+' . $this->get_duration() . ' ' . $this->get_duration_unit() . ' 23:59:59', $base_timestamp);
 
 			$extension_days = ['29', '30', '31'];
 
@@ -1266,7 +1302,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		 *
 		 * @param string         $expiration    Calculated expiration date in MySQL format.
 		 * @param int            $membership_id ID of the membership.
-		 * @param \WP_Ultimo\Models\Membership $this          Membership object.
+		 * @param \WP_Ultimo\Models\Membership $membership Membership object.
 		 *
 		 * @since 2.0
 		 */
@@ -1343,11 +1379,11 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	public function get_discount_code() {
 
 		if (null === $this->discount_code) {
-			$this->discount_code = $this->get_meta('discount_code');
+			$this->discount_code = $this->get_meta(self::META_DISCOUNT_CODE);
 		}
 
 		// Get discount code from original payment for compatibility
-		if (empty($this->discount_code) && ! $this->get_meta('verified_payment_discount')) {
+		if (empty($this->discount_code) && ! $this->get_meta(self::META_VERIFIED_PAYMENT_DISCOUNT)) {
 			$original_payment = wu_get_payments(
 				[
 					'number'        => 1,
@@ -1358,16 +1394,16 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			);
 
 			if (isset($original_payment[0])) {
-				$original_cart = $original_payment[0]->get_meta('wu_original_cart');
+				$original_cart = $original_payment[0]->get_meta(Payment::META_ORIGINAL_CART);
 
 				$this->discount_code = $original_cart ? $original_cart->get_discount_code() : false;
 
 				if ($this->discount_code) {
-					$this->update_meta('discount_code', $this->discount_code);
+					$this->update_meta(self::META_DISCOUNT_CODE, $this->discount_code);
 				}
 			}
 
-			$this->update_meta('verified_payment_discount', true);
+			$this->update_meta(self::META_VERIFIED_PAYMENT_DISCOUNT, true);
 		}
 
 		return $this->discount_code;
@@ -1383,8 +1419,8 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	public function set_discount_code($discount_code): void {
 
 		if (is_a($discount_code, '\WP_Ultimo\Models\Discount_Code')) {
-			$this->meta['discount_code'] = $discount_code;
-			$this->discount_code         = $discount_code;
+			$this->meta[ self::META_DISCOUNT_CODE ] = $discount_code;
+			$this->discount_code                    = $discount_code;
 
 			return;
 		}
@@ -1395,8 +1431,8 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			return;
 		}
 
-		$this->meta['discount_code'] = $discount_code;
-		$this->discount_code         = $discount_code;
+		$this->meta[ self::META_DISCOUNT_CODE ] = $discount_code;
+		$this->discount_code                    = $discount_code;
 	}
 
 	/**
@@ -1842,9 +1878,9 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 * @since 2.0.0
 	 *
 	 * @param array $site_info Site info.
-	 * @return bool
+	 * @return Site
 	 */
-	public function create_pending_site($site_info): bool {
+	public function create_pending_site($site_info): Site {
 
 		global $current_site;
 
@@ -1859,33 +1895,32 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			]
 		);
 
-		$site = new \WP_Ultimo\Models\Site($site_info);
+		$site = new Site($site_info);
 
-		return (bool) $this->update_meta('pending_site', $site);
+		$this->update_meta('pending_site', $site);
+		return $site;
 	}
 
 	/**
-	 * Updates a pending site to the membership meta data.
+	 * Updates a pending site to the membership meta-data.
 	 *
-	 * @since 2.0.11
-	 *
-	 * @param \WP_Ultimo\Models\Site $site Site info.
+	 * @param Site $site Site info.
 	 * @return bool
 	 */
 	public function update_pending_site($site) {
 
-		return $this->update_meta('pending_site', $site);
+		return $this->update_meta(self::META_PENDING_SITE, $site);
 	}
 
 	/**
 	 * Returns the pending site, if any.
 	 *
+	 * @return Site|false
 	 * @since 2.0.0
-	 * @return \WP_Ultimo\Models\Site|false
 	 */
 	public function get_pending_site() {
 
-		return $this->get_meta('pending_site');
+		return $this->get_meta(self::META_PENDING_SITE);
 	}
 
 	/**
@@ -1913,26 +1948,34 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			],
 			admin_url('admin-ajax.php')
 		);
+		$headers   = array(
+			'Cache-Control' => 'no-cache',
+		);
 
-		if ( function_exists('fastcgi_finish_request') && version_compare(phpversion(), '7.0.16', '>=') ) {
-			// The server supports fastcgi, so we use this to guarantee that the function started before abort connection
+		// Include Basic auth in loopback requests.
+		if ( isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW']) ) {
+			$headers['Authorization'] = 'Basic ' . base64_encode(sanitize_text_field(wp_unslash($_SERVER['PHP_AUTH_USER'])) . ':' . sanitize_text_field(wp_unslash($_SERVER['PHP_AUTH_PW']))); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		}
+		$request_args = [
+			'cookies'   => wp_unslash($_COOKIE), // Cookies are needed for nonce check to work.
+			'timeout'   => 10,
+			/** This filter is documented in wp-includes/class-wp-http-streams.php */
+			'sslverify' => apply_filters('https_local_ssl_verify', false),
+			'headers'   => $headers,
+		];
 
-			wp_remote_request(
-				$rest_path,
-				[
-					'sslverify' => false,
-				]
-			);
-		} elseif (ignore_user_abort(true) !== ignore_user_abort(false)) {
-			// We do not have fastcgi but can make the request continue without listening
+		if ( ! function_exists('fastcgi_finish_request')) {
+			// We do not have fastcgi but can make the request continue without listening with blocking = false.
+			$request_args['blocking'] = false;
+		}
+		$result = wp_remote_request(
+			$rest_path,
+			$request_args
+		);
 
-			wp_remote_request(
-				$rest_path,
-				[
-					'sslverify' => false,
-					'blocking'  => false,
-				]
-			);
+		if (is_wp_error($result)) {
+			// translators: %s full error message.
+			wu_log_add("membership-{$this->get_id()}", sprintf(__('Failed to trigger async site creation. The site will not be created until the next cron run which is much slower: %s'), $result->get_error_message()));
 		}
 
 		wu_enqueue_async_action('wu_async_publish_pending_site', ['membership_id' => $this->get_id()], 'membership');
@@ -2142,7 +2185,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			 * @param string     $expiration       Calculated expiration date.
 			 * @param Product    $plan Membership level object.
 			 * @param int        $membership_id    The ID of the membership.
-			 * @param Membership $this             Membership object.
+			 * @param Membership $membership       Membership object.
 			 *
 			 * @since 2.0.0
 			 */
@@ -2154,7 +2197,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		 *
 		 * @param string     $expiration    New expiration date to be set.
 		 * @param int        $membership_id The ID of the membership.
-		 * @param Membership $this          Membership object.
+		 * @param Membership $membership    Membership object.
 		 *
 		 * @since 2.0
 		 */
@@ -2185,7 +2228,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		 *
 		 * @param string     $expiration    New expiration date to be set.
 		 * @param int        $membership_id The ID of the membership.
-		 * @param Membership $this          Membership object.
+		 * @param Membership $membership          Membership object.
 		 *
 		 * @since 2.0
 		 */
@@ -2217,7 +2260,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		 * Triggers before the membership is cancelled.
 		 *
 		 * @param int            $membership_id The ID of the membership.
-		 * @param \WP_Ultimo\Models\Membership $this          Membership object.
+		 * @param \WP_Ultimo\Models\Membership $membership Membership object.
 		 *
 		 * @since 2.0
 		 */
@@ -2240,7 +2283,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		 * This triggers the cancellation email.
 		 *
 		 * @param int            $membership_id The ID of the membership.
-		 * @param \WP_Ultimo\Models\Membership $this          Membership object.
+		 * @param \WP_Ultimo\Models\Membership $membership Membership object.
 		 *
 		 * @since 2.0
 		 */
@@ -2336,11 +2379,11 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 */
 	protected function has_product_changes() {
 
-		if (empty($this->_compiled_product_list)) {
+		if (empty($this->compiled_product_list)) {
 			return false;
 		}
 
-		$old_products = $this->_compiled_product_list;
+		$old_products = $this->compiled_product_list;
 		$new_products = $this->get_all_products();
 
 		if (count($old_products) !== count($new_products)) {
@@ -2370,7 +2413,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			'gateway_subscription_id' => $this->get_gateway_subscription_id(),
 		];
 
-		foreach ($this->_gateway_info as $key => $value) {
+		foreach ($this->gateway_info as $key => $value) {
 			if ($current_gateway[ $key ] !== $value) {
 				$has_change = true;
 
@@ -2460,19 +2503,19 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			$this->set_auto_renew(false);
 		}
 
-		if ($this->has_gateway_changes() && $this->_gateway_info['gateway']) {
+		if ($this->has_gateway_changes() && $this->gateway_info['gateway']) {
 			/**
 			 * Lets deal with gateway change processing
 			 * the cancelation of the original one
 			 */
 
-			$gateway = wu_get_gateway($this->_gateway_info['gateway']);
+			$gateway = wu_get_gateway($this->gateway_info['gateway']);
 
 			if ($gateway) {
 				$membership_old = clone $this;
-				$membership_old->set_gateway($this->_gateway_info['gateway']);
-				$membership_old->set_gateway_customer_id($this->_gateway_info['gateway_customer_id']);
-				$membership_old->set_gateway_subscription_id($this->_gateway_info['gateway_subscription_id']);
+				$membership_old->set_gateway($this->gateway_info['gateway']);
+				$membership_old->set_gateway_customer_id($this->gateway_info['gateway_customer_id']);
+				$membership_old->set_gateway_subscription_id($this->gateway_info['gateway_subscription_id']);
 
 				$gateway->process_cancellation($membership_old, $this->get_customer());
 			}
@@ -2523,5 +2566,28 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		}
 
 		return parent::delete();
+	}
+
+	/**
+	 * Get the network ID for multinetwork support.
+	 *
+	 * @since 2.3.0
+	 * @return int|null
+	 */
+	public function get_network_id() {
+
+		return $this->network_id ? absint($this->network_id) : null;
+	}
+
+	/**
+	 * Set the network ID for multinetwork support.
+	 *
+	 * @since 2.3.0
+	 * @param int|null $network_id Network ID.
+	 * @return void
+	 */
+	public function set_network_id($network_id): void {
+
+		$this->network_id = $network_id ? absint($network_id) : null;
 	}
 }

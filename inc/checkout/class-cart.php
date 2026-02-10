@@ -10,6 +10,7 @@
 namespace WP_Ultimo\Checkout;
 
 use WP_Ultimo\Database\Memberships\Membership_Status;
+use WP_Ultimo\Database\Payments\Payment_Status;
 use Arrch\Arrch as Array_Search;
 
 // Exit if accessed directly
@@ -229,6 +230,22 @@ class Cart implements \JsonSerializable {
 	protected $extra = [];
 
 	/**
+	 * Custom amounts for PWYW products.
+	 *
+	 * @since 2.0.0
+	 * @var array<int, float>
+	 */
+	protected $custom_amounts = [];
+
+	/**
+	 * Customer's recurring choice for PWYW products.
+	 *
+	 * @since 2.0.0
+	 * @var array<int, bool>
+	 */
+	protected $pwyw_recurring = [];
+
+	/**
 	 * The cart description.
 	 *
 	 * @since 2.1.3
@@ -259,54 +276,66 @@ class Cart implements \JsonSerializable {
 				/*
 				 * Cart Type.
 				 */
-				'cart_type'     => 'new',
+				'cart_type'      => 'new',
 
 				/*
 				 * The list of products being bought.
 				 */
-				'products'      => [],
+				'products'       => [],
 
 				/*
 				 * The duration parameters
 				 * This will dictate which price variations we are going to use.
 				 */
-				'duration'      => false,
-				'duration_unit' => false,
+				'duration'       => false,
+				'duration_unit'  => false,
 
 				/*
 				 * The membership ID.
 				 * This is passed when we want to handle a upgrade/downgrade/addon.
 				 */
-				'membership_id' => false,
+				'membership_id'  => false,
 
 				/*
 				 * Payment ID.
 				 * This is passed when we are trying to recovered a abandoned/pending payment.
 				 */
-				'payment_id'    => false,
+				'payment_id'     => false,
 
 				/*
 				 * The discount code to be used.
 				 */
-				'discount_code' => false,
+				'discount_code'  => false,
 
 				/*
 				 * If we should auto-renew or not.
 				 */
-				'auto_renew'    => true,
+				'auto_renew'     => true,
 
 				/*
 				 * The country, state, and city of the customer.
 				 * Used for taxation purposes.
 				 */
-				'country'       => '',
-				'state'         => '',
-				'city'          => '',
+				'country'        => '',
+				'state'          => '',
+				'city'           => '',
 
 				/*
 				 * Currency
 				 */
-				'currency'      => '',
+				'currency'       => '',
+
+				/*
+				 * Custom amounts for PWYW products.
+				 * Keyed by product ID => custom amount.
+				 */
+				'custom_amounts' => [],
+
+				/*
+				 * Customer's recurring choice for PWYW products.
+				 * Keyed by product ID => boolean.
+				 */
+				'pwyw_recurring' => [],
 
 			],
 			$args
@@ -334,13 +363,15 @@ class Cart implements \JsonSerializable {
 		/*
 		 * Set the country, duration and duration_unit.
 		 */
-		$this->cart_type     = $this->attributes->cart_type;
-		$this->country       = $this->attributes->country;
-		$this->state         = $this->attributes->state;
-		$this->city          = $this->attributes->city;
-		$this->currency      = $this->attributes->currency;
-		$this->duration      = $this->attributes->duration;
-		$this->duration_unit = $this->attributes->duration_unit;
+		$this->cart_type      = $this->attributes->cart_type;
+		$this->country        = $this->attributes->country;
+		$this->state          = $this->attributes->state;
+		$this->city           = $this->attributes->city;
+		$this->currency       = $this->attributes->currency;
+		$this->duration       = $this->attributes->duration;
+		$this->duration_unit  = $this->attributes->duration_unit;
+		$this->custom_amounts = is_array($this->attributes->custom_amounts) ? $this->attributes->custom_amounts : [];
+		$this->pwyw_recurring = is_array($this->attributes->pwyw_recurring) ? $this->attributes->pwyw_recurring : [];
 
 		/*
 		 * Loads the current customer, if it exists.
@@ -475,11 +506,16 @@ class Cart implements \JsonSerializable {
 
 		if (is_array($this->attributes->products)) {
 			/*
-			 * Otherwise, we add the products to build the cart.
-			 */
+			* Otherwise, we add the products to build the cart.
+			*/
 			foreach ($this->attributes->products as $product_id) {
 				$this->add_product($product_id);
 			}
+
+			/*
+			* Cancel conflicting pending payments for new checkouts.
+			*/
+			$this->cancel_conflicting_pending_payments();
 		}
 	}
 
@@ -555,7 +591,7 @@ class Cart implements \JsonSerializable {
 		$payment = wu_get_payment($payment_id);
 
 		if ( ! $payment) {
-			$this->errors->add('payment_not_found', __('The payment in question was not found.', 'multisite-ultimate'));
+			$this->errors->add('payment_not_found', __('The payment in question was not found.', 'ultimate-multisite'));
 
 			return true;
 		}
@@ -582,7 +618,7 @@ class Cart implements \JsonSerializable {
 		 * a payment can pay it. Let's check for that.
 		 */
 		if (empty($this->customer) || $this->customer->get_id() !== $payment->get_customer_id()) {
-			$this->errors->add('lacks_permission', __('You are not allowed to modify this payment.', 'multisite-ultimate'));
+			$this->errors->add('lacks_permission', __('You are not allowed to modify this payment.', 'ultimate-multisite'));
 
 			return true;
 		}
@@ -593,7 +629,7 @@ class Cart implements \JsonSerializable {
 		$membership = $payment->get_membership();
 
 		if ( ! $membership) {
-			$this->errors->add('membership_not_found', __('The membership in question was not found.', 'multisite-ultimate'));
+			$this->errors->add('membership_not_found', __('The membership in question was not found.', 'ultimate-multisite'));
 
 			return true;
 		}
@@ -638,7 +674,7 @@ class Cart implements \JsonSerializable {
 
 				$this->products[] = $product;
 
-				if ($line_item->get_type() === 'product' && $product->get_type() === 'plan') {
+				if ($line_item->get_type() === 'product' && wu_is_plan_type($product->get_type())) {
 					/*
 					 * If we already have a plan, we can't add
 					 * another one.
@@ -682,7 +718,7 @@ class Cart implements \JsonSerializable {
 		);
 
 		if ( ! in_array($payment->get_status(), $allowed_status, true)) {
-			$this->errors->add('invalid_status', __('The payment in question has an invalid status.', 'multisite-ultimate'));
+			$this->errors->add('invalid_status', __('The payment in question has an invalid status.', 'ultimate-multisite'));
 
 			return true;
 		}
@@ -741,7 +777,7 @@ class Cart implements \JsonSerializable {
 		$membership = wu_get_membership($membership_id);
 
 		if ( ! $membership) {
-			$this->errors->add('membership_not_found', __('The membership in question was not found.', 'multisite-ultimate'));
+			$this->errors->add('membership_not_found', __('The membership in question was not found.', 'ultimate-multisite'));
 
 			return true;
 		}
@@ -761,7 +797,7 @@ class Cart implements \JsonSerializable {
 		 * Only the customer that owns a membership can change it.
 		 */
 		if (empty($this->customer) || $this->customer->get_id() !== $membership->get_customer_id()) {
-			$this->errors->add('lacks_permission', __('You are not allowed to modify this membership.', 'multisite-ultimate'));
+			$this->errors->add('lacks_permission', __('You are not allowed to modify this membership.', 'ultimate-multisite'));
 
 			return true;
 		}
@@ -793,7 +829,7 @@ class Cart implements \JsonSerializable {
 				return false;
 			}
 
-			$this->errors->add('no_changes', __('This cart proposes no changes to the current membership.', 'multisite-ultimate'));
+			$this->errors->add('no_changes', __('This cart proposes no changes to the current membership.', 'ultimate-multisite'));
 
 			return true;
 		}
@@ -815,7 +851,7 @@ class Cart implements \JsonSerializable {
 		 */
 		if (empty($this->plan_id)) {
 			if (count($this->products) === 0) {
-				$this->errors->add('no_changes', __('This cart proposes no changes to the current membership.', 'multisite-ultimate'));
+				$this->errors->add('no_changes', __('This cart proposes no changes to the current membership.', 'ultimate-multisite'));
 
 				return true;
 			}
@@ -937,7 +973,7 @@ class Cart implements \JsonSerializable {
 			$this->products   = [];
 			$this->line_items = [];
 
-			$this->errors->add('no_changes', __('This cart proposes no changes to the current membership.', 'multisite-ultimate'));
+			$this->errors->add('no_changes', __('This cart proposes no changes to the current membership.', 'ultimate-multisite'));
 
 			return true;
 		} else {
@@ -957,7 +993,7 @@ class Cart implements \JsonSerializable {
 							'overlimits_' . $post_type_slug,
 							sprintf(
 							// translators: %1$d: current number of posts, %2$s: post type name, %3$d: posts quota, %4$s: post type name, %5$d: number of posts to be deleted, %6$s: post type name.
-								esc_html__('Your site currently has %1$d %2$s but the new plan is limited to %3$d %4$s. You must trash %5$d %6$s before you can downgrade your plan.', 'multisite-ultimate'),
+								esc_html__('Your site currently has %1$d %2$s but the new plan is limited to %3$d %4$s. You must trash %5$d %6$s before you can downgrade your plan.', 'ultimate-multisite'),
 								$limit['current'],
 								$limit['current'] > 1 ? $post_type->labels->name : $post_type->labels->singular_name,
 								$limit['limit'],
@@ -983,7 +1019,7 @@ class Cart implements \JsonSerializable {
 						$this->errors->add(
 							'overlimits',
 							sprintf(
-								esc_html__('This new plan does NOT support custom domains. You must remove all custom domains before you can downgrade your plan.', 'multisite-ultimate'),
+								esc_html__('This new plan does NOT support custom domains. You must remove all custom domains before you can downgrade your plan.', 'ultimate-multisite'),
 							)
 						);
 					} else {
@@ -991,13 +1027,13 @@ class Cart implements \JsonSerializable {
 							'overlimits',
 							sprintf(
 							// translators: %1$d: current number of custom domains, %2$s: 'custom domain' or 'custom domains', %3$d: domain limit, %4$s: 'custom domain' or 'custom domains', %5$d: number of domains to be removed, %6$s: 'custom domain' or 'custom domains'.
-								esc_html__('Your site currently has %1$d %2$s but the new plan is limited to %3$d %4$s. You must remove %5$d %6$s before you can downgrade your plan.', 'multisite-ultimate'),
+								esc_html__('Your site currently has %1$d %2$s but the new plan is limited to %3$d %4$s. You must remove %5$d %6$s before you can downgrade your plan.', 'ultimate-multisite'),
 								$domain_count,
-								$domain_count > 1 ? __('custom domains', 'multisite-ultimate') : __('custom domain', 'multisite-ultimate'),
+								$domain_count > 1 ? __('custom domains', 'ultimate-multisite') : __('custom domain', 'ultimate-multisite'),
 								$domain_limit,
-								$domain_limit > 1 ? __('custom domains', 'multisite-ultimate') : __('custom domain', 'multisite-ultimate'),
+								$domain_limit > 1 ? __('custom domains', 'ultimate-multisite') : __('custom domain', 'ultimate-multisite'),
 								$domain_count - $domain_limit,
-								($domain_count - $domain_limit) > 1 ? __('custom domains', 'multisite-ultimate') : __('custom domain', 'multisite-ultimate')
+								($domain_count - $domain_limit) > 1 ? __('custom domains', 'ultimate-multisite') : __('custom domain', 'ultimate-multisite')
 							)
 						);
 					}
@@ -1071,7 +1107,7 @@ class Cart implements \JsonSerializable {
 			);
 
 			// Translators: Placeholder receives the recurring period description
-			$message = sprintf(__('You already have an active %s agreement.', 'multisite-ultimate'), $description);
+			$message = sprintf(__('You already have an active %s agreement.', 'ultimate-multisite'), $description);
 
 			$this->errors->add('no_changes', $message);
 
@@ -1086,14 +1122,14 @@ class Cart implements \JsonSerializable {
 		if (($is_same_product && $membership->get_amount() > $this->get_recurring_total()) || (! $is_same_product && $old_price_per_day > $new_price_per_day)) {
 			$this->cart_type = 'downgrade';
 
-			// If membership is active or trialing we will schendule the swap
+			// If membership is active or trialing we will schedule the swap
 			if ($membership->is_active() || $membership->get_status() === Membership_Status::TRIALING) {
 				$line_item_params = apply_filters(
 					'wu_checkout_credit_line_item_params',
 					[
 						'type'         => 'credit',
-						'title'        => __('Scheduled Swap Credit', 'multisite-ultimate'),
-						'description'  => __('Swap scheduled to next billing cycle.', 'multisite-ultimate'),
+						'title'        => __('Scheduled Swap Credit', 'ultimate-multisite'),
+						'description'  => __('Swap scheduled to next billing cycle.', 'ultimate-multisite'),
 						'discountable' => false,
 						'taxable'      => false,
 						'quantity'     => 1,
@@ -1195,7 +1231,7 @@ class Cart implements \JsonSerializable {
 		 */
 
 		/*
-		 * If the membership is in trial period theres nothing to prorate.
+		 * If the membership is in trial period there's nothing to prorate.
 		 */
 		if ($this->membership->get_status() === Membership_Status::TRIALING) {
 			return;
@@ -1293,8 +1329,8 @@ class Cart implements \JsonSerializable {
 			'wu_checkout_credit_line_item_params',
 			[
 				'type'         => 'credit',
-				'title'        => __('Credit', 'multisite-ultimate'),
-				'description'  => __('Prorated amount based on the previous membership.', 'multisite-ultimate'),
+				'title'        => __('Credit', 'ultimate-multisite'),
+				'description'  => __('Prorated amount based on the previous membership.', 'ultimate-multisite'),
 				'discountable' => false,
 				'taxable'      => false,
 				'quantity'     => 1,
@@ -1330,7 +1366,7 @@ class Cart implements \JsonSerializable {
 		if (empty($discount_code)) {
 
 			// translators: %s is the coupon code being used, all-caps. e.g. PROMO10OFF
-			$this->errors->add('discount_code', sprintf(__('The code %s do not exist or is no longer valid.', 'multisite-ultimate'), $code));
+			$this->errors->add('discount_code', sprintf(__('The code %s does not exist or is no longer valid.', 'ultimate-multisite'), $code));
 
 			return false;
 		}
@@ -1392,6 +1428,12 @@ class Cart implements \JsonSerializable {
 				continue;
 			}
 
+			$product = $line_item->get_product();
+
+			if ($product && wu_has_independent_billing_cycle($product->get_type())) {
+				continue;
+			}
+
 			/*
 			 * Create a key that will tell us if something changes.
 			 *
@@ -1411,13 +1453,34 @@ class Cart implements \JsonSerializable {
 
 			if ($line_item_interval !== $interval) {
 				// translators: two intervals
-				$this->errors->add('wrong', sprintf(__('Interval %1$s and %2$s do not match.', 'multisite-ultimate'), $line_item_interval, $interval));
+				$this->errors->add('wrong', sprintf(__('Interval %1$s and %2$s do not match.', 'ultimate-multisite'), $line_item_interval, $interval));
 
 				return false;
 			}
 		}
 
 		return $is_valid;
+	}
+
+	/**
+	 * Returns line items whose product type has an independent billing cycle.
+	 *
+	 * @since 2.5.0
+	 * @return array
+	 */
+	public function get_independent_line_items(): array {
+
+		$items = [];
+
+		foreach ($this->line_items as $line_item) {
+			$product = $line_item->get_product();
+
+			if ($product && wu_has_independent_billing_cycle($product->get_type())) {
+				$items[] = $line_item;
+			}
+		}
+
+		return $items;
 	}
 
 	/**
@@ -1574,19 +1637,27 @@ class Cart implements \JsonSerializable {
 		$product = is_numeric($product_id_or_slug) ? wu_get_product($product_id_or_slug) : wu_get_product_by_slug($product_id_or_slug);
 
 		if ( ! $product) {
-			$message = __('The product you are trying to add does not exist.', 'multisite-ultimate');
+			$message = __('The product you are trying to add does not exist.', 'ultimate-multisite');
 
 			$this->errors->add('missing-product', $message);
 
 			return false;
 		}
 
-		// Here we check if the product is recurring and if so, get the correct variation
-		if ($product->is_recurring() && ! empty($this->duration) && ($product->get_duration() !== $this->duration || $product->get_duration_unit() !== $this->duration_unit)) {
+		// Check if this product is already in the cart (prevents duplicates when building from payment/membership)
+		foreach ($this->products as $existing_product) {
+			if ($existing_product->get_id() === $product->get_id()) {
+				return true; // Silently skip duplicate
+			}
+		}
+
+		// Here we check if the product is recurring and if so, get the correct variation.
+		// Products with independent billing cycles (e.g. domain registrations) are skipped.
+		if ($product->is_recurring() && ! wu_has_independent_billing_cycle($product->get_type()) && ! empty($this->duration) && ($product->get_duration() !== $this->duration || $product->get_duration_unit() !== $this->duration_unit)) {
 			$product = $product->get_as_variation($this->duration, $this->duration_unit);
 
 			if ( ! $product) {
-				$message = __('The product you are trying to add does not exist for the selected duration.', 'multisite-ultimate');
+				$message = __('The product you are trying to add does not exist for the selected duration.', 'ultimate-multisite');
 
 				$this->errors->add('missing-price-variations', $message);
 
@@ -1594,17 +1665,23 @@ class Cart implements \JsonSerializable {
 			}
 		}
 
-		if ($product->get_type() === 'plan') {
+		if (wu_is_plan_type($product->get_type())) {
 			/*
-			 * If we already have a plan, we can't add
-			 * another one. Bail.
+			 * If we already have a plan, we can't add another one
+			 * unless it's the same plan (which can happen when
+			 * building from payment/membership and products are passed).
 			 */
-			if ( ! empty($this->plan_id)) {
-				$message = __('Theres already a plan in this membership.', 'multisite-ultimate');
+			if ( ! empty($this->plan_id) && $this->plan_id !== $product->get_id()) {
+				$message = __("There's already a plan in this membership.", 'ultimate-multisite');
 
 				$this->errors->add('plan-already-added', $message);
 
 				return false;
+			}
+
+			// If it's the same plan, just skip adding it again
+			if ($this->plan_id === $product->get_id()) {
+				return true;
 			}
 
 			$this->plan_id        = $product->get_id();
@@ -1646,7 +1723,7 @@ class Cart implements \JsonSerializable {
 		 * If a price variation doesn't exist, we add an error to
 		 * the cart.
 		 */
-		if ($product->is_free() === false) {
+		if ($product->is_free() === false && ! $product->is_pay_what_you_want() && ! wu_has_independent_billing_cycle($product->get_type())) {
 			if (absint($this->duration) !== $product->get_duration() || $product->get_duration_unit() !== $this->duration_unit) {
 				$price_variation = $product->get_price_variation($this->duration, $this->duration_unit);
 
@@ -1662,7 +1739,7 @@ class Cart implements \JsonSerializable {
 					 * price variation. We need to add an error.
 					 */
 					// translators: respectively, product name, duration, and duration unit.
-					$message = sprintf(__('%1$s does not have a valid price variation for that billing period (every %2$s %3$s(s)) and was not added to the cart.', 'multisite-ultimate'), $product->get_name(), $this->duration, $this->duration_unit);
+					$message = sprintf(__('%1$s does not have a valid price variation for that billing period (every %2$s %3$s(s)) and was not added to the cart.', 'ultimate-multisite'), $product->get_name(), $this->duration, $this->duration_unit);
 
 					$this->errors->add('missing-price-variations', $message);
 
@@ -1671,15 +1748,73 @@ class Cart implements \JsonSerializable {
 			}
 		}
 
+		/*
+		 * Handle Pay What You Want pricing.
+		 */
+		$is_recurring = $product->is_recurring();
+
+		if ($product->is_pay_what_you_want()) {
+			$custom_amount = $this->get_custom_amount_for_product($product->get_id());
+
+			if (null !== $custom_amount) {
+				$minimum = $product->get_pwyw_minimum_amount();
+
+				if ($custom_amount < $minimum) {
+					$this->errors->add(
+						'pwyw-below-minimum',
+						sprintf(
+							// translators: %1$s is the product name, %2$s is the minimum amount formatted as currency
+							__('The amount for %1$s must be at least %2$s.', 'ultimate-multisite'),
+							$product->get_name(),
+							wu_format_currency($minimum, $product->get_currency())
+						)
+					);
+
+					return false;
+				}
+
+				$amount = (float) $custom_amount;
+			} else {
+				// Use suggested amount as default
+				$amount = $product->get_pwyw_suggested_amount();
+			}
+
+			// Determine recurring status based on product mode and customer choice
+			$recurring_mode = $product->get_pwyw_recurring_mode();
+
+			if ('force_recurring' === $recurring_mode) {
+				$is_recurring = true;
+			} elseif ('force_one_time' === $recurring_mode) {
+				$is_recurring = false;
+			} else {
+				// customer_choice - check customer's selection, default to false (one-time)
+				$is_recurring = $this->get_pwyw_recurring_for_product($product->get_id());
+			}
+		}
+
+		// Build line item data
+		$line_item_base = [
+			'product'       => $product,
+			'quantity'      => $quantity,
+			'unit_price'    => $amount,
+			'duration'      => $duration,
+			'duration_unit' => $duration_unit,
+		];
+
+		// For PWYW products, explicitly set the recurring status
+		if ($product->is_pay_what_you_want()) {
+			$line_item_base['recurring'] = $is_recurring;
+
+			// If recurring, ensure duration values are set
+			if ($is_recurring && (! $duration || ! $duration_unit)) {
+				$line_item_base['duration']      = $product->get_duration();
+				$line_item_base['duration_unit'] = $product->get_duration_unit();
+			}
+		}
+
 		$line_item_data = apply_filters(
 			'wu_add_product_line_item',
-			[
-				'product'       => $product,
-				'quantity'      => $quantity,
-				'unit_price'    => $amount,
-				'duration'      => $duration,
-				'duration_unit' => $duration_unit,
-			],
+			$line_item_base,
 			$product,
 			$duration,
 			$duration_unit,
@@ -1726,7 +1861,7 @@ class Cart implements \JsonSerializable {
 		}
 
 		// translators: placeholder is the product name.
-		$description = ($product->get_setup_fee() > 0) ? __('Signup Fee for %s', 'multisite-ultimate') : __('Signup Credit for %s', 'multisite-ultimate');
+		$description = ($product->get_setup_fee() > 0) ? __('Signup Fee for %s', 'ultimate-multisite') : __('Signup Credit for %s', 'ultimate-multisite');
 
 		$description = sprintf($description, $product->get_name());
 
@@ -2196,6 +2331,14 @@ class Cart implements \JsonSerializable {
 		 */
 		$smallest_trial = 300 * YEAR_IN_SECONDS;
 
+		if ($this->get_cart_type() === 'downgrade') {
+			$membership = $this->membership;
+
+			if ($membership && ($membership->is_active() || $membership->get_status() === Membership_Status::TRIALING)) {
+				return strtotime($membership->get_date_expiration());
+			}
+		}
+
 		foreach ($this->get_all_products() as $product) {
 			if ( ! $product->has_trial()) {
 				$smallest_trial = 0;
@@ -2221,7 +2364,7 @@ class Cart implements \JsonSerializable {
 	 * Returns the timestamp of the next charge, if recurring.
 	 *
 	 * @since 2.0.0
-	 * @return string|false
+	 * @return int unix timestamp
 	 */
 	public function get_billing_next_charge_date() {
 		/*
@@ -2297,7 +2440,13 @@ class Cart implements \JsonSerializable {
 			return $line_item;
 		}
 
-		if (is_wp_error($this->discount_code->is_valid($line_item->get_product_id()))) {
+		$is_valid = $this->discount_code->is_valid(
+			$line_item->get_product_id(),
+			$line_item->get_duration(),
+			$line_item->get_duration_unit()
+		);
+
+		if (is_wp_error($is_valid)) {
 			return $line_item;
 		}
 
@@ -2515,6 +2664,12 @@ class Cart implements \JsonSerializable {
 		$addon_list = [];
 
 		foreach ($all_additional_products as $line_item) {
+			$product = $line_item->get_product();
+
+			if ($product && wu_has_independent_billing_cycle($product->get_type())) {
+				continue;
+			}
+
 			$addon_list[ $line_item->get_product_id() ] = $line_item->get_quantity();
 		}
 
@@ -2762,5 +2917,79 @@ class Cart implements \JsonSerializable {
 			],
 			$base_url
 		);
+	}
+
+	/**
+	 * Cancels conflicting pending payments for new checkouts.
+	 *
+	 * @since 2.4.8
+	 * @return void
+	 */
+	protected function cancel_conflicting_pending_payments(): void {
+
+		if ('new' !== $this->cart_type || ! $this->customer) {
+			return;
+		}
+
+		$pending_payments = wu_get_payments(
+			[
+				'customer_id' => $this->customer->get_id(),
+				'status'      => Payment_Status::PENDING,
+			]
+		);
+
+		foreach ($pending_payments as $payment) {
+			$current_line_items  = $this->get_line_items();
+			$existing_line_items = $payment->get_line_items();
+
+			$product_count  = 0;
+			$products_found = 0;
+			foreach ($current_line_items as $current_line_item) {
+				if ($current_line_item->get_type() === 'product') {
+					++$product_count;
+					foreach ($existing_line_items as $existing_line_item) {
+						if ($current_line_item->get_product_id() === $existing_line_item->get_product_id()) {
+							++$products_found;
+						}
+					}
+				}
+			}
+
+			if ($product_count !== $products_found) {
+				// Customer selected different products. Cancel pending payment.
+				$payment->set_status(Payment_Status::CANCELLED);
+				$payment->save();
+				$payment->get_membership()->cancel();
+			}
+			// Pending payment is the same. Nothing to do, Let the form element show the pay pending payment message.
+		}
+	}
+
+	/**
+	 * Get the custom amount for a PWYW product.
+	 *
+	 * @since 2.0.0
+	 * @param int $product_id The product ID.
+	 * @return float|null The custom amount or null if not set.
+	 */
+	public function get_custom_amount_for_product($product_id) {
+
+		$product_id = (int) $product_id;
+
+		return isset($this->custom_amounts[ $product_id ]) ? (float) $this->custom_amounts[ $product_id ] : null;
+	}
+
+	/**
+	 * Get whether this PWYW product should be recurring.
+	 *
+	 * @since 2.0.0
+	 * @param int $product_id The product ID.
+	 * @return bool
+	 */
+	public function get_pwyw_recurring_for_product($product_id): bool {
+
+		$product_id = (int) $product_id;
+
+		return (bool) wu_get_isset($this->pwyw_recurring, $product_id, false);
 	}
 }

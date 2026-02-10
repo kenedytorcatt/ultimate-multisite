@@ -256,7 +256,7 @@ class Template_Previewer {
 		 * Check if this is a site template
 		 */
 		if ( ! $selected_template || ($selected_template->get_type() !== Site_Type::SITE_TEMPLATE && ! wu_request('customizer'))) {
-			wp_die(esc_html__('This template is not available', 'multisite-ultimate'));
+			wp_die(esc_html__('This template is not available', 'ultimate-multisite'));
 		}
 
 		$categories = [];
@@ -282,7 +282,7 @@ class Template_Previewer {
 
 			[$plan, $additional_products] = wu_segregate_products($products);
 
-			$products = array_merge([$plan], $additional_products);
+			$products = array_filter(array_merge([$plan], $additional_products));
 
 			foreach ($products as $product) {
 				$limits = $limits->merge($product->get_limitations());
@@ -376,7 +376,7 @@ class Template_Previewer {
 			'bg_color'                    => '#f9f9f9',
 			'button_bg_color'             => '#00a1ff',
 			'logo_url'                    => wu_get_network_logo(),
-			'button_text'                 => __('Use this Template', 'multisite-ultimate'),
+			'button_text'                 => __('Use this Template', 'ultimate-multisite'),
 			'preview_url_parameter'       => 'template-preview',
 			'display_responsive_controls' => true,
 			'use_custom_logo'             => false,

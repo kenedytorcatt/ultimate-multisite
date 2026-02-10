@@ -1,6 +1,6 @@
 <?php
 /**
- * Multisite Ultimate Customize/Add New Email Template Page.
+ * Ultimate Multisite Customize/Add New Email Template Page.
  *
  * @package WP_Ultimo
  * @subpackage Admin_Pages
@@ -13,7 +13,7 @@ namespace WP_Ultimo\Admin_Pages;
 defined('ABSPATH') || exit;
 
 /**
- * Multisite Ultimate Email Template Customize/Add New Admin Page.
+ * Ultimate Multisite Email Template Customize/Add New Admin Page.
  */
 class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 
@@ -156,16 +156,13 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 				'site_url'          => get_site_url(),
 				'logo_url'          => wu_get_network_logo(),
 				'content'           => $content,
-				'subject'           => __('Sample Subject', 'multisite-ultimate'),
+				'subject'           => __('Sample Subject', 'ultimate-multisite'),
 				'is_editor'         => true,
 				'template_settings' => [
+					'hide_logo'               => wu_string_to_bool(wu_request('hide_logo', $first_request ? $object->get_setting('hide_logo', false) : false)),
 					'use_custom_logo'         => wu_string_to_bool(wu_request('use_custom_logo', $first_request ? $object->get_setting('use_custom_logo', false) : false)),
 					'custom_logo'             => wu_request('custom_logo', $object->get_setting('custom_logo', false)),
 					'background_color'        => wu_request('background_color', $object->get_setting('background_color', '#f9f9f9')),
-					'title_color'             => wu_request('title_color', $object->get_setting('title_color', '#000000')),
-					'title_size'              => wu_request('title_size', $object->get_setting('title_size', 'h3')),
-					'title_align'             => wu_request('title_align', $object->get_setting('title_align', 'center')),
-					'title_font'              => wu_request('title_font', $object->get_setting('title_font', 'Helvetica Neue, Helvetica, Helvetica, Arial, sans-serif')),
 					'content_color'           => wu_request('content_color', $object->get_setting('content_color', '#000000')),
 					'content_align'           => wu_request('content_align', $object->get_setting('content_align', 'left')),
 					'content_font'            => wu_request('content_font', $object->get_setting('content_font', 'Helvetica Neue, Helvetica, Helvetica, Arial, sans-serif')),
@@ -218,7 +215,7 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 				'fields'    => [
 					'note' => [
 						'type' => 'note',
-						'desc' => __('System emails and broadcasts will be sent using this template.', 'multisite-ultimate'),
+						'desc' => __('System emails and broadcasts will be sent using this template.', 'ultimate-multisite'),
 					],
 				],
 			]
@@ -243,17 +240,29 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 					'v-model' => 'tab',
 				],
 				'options'           => [
-					'header'  => __('Header', 'multisite-ultimate'),
-					'content' => __('Content', 'multisite-ultimate'),
-					'footer'  => __('Footer', 'multisite-ultimate'),
+					'header'  => __('Header', 'ultimate-multisite'),
+					'content' => __('Content', 'ultimate-multisite'),
+					'footer'  => __('Footer', 'ultimate-multisite'),
+				],
+			],
+			'hide_logo'               => [
+				'type'              => 'toggle',
+				'title'             => __('Hide Logo', 'ultimate-multisite'),
+				'desc'              => __('Toggle to hide the logo in the email header.', 'ultimate-multisite'),
+				'wrapper_html_attr' => [
+					'v-show'  => 'require("tab", "header")',
+					'v-cloak' => 1,
+				],
+				'html_attr'         => [
+					'v-model' => 'hide_logo',
 				],
 			],
 			'use_custom_logo'         => [
 				'type'              => 'toggle',
-				'title'             => __('Use Custom Logo', 'multisite-ultimate'),
-				'desc'              => __('You can set a different logo to be used on the system emails.', 'multisite-ultimate'),
+				'title'             => __('Use Custom Logo', 'ultimate-multisite'),
+				'desc'              => __('You can set a different logo to be used on the system emails.', 'ultimate-multisite'),
 				'wrapper_html_attr' => [
-					'v-show'  => 'require("tab", "header")',
+					'v-show'  => 'require("tab", "header") && require("hide_logo", false)',
 					'v-cloak' => 1,
 				],
 				'html_attr'         => [
@@ -263,8 +272,8 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 			'custom_logo'             => [
 				'type'              => 'image',
 				'stacked'           => true,
-				'title'             => __('Custom Logo', 'multisite-ultimate'),
-				'desc'              => __('The custom logo is used in the email header, if HTML emails are used.', 'multisite-ultimate'),
+				'title'             => __('Custom Logo', 'ultimate-multisite'),
+				'desc'              => __('The custom logo is used in the email header, if HTML emails are used.', 'ultimate-multisite'),
 				'value'             => $custom_logo,
 				'img'               => $custom_logo_url,
 				'wrapper_html_attr' => [
@@ -277,8 +286,8 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 			],
 			'background_color'        => [
 				'type'              => 'color-picker',
-				'title'             => __('Background Color', 'multisite-ultimate'),
-				'tooltip'           => __('The cover background color of the email.', 'multisite-ultimate'),
+				'title'             => __('Background Color', 'ultimate-multisite'),
+				'tooltip'           => __('The cover background color of the email.', 'ultimate-multisite'),
 				'value'             => '#00a1ff',
 				'wrapper_html_attr' => [
 					'v-show'  => 'require("tab", "header")',
@@ -288,76 +297,9 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 					'v-model' => 'background_color',
 				],
 			],
-			'title_color'             => [
-				'type'              => 'color-picker',
-				'title'             => __('Title Color', 'multisite-ultimate'),
-				'value'             => '#00a1ff',
-				'wrapper_html_attr' => [
-					'v-show'  => 'require("tab", "header")',
-					'v-cloak' => 1,
-				],
-				'html_attr'         => [
-					'v-model' => 'title_color',
-				],
-			],
-			'title_size'              => [
-				'type'              => 'select',
-				'title'             => __('Title Size', 'multisite-ultimate'),
-				'value'             => wu_get_isset($settings, 'title_size'),
-				'options'           => [
-					'h1' => __('h1', 'multisite-ultimate'),
-					'h2' => __('h2', 'multisite-ultimate'),
-					'h3' => __('h3', 'multisite-ultimate'),
-					'h4' => __('h4', 'multisite-ultimate'),
-					'h5' => __('h5', 'multisite-ultimate'),
-				],
-				'wrapper_html_attr' => [
-					'v-show'  => 'require("tab", "header")',
-					'v-cloak' => 1,
-				],
-				'html_attr'         => [
-					'v-model.lazy' => 'title_size',
-				],
-			],
-			'title_align'             => [
-				'type'              => 'select',
-				'title'             => __('Title Align', 'multisite-ultimate'),
-				'tooltip'           => __('Aligment of the font in the title.', 'multisite-ultimate'),
-				'value'             => wu_get_isset($settings, 'title_align', ''),
-				'options'           => [
-					'left'   => __('Left', 'multisite-ultimate'),
-					'center' => __('Center', 'multisite-ultimate'),
-					'right'  => __('Right', 'multisite-ultimate'),
-				],
-				'wrapper_html_attr' => [
-					'v-show'  => 'require("tab", "header")',
-					'v-cloak' => 1,
-				],
-				'html_attr'         => [
-					'v-model.lazy' => 'title_align',
-				],
-			],
-			'title_font'              => [
-				'type'              => 'select',
-				'title'             => __('Title Font-Family', 'multisite-ultimate'),
-				'value'             => wu_get_isset($settings, 'title_font', ''),
-				'options'           => [
-					'Helvetica Neue, Helvetica, Helvetica, Arial, sans-serif' => __('Helvetica', 'multisite-ultimate'),
-					'Arial, Helvetica, sans-serif'       => __('Arial', 'multisite-ultimate'),
-					'Times New Roman, Times, serif'      => __('Times New Roman', 'multisite-ultimate'),
-					'Lucida Console, Courier, monospace' => __('Lucida', 'multisite-ultimate'),
-				],
-				'wrapper_html_attr' => [
-					'v-show'  => 'require("tab", "header")',
-					'v-cloak' => 1,
-				],
-				'html_attr'         => [
-					'v-model.lazy' => 'title_font',
-				],
-			],
 			'content_color'           => [
 				'type'              => 'color-picker',
-				'title'             => __('Content Color', 'multisite-ultimate'),
+				'title'             => __('Content Color', 'ultimate-multisite'),
 				'value'             => '#000000',
 				'wrapper_html_attr' => [
 					'v-show'  => 'require("tab", "content")',
@@ -369,13 +311,13 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 			],
 			'content_align'           => [
 				'type'              => 'select',
-				'title'             => __('Content Alignment', 'multisite-ultimate'),
-				'tooltip'           => __('Alignment of the font in the main email content.', 'multisite-ultimate'),
+				'title'             => __('Content Alignment', 'ultimate-multisite'),
+				'tooltip'           => __('Alignment of the font in the main email content.', 'ultimate-multisite'),
 				'value'             => wu_get_isset($settings, 'content_align', ''),
 				'options'           => [
-					'left'   => __('Left', 'multisite-ultimate'),
-					'center' => __('Center', 'multisite-ultimate'),
-					'right'  => __('Right', 'multisite-ultimate'),
+					'left'   => __('Left', 'ultimate-multisite'),
+					'center' => __('Center', 'ultimate-multisite'),
+					'right'  => __('Right', 'ultimate-multisite'),
 				],
 				'wrapper_html_attr' => [
 					'v-show'  => 'require("tab", "content")',
@@ -387,13 +329,13 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 			],
 			'content_font'            => [
 				'type'              => 'select',
-				'title'             => __('Content Font-Family', 'multisite-ultimate'),
+				'title'             => __('Content Font-Family', 'ultimate-multisite'),
 				'value'             => wu_get_isset($settings, 'content_font', ''),
 				'options'           => [
-					'Helvetica Neue, Helvetica, Helvetica, Arial, sans-serif' => __('Helvetica', 'multisite-ultimate'),
-					'Arial, Helvetica, sans-serif'       => __('Arial', 'multisite-ultimate'),
-					'Times New Roman, Times, serif'      => __('Times New Roman', 'multisite-ultimate'),
-					'Lucida Console, Courier, monospace' => __('Lucida', 'multisite-ultimate'),
+					'Helvetica Neue, Helvetica, Helvetica, Arial, sans-serif' => __('Helvetica', 'ultimate-multisite'),
+					'Arial, Helvetica, sans-serif'       => __('Arial', 'ultimate-multisite'),
+					'Times New Roman, Times, serif'      => __('Times New Roman', 'ultimate-multisite'),
+					'Lucida Console, Courier, monospace' => __('Lucida', 'ultimate-multisite'),
 				],
 				'wrapper_html_attr' => [
 					'v-show'  => 'require("tab", "content")',
@@ -405,8 +347,8 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 			],
 			'display_company_address' => [
 				'type'              => 'toggle',
-				'title'             => __('Display Company Address', 'multisite-ultimate'),
-				'desc'              => __('Toggle to show/hide your company address.', 'multisite-ultimate'),
+				'title'             => __('Display Company Address', 'ultimate-multisite'),
+				'desc'              => __('Toggle to show/hide your company address.', 'ultimate-multisite'),
 				'wrapper_html_attr' => [
 					'v-show'  => 'require("tab", "footer")',
 					'v-cloak' => 1,
@@ -417,8 +359,8 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 			],
 			'footer_text'             => [
 				'type'              => 'textarea',
-				'title'             => __('Footer Content', 'multisite-ultimate'),
-				'placeholder'       => __('e.g. Extra info in the email footer.', 'multisite-ultimate'),
+				'title'             => __('Footer Content', 'ultimate-multisite'),
+				'placeholder'       => __('e.g. Extra info in the email footer.', 'ultimate-multisite'),
 				'value'             => wu_get_isset($settings, 'footer_text', ''),
 				'wrapper_html_attr' => [
 					'v-show'  => 'require("tab", "footer")',
@@ -430,13 +372,13 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 			],
 			'footer_font'             => [
 				'type'              => 'select',
-				'title'             => __('Footer Font-Family', 'multisite-ultimate'),
+				'title'             => __('Footer Font-Family', 'ultimate-multisite'),
 				'value'             => wu_get_isset($settings, 'footer_font', ''),
 				'options'           => [
-					'Helvetica Neue, Helvetica, Helvetica, Arial, sans-serif' => __('Helvetica', 'multisite-ultimate'),
-					'Arial, Helvetica, sans-serif'       => __('Arial', 'multisite-ultimate'),
-					'Times New Roman, Times, serif'      => __('Times New Roman', 'multisite-ultimate'),
-					'Lucida Console, Courier, monospace' => __('Lucida', 'multisite-ultimate'),
+					'Helvetica Neue, Helvetica, Helvetica, Arial, sans-serif' => __('Helvetica', 'ultimate-multisite'),
+					'Arial, Helvetica, sans-serif'       => __('Arial', 'ultimate-multisite'),
+					'Times New Roman, Times, serif'      => __('Times New Roman', 'ultimate-multisite'),
+					'Lucida Console, Courier, monospace' => __('Lucida', 'ultimate-multisite'),
 				],
 				'wrapper_html_attr' => [
 					'v-show'  => 'require("tab", "footer")',
@@ -448,7 +390,7 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 			],
 			'footer_color'            => [
 				'type'              => 'color-picker',
-				'title'             => __('Footer Color', 'multisite-ultimate'),
+				'title'             => __('Footer Color', 'ultimate-multisite'),
 				'value'             => '#000000',
 				'wrapper_html_attr' => [
 					'v-show'  => 'require("tab", "footer")',
@@ -460,13 +402,13 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 			],
 			'footer_align'            => [
 				'type'              => 'select',
-				'title'             => __('Footer Alignment', 'multisite-ultimate'),
-				'tooltip'           => __('Alignment of the font in the main email footer.', 'multisite-ultimate'),
+				'title'             => __('Footer Alignment', 'ultimate-multisite'),
+				'tooltip'           => __('Alignment of the font in the main email footer.', 'ultimate-multisite'),
 				'value'             => wu_get_isset($settings, 'footer_align', ''),
 				'options'           => [
-					'left'   => __('Left', 'multisite-ultimate'),
-					'center' => __('Center', 'multisite-ultimate'),
-					'right'  => __('Right', 'multisite-ultimate'),
+					'left'   => __('Left', 'ultimate-multisite'),
+					'center' => __('Center', 'ultimate-multisite'),
+					'right'  => __('Right', 'ultimate-multisite'),
 				],
 				'wrapper_html_attr' => [
 					'v-show'  => 'require("tab", "footer")',
@@ -489,7 +431,7 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 		$this->add_fields_widget(
 			'customizer',
 			[
-				'title'     => __('Customizer', 'multisite-ultimate'),
+				'title'     => __('Customizer', 'ultimate-multisite'),
 				'position'  => 'side',
 				'fields'    => $fields,
 				'html_attr' => [
@@ -510,7 +452,7 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 	 */
 	public function get_title() {
 
-		return __('Customize Email Template:', 'multisite-ultimate');
+		return __('Customize Email Template:', 'ultimate-multisite');
 	}
 
 	/**
@@ -521,7 +463,7 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 	 */
 	public function get_menu_title() {
 
-		return __('Customize Email Template', 'multisite-ultimate');
+		return __('Customize Email Template', 'ultimate-multisite');
 	}
 
 	/**
@@ -544,16 +486,16 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 	public function get_labels() {
 
 		return [
-			'customize_label'     => __('Customize Email Template', 'multisite-ultimate'),
-			'add_new_label'       => __('Customize Email Template', 'multisite-ultimate'),
-			'edit_label'          => __('Edit Email Template', 'multisite-ultimate'),
-			'updated_message'     => __('Email Template updated with success!', 'multisite-ultimate'),
-			'title_placeholder'   => __('Enter Email Template Name', 'multisite-ultimate'),
-			'title_description'   => __('This name is used for internal reference only.', 'multisite-ultimate'),
-			'save_button_label'   => __('Save Template', 'multisite-ultimate'),
+			'customize_label'     => __('Customize Email Template', 'ultimate-multisite'),
+			'add_new_label'       => __('Customize Email Template', 'ultimate-multisite'),
+			'edit_label'          => __('Edit Email Template', 'ultimate-multisite'),
+			'updated_message'     => __('Email Template updated with success!', 'ultimate-multisite'),
+			'title_placeholder'   => __('Enter Email Template Name', 'ultimate-multisite'),
+			'title_description'   => __('This name is used for internal reference only.', 'ultimate-multisite'),
+			'save_button_label'   => __('Save Template', 'ultimate-multisite'),
 			'save_description'    => '',
-			'delete_button_label' => __('Delete Email Template', 'multisite-ultimate'),
-			'delete_description'  => __('Be careful. This action is irreversible.', 'multisite-ultimate'),
+			'delete_button_label' => __('Delete Email Template', 'ultimate-multisite'),
+			'delete_description'  => __('Be careful. This action is irreversible.', 'ultimate-multisite'),
 		];
 	}
 
@@ -568,6 +510,7 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 		$allowed_settings = [
 			'use_custom_logo',
 			'custom_logo',
+			'hide_logo',
 			'display_company_address',
 			'background_color',
 			'title_color',
@@ -597,6 +540,7 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 						$settings_to_save[ $setting ] = sanitize_hex_color($value);
 						break;
 					case 'use_custom_logo':
+					case 'hide_logo':
 					case 'display_company_address':
 						$settings_to_save[ $setting ] = wu_string_to_bool($value);
 						break;
@@ -670,6 +614,7 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 		return [
 			'use_custom_logo'         => false,
 			'custom_logo'             => false,
+			'hide_logo'               => false,
 			'display_company_address' => true,
 			'background_color'        => '#f1f1f1',
 			'title_color'             => '#000000',
@@ -720,6 +665,8 @@ class Email_Template_Customize_Admin_Page extends Customizer_Admin_Page {
 
 			return $return;
 		}
+
+		return $default_value;
 	}
 
 	/**

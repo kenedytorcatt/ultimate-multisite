@@ -9,10 +9,9 @@
 
 namespace WP_Ultimo\Models;
 
-use WP_Ultimo\Models\Base_Model;
+use stdClass;
 use WP_Ultimo\Domain_Mapping\Helper;
 use WP_Ultimo\Database\Domains\Domain_Stage;
-use WP_Ultimo\Models\Site;
 
 // Exit if accessed directly
 defined('ABSPATH') || exit;
@@ -74,7 +73,7 @@ class Domain extends Base_Model {
 	 * @since 2.0.0
 	 * @var string
 	 */
-	protected $stage = 'checking-dns';
+	protected $stage = Domain_Stage::CHECKING_DNS;
 
 	/**
 	 * Date when this was created.
@@ -91,9 +90,10 @@ class Domain extends Base_Model {
 	 * @var array
 	 */
 	const INACTIVE_STAGES = [
-		'checking-dns',
-		'checking-ssl-cert',
-		'failed',
+		Domain_Stage::CHECKING_DNS,
+		Domain_Stage::CHECKING_SSL,
+		Domain_Stage::FAILED,
+		Domain_Stage::SSL_FAILED,
 	];
 
 	/**
@@ -103,6 +103,13 @@ class Domain extends Base_Model {
 	 * @var string
 	 */
 	protected $query_class = \WP_Ultimo\Database\Domains\Domain_Query::class;
+
+	/**
+	 * Cache the path so we don't need to load the site object every time.
+	 *
+	 * @var string
+	 */
+	private string $path;
 
 	/**
 	 * Set the validation rules for this particular model.
@@ -121,7 +128,7 @@ class Domain extends Base_Model {
 		return [
 			'blog_id'        => 'required|integer',
 			'domain'         => "required|domain|unique:\WP_Ultimo\Models\Domain,domain,{$id}",
-			'stage'          => 'required|in:checking-dns,checking-ssl-cert,done-without-ssl,done,failed|default:checking-dns',
+			'stage'          => 'required|in:checking-dns,checking-ssl-cert,done-without-ssl,done,failed,ssl-failed|default:checking-dns',
 			'active'         => 'default:1',
 			'secure'         => 'default:0',
 			'primary_domain' => 'default:0',
@@ -225,6 +232,24 @@ class Domain extends Base_Model {
 	}
 
 	/**
+	 * Gets the path of the mapped site.
+	 *
+	 * @return string|null
+	 */
+	public function get_path() {
+		if (! isset($this->path)) {
+			// don't use $this->get_site() as it causes infinite loop and native is faster anyway.
+			$site = \WP_Site::get_instance($this->get_blog_id());
+			if ( ! $site) {
+				return null;
+			}
+			$this->path = $site->path;
+		}
+
+		return $this->path;
+	}
+
+	/**
 	 * Check if this particular mapping is active.
 	 *
 	 * @since 2.0.0
@@ -272,7 +297,6 @@ class Domain extends Base_Model {
 	 * @return void
 	 */
 	public function set_primary_domain($primary_domain): void {
-
 		$this->primary_domain = $primary_domain;
 	}
 
@@ -424,7 +448,7 @@ class Domain extends Base_Model {
 		 *
 		 * @since 2.0.4
 		 * @param bool $result the current result.
-		 * @param self $this The current domain instance.
+		 * @param self $domain The current domain instance.
 		 * @param array $domains_and_ips The list of domains and IPs found on the DNS lookup.
 		 * @return bool If the DNS is correctly setup or not.
 		 */
@@ -452,13 +476,15 @@ class Domain extends Base_Model {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @return bool
+	 * @return bool|\WP_Error
 	 */
 	public function save() {
 
 		$new_domain = $this->exists();
 
 		$before_changes = clone $this;
+
+		$was_new = ! $this->exists();
 
 		$results = parent::save();
 
@@ -473,8 +499,7 @@ class Domain extends Base_Model {
 					 * Deprecated: Mercator created domain.
 					 *
 					 * @since 2.0.0
-					 * @param self The domain object after saving.
-					 * @param self The domain object before the changes.
+					 * @param self $domain The domain object after saving.
 					 * @return void.
 					 */
 					do_action_deprecated('mercator.mapping.created', $deprecated_args, '2.0.0', 'wu_domain_post_save');
@@ -489,8 +514,8 @@ class Domain extends Base_Model {
 					 * Deprecated: Mercator updated domain.
 					 *
 					 * @since 2.0.0
-					 * @param self The domain object after saving.
-					 * @param self The domain object before the changes.
+					 * @param self $domain The domain object after saving.
+					 * @param self $before_changes The domain object before the changes.
 					 * @return void.
 					 */
 					do_action_deprecated('mercator.mapping.updated', $deprecated_args, '2.0.0', 'wu_domain_post_save');
@@ -503,6 +528,37 @@ class Domain extends Base_Model {
 			 * after a change is made.
 			 */
 			wp_cache_flush();
+
+			/*
+			 * If this domain was just set as primary, unset other primaries for this site.
+			 */
+			if ($this->primary_domain && ($was_new || (isset($this->_original['primary_domain']) && ! $this->_original['primary_domain']))) {
+				$old_primary_domains = wu_get_domains(
+					[
+						'primary_domain' => true,
+						'blog_id'        => $this->blog_id,
+						'id__not_in'     => [$this->id],
+						'fields'         => 'ids',
+					]
+				);
+
+				do_action('wu_async_remove_old_primary_domains', $old_primary_domains);
+
+				/**
+				 * Fires when a domain becomes the primary domain for a site.
+				 *
+				 * This action is triggered when a domain's primary_domain flag is set to true,
+				 * either when creating a new primary domain or when updating an existing domain
+				 * to become primary.
+				 *
+				 * @since 2.0.0
+				 *
+				 * @param \WP_Ultimo\Models\Domain $domain  The domain that became primary.
+				 * @param int                      $blog_id The blog ID of the affected site.
+				 * @param bool                     $was_new Whether this is a newly created domain.
+				 */
+				do_action('wu_domain_became_primary', $this, $this->blog_id, $was_new);
+			}
 		}
 
 		return $results;
@@ -538,7 +594,7 @@ class Domain extends Base_Model {
 		 */
 		wu_log_clear("domain-{$this->get_domain()}");
 
-		wu_log_add("domain-{$this->get_domain()}", __('Domain deleted and logs cleared...', 'multisite-ultimate'));
+		wu_log_add("domain-{$this->get_domain()}", __('Domain deleted and logs cleared...', 'ultimate-multisite'));
 
 		return $results;
 	}
@@ -606,7 +662,7 @@ class Domain extends Base_Model {
 	 * @since 2.0.0
 	 *
 	 * @param array|string $domains Domain names to search for.
-	 * @return static
+	 * @return self
 	 */
 	public static function get_by_domain($domains) {
 
@@ -621,7 +677,7 @@ class Domain extends Base_Model {
 			$data = wp_cache_get('domain:' . $domain, 'domain_mappings');
 
 			if ( ! empty($data) && 'notexists' !== $data) {
-				return new static($data);
+				return new self($data);
 			} elseif ('notexists' === $data) {
 				++$not_exists;
 			}
@@ -662,6 +718,6 @@ class Domain extends Base_Model {
 
 		wp_cache_set('domain:' . $mapping->domain, $mapping, 'domain_mappings');
 
-		return new static($mapping);
+		return new self($mapping);
 	}
 }

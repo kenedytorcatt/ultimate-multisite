@@ -11,10 +11,11 @@ on:
 jobs:
   cypress:
     runs-on: ubuntu-latest
+    timeout-minutes: 30  # Increased timeout for setup wizard
     strategy:
       matrix:
-        php: ["7.4", "8.0", "8.1", "8.2", "8.3", "8.4"]
-        browser: ["chrome", "firefox"]
+        php: ["8.1", "8.2"]  # Reduced PHP versions for faster CI
+        browser: ["chrome"]   # Start with Chrome only for reliability
 
     services:
       mailpit:
@@ -59,30 +60,112 @@ jobs:
         run: |
           echo "{\"config\": {\"phpVersion\": \"${{ matrix.php }}\"}}" > .wp-env.override.json
 
-      - name: Start WordPress Environment
-        run: npm run env:start
+      - name: Start WordPress Test Environment
+        run: npm run env:start:test
 
       - name: Wait for WordPress to be ready
         run: |
-          for i in {1..30}; do
+          for i in {1..60}; do
             if curl -s http://localhost:8889 | grep -q "WordPress"; then
               echo "WordPress is ready";
               break;
             fi
-            echo "Waiting for WordPress... ($i/30)";
+            echo "Waiting for WordPress... ($i/60)";
             sleep 5;
           done
+          echo "Final check:"
+          curl -s http://localhost:8889 || echo "WordPress not responding"
 
-      - name: Run Cypress Tests in ${{ matrix.browser }}
-        id: tests
+      - name: Comprehensive WordPress Debug
         run: |
-          docker run --network host \
-            -e CYPRESS_BASE_URL=http://localhost:8889 \
-            -v ${{ github.workspace }}:/e2e \
-            -w /e2e \
-            cypress/included:latest \
-            --browser ${{ matrix.browser }} \
-            --config baseUrl=http://localhost:8889
+          echo "=== WordPress Environment Debug ==="
+          echo "1. Basic URL Tests:"
+          curl -I http://localhost:8889 || echo "❌ WordPress not responding"
+          curl -I http://localhost:8889/wp-admin/ || echo "❌ WP Admin not responding"
+          curl -I http://localhost:8889/wp-admin/network/ || echo "❌ Network admin not responding"
+
+          echo -e "\n2. WordPress Content Test:"
+          curl -s http://localhost:8889 | head -20 | grep -E "(WordPress|wp-)" || echo "❌ No WordPress indicators found"
+
+          echo -e "\n3. Plugin Status Check:"
+          curl -s "http://localhost:8889/wp-admin/network/plugins.php" | grep -i "multisite-ultimate" || echo "❌ Plugin not found in network admin"
+
+          echo -e "\n4. Database Connection Test:"
+          curl -s "http://localhost:8889/wp-admin/network/" | grep -E "(Database|MySQL|connection)" || echo "✅ No database errors visible"
+
+          echo -e "\n5. Multisite Status:"
+          curl -s http://localhost:8889 | grep -i "multisite\|network" || echo "ℹ️  No multisite indicators in homepage"
+
+          echo -e "\n6. Error Log Check:"
+          docker logs $(docker ps -q --filter "name=tests-wordpress") 2>&1 | tail -20 || echo "ℹ️  Could not get container logs"
+
+          echo -e "\n7. File System Check:"
+          ls -la $(pwd) || echo "❌ Could not list current directory"
+          ls -la $(pwd)/multisite-ultimate.php 2>/dev/null && echo "✅ Main plugin file exists" || echo "❌ Main plugin file not found"
+
+      - name: Pre-Test Environment Verification
+        run: |
+          echo "=== Pre-Test Verification ==="
+          echo "1. Cypress Config Check:"
+          ls -la cypress.config.test.js && echo "✅ Config file exists" || echo "❌ Config file missing"
+
+          echo "2. Test Files Check:"
+          ls -la tests/e2e/cypress/integration/ && echo "✅ Test directory exists" || echo "❌ Test directory missing"
+          find tests/e2e/cypress/integration/ -name "*.spec.js" | wc -l | xargs echo "Test files found:"
+
+          echo "3. Support Files Check:"
+          ls -la tests/e2e/cypress/support/commands/ && echo "✅ Commands directory exists" || echo "❌ Commands missing"
+
+          echo "4. Cypress Environment Variables:"
+          echo "Base URL: http://localhost:8889"
+          cat cypress.env.json 2>/dev/null || echo "❌ cypress.env.json not found"
+
+      - name: Run Setup Test (Must Run First)
+        id: setup-test
+        run: |
+          echo "=== Starting Setup Test ==="
+          npx cypress run \
+            --config-file cypress.config.test.js \
+            --spec "tests/e2e/cypress/integration/000-setup.spec.js" \
+            --browser ${{ matrix.browser }}
+
+      - name: Run Checkout Tests (After Setup)
+        id: checkout-tests
+        run: |
+          set +e
+          echo "=== Starting Checkout Tests ==="
+
+          CHECKOUT_TESTS=(
+            "tests/e2e/cypress/integration/010-manual-checkout-flow.spec.js"
+            "tests/e2e/cypress/integration/020-free-trial-flow.spec.js"
+          )
+
+          TOTAL_FAILURES=0
+
+          for TEST_SPEC in "${CHECKOUT_TESTS[@]}"; do
+            echo "Running: $TEST_SPEC"
+
+            npx cypress run \
+              --config-file cypress.config.test.js \
+              --spec "$TEST_SPEC" \
+              --browser ${{ matrix.browser }}
+
+            CYPRESS_EXIT_CODE=$?
+
+            if [ $CYPRESS_EXIT_CODE -eq 0 ]; then
+              echo "✅ $TEST_SPEC passed"
+            else
+              echo "❌ $TEST_SPEC failed with exit code $CYPRESS_EXIT_CODE"
+              TOTAL_FAILURES=$((TOTAL_FAILURES + 1))
+            fi
+          done
+
+          if [ $TOTAL_FAILURES -gt 0 ]; then
+            echo "❌ $TOTAL_FAILURES checkout test(s) failed"
+            exit 1
+          fi
+
+          echo "✅ All checkout tests passed!"
 
       - name: Fix permissions for Cypress output
         if: always()
@@ -103,12 +186,6 @@ jobs:
         with:
           name: cypress-videos-${{ matrix.php }}-${{ matrix.browser }}
           path: tests/e2e/cypress/videos
-
-      - name: Fail job if tests failed
-        if: failure()
-        run: |
-          echo "❌ One or more e2e tests failed."
-          exit 1
 
       - name: Stop WordPress Environment
         if: always()

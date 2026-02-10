@@ -4,10 +4,11 @@
  *
  * @since 2.0.0
  */
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
+/** @var $field \WP_Ultimo\UI\Field */
 
 ?>
-<div class="<?php echo esc_attr(trim($field->wrapper_classes)); ?>" <?php echo $field->get_wrapper_html_attributes(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+<div class="<?php echo esc_attr(trim($field->wrapper_classes)); ?>" <?php $field->print_wrapper_html_attributes(); ?>>
 
 	<?php
 
@@ -25,12 +26,18 @@ defined( 'ABSPATH' ) || exit;
 
 	?>
 
+	<?php
+	// Check if Vue is handling the name dynamically to avoid duplicate attributes
+	$has_vue_name = isset($field->html_attr['v-bind:name']);
+	?>
 	<select
 	class="form-control wu-w-full wu-my-1 <?php echo esc_attr(trim($field->classes)); ?>"
 	id="field-<?php echo esc_attr($field->id); ?>"
+	<?php if ( ! $has_vue_name) : ?>
 	name="<?php echo esc_attr($field->id); ?>"
+	<?php endif; ?>
 	value="<?php echo esc_attr($field->value); ?>"
-	<?php echo $field->get_html_attributes(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+	<?php $field->print_html_attributes(); ?>
 	>
 
 	<?php if ($field->placeholder) : ?>
@@ -52,7 +59,7 @@ defined( 'ABSPATH' ) || exit;
 
 	<?php if ($field->options_template) : ?>
 
-		<?php echo $field->options_template; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+		<?php echo wp_kses($field->options_template, wu_kses_allowed_html()); ?>
 
 	<?php endif; ?>
 

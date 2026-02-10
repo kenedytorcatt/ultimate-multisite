@@ -69,7 +69,7 @@ class Signup_Field_Username extends Base_Signup_Field {
 	 */
 	public function get_title() {
 
-		return __('Username', 'multisite-ultimate');
+		return __('Username', 'ultimate-multisite');
 	}
 
 	/**
@@ -82,7 +82,7 @@ class Signup_Field_Username extends Base_Signup_Field {
 	 */
 	public function get_description() {
 
-		return __('Adds an username field. This username will be used to create the WordPress user.', 'multisite-ultimate');
+		return __('Adds an username field. This username will be used to create the WordPress user.', 'ultimate-multisite');
 	}
 
 	/**
@@ -95,7 +95,7 @@ class Signup_Field_Username extends Base_Signup_Field {
 	 */
 	public function get_tooltip() {
 
-		return __('Adds an username field. This username will be used to create the WordPress user.', 'multisite-ultimate');
+		return __('Adds an username field. This username will be used to create the WordPress user.', 'ultimate-multisite');
 	}
 
 	/**
@@ -124,6 +124,7 @@ class Signup_Field_Username extends Base_Signup_Field {
 
 		return [
 			'auto_generate_username' => false,
+			'enable_inline_login_username'    => false,
 		];
 	}
 
@@ -167,13 +168,19 @@ class Signup_Field_Username extends Base_Signup_Field {
 		return [
 			'auto_generate_username' => [
 				'type'      => 'toggle',
-				'title'     => __('Auto-generate', 'multisite-ultimate'),
-				'desc'      => __('Check this option to auto-generate this field based on the email address of the customer.', 'multisite-ultimate'),
+				'title'     => __('Auto-generate', 'ultimate-multisite'),
+				'desc'      => __('Check this option to auto-generate this field based on the email address of the customer.', 'ultimate-multisite'),
 				'tooltip'   => '',
 				'value'     => 0,
 				'html_attr' => [
 					'v-model' => 'auto_generate_username',
 				],
+			],
+			'enable_inline_login_username' => [
+				'type'  => 'toggle',
+				'title' => __('Enable Inline Login', 'ultimate-multisite'),
+				'desc'  => __('When enabled, users entering an existing username will see an inline login prompt to authenticate with their password without leaving the page.', 'ultimate-multisite'),
+				'value' => 1,
 			],
 		];
 	}
@@ -209,7 +216,7 @@ class Signup_Field_Username extends Base_Signup_Field {
 			];
 		}
 
-		return [
+		$fields = [
 			'username' => [
 				'type'              => 'text',
 				'id'                => 'username',
@@ -224,11 +231,37 @@ class Signup_Field_Username extends Base_Signup_Field {
 					'v-model'         => 'username',
 					'v-init:username' => "'{$this->get_value()}'",
 					'autocomplete'    => 'username',
+					'@blur'           => "check_user_exists_debounced('username', username)",
 				],
 				'wrapper_html_attr' => [
 					'style' => $this->calculate_style_attr(),
 				],
 			],
 		];
+
+		if (wu_get_isset($attributes, 'enable_inline_login_username', false)) {
+			$fields['username_inline_login_prompt'] = [
+				'type'              => 'html',
+				'id'                => 'username_inline_login_prompt',
+				'content'           => [$this, 'render_inline_login_prompt'],
+				'wrapper_classes'   => '',
+				'wrapper_html_attr' => [
+					'v-if'    => "show_login_prompt && login_prompt_field === 'username'",
+					'v-cloak' => true,
+				],
+			];
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * Renders the inline login prompt HTML.
+	 *
+	 * @since 2.0.20
+	 * @return string
+	 */
+	public function render_inline_login_prompt(): string {
+		return wu_get_template_contents('checkout/partials/inline-login-prompt', ['field_type' => 'username']);
 	}
 }

@@ -4,10 +4,11 @@
  *
  * @since 2.0.0
  */
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
+/** @var $field \WP_Ultimo\UI\Field */
 
 ?>
-<li class="<?php echo esc_attr(trim($field->wrapper_classes)); ?>" <?php echo $field->get_wrapper_html_attributes(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+<li class="<?php echo esc_attr(trim($field->wrapper_classes)); ?>" <?php $field->print_wrapper_html_attributes(); ?>>
 
 	<div class="wu-block wu-w-full">
 
@@ -40,9 +41,13 @@ defined( 'ABSPATH' ) || exit;
 	?>
 
 	<div class="wu-block wu-w-full wu-mt-4 <?php echo esc_attr($field->classes); ?>">
-
-		<?php echo $field->content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-
+		<?php
+		// Hopefully content is a callable and escapes and outputs itself.
+		$content = $field->content;
+		if ($content) {
+			echo wp_kses($content, wu_kses_allowed_html());
+		}
+		?>
 	</div>
 
 	</div>

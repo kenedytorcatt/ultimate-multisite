@@ -30,6 +30,26 @@ class Payment extends Base_Model implements Notable {
 	use Traits\Notable;
 
 	/**
+	 * Meta key for line items.
+	 */
+	const META_LINE_ITEMS = 'wu_line_items';
+
+	/**
+	 * Meta key for invoice number.
+	 */
+	const META_INVOICE_NUMBER = 'wu_invoice_number';
+
+	/**
+	 * Meta key for cancel membership on refund.
+	 */
+	const META_CANCEL_MEMBERSHIP_ON_REFUND = 'wu_cancel_membership_on_refund';
+
+	/**
+	 * Meta key for original cart.
+	 */
+	const META_ORIGINAL_CART = 'wu_original_cart';
+
+	/**
 	 * ID of the product of this payment.
 	 *
 	 * @since 2.0.0
@@ -549,13 +569,13 @@ class Payment extends Base_Model implements Notable {
 		$gateway = $this->get_gateway();
 
 		if ( ! $gateway) {
-			return __('None', 'multisite-ultimate');
+			return __('None', 'ultimate-multisite');
 		}
 
 		$gateway_class = wu_get_gateway($gateway);
 
 		if ( ! $gateway_class) {
-			return __('None', 'multisite-ultimate');
+			return __('None', 'ultimate-multisite');
 		}
 
 		$title = $gateway_class->get_public_title();
@@ -599,7 +619,7 @@ class Payment extends Base_Model implements Notable {
 	public function get_line_items(): array {
 
 		if (null === $this->line_items) {
-			$line_items = (array) $this->get_meta('wu_line_items');
+			$line_items = (array) $this->get_meta(self::META_LINE_ITEMS);
 
 			$this->line_items = array_filter($line_items);
 		}
@@ -621,7 +641,7 @@ class Payment extends Base_Model implements Notable {
 
 		$line_items = array_map(fn($item) => is_array($item) ? new \WP_Ultimo\Checkout\Line_Item($item) : $item, $line_items);
 
-		$this->meta['wu_line_items'] = $line_items;
+		$this->meta[ self::META_LINE_ITEMS ] = $line_items;
 
 		$this->line_items = $line_items;
 	}
@@ -886,7 +906,7 @@ class Payment extends Base_Model implements Notable {
 	public function get_saved_invoice_number() {
 
 		if (null === $this->invoice_number) {
-			$this->invoice_number = $this->get_meta('wu_invoice_number', '');
+			$this->invoice_number = $this->get_meta(self::META_INVOICE_NUMBER, '');
 		}
 
 		return $this->invoice_number;
@@ -907,7 +927,7 @@ class Payment extends Base_Model implements Notable {
 		$provisional = false;
 
 		if (null === $this->invoice_number) {
-			$this->invoice_number = $this->get_meta('wu_invoice_number');
+			$this->invoice_number = $this->get_meta(self::META_INVOICE_NUMBER);
 		}
 
 		if (false === $this->invoice_number) {
@@ -938,7 +958,7 @@ class Payment extends Base_Model implements Notable {
 
 		$prefix = str_replace($search, $replace, (string) $prefix);
 
-		return sprintf('%s%s %s', $prefix, $this->invoice_number, $provisional ? __('(provisional)', 'multisite-ultimate') : '');
+		return sprintf('%s%s %s', $prefix, $this->invoice_number, $provisional ? __('(provisional)', 'ultimate-multisite') : '');
 	}
 
 	/**
@@ -950,7 +970,7 @@ class Payment extends Base_Model implements Notable {
 	 */
 	public function set_invoice_number($invoice_number): void {
 
-		$this->meta['wu_invoice_number'] = $invoice_number;
+		$this->meta[ self::META_INVOICE_NUMBER ] = $invoice_number;
 
 		$this->invoice_number = $invoice_number;
 	}
@@ -990,7 +1010,7 @@ class Payment extends Base_Model implements Notable {
 	public function should_cancel_membership_on_refund() {
 
 		if (null === $this->cancel_membership_on_refund) {
-			$this->cancel_membership_on_refund = $this->get_meta('wu_cancel_membership_on_refund', false);
+			$this->cancel_membership_on_refund = $this->get_meta(self::META_CANCEL_MEMBERSHIP_ON_REFUND, false);
 		}
 
 		return $this->cancel_membership_on_refund;
@@ -1005,7 +1025,7 @@ class Payment extends Base_Model implements Notable {
 	 */
 	public function set_cancel_membership_on_refund($cancel_membership_on_refund): void {
 
-		$this->meta['wu_cancel_membership_on_refund'] = $cancel_membership_on_refund;
+		$this->meta[ self::META_CANCEL_MEMBERSHIP_ON_REFUND ] = $cancel_membership_on_refund;
 
 		$this->cancel_membership_on_refund = $cancel_membership_on_refund;
 	}
@@ -1020,7 +1040,7 @@ class Payment extends Base_Model implements Notable {
 	 * An example of how that would work:
 	 * 1. Admin issues a refund on the admin panel;
 	 * 2. PayPal (for example), process the refund request
-	 *    and sends back a IPN (webhook call) telling Multisite Ultimate
+	 *    and sends back a IPN (webhook call) telling Ultimate Multisite
 	 *    that the refund was issued successfully;
 	 * 3. The IPN handler listens for that event and calls this
 	 *    to reflect the refund in the original WU payment.
@@ -1058,11 +1078,11 @@ class Payment extends Base_Model implements Notable {
 		 * it is a partial refund.
 		 */
 		if ($amount >= $this->get_total()) {
-			$title = __('Full Refund', 'multisite-ultimate');
+			$title = __('Full Refund', 'ultimate-multisite');
 
 			$new_status = Payment_Status::REFUND;
 		} else {
-			$title = __('Partial Refund', 'multisite-ultimate');
+			$title = __('Partial Refund', 'ultimate-multisite');
 
 			$new_status = Payment_Status::PARTIAL_REFUND;
 		}
@@ -1072,7 +1092,7 @@ class Payment extends Base_Model implements Notable {
 		$formatted_value = date_i18n(get_option('date_format'), $time);
 
 		// translators: %s is the date of processing.
-		$description = sprintf(__('Processed on %s', 'multisite-ultimate'), $formatted_value);
+		$description = sprintf(__('Processed on %s', 'ultimate-multisite'), $formatted_value);
 
 		$line_item_data = [
 			'type'         => 'refund',

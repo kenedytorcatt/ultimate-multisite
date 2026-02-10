@@ -51,22 +51,10 @@ final class Customers_Table extends Table {
 	 * @var array
 	 */
 	protected $upgrades = [
-		'2.0.1-revision.20210508' => 20_210_508,
-		'2.0.1-revision.20210607' => 20_210_607,
-		'2.0.1-revision.20230601' => 20_230_601,
+		'2.0.1-revision.20210508' => 20210508,
+		'2.0.1-revision.20210607' => 20210607,
+		'2.0.1-revision.20230601' => 20230601,
 	];
-
-	/**
-	 * Customer constructor.
-	 *
-	 * @access public
-	 * @since  2.0.0
-	 * @return void
-	 */
-	public function __construct() {
-
-		parent::__construct();
-	}
 
 	/**
 	 * Setup the database schema
@@ -150,7 +138,7 @@ final class Customers_Table extends Table {
 	 *
 	 * @since 2.1.2
 	 */
-	protected function __20230601(): bool {
+	protected function __20230601(): bool { // phpcs:ignore PHPCompatibility.FunctionNameRestrictions.ReservedFunctionNames.MethodDoubleUnderscore
 
 		$null_columns = [
 			'date_modified',

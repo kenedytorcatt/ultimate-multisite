@@ -18,8 +18,10 @@ use WP_Ultimo\Database\Payments\Payment_Status;
 use WP_Ultimo\Database\Memberships\Membership_Status;
 use WP_Ultimo\Checkout\Checkout_Pages;
 use WP_Ultimo\Managers\Payment_Manager;
+use WP_Ultimo\Models\Customer;
 use WP_Ultimo\Objects\Billing_Address;
 use WP_Ultimo\Models\Site;
+use WP_User;
 
 /**
  * Handles the processing of new membership purchases.
@@ -123,6 +125,14 @@ class Checkout {
 	protected $gateway_id;
 
 	/**
+	 * Pending payments for the current user.
+	 *
+	 * @since 2.1.4
+	 * @var array
+	 */
+	protected $pending_payments;
+
+	/**
 	 * The customer object.
 	 *
 	 * @since 2.1.2
@@ -173,6 +183,14 @@ class Checkout {
 		 */
 		add_action('init', [$this, 'add_rewrite_rules'], 20);
 
+		// Schedule draft cleanup
+		if (! wp_next_scheduled('wu_cleanup_draft_payments')) {
+			wp_schedule_event(time(), 'daily', 'wu_cleanup_draft_payments');
+		}
+		add_action('wu_cleanup_draft_payments', [$this, 'cleanup_expired_drafts']);
+
+		add_action('init', [$this, 'handle_cancel_payment']);
+
 		add_filter('wu_request', [$this, 'get_checkout_from_query_vars'], 10, 2);
 
 		/*
@@ -188,6 +206,20 @@ class Checkout {
 		add_action('wu_ajax_wu_validate_form', [$this, 'maybe_handle_order_submission']);
 
 		add_action('wu_ajax_nopriv_wu_validate_form', [$this, 'maybe_handle_order_submission']);
+
+		/*
+		 * Check if user exists (for inline login prompt)
+		 */
+		add_action('wu_ajax_wu_check_user_exists', [$this, 'check_user_exists']);
+
+		add_action('wu_ajax_nopriv_wu_check_user_exists', [$this, 'check_user_exists']);
+
+		/*
+		 * Handle inline login during checkout
+		 */
+		add_action('wu_ajax_wu_inline_login', [$this, 'handle_inline_login']);
+
+		add_action('wu_ajax_nopriv_wu_inline_login', [$this, 'handle_inline_login']);
 
 		/*
 		 * Adds the necessary scripts
@@ -304,6 +336,7 @@ class Checkout {
 				'duration_unit',
 				'template_id',
 				'wu_preselected',
+				'resume_checkout',
 			]
 		);
 
@@ -372,6 +405,51 @@ class Checkout {
 			$this->session = wu_get_session('signup');
 		}
 
+		// Handle resume checkout from URL
+		$resume_hash = wu_request('resume_checkout');
+		if ($resume_hash) {
+			$resume_payment = wu_get_payment_by_hash($resume_hash);
+			if ($resume_payment && $resume_payment->get_status() === Payment_Status::DRAFT) {
+				$this->session->set('draft_payment_id', $resume_payment->get_id());
+				$saved_session = $resume_payment->get_meta('checkout_session');
+				if ($saved_session) {
+					$this->session->set('signup', $saved_session);
+				}
+			}
+		}
+
+		// Handle cancel pending payment request
+		if (wu_request('cancel_pending_payment')) {
+			$payment_id = wu_request('cancel_pending_payment');
+			$payment    = wu_get_payment($payment_id);
+			if ($payment && $payment->get_status() === Payment_Status::PENDING && $this->can_user_cancel_payment($payment)) {
+				$payment->set_status(Payment_Status::CANCELLED);
+				$payment->save();
+				// Clear session if it was this payment
+				if ((int) $this->session->get('payment_id') === (int) $payment_id) {
+					$this->session->set('payment_id', null);
+				}
+			}
+		}
+
+		// Load from draft payment if exists
+		$draft_payment_id = $this->session->get('draft_payment_id');
+		if ($draft_payment_id) {
+			$draft_payment = wu_get_payment($draft_payment_id);
+			if ($draft_payment && $draft_payment->get_status() === Payment_Status::DRAFT) {
+				$saved_session = $draft_payment->get_meta('checkout_session');
+				if ($saved_session) {
+					$this->session->set('signup', array_merge($this->session->get('signup') ?? [], $saved_session));
+				}
+			} else {
+				// Invalid draft, remove
+				$this->session->set('draft_payment_id', null);
+			}
+		}
+
+		// Detect pending payments
+		// $this->detect_pending_payments();
+
 		if ($this->checkout_form) {
 			$this->steps = $this->checkout_form->get_steps_to_show();
 
@@ -383,7 +461,7 @@ class Checkout {
 
 			$this->step = $this->checkout_form->get_step($this->step_name, true);
 
-			if(!$this->step) {
+			if (! $this->step) {
 				$this->step = [];
 			}
 
@@ -399,6 +477,13 @@ class Checkout {
 		}
 
 		$this->already_setup = true;
+
+		// Create draft payment if products selected and no draft exists
+		$products = $this->request_or_session('products', []);
+		if (! empty($products) && ! $this->session->get('draft_payment_id')) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
+			// TODO: Get this working, later.
+			// $this->create_draft_payment($products);
+		}
 
 		wu_no_cache(); // Prevent the registration page from being cached.
 	}
@@ -490,6 +575,9 @@ class Checkout {
 				wp_send_json_error($validation);
 			}
 
+			// Auto-save progress to draft payment
+			$this->save_draft_progress();
+
 			wp_send_json_success([]);
 		}
 	}
@@ -551,7 +639,17 @@ class Checkout {
 
 		$wpdb->query('COMMIT'); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
+		// Clean up draft payment if it exists
+		$draft_payment_id = $this->session->get('draft_payment_id');
+		if ($draft_payment_id) {
+			$draft_payment = wu_get_payment($draft_payment_id);
+			if ($draft_payment && $draft_payment->get_status() === Payment_Status::DRAFT) {
+				$draft_payment->delete();
+			}
+		}
+
 		$this->session->set('signup', []);
+		$this->session->set('draft_payment_id', null);
 		$this->session->commit();
 
 		wp_send_json_success($results);
@@ -597,17 +695,19 @@ class Checkout {
 			apply_filters(
 				'wu_cart_parameters',
 				[
-					'products'      => $this->request_or_session('products', []),
-					'discount_code' => $this->request_or_session('discount_code'),
-					'country'       => $this->request_or_session('billing_country'),
-					'state'         => $this->request_or_session('billing_state'),
-					'city'          => $this->request_or_session('billing_city'),
-					'membership_id' => $this->request_or_session('membership_id'),
-					'payment_id'    => $this->request_or_session('payment_id'),
-					'auto_renew'    => $this->request_or_session('auto_renew', false),
-					'duration'      => $this->request_or_session('duration'),
-					'duration_unit' => $this->request_or_session('duration_unit'),
-					'cart_type'     => $this->request_or_session('cart_type', 'new'),
+					'products'       => $this->request_or_session('products', []),
+					'discount_code'  => $this->request_or_session('discount_code'),
+					'country'        => $this->request_or_session('billing_country'),
+					'state'          => $this->request_or_session('billing_state'),
+					'city'           => $this->request_or_session('billing_city'),
+					'membership_id'  => $this->request_or_session('membership_id'),
+					'payment_id'     => $this->request_or_session('payment_id'),
+					'auto_renew'     => $this->request_or_session('auto_renew', false),
+					'duration'       => $this->request_or_session('duration'),
+					'duration_unit'  => $this->request_or_session('duration_unit'),
+					'cart_type'      => $this->request_or_session('cart_type', 'new'),
+					'custom_amounts' => $this->request_or_session('custom_amounts', []),
+					'pwyw_recurring' => $this->request_or_session('pwyw_recurring', []),
 				],
 				$this
 			)
@@ -651,9 +751,7 @@ class Checkout {
 		if ($cart->should_collect_payment() === false) {
 			$gateway = wu_get_gateway('free');
 		} elseif ( ! $gateway || $gateway->get_id() === 'free') {
-			$this->errors = new \WP_Error('no-gateway', __('Payment gateway not registered.', 'multisite-ultimate'));
-
-			return false;
+			return new \WP_Error('no-gateway', __('Payment gateway not registered.', 'ultimate-multisite'));
 		}
 
 		/*
@@ -661,10 +759,17 @@ class Checkout {
 		 * we need to bail.
 		 */
 		if ( ! $gateway) {
-			return new \WP_Error('no-gateway', __('Payment gateway not registered.', 'multisite-ultimate'));
+			return new \WP_Error('no-gateway', __('Payment gateway not registered.', 'ultimate-multisite'));
 		}
 
 		$this->gateway_id = $gateway->get_id();
+
+		/*
+		 * Set the order early so that validation_rules()
+		 * can check should_collect_payment() to skip
+		 * billing field requirements for free trials.
+		 */
+		$this->order = $cart;
 
 		/*
 		 * Now we need to validate the form.
@@ -680,13 +785,6 @@ class Checkout {
 		if (is_wp_error($validation)) {
 			return $validation;
 		}
-
-		/*
-		 * From now on, logic can be delegated to
-		 * special methods, so we need to set
-		 * the order as globally accessible.
-		 */
-		$this->order = $cart;
 
 		/*
 		 * Handles display names, if needed.
@@ -778,6 +876,21 @@ class Checkout {
 		$this->order->set_customer($this->customer);
 		$this->order->set_membership($this->membership);
 		$this->order->set_payment($this->payment);
+
+		/**
+		 * Fires after the checkout order is fully assembled.
+		 *
+		 * Addons can use this to create secondary memberships
+		 * for products with independent billing cycles.
+		 *
+		 * @since 2.5.0
+		 *
+		 * @param \WP_Ultimo\Checkout\Cart           $order      The cart/order object.
+		 * @param \WP_Ultimo\Models\Customer          $customer   The customer.
+		 * @param \WP_Ultimo\Models\Membership        $membership The primary membership.
+		 * @param \WP_Ultimo\Models\Payment           $payment    The payment.
+		 */
+		do_action('wu_checkout_order_created', $this->order, $this->customer, $this->membership, $this->payment);
 
 		$gateway->set_order($this->order);
 
@@ -941,13 +1054,6 @@ class Checkout {
 			 */
 			if ($this->request_or_session('auto_generate_username') === 'email') {
 				$username = wu_username_from_email($this->request_or_session('email_address'));
-
-				/*
-				 * Case where the site title is also auto-generated, based on the username.
-				 */
-				if ($this->request_or_session('auto_generate_site_title') && $this->request_or_session('site_title', '') === '') {
-					$_REQUEST['site_title'] = $username;
-				}
 			}
 
 			/*
@@ -975,7 +1081,7 @@ class Checkout {
 					'email_verification' => 'verified',
 				];
 			} elseif (isset($customer_data['email']) && get_user_by('email', $customer_data['email'])) {
-				return new \WP_Error('email_exists', __('The email address you entered is already in use.', 'multisite-ultimate'));
+				return new \WP_Error('email_exists', __('The email address you entered is already in use.', 'ultimate-multisite'));
 			}
 
 			/*
@@ -1006,16 +1112,14 @@ class Checkout {
 		$billing_address->load_attributes_from_post($session);
 
 		/*
-		 * Validates the address.
+		 * Validates the address when payment is being collected.
 		 */
-		$valid_address = $billing_address->validate();
+		if ($this->should_collect_payment()) {
+			$valid_address = $billing_address->validate();
 
-		/*
-		 * There's something invalid on the address,
-		 * bail with the errors.
-		 */
-		if (is_wp_error($valid_address)) {
-			return $valid_address;
+			if (is_wp_error($valid_address)) {
+				return $valid_address;
+			}
 		}
 
 		$customer->set_billing_address($billing_address);
@@ -1027,7 +1131,7 @@ class Checkout {
 		 * wrong with the customer update, we return a general error.
 		 */
 		if ( ! $address_saved) {
-			return new \WP_Error('address_failure', __('Something wrong happened while attempting to save the customer billing address', 'multisite-ultimate'));
+			return new \WP_Error('address_failure', __('Something wrong happened while attempting to save the customer billing address', 'ultimate-multisite'));
 		}
 
 		/*
@@ -1047,7 +1151,7 @@ class Checkout {
 		 *
 		 * @since 2.0.0
 		 * @param Customer $customer The customer that was maybe created.
-		 * @param Checkout $this     The current checkout class.
+		 * @param Checkout $checkout     The current checkout class.
 		 */
 		do_action('wu_maybe_create_customer', $customer, $this);
 
@@ -1101,8 +1205,8 @@ class Checkout {
 			 *
 			 * @since 2.0.0
 			 * @param array $meta_repository The list of meta fields, key => value structured.
-			 * @param Customer $customer The Multisite Ultimate customer object.
-			 * @param Checkout $this The checkout class.
+			 * @param Customer $customer The Ultimate Multisite customer object.
+			 * @param Checkout $checkout The checkout class.
 			 */
 			do_action('wu_handle_customer_meta_fields', $meta_repository, $customer, $this);
 
@@ -1133,9 +1237,9 @@ class Checkout {
 			 *
 			 * @since 2.0.4
 			 * @param array $meta_repository The list of meta fields, key => value structured.
-			 * @param \WP_User $user The WordPress user object.
-			 * @param Customer $customer The Multisite Ultimate customer object.
-			 * @param Checkout $this The checkout class.
+			 * @param WP_User $user The WordPress user object.
+			 * @param Customer $customer The Ultimate Multisite customer object.
+			 * @param Checkout $checkout The checkout class.
 			 */
 			do_action('wu_handle_user_meta_fields', $user_meta_repository, $user, $customer, $this);
 		}
@@ -1178,7 +1282,7 @@ class Checkout {
 		/*
 		 * Important dates.
 		 */
-		$membership_data['date_expiration'] = $this->order->get_billing_start_date();
+		$membership_data['date_expiration'] = gmdate('Y-m-d 23:59:59', $this->order->get_billing_start_date());
 
 		$membership = wu_create_membership($membership_data);
 
@@ -1228,6 +1332,22 @@ class Checkout {
 		$site_url   = $this->request_or_session('site_url');
 		$site_title = $this->request_or_session('site_title');
 
+		// Handle special auto-generation values passed from form fields
+		if ('autogenerate' === $site_title) {
+			if ($this->customer) {
+				$site_title = $this->customer->get_username();
+			} else {
+				$email      = $this->request_or_session('email_address');
+				$site_title = $email ? wu_generate_site_title_from_email($email) : '';
+			}
+		}
+
+		if ('autogenerate' === $site_url && $site_title) {
+			$site_url = wu_generate_unique_site_url($site_title, $this->request_or_session('site_domain'));
+		} elseif ('autogenerate' === $site_url && $this->customer) {
+			$site_url = wu_generate_unique_site_url($this->customer->get_username(), $this->request_or_session('site_domain'));
+		}
+
 		if ( ! $site_url && ! $site_title) {
 			return false;
 		}
@@ -1240,31 +1360,26 @@ class Checkout {
 		 * Let's handle auto-generation of site URLs.
 		 *
 		 * To decide if we need to auto-generate the site URL,
-		 * we'll check the request for the auto_generate_site_url = username request value.
+		 * we'll check the request for the auto_generate_site_url value.
 		 *
 		 * If that's present and no site_url is present, then we need to auto-generate this.
-		 * The strategy here is simple, we basically set the site_url to the username and
-		 * check if it is already taken.
+		 * We support generating from either username or site_title.
 		 */
-		if (empty($site_url) || 'username' === $auto_generate_url) {
+		if (empty($site_url) || in_array($auto_generate_url, ['username', 'site_title'], true)) {
 			if ('username' === $auto_generate_url) {
-				$site_url = $this->customer->get_username();
-
+				$site_url   = $this->customer->get_username();
 				$site_title = $site_title ?: $site_url;
+			} elseif ('site_title' === $auto_generate_url && $site_title) {
+				$site_url = wu_generate_unique_site_url($site_title, $this->request_or_session('site_domain'));
 			} else {
-				$site_url = strtolower(str_replace(' ', '', preg_replace('/&([a-z])[a-z]+;/i', '$1', htmlentities(trim((string) $site_title)))));
-			}
+				// Fallback to legacy behavior - generate from site title if available
+				$site_url = wu_generate_site_url_from_title($site_title);
+				if (empty($site_url)) {
+					$site_url = $this->customer->get_username();
+				}
 
-			$d = wu_get_site_domain_and_path($site_url, $this->request_or_session('site_domain'));
-
-			$n = 0;
-
-			while (domain_exists($d->domain, $d->path)) {
-				++$n;
-
-				$site_url = $this->customer->get_username() . $n;
-
-				$d = wu_get_site_domain_and_path($site_url, $this->request_or_session('site_domain'));
+				// Ensure uniqueness
+				$site_url = wu_generate_unique_site_url($site_url, $this->request_or_session('site_domain'));
 			}
 		}
 
@@ -1334,9 +1449,7 @@ class Checkout {
 			'type'           => Site_Type::CUSTOMER_OWNED,
 		];
 
-		$pending_site = $this->membership->create_pending_site($site_data);
-
-		return $pending_site;
+		return $this->membership->create_pending_site($site_data);
 	}
 
 	/**
@@ -1450,6 +1563,20 @@ class Checkout {
 		 */
 		$payment = wu_create_payment($payment_data);
 
+		if (is_wp_error($payment)) {
+			// Log the error and return it to halt order processing
+			wu_log_add(
+				'checkout',
+				sprintf(
+					'Failed to create payment during order submission: %s (Code: %s)',
+					$payment->get_error_message(),
+					$payment->get_error_code()
+				),
+				\Psr\Log\LogLevel::ERROR
+			);
+			return $payment;
+		}
+
 		/*
 		 * Then, if this is a trial,
 		 * we need to set the payment value to zero.
@@ -1506,17 +1633,19 @@ class Checkout {
 			apply_filters(
 				'wu_cart_parameters',
 				[
-					'products'      => $this->request_or_session('products', []),
-					'discount_code' => $this->request_or_session('discount_code'),
-					'country'       => $country,
-					'state'         => $state,
-					'city'          => $city,
-					'membership_id' => $this->request_or_session('membership_id'),
-					'payment_id'    => $this->request_or_session('payment_id'),
-					'auto_renew'    => $this->request_or_session('auto_renew', false),
-					'duration'      => $this->request_or_session('duration'),
-					'duration_unit' => $this->request_or_session('duration_unit'),
-					'cart_type'     => $this->request_or_session('cart_type', 'new'),
+					'products'       => $this->request_or_session('products', []),
+					'discount_code'  => $this->request_or_session('discount_code'),
+					'country'        => $country,
+					'state'          => $state,
+					'city'           => $city,
+					'membership_id'  => $this->request_or_session('membership_id'),
+					'payment_id'     => $this->request_or_session('payment_id'),
+					'auto_renew'     => $this->request_or_session('auto_renew', false),
+					'duration'       => $this->request_or_session('duration'),
+					'duration_unit'  => $this->request_or_session('duration_unit'),
+					'cart_type'      => $this->request_or_session('cart_type', 'new'),
+					'custom_amounts' => $this->request_or_session('custom_amounts', []),
+					'pwyw_recurring' => $this->request_or_session('pwyw_recurring', []),
 				],
 				$this
 			)
@@ -1543,6 +1672,145 @@ class Checkout {
 	}
 
 	/**
+	 * Checks if a user exists with given email or username.
+	 *
+	 * Used for inline login prompt on checkout form.
+	 * Implements rate limiting to prevent user enumeration attacks.
+	 *
+	 * @since 2.0.20
+	 * @return void
+	 */
+	public function check_user_exists(): void {
+
+		check_ajax_referer('wu_checkout');
+
+		$field_type = wu_request('field_type');
+		$value      = sanitize_text_field(wu_request('value'));
+
+		if (empty($value) || empty($field_type)) {
+			wp_send_json_error(['message' => __('Invalid request', 'ultimate-multisite')]);
+		}
+
+		// Rate limiting: 10 checks per minute per IP
+		$ip            = wu_get_ip();
+		$transient_key = 'wu_check_user_' . md5($ip);
+		$check_count   = get_transient($transient_key);
+
+		if ($check_count) {
+			// Deliberate delay to prevent timing attacks
+			usleep(100000); // 100ms
+			if ($check_count > 10) {
+				wp_send_json_error(['message' => __('Too many requests. Please try again later.', 'ultimate-multisite')]);
+			}
+		}
+
+		set_transient($transient_key, ($check_count ? $check_count + 1 : 1), MINUTE_IN_SECONDS);
+
+		$user_exists = false;
+
+		if ('email' === $field_type) {
+			$user        = get_user_by('email', $value);
+			$user_exists = false !== $user;
+		} elseif ('username' === $field_type) {
+			$user        = get_user_by('login', $value);
+			$user_exists = false !== $user;
+		}
+
+		wp_send_json_success(
+			[
+				'exists' => $user_exists,
+			]
+		);
+	}
+
+	/**
+	 * Handles inline login during checkout.
+	 *
+	 * Authenticates user and sets auth cookie on success.
+	 * Implements rate limiting to prevent brute force attacks.
+	 *
+	 * @since 2.0.20
+	 * @return void
+	 */
+	public function handle_inline_login(): void {
+
+		check_ajax_referer('wu_checkout');
+
+		$username_or_email = sanitize_text_field(wu_request('username_or_email'));
+		$password          = wu_request('password'); // Don't sanitize passwords
+
+		if (empty($username_or_email) || empty($password)) {
+			wp_send_json_error(
+				[
+					'message' => __('Please provide both username/email and password.', 'ultimate-multisite'),
+				]
+			);
+		}
+
+		// Rate limiting: 5 failed attempts per IP with 5-minute lockout
+		$ip            = wu_get_ip();
+		$transient_key = 'wu_login_attempt_' . md5($ip);
+		$attempt_count = get_transient($transient_key);
+
+		if ($attempt_count && $attempt_count >= 5) {
+			wp_send_json_error(
+				[
+					'message' => __('Too many login attempts. Please try again in a few minutes.', 'ultimate-multisite'),
+				]
+			);
+		}
+
+		// Determine if input is email or username
+		if (is_email($username_or_email)) {
+			$user = get_user_by('email', $username_or_email);
+
+			if ($user) {
+				$username = $user->user_login;
+			} else {
+				$username = $username_or_email; // Will fail authentication
+
+			}
+		} else {
+			$username = $username_or_email;
+		}
+
+		// Attempt authentication using WordPress core
+		$user = wp_authenticate($username, $password);
+
+		if (is_wp_error($user)) {
+
+			// Increment failed attempt counter
+			set_transient($transient_key, ($attempt_count ? $attempt_count + 1 : 1), 5 * MINUTE_IN_SECONDS);
+
+			wp_send_json_error(
+				[
+					'message' => __('Invalid username or password.', 'ultimate-multisite'),
+				]
+			);
+		}
+
+		// Clear rate limiting on successful login
+		delete_transient($transient_key);
+
+		// Log the user in
+		wp_clear_auth_cookie();
+		wp_set_auth_cookie($user->ID, false);
+		do_action('wp_login', $user->user_login, $user);
+
+		// Get customer data if exists
+		$customer = wu_get_customer_by_user_id($user->ID);
+
+		wp_send_json_success(
+			[
+				'message'      => __('Login successful!', 'ultimate-multisite'),
+				'user_id'      => $user->ID,
+				'display_name' => $user->display_name,
+				'customer'     => $customer ? $customer->to_search_results() : null,
+			]
+		);
+	}
+
+	/**
 	 * Returns the checkout variables.
 	 *
 	 * @since 2.0.0
@@ -1556,9 +1824,16 @@ class Checkout {
 		 * Localized strings.
 		 */
 		$i18n = [
-			'loading'        => __('Loading...', 'multisite-ultimate'),
-			'added_to_order' => __('The item was added!', 'multisite-ultimate'),
-			'weak_password'  => __('The Password entered is too weak.', 'multisite-ultimate'),
+			'loading'              => __('Loading...', 'ultimate-multisite'),
+			'added_to_order'       => __('The item was added!', 'ultimate-multisite'),
+			'weak_password'        => __('The Password entered is too weak.', 'ultimate-multisite'),
+			'password_required'    => __('Password is required', 'ultimate-multisite'),
+			'login_failed'         => __('Login failed. Please try again.', 'ultimate-multisite'),
+			'logging_in'           => __('Logging in...', 'ultimate-multisite'),
+			'already_have_account' => __('Already have an account?', 'ultimate-multisite'),
+			'sign_in'              => __('Sign in', 'ultimate-multisite'),
+			'forgot_password'      => __('Forgot password?', 'ultimate-multisite'),
+			'cancel'               => __('Cancel', 'ultimate-multisite'),
 		];
 
 		/*
@@ -1608,7 +1883,8 @@ class Checkout {
 			'city'               => $this->request_or_session('billing_city'),
 			'duration'           => $duration,
 			'duration_unit'      => $duration_unit,
-			'site_url'           => $this->request_or_session('site_url'),
+			'site_title'         => $this->request_or_session('site_title'),
+			'site_url'           => $this->request_or_session('site_url') === 'autogenerate' ? '' : $this->request_or_session('site_url'),
 			'site_domain'        => $this->request_or_session('site_domain', preg_replace('#^https?://#', '', $site_domain)),
 			'is_subdomain'       => is_subdomain_install(),
 			'gateway'            => wu_request('gateway', $default_gateway),
@@ -1691,10 +1967,50 @@ class Checkout {
 		 *
 		 * @since 2.0.0
 		 * @param array    $variables Localized variables.
-		 * @param Checkout $this The checkout class.
+		 * @param Checkout $checkout The checkout class.
 		 * @return array The new variables array.
 		 */
 		return apply_filters('wu_get_checkout_variables', $variables, $this);
+	}
+
+	/**
+	 * Determines whether payment should be collected for the current checkout.
+	 *
+	 * Uses $this->order if available, otherwise builds a temporary Cart
+	 * from the request/session data to check.
+	 *
+	 * @since 2.0.20
+	 * @return bool
+	 */
+	public function should_collect_payment(): bool {
+
+		if ($this->order) {
+			return $this->order->should_collect_payment();
+		}
+
+		$products = $this->request_or_session('products', []);
+
+		if (empty($products)) {
+			return true;
+		}
+
+		try {
+			$cart = new Cart(
+				[
+					'products'       => (array) $products,
+					'country'        => $this->request_or_session('billing_country'),
+					'discount_code'  => $this->request_or_session('discount_code'),
+					'duration'       => $this->request_or_session('duration'),
+					'duration_unit'  => $this->request_or_session('duration_unit'),
+					'custom_amounts' => $this->request_or_session('custom_amounts', []),
+					'pwyw_recurring' => $this->request_or_session('pwyw_recurring', []),
+				]
+			);
+
+			return $cart->should_collect_payment();
+		} catch (\Throwable $e) {
+			return true;
+		}
 	}
 
 	/**
@@ -1809,12 +2125,23 @@ class Checkout {
 			}
 		}
 
+		/*
+		 * Remove billing field requirements when payment is not needed
+		 * (e.g. free trials with allow_trial_without_payment_method enabled).
+		 */
+		if ( ! $this->should_collect_payment()) {
+			$validation_rules['billing_country']  = '';
+			$validation_rules['billing_zip_code'] = '';
+			$validation_rules['billing_state']    = '';
+			$validation_rules['billing_city']     = '';
+		}
+
 		/**
 		 * Allow plugin developers to filter the validation rules.
 		 *
 		 * @since 2.0.20
 		 * @param array    $validation_rules The validation rules to be used.
-		 * @param Checkout $this The checkout class.
+		 * @param Checkout $checkout The checkout class.
 		 */
 		return apply_filters('wu_checkout_validation_rules', $validation_rules, $this);
 	}
@@ -1836,7 +2163,7 @@ class Checkout {
 		if (is_array($session)) {
 			$stack = array_merge($session, $_REQUEST); // phpcs:ignore WordPress.Security.NonceVerification
 		} else {
-			$stack = $_REQUEST;
+			$stack = $_REQUEST; // phpcs:ignore WordPress.Security.NonceVerification
 		}
 
 		if (null === $rules) {
@@ -1860,12 +2187,12 @@ class Checkout {
 		// Add some hidden or compound fields ids
 		$validation_aliases = array_merge(
 			[
-				'password_conf'              => __('Password confirmation', 'multisite-ultimate'),
-				'email_address_confirmation' => __('Email confirmation', 'multisite-ultimate'),
-				'template_id'                => __('Template ID', 'multisite-ultimate'),
-				'valid_password'             => __('Valid password', 'multisite-ultimate'),
-				'products'                   => __('Products', 'multisite-ultimate'),
-				'gateway'                    => __('Payment Gateway', 'multisite-ultimate'),
+				'password_conf'              => __('Password confirmation', 'ultimate-multisite'),
+				'email_address_confirmation' => __('Email confirmation', 'ultimate-multisite'),
+				'template_id'                => __('Template ID', 'ultimate-multisite'),
+				'valid_password'             => __('Valid password', 'ultimate-multisite'),
+				'products'                   => __('Products', 'ultimate-multisite'),
+				'gateway'                    => __('Payment Gateway', 'ultimate-multisite'),
 			],
 			$base_aliases
 		);
@@ -1875,7 +2202,7 @@ class Checkout {
 		 *
 		 * @since 2.1
 		 * @param array    $validation_aliases The array with id => alias.
-		 * @param Checkout $this The checkout class.
+		 * @param Checkout $checkout The checkout class.
 		 */
 		$validation_aliases = apply_filters('wu_checkout_validation_aliases', $validation_aliases, $this);
 
@@ -1923,7 +2250,7 @@ class Checkout {
 		/*
 		 * Checks if we are in the last step.
 		 *
-		 * Multisite Ultimate supports multi-step checkout
+		 * Ultimate Multisite supports multi-step checkout
 		 * flows. That means that we do different
 		 * things on the intermediary steps (mostly
 		 * add things to the session) and on the final,
@@ -2052,8 +2379,14 @@ class Checkout {
 
 		$this->setup_checkout();
 
-		$gateway    = wu_get_gateway(wu_request('gateway'));
-		$payment    = wu_get_payment($this->request_or_session('payment_id'));
+		$gateway = wu_get_gateway(wu_request('gateway'));
+		$payment = wu_get_payment($this->request_or_session('payment_id'));
+
+		if ( ! $payment) {
+			// translators: %s payment id.
+			$this->errors = new \WP_Error('no-payment', sprintf(__('Payment (%s) not found.', 'ultimate-multisite'), $this->request_or_session('payment_id')));
+			return false;
+		}
 		$customer   = $payment->get_customer();
 		$membership = $payment->get_membership();
 
@@ -2082,13 +2415,13 @@ class Checkout {
 			} elseif ($this->order->should_collect_payment() === false) {
 				$gateway = wu_get_gateway('free');
 			} elseif ($gateway->get_id() === 'free') {
-					$this->errors = new \WP_Error('no-gateway', __('Payment gateway not registered.', 'multisite-ultimate'));
+					$this->errors = new \WP_Error('no-gateway', __('Payment gateway not registered.', 'ultimate-multisite'));
 
 					return false;
 			}
 
 			if ( ! $gateway) {
-				$this->errors = new \WP_Error('no-gateway', __('Payment gateway not registered.', 'multisite-ultimate'));
+				$this->errors = new \WP_Error('no-gateway', __('Payment gateway not registered.', 'ultimate-multisite'));
 
 				return false;
 			}
@@ -2110,7 +2443,7 @@ class Checkout {
 			 *
 			 * The gateway takes in the info about the transaction
 			 * and perform the necessary steps to make sure the
-			 * data on the gateway correctly reflects the data on Multisite Ultimate.
+			 * data on the gateway correctly reflects the data on Ultimate Multisite.
 			 */
 			$status = $gateway->process_checkout($payment, $membership, $customer, $this->order, $type);
 
@@ -2122,7 +2455,7 @@ class Checkout {
 			 * In that case, we simply return.
 			 */
 			if (false === $status) {
-				return;
+				return true;
 			}
 
 			/*
@@ -2186,7 +2519,7 @@ class Checkout {
 			$membership_id = $this->order->get_membership() ? $this->order->get_membership()->get_id() : 'unknown';
 
 			// translators: %s is the membership ID
-			$log_message  = sprintf(__('Checkout failed for customer %s: ', 'multisite-ultimate'), $membership_id);
+			$log_message  = sprintf(__('Checkout failed for customer %s: ', 'ultimate-multisite'), $membership_id);
 			$log_message .= $e->getMessage();
 
 			wu_log_add('checkout', $log_message, LogLevel::ERROR);
@@ -2300,7 +2633,12 @@ class Checkout {
 
 		wp_enqueue_style('wu-admin');
 
-		wp_register_script('wu-checkout', wu_get_asset('checkout.js', 'js'), ['jquery-core', 'wu-vue', 'moment', 'wu-block-ui', 'wu-functions', 'password-strength-meter', 'underscore', 'wp-polyfill', 'wp-hooks', 'wu-cookie-helpers'], wu_get_version(), true);
+		// Enqueue password styles (includes dashicons as dependency).
+		wp_enqueue_style('wu-password');
+
+		wp_register_script('wu-checkout', wu_get_asset('checkout.js', 'js'), ['jquery-core', 'wu-vue', 'moment', 'wu-block-ui', 'wu-functions', 'password-strength-meter', 'wu-password-strength', 'underscore', 'wp-polyfill', 'wp-hooks', 'wu-cookie-helpers', 'wu-password-toggle'], wu_get_version(), true);
+
+		wp_set_script_translations('wu-password-toggle', 'ultimate-multisite');
 
 		wp_localize_script('wu-checkout', 'wu_checkout', $this->get_checkout_variables());
 
@@ -2431,5 +2769,163 @@ class Checkout {
 		if (wu_request('status') !== 'error') {
 			return;
 		}
+	}
+
+	/**
+	 * Cleans up expired draft and pending payments (older than 30 days).
+	 *
+	 * @since 2.1.4
+	 * @return void
+	 */
+	public function cleanup_expired_drafts(): void {
+
+		global $wpdb;
+
+		$expired_date = gmdate('Y-m-d H:i:s', strtotime('-30 days'));
+
+		$expired_drafts = wu_get_payments(
+			[
+				'status'           => Payment_Status::DRAFT,
+				'date_created__lt' => $expired_date,
+			]
+		);
+
+		$expired_pendings = wu_get_payments(
+			[
+				'status'           => Payment_Status::PENDING,
+				'date_created__lt' => $expired_date,
+			]
+		);
+
+		foreach (array_merge($expired_drafts, $expired_pendings) as $payment) {
+			if ($payment->get_status() === Payment_Status::PENDING) {
+				$payment->set_status(Payment_Status::CANCELLED);
+				$payment->save();
+			} else {
+				$payment->delete();
+			}
+		}
+	}
+
+	/**
+	 * Handles cancel payment requests.
+	 *
+	 * @since 2.1.4
+	 * @return void
+	 */
+	public function handle_cancel_payment(): void {
+
+		$payment_id = wu_request('cancel_payment');
+		if (! $payment_id) {
+			return;
+		}
+
+		if (! wp_verify_nonce(wu_request('_wpnonce'), 'cancel_payment_' . $payment_id)) {
+			return;
+		}
+
+		$payment = wu_get_payment($payment_id);
+		if (! $payment || $payment->get_status() !== Payment_Status::PENDING) {
+			return;
+		}
+
+		if (! $this->can_user_cancel_payment($payment)) {
+			return;
+		}
+
+		$payment->set_status(Payment_Status::CANCELLED);
+		$payment->save();
+
+		// Redirect back
+		wp_safe_redirect(remove_query_arg(['cancel_payment', '_wpnonce']));
+		exit;
+	}
+
+	/**
+	 * Creates a draft payment for incomplete checkouts.
+	 *
+	 * @since 2.1.4
+	 *
+	 * @param array $products List of products.
+	 * @return void
+	 */
+	protected function create_draft_payment($products): void {
+
+		$cart = new Cart(
+			[
+				'products'      => $products,
+				'cart_type'     => 'new',
+				'duration'      => $this->request_or_session('duration'),
+				'duration_unit' => $this->request_or_session('duration_unit'),
+			]
+		);
+
+		if ($cart->is_valid() === false) {
+			return; // Don't create draft if cart is invalid
+		}
+
+		$payment_data           = $cart->to_payment_data();
+		$payment_data['status'] = Payment_Status::DRAFT;
+
+		$payment = wu_create_payment($payment_data);
+
+		if (is_wp_error($payment)) {
+			// Log the error but allow checkout to continue
+			wu_log_add(
+				'checkout',
+				sprintf(
+					'Failed to create draft payment: %s (Code: %s)',
+					$payment->get_error_message(),
+					$payment->get_error_code()
+				),
+				\Psr\Log\LogLevel::WARNING
+			);
+			return;
+		}
+
+		if ($payment) {
+			$this->session->set('draft_payment_id', $payment->get_id());
+			$payment->update_meta('checkout_session', $this->session->get());
+			$this->session->commit();
+		}
+	}
+
+	/**
+	 * Saves the current checkout progress to the draft payment.
+	 *
+	 * @since 2.1.4
+	 * @return void
+	 */
+	protected function save_draft_progress(): void {
+
+		$draft_payment_id = $this->session->get('draft_payment_id');
+		if (! $draft_payment_id) {
+			return;
+		}
+
+		$draft_payment = wu_get_payment($draft_payment_id);
+		if (! $draft_payment || $draft_payment->get_status() !== Payment_Status::DRAFT) {
+			return;
+		}
+
+		$draft_payment->update_meta('checkout_session', $this->session->get());
+	}
+
+	/**
+	 * Checks if the current user can cancel a payment.
+	 *
+	 * @since 2.1.4
+	 *
+	 * @param \WP_Ultimo\Models\Payment $payment The payment object.
+	 * @return bool
+	 */
+	protected function can_user_cancel_payment($payment): bool {
+
+		if (! is_user_logged_in()) {
+			return false;
+		}
+
+		$customer = wu_get_current_customer();
+		return $customer && $customer->get_id() === $payment->get_customer_id();
 	}
 }

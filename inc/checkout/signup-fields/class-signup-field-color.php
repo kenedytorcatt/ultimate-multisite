@@ -55,7 +55,7 @@ class Signup_Field_Color extends Base_Signup_Field {
 	 */
 	public function get_title() {
 
-		return __('Color', 'multisite-ultimate');
+		return __('Color', 'ultimate-multisite');
 	}
 
 	/**
@@ -68,7 +68,7 @@ class Signup_Field_Color extends Base_Signup_Field {
 	 */
 	public function get_description() {
 
-		return __('Adds a color picker field.', 'multisite-ultimate');
+		return __('Adds a color picker field.', 'ultimate-multisite');
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Signup_Field_Color extends Base_Signup_Field {
 	 */
 	public function get_tooltip() {
 
-		return __('Adds a color picker field.', 'multisite-ultimate');
+		return __('Adds a color picker field.', 'ultimate-multisite');
 	}
 
 	/**
@@ -132,17 +132,6 @@ class Signup_Field_Color extends Base_Signup_Field {
 	}
 
 	/**
-	 * If you want to force a particular attribute to a value, declare it here.
-	 *
-	 * @since 2.0.0
-	 * @return array
-	 */
-	public function force_attributes() {
-
-		return [];
-	}
-
-	/**
 	 * Returns the list of additional fields specific to this type.
 	 *
 	 * @since 2.0.0
@@ -154,8 +143,8 @@ class Signup_Field_Color extends Base_Signup_Field {
 			'default_value' => [
 				'type'  => 'color-picker',
 				'order' => 12,
-				'title' => __('Default Color', 'multisite-ultimate'),
-				'desc'  => __('Set the default value for this color field.', 'multisite-ultimate'),
+				'title' => __('Default Color', 'ultimate-multisite'),
+				'desc'  => __('Set the default value for this color field.', 'ultimate-multisite'),
 			],
 		];
 	}

@@ -29,10 +29,13 @@ require_once "{$_tests_dir}/includes/functions.php";
  * Manually load the plugin being tested.
  */
 function _manually_load_plugin() {
-	require dirname(__DIR__) . '/multisite-ultimate.php';
+	require dirname(__DIR__) . '/ultimate-multisite.php';
 }
 
 tests_add_filter('muplugins_loaded', '_manually_load_plugin');
 
 // Start up the WP testing environment.
 require "{$_tests_dir}/includes/bootstrap.php";
+
+// Load test traits (not autoloaded since they don't end in Test.php).
+require_once __DIR__ . '/WP_Ultimo/Managers/Manager_Test_Trait.php';

@@ -55,7 +55,7 @@ class Signup_Field_Text extends Base_Signup_Field {
 	 */
 	public function get_title() {
 
-		return __('Text', 'multisite-ultimate');
+		return __('Text', 'ultimate-multisite');
 	}
 
 	/**
@@ -68,7 +68,7 @@ class Signup_Field_Text extends Base_Signup_Field {
 	 */
 	public function get_description() {
 
-		return __('Adds a text field that the customer can fill with arbitrary data.', 'multisite-ultimate');
+		return __('Adds a text field that the customer can fill with arbitrary data.', 'ultimate-multisite');
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Signup_Field_Text extends Base_Signup_Field {
 	 */
 	public function get_tooltip() {
 
-		return __('Adds a text field that the customer can fill with arbitrary data.', 'multisite-ultimate');
+		return __('Adds a text field that the customer can fill with arbitrary data.', 'ultimate-multisite');
 	}
 
 	/**
@@ -130,17 +130,6 @@ class Signup_Field_Text extends Base_Signup_Field {
 			'required',
 			'save_as',
 		];
-	}
-
-	/**
-	 * If you want to force a particular attribute to a value, declare it here.
-	 *
-	 * @since 2.0.0
-	 * @return array
-	 */
-	public function force_attributes() {
-
-		return [];
 	}
 
 	/**

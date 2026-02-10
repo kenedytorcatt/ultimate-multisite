@@ -1,6 +1,6 @@
 <?php
 /**
- * Multisite Ultimate Dashboard Admin Page.
+ * Ultimate Multisite Dashboard Admin Page.
  *
  * @package WP_Ultimo
  * @subpackage Admin_Pages
@@ -13,7 +13,7 @@ namespace WP_Ultimo\Admin_Pages;
 defined('ABSPATH') || exit;
 
 /**
- * Multisite Ultimate Dashboard Admin Page.
+ * Ultimate Multisite Dashboard Admin Page.
  */
 class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 
@@ -74,7 +74,7 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 	 * Current integration being setup.
 	 *
 	 * @since 2.0.0
-	 * @var \WP_Ultimo\Integrations\Host_Providers\Base_Host_Provider
+	 * @var \WP_Ultimo\Integrations\Integration|null
 	 */
 	protected $integration;
 
@@ -87,9 +87,19 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 	public function page_loaded(): void {
 
 		if (isset($_GET['integration'])) { // phpcs:ignore WordPress.Security.NonceVerification
-			$domain_manager = \WP_Ultimo\Managers\Domain_Manager::get_instance();
+			$id = sanitize_text_field(wp_unslash($_GET['integration'])); // phpcs:ignore WordPress.Security.NonceVerification
 
-			$this->integration = $domain_manager->get_integration_instance(sanitize_text_field(wp_unslash($_GET['integration']))); // phpcs:ignore WordPress.Security.NonceVerification
+			// Try the new Integration Registry first
+			$registry    = \WP_Ultimo\Integrations\Integration_Registry::get_instance();
+			$integration = $registry->get($id);
+
+			if ($integration) {
+				$this->integration = $integration;
+			} else {
+				// Fall back to legacy Domain_Manager
+				$domain_manager    = \WP_Ultimo\Managers\Domain_Manager::get_instance();
+				$this->integration = $domain_manager->get_integration_instance($id);
+			}
 		}
 
 		if ( ! $this->integration) {
@@ -109,7 +119,7 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 	 */
 	public function get_title(): string {
 
-		return sprintf(__('Integration Setup', 'multisite-ultimate'));
+		return sprintf(__('Integration Setup', 'ultimate-multisite'));
 	}
 
 	/**
@@ -120,7 +130,7 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 	 */
 	public function get_menu_title() {
 
-		return __('Host Provider Integration', 'multisite-ultimate');
+		return __('Host Provider Integration', 'ultimate-multisite');
 	}
 
 	/**
@@ -133,25 +143,25 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 
 		$sections = [
 			'activation'   => [
-				'title'   => __('Activation', 'multisite-ultimate'),
+				'title'   => __('Activation', 'ultimate-multisite'),
 				'view'    => [$this, 'section_activation'],
 				'handler' => [$this, 'handle_activation'],
 			],
 			'instructions' => [
-				'title' => __('Instructions', 'multisite-ultimate'),
+				'title' => __('Instructions', 'ultimate-multisite'),
 				'view'  => [$this, 'section_instructions'],
 			],
 			'config'       => [
-				'title'   => __('Configuration', 'multisite-ultimate'),
+				'title'   => __('Configuration', 'ultimate-multisite'),
 				'view'    => [$this, 'section_configuration'],
 				'handler' => [$this, 'handle_configuration'],
 			],
 			'testing'      => [
-				'title' => __('Testing Integration', 'multisite-ultimate'),
+				'title' => __('Testing Integration', 'ultimate-multisite'),
 				'view'  => [$this, 'section_test'],
 			],
 			'done'         => [
-				'title' => __('Ready!', 'multisite-ultimate'),
+				'title' => __('Ready!', 'ultimate-multisite'),
 				'view'  => [$this, 'section_ready'],
 			],
 		];
@@ -159,7 +169,7 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 		/*
 		 * Some host providers require no instructions.
 		 */
-		if ($this->integration->supports('no-instructions')) {
+		if ($this->integration->supports('no-instructions') || ! method_exists($this->integration, 'get_instructions')) {
 			unset($sections['instructions']);
 		}
 
@@ -169,6 +179,19 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 		if ($this->integration->supports('no-config')) {
 			unset($sections['config']);
 		}
+
+		/**
+		 * Filters the wizard sections for hosting integration setup.
+		 *
+		 * Allows addons to add, remove, or modify wizard sections.
+		 *
+		 * @since 2.5.0
+		 *
+		 * @param array                                                                           $sections    Wizard sections.
+		 * @param \WP_Ultimo\Integrations\Integration $integration The integration being configured.
+		 * @param Hosting_Integration_Wizard_Admin_Page                                           $page        The wizard page instance.
+		 */
+		$sections = apply_filters('wu_hosting_integration_wizard_sections', $sections, $this->integration, $this);
 
 		return $sections;
 	}
@@ -203,7 +226,9 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 	 */
 	public function section_instructions(): void {
 
-		call_user_func([$this->integration, 'get_instructions']);
+		if (method_exists($this->integration, 'get_instructions')) {
+			call_user_func([$this->integration, 'get_instructions']);
+		}
 
 		$this->render_submit_box();
 	}
@@ -218,8 +243,40 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 
 		$fields = $this->integration->get_fields();
 
+		// Aggregate fields from capability modules if this is a new Integration
+		if ($this->integration instanceof \WP_Ultimo\Integrations\Integration) {
+			$registry = \WP_Ultimo\Integrations\Integration_Registry::get_instance();
+
+			foreach ($registry->get_capabilities($this->integration->get_id()) as $module) {
+				$module_fields = $module->get_fields();
+
+				if ( ! empty($module_fields)) {
+					$fields = array_merge($fields, $module_fields);
+				}
+			}
+		}
+
 		foreach ($fields as $field_constant => &$field) {
-			$field['value'] = defined($field_constant) && constant($field_constant) ? constant($field_constant) : '';
+			$field['value'] = $this->integration->get_credential($field_constant);
+
+			// Mark fields that are defined as PHP constants in wp-config.php
+			if (defined($field_constant) && constant($field_constant)) {
+				$field['html_attr'] = array_merge(
+					$field['html_attr'] ?? [],
+					[
+						'disabled' => 'disabled',
+					]
+				);
+
+				$field['desc'] = sprintf(
+					'<span class="wu-text-yellow-700">%s</span>',
+					sprintf(
+						/* translators: %s is the constant name, e.g. WU_CLOUDWAYS_API_KEY */
+						__('Defined as <code>%s</code> in wp-config.php. Edit your wp-config.php to change this value.', 'ultimate-multisite'),
+						esc_html($field_constant)
+					)
+				);
+			}
 		}
 
 		$form = new \WP_Ultimo\UI\Form(
@@ -231,21 +288,6 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 				'field_wrapper_classes' => 'wu-w-full wu-box-border wu-items-center wu-flex wu-justify-between wu-px-6 wu-py-4 wu-m-0 wu-border-t wu-border-l-0 wu-border-r-0 wu-border-b-0 wu-border-gray-300 wu-border-solid',
 			]
 		);
-
-		if (wu_request('manual')) {
-			wu_get_template(
-				'wizards/host-integrations/configuration-results',
-				[
-					'screen'      => get_current_screen(),
-					'page'        => $this,
-					'integration' => $this->integration,
-					'form'        => $form,
-					'post'        => sanitize_text_field(wp_unslash($_GET['post'] ?? '')), // phpcs:ignore WordPress.Security.NonceVerification
-				]
-			);
-
-			return;
-		}
 
 		wu_get_template(
 			'wizards/host-integrations/configuration',
@@ -311,6 +353,15 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 
 		$allowed_fields = array_keys($this->integration->get_fields());
 
+		// Also allow fields from capability modules
+		if ($this->integration instanceof \WP_Ultimo\Integrations\Integration) {
+			$registry = \WP_Ultimo\Integrations\Integration_Registry::get_instance();
+
+			foreach ($registry->get_capabilities($this->integration->get_id()) as $module) {
+				$allowed_fields = array_merge($allowed_fields, array_keys($module->get_fields()));
+			}
+		}
+
 		// Filter and sanitize $_POST to only include allowed integration fields
 		$filtered_data = [];
 		foreach ($allowed_fields as $field) {
@@ -319,30 +370,9 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 			}
 		}
 
-		if ((int) wu_request('submit') === 0) {
-			$redirect_url = add_query_arg(
-				[
-					'manual' => '1',
-					'post'   => wp_json_encode($filtered_data),
-				]
-			);
+		$this->integration->save_credentials($filtered_data);
 
-			wp_safe_redirect($redirect_url);
-
-			exit;
-		}
-
-		if ((int) wu_request('submit') === 1) {
-			$this->integration->setup_constants($filtered_data);
-		}
-
-		$redirect_url = $this->get_next_section_link();
-
-		$redirect_url = remove_query_arg('post', $redirect_url);
-
-		$redirect_url = remove_query_arg('manual', $redirect_url);
-
-		wp_safe_redirect($redirect_url);
+		wp_safe_redirect($this->get_next_section_link());
 
 		exit;
 	}
@@ -365,6 +395,34 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 				'page'        => $this,
 				'integration' => $this->integration,
 			]
+		);
+	}
+
+	/**
+	 * Register the script for the test page.
+	 *
+	 * @return void
+	 */
+	public function register_scripts() {
+		parent::register_scripts();
+
+		wp_enqueue_script(
+			'wu-integration-test',
+			wu_get_asset('integration-test.js', 'js'),
+			[
+				'jquery',
+				'wu-vue',
+			],
+			wu_get_version(),
+			true
+		);
+		wp_add_inline_script(
+			'wu-integration-test',
+			'var wu_integration_test_data = {
+				integration_id: "' . esc_js($this->integration->get_id()) . '",
+				waiting_message: "' . esc_js(__('Waiting for results...', 'ultimate-multisite')) . '"
+			};',
+			'before'
 		);
 	}
 }

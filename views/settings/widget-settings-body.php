@@ -2,7 +2,7 @@
 /**
  * No php code in this file.
  */
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 ?>
 <div id="general" data-type="heading"
 	class="wu-bg-gray-100 wu--mt-1 wu--mx-3 wu-p-4 wu-border-solid wu-border-b wu-border-l-0 wu-border-r-0 wu-border-t-0 wu-border-gray-300">
@@ -99,7 +99,7 @@ defined( 'ABSPATH' ) || exit;
 			</select>
 
 			<p class="description" id="currency_symbol-desc">
-				Select the currency symbol to be used in Multisite Ultimate
+				Select the currency symbol to be used in Ultimate Multisite
 			</p>
 
 		</td>
@@ -265,7 +265,7 @@ defined( 'ABSPATH' ) || exit;
 
 <div id="error_reporting" data-type="heading">
 	<h3>Error Reporting</h3>
-	<p>Help us make Multisite Ultimate better by automatically reporting fatal errors and warnings so we can fix them as
+	<p>Help us make Ultimate Multisite better by automatically reporting fatal errors and warnings so we can fix them as
 		soon
 		as possible.</p>
 </div>
@@ -275,19 +275,17 @@ defined( 'ABSPATH' ) || exit;
 
 
 	<tr>
-		<th scope="row"><label for="enable_error_reporting">Send Error Data to Multisite Ultimate Developers</label></th>
+		<th scope="row"><label for="enable_error_reporting"><?php esc_html_e('Help Improve Ultimate Multisite', 'ultimate-multisite'); ?></label></th>
 		<td>
 
 			<label for="enable_error_reporting">
 				<input name="enable_error_reporting" type="checkbox" id="enable_error_reporting" value="1">
-				Send Error Data to Multisite Ultimate Developers </label>
+				<?php esc_html_e('Help Improve Ultimate Multisite', 'ultimate-multisite'); ?>
+			</label>
 
 			<p class="description" id="enable_error_reporting-desc">
-				With this option enabled, every time your installation runs into an error related to Multisite Ultimate,
-				that
-				error data will be sent to us. That way we can review, debug, and fix issues without you having to
-				manually report anything. No sensitive data gets collected, only environmental stuff (e.g. if this is
-				this is a subdomain network, etc).
+				<?php esc_html_e('Allow Ultimate Multisite to collect anonymous usage data and error reports to help us improve the plugin. We collect: PHP version, WordPress version, plugin version, network type, aggregate counts, active gateways, and error logs. We never collect personal data, customer information, or domain names.', 'ultimate-multisite'); ?>
+				<a href="https://ultimatemultisite.com/privacy-policy/" target="_blank"><?php esc_html_e('Learn more', 'ultimate-multisite'); ?></a>.
 			</p>
 
 		</td>
@@ -315,7 +313,7 @@ defined( 'ABSPATH' ) || exit;
 				Remove Data on Uninstall </label>
 
 			<p class="description" id="uninstall_wipe_tables-desc">
-				Remove all saved data for Multisite Ultimate when the plugin is uninstalled.
+				Remove all saved data for Ultimate Multisite when the plugin is uninstalled.
 			</p>
 
 		</td>

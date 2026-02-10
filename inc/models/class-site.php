@@ -29,6 +29,46 @@ class Site extends Base_Model implements Limitable, Notable {
 	use \WP_Ultimo\Traits\WP_Ultimo_Site_Deprecated;
 	use Traits\Notable;
 
+	/**
+	 * Meta key for categories.
+	 */
+	const META_CATEGORIES = 'wu_categories';
+
+	/**
+	 * Meta key for featured image ID.
+	 */
+	const META_FEATURED_IMAGE_ID = 'wu_featured_image_id';
+
+	/**
+	 * Meta key for active status.
+	 */
+	const META_ACTIVE = 'wu_active';
+
+	/**
+	 * Meta key for customer ID.
+	 */
+	const META_CUSTOMER_ID = 'wu_customer_id';
+
+	/**
+	 * Meta key for membership ID.
+	 */
+	const META_MEMBERSHIP_ID = 'wu_membership_id';
+
+	/**
+	 * Meta key for template ID.
+	 */
+	const META_TEMPLATE_ID = 'wu_template_id';
+
+	/**
+	 * Meta key for site type.
+	 */
+	const META_TYPE = 'wu_type';
+
+	/**
+	 * Meta key for transient status.
+	 */
+	const META_TRANSIENT = 'wu_transient';
+
 	/**  DEFAULT WP_SITE COLUMNS */
 
 	/**
@@ -189,7 +229,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 * @since 2.0.0
 	 * @var null|\WP_Ultimo\Models\Membership
 	 */
-	private $_membership;
+	private $membership;
 
 	/**
 	 * The site template id used to create this site.
@@ -330,7 +370,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	public function set_categories($categories): void {
 
-		$this->meta['wu_categories'] = $categories;
+		$this->meta[ self::META_CATEGORIES ] = $categories;
 
 		$this->categories = $categories;
 	}
@@ -344,7 +384,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	public function get_categories() {
 
 		if (null === $this->categories) {
-			$this->categories = $this->get_meta('wu_categories', []);
+			$this->categories = $this->get_meta(self::META_CATEGORIES, []);
 		}
 
 		if ( ! is_array($this->categories)) {
@@ -363,7 +403,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	public function get_featured_image_id() {
 
 		if (null === $this->featured_image_id) {
-			return $this->get_meta('wu_featured_image_id');
+			return $this->get_meta(self::META_FEATURED_IMAGE_ID);
 		}
 
 		return $this->featured_image_id;
@@ -406,7 +446,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	public function set_featured_image_id($image_id): void {
 
-		$this->meta['wu_featured_image_id'] = $image_id;
+		$this->meta[ self::META_FEATURED_IMAGE_ID ] = $image_id;
 
 		$this->featured_image_id = $image_id;
 	}
@@ -427,19 +467,14 @@ class Site extends Base_Model implements Limitable, Notable {
 	 *
 	 * @since 2.0.0
 	 */
-	public function get_preview_url_attrs(): string {
+	public function get_preview_url_attrs(): void {
 
-		$is_enabled = Template_Previewer::get_instance()->get_setting('enabled', true);
-
-		$href = 'href="%s" target="_blank"';
-
-		if ( ! $is_enabled) {
-			return sprintf($href, $this->get_active_site_url());
+		if ( ! Template_Previewer::get_instance()->get_setting('enabled', true)) {
+			printf('href="%s" target="_blank"', esc_attr($this->get_active_site_url()));
+			return;
 		}
 
-		$onclick = 'onclick="window.open(\'%s\')"';
-
-		return sprintf($onclick, add_query_arg('open', 1, $this->get_preview_url()));
+		printf('onclick="window.open(\'%s\')"', esc_attr(add_query_arg('open', 1, $this->get_preview_url())));
 	}
 
 	/**
@@ -604,7 +639,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	public function get_path(): string {
 
-		return trim($this->path, '/');
+		return $this->path;
 	}
 
 	/**
@@ -719,7 +754,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	public function is_active() {
 
 		if (null === $this->active) {
-			$this->active = $this->get_meta('wu_active', true);
+			$this->active = $this->get_meta(self::META_ACTIVE, true);
 		}
 
 		return $this->active;
@@ -734,7 +769,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	public function set_active($active): void {
 
-		$this->meta['wu_active'] = $active;
+		$this->meta[ self::META_ACTIVE ] = $active;
 
 		$this->active = $active;
 	}
@@ -754,12 +789,12 @@ class Site extends Base_Model implements Limitable, Notable {
 	 * Set is this a public site?.
 	 *
 	 * @since 2.0.0
-	 * @param bool $public Set true if this site is a public one, false if not.
+	 * @param bool $is_public Set true if this site is a public one, false if not.
 	 * @return void
 	 */
-	public function set_public($public): void {
+	public function set_public($is_public): void {
 
-		$this->public = $public;
+		$this->public = $is_public;
 	}
 
 	/**
@@ -886,7 +921,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	public function get_customer_id() {
 
 		if (null === $this->customer_id) {
-			$this->customer_id = $this->get_meta('wu_customer_id');
+			$this->customer_id = $this->get_meta(self::META_CUSTOMER_ID);
 		}
 
 		return (int) $this->customer_id;
@@ -901,7 +936,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	public function set_customer_id($customer_id): void {
 
-		$this->meta['wu_customer_id'] = $customer_id;
+		$this->meta[ self::META_CUSTOMER_ID ] = $customer_id;
 
 		$this->customer_id = $customer_id;
 	}
@@ -951,7 +986,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	public function get_membership_id() {
 
 		if (null === $this->membership_id) {
-			$this->membership_id = $this->get_meta('wu_membership_id');
+			$this->membership_id = $this->get_meta(self::META_MEMBERSHIP_ID);
 		}
 
 		return $this->membership_id;
@@ -966,7 +1001,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	public function set_membership_id($membership_id): void {
 
-		$this->meta['wu_membership_id'] = $membership_id;
+		$this->meta[ self::META_MEMBERSHIP_ID ] = $membership_id;
 
 		$this->membership_id = $membership_id;
 	}
@@ -1001,14 +1036,14 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	public function get_membership() {
 
-		if (null !== $this->_membership) {
-			return $this->_membership;
+		if (null !== $this->membership) {
+			return $this->membership;
 		}
 
 		if (function_exists('wu_get_membership')) {
-			$this->_membership = wu_get_membership($this->get_membership_id());
+			$this->membership = wu_get_membership($this->get_membership_id());
 
-			return $this->_membership;
+			return $this->membership;
 		}
 
 		global $wpdb;
@@ -1029,9 +1064,9 @@ class Site extends Base_Model implements Limitable, Notable {
 			return false;
 		}
 
-		$this->_membership = new \WP_Ultimo\Models\Membership($results);
+		$this->membership = new \WP_Ultimo\Models\Membership($results);
 
-		return $this->_membership;
+		return $this->membership;
 	}
 
 	/**
@@ -1058,7 +1093,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	public function get_template_id() {
 
 		if (null === $this->template_id) {
-			$this->template_id = $this->get_meta('wu_template_id');
+			$this->template_id = $this->get_meta(self::META_TEMPLATE_ID);
 		}
 
 		return $this->template_id;
@@ -1073,7 +1108,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	public function set_template_id($template_id): void {
 
-		$this->meta['wu_template_id'] = absint($template_id);
+		$this->meta[ self::META_TEMPLATE_ID ] = absint($template_id);
 
 		$this->template_id = $template_id;
 	}
@@ -1153,7 +1188,7 @@ class Site extends Base_Model implements Limitable, Notable {
 		}
 
 		if (null === $this->type) {
-			$type = $this->get_meta('wu_type');
+			$type = $this->get_meta(self::META_TYPE);
 
 			$this->type = $type ?: 'default';
 		}
@@ -1173,7 +1208,7 @@ class Site extends Base_Model implements Limitable, Notable {
 
 		$this->meta = (array) $this->meta;
 
-		$this->meta['wu_type'] = $type;
+		$this->meta[ self::META_TYPE ] = $type;
 
 		$this->type = $type;
 	}
@@ -1234,7 +1269,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	public function get_site_url() {
 
-		$url = set_url_scheme(esc_url(sprintf($this->get_domain() . '/' . $this->get_path())));
+		$url = set_url_scheme(esc_url(sprintf($this->get_domain() . '/' . trim($this->get_path(), '/'))));
 
 		return $url;
 	}
@@ -1290,7 +1325,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	public function get_transient() {
 
 		if (null === $this->transient) {
-			$this->transient = $this->get_meta('wu_transient');
+			$this->transient = $this->get_meta(self::META_TRANSIENT);
 		}
 
 		return $this->transient;
@@ -1305,7 +1340,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	public function set_transient($transient): void {
 
-		$this->meta['wu_transient'] = $transient;
+		$this->meta[ self::META_TRANSIENT ] = $transient;
 
 		$this->transient = $transient;
 	}
@@ -1437,7 +1472,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	public function delete() {
 
 		if ( ! $this->get_id()) {
-			return new \WP_Error("wu_{$this->model}_delete_unsaved_item", __('Item not found.', 'multisite-ultimate'));
+			return new \WP_Error("wu_{$this->model}_delete_unsaved_item", __('Item not found.', 'ultimate-multisite'));
 		}
 
 		/**
@@ -1445,7 +1480,7 @@ class Site extends Base_Model implements Limitable, Notable {
 		 *
 		 * @since 2.0.0
 		 *
-		 * @param \WP_Ultimo\Models\Base_Model $this The object instance.
+		 * @param Base_Model $this The object instance.
 		 */
 		do_action("wu_{$this->model}_pre_delete", $this); // @phpstan-ignore-line
 
@@ -1463,9 +1498,9 @@ class Site extends Base_Model implements Limitable, Notable {
 		 * @since 2.0.0
 		 *
 		 * @param bool       $result True if the object was successfully deleted.
-		 * @param Base_Model $this   The object instance.
+		 * @param Base_Model $model   The object instance.
 		 */
-		do_action("wu_{$this->model}_post_delete", $result, $this); // @phpstan-ignore-line
+		do_action("wu_{$this->model}_post_delete", $result, $this);
 
 		wp_cache_flush();
 
@@ -1485,7 +1520,7 @@ class Site extends Base_Model implements Limitable, Notable {
 		if ($transient) {
 			add_filter(
 				'wu_search_and_replace_on_duplication',
-				function ($replace_list, $from_site_id, $to_site_id) use ($transient) {
+				function ($replace_list, $from_site_id, $to_site_id) use ($transient) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 
 					foreach ($transient as $transient_key => $transient_value) {
 						$key = sprintf('{{%s}}', $transient_key);
@@ -1607,14 +1642,14 @@ class Site extends Base_Model implements Limitable, Notable {
 
 				/**
 				 * Fires after a site is created for the first time.
+				 * Does not fire if duplicated from a template.
 				 *
 				 * @since 2.0.0
 				 *
-				 * @param array      $data The object data that will be stored.
-				 * @param \WP_Ultimo\Models\Base_Model $this The object instance.
+				 * @param array $data The object data that will be stored.
+				 * @param Site  $site The object instance.
 				 */
-				do_action('wu_site_created', $data, $this); // @phpstan-ignore-line
-
+				do_action('wu_site_created', $data, $this);
 			}
 
 			if ( ! is_wp_error($saved) && wu_get_setting('enable_screenshot_generator', true)) {
@@ -1702,8 +1737,8 @@ class Site extends Base_Model implements Limitable, Notable {
 		 * @param array      $model The model slug.
 		 * @param array      $data The object data that will be stored, serialized.
 		 * @param array      $data_unserialized The object data that will be stored.
-		 * @param \WP_Ultimo\Models\Base_Model $this The object instance.
-		 * @param array      $new If this object is a new one.
+		 * @param Base_Model $model_object The object instance.
+		 * @param bool       $is_new If this object is a new one.
 		 */
 		do_action('wu_model_post_save', $this->model, $data, $data_unserialized, $this, $new); // @phpstan-ignore-line
 
@@ -1713,10 +1748,36 @@ class Site extends Base_Model implements Limitable, Notable {
 		 * @since 2.0.0
 		 *
 		 * @param array      $data The object data that will be stored.
-		 * @param \WP_Ultimo\Models\Base_Model $this The object instance.
-		 * @param array      $new If this object is a new one.
+		 * @param Base_Model $model_obeject The object instance.
+		 * @param bool      $is_new If this object is a new one.
 		 */
-		do_action("wu_{$this->model}_post_save", $data, $this, $new); // @phpstan-ignore-line
+		do_action("wu_{$this->model}_post_save", $data, $this, $new);
+
+		// Only compute extra hook parameters if the deprecated hook is actually in use.
+		if ($new && has_filter('wu_create_site_meta')) {
+			$signup_options = $this->get_signup_options();
+			/**
+			 * Fires immediately after a new site is created.
+			 *
+			 * @deprecated 2.0.0 Use {@see 'wu_site_post_save'} instead.
+			 *
+			 * @param array  $meta       Meta data. Used to set initial site options.
+			 * @param array  $transient  Form data. Used to set initial site options.
+			 */
+			$meta = apply_filters_deprecated(
+				'wu_create_site_meta',
+				[$signup_options, $this->get_transient()],
+				'2.0.0',
+				'wu_site_post_save'
+			);
+			if ($signup_options !== $meta) {
+				foreach ($meta as $key => $value) {
+					if (! isset($signup_options[ $key ]) || $value !== $signup_options[ $key ]) {
+						update_blog_option($this->blog_id, $key, $value);
+					}
+				}
+			}
+		}
 
 		if (isset($session)) {
 			$session->destroy();
@@ -1749,7 +1810,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 *
 	 * @param string $type Type to return. Can be customer_owned or template.
 	 * @param array  $query_args Additional query args.
-	 * @return array
+	 * @return Site[]
 	 */
 	public static function get_all_by_type($type = 'customer_owned', $query_args = []) {
 
@@ -1847,7 +1908,17 @@ class Site extends Base_Model implements Limitable, Notable {
 
 		global $wpdb;
 
-		$cache = wp_cache_get('site_categories', 'sites');
+		$site_ids = [];
+
+		foreach ($sites as $site) {
+			if ($site instanceof Site) {
+				$site_ids[] = $site->get_id();
+			}
+		}
+
+		$cache_key = 'site_categories_' . implode(':', $site_ids);
+
+		$cache = wp_cache_get($cache_key, 'sites');
 
 		if (is_array($cache)) {
 			return $cache;
@@ -1857,43 +1928,24 @@ class Site extends Base_Model implements Limitable, Notable {
 
 		$query = "SELECT DISTINCT meta_value FROM {$wpdb->base_prefix}blogmeta WHERE meta_key = %s";
 
-		if ( ! empty($sites)) {
-
-			// Ensures that $sites is a indexed array
-			$sites = array_values($sites);
-
-			if (is_a($sites[0], self::class)) {
-				$array_sites = json_decode(json_encode($sites), true);
-
-				$sites = array_values(array_column($array_sites, 'blog_id'));
-			}
-
-			$query .= ' AND blog_id IN (' . implode(', ', $sites) . ')';
+		if ( ! empty($site_ids)) {
+			$query .= ' AND blog_id IN (' . implode(', ', $site_ids) . ')';
 		}
 
-		$results = $wpdb->get_results($wpdb->prepare($query, 'wu_categories'), ARRAY_A); // phpcs:ignore
+		$results = $wpdb->get_results($wpdb->prepare($query, 'wu_categories')); // phpcs:ignore
 
-		$all_arrays = array_column($results, 'meta_value');
-
-		$all_arrays = array_map('maybe_unserialize', $all_arrays);
-
-		if ($all_arrays) {
-			$filtered_array = [];
-
-			foreach ($all_arrays as $array) {
-				if (is_array($array)) {
-					$filtered_array = array_merge($filtered_array, $array);
+		foreach ($results as $category_array_raw) {
+			$category_array = maybe_unserialize($category_array_raw->meta_value);
+			if ( is_array($category_array) ) {
+				foreach ($category_array as $category) {
+					if ( ! isset($final_array[ $category ])) {
+						$final_array[ $category ] = $category;
+					}
 				}
 			}
-
-			$all_arrays = array_filter($filtered_array);
-
-			$all_arrays = array_unique($all_arrays);
-
-			$final_array = array_combine($all_arrays, $all_arrays);
 		}
 
-		wp_cache_set('site_categories', $final_array, 'sites');
+		wp_cache_set($cache_key, $final_array, 'sites');
 
 		return $final_array;
 	}

@@ -1,6 +1,6 @@
 <?php
 /**
- * Multisite Ultimate helper class to handle global registering of scripts and styles.
+ * Ultimate Multisite helper class to handle global registering of scripts and styles.
  *
  * @package WP_Ultimo
  * @subpackage Scripts
@@ -13,7 +13,7 @@ namespace WP_Ultimo;
 defined('ABSPATH') || exit;
 
 /**
- * Multisite Ultimate helper class to handle global registering of scripts and styles.
+ * Ultimate Multisite helper class to handle global registering of scripts and styles.
  *
  * @since 2.0.0
  */
@@ -99,7 +99,7 @@ class Scripts {
 	}
 
 	/**
-	 * Registers the default Multisite Ultimate scripts.
+	 * Registers the default Ultimate Multisite scripts.
 	 *
 	 * @since 2.0.0
 	 * @return void
@@ -151,6 +151,37 @@ class Scripts {
 		$this->register_script('wu-cookie-helpers', wu_get_asset('cookie-helpers.js', 'js'), ['jquery-core']);
 
 		/*
+		 * Adds Password Toggle
+		 */
+		$this->register_script('wu-password-toggle', wu_get_asset('wu-password-toggle.js', 'js'), ['wp-i18n']);
+
+		/*
+		 * Adds Password Strength Checker
+		 */
+		$this->register_script('wu-password-strength', wu_get_asset('wu-password-strength.js', 'js'), ['jquery', 'password-strength-meter']);
+
+		wp_localize_script(
+			'wu-password-strength',
+			'wu_password_strength_settings',
+			array_merge(
+				$this->get_password_requirements(),
+				[
+					'i18n' => [
+						'empty'            => __('Strength indicator', 'ultimate-multisite'),
+						'super_strong'     => __('Super Strong', 'ultimate-multisite'),
+						'required'         => __('Required:', 'ultimate-multisite'),
+						/* translators: %d is the minimum number of characters required */
+						'min_length'       => __('at least %d characters', 'ultimate-multisite'),
+						'uppercase_letter' => __('uppercase letter', 'ultimate-multisite'),
+						'lowercase_letter' => __('lowercase letter', 'ultimate-multisite'),
+						'number'           => __('number', 'ultimate-multisite'),
+						'special_char'     => __('special character', 'ultimate-multisite'),
+					],
+				]
+			)
+		);
+
+		/*
 		 * Adds Input Masking
 		 */
 		$this->register_script('wu-money-mask', wu_get_asset('lib/v-money.js', 'js'), ['wu-vue']);
@@ -193,8 +224,8 @@ class Scripts {
 			'wu_fields',
 			[
 				'l10n' => [
-					'image_picker_title'       => __('Select an Image.', 'multisite-ultimate'),
-					'image_picker_button_text' => __('Use this image', 'multisite-ultimate'),
+					'image_picker_title'       => __('Select an Image.', 'ultimate-multisite'),
+					'image_picker_button_text' => __('Use this image', 'ultimate-multisite'),
 				],
 			]
 		);
@@ -224,7 +255,7 @@ class Scripts {
 			'wu-functions',
 			'wu_selectizer',
 			[
-				'ajaxurl' => wu_ajax_url(),
+				'ajaxurl' => wu_ajax_url('init'),
 			]
 		);
 
@@ -246,6 +277,28 @@ class Scripts {
 		 */
 		$this->register_script('wubox', wu_get_asset('wubox.js', 'js'), ['wu-vue-apps']);
 
+		/*
+		 * Add inline script to handle early clicks on wubox elements
+		 * before the main wubox.js is fully loaded.
+		 */
+		wp_add_inline_script(
+			'wubox',
+			"(function(){
+				window.__wuboxEarlyClicks=[];
+				window.__wuboxEarlyClickHandler=function(e){
+					if(window.__wuboxReady)return;
+					var t=e.target.closest('.wubox');
+					if(!t)return;
+					e.preventDefault();
+					e.stopPropagation();
+					t.style.cursor='wait';
+					window.__wuboxEarlyClicks.push(t);
+				};
+				document.addEventListener('click',window.__wuboxEarlyClickHandler,true);
+			})();",
+			'before'
+		);
+
 		wp_localize_script(
 			'wubox',
 			'wuboxL10n',
@@ -257,6 +310,7 @@ class Scripts {
 				'close'            => __('Close'), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'noiframes'        => __('This feature requires inline frames. You have iframes disabled or your browser does not support them.'), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'loadingAnimation' => includes_url('js/thickbox/loadingAnimation.gif'),
+				'server_error'     => __('An unexpected error occurred. Please try again or contact support if the problem persists.', 'ultimate-multisite'),
 			]
 		);
 
@@ -291,8 +345,8 @@ class Scripts {
 			[
 				'LT'   => $time_format,
 				'LTS'  => str_replace(':i', ':i:s', (string) $time_format),
-				/* translators: the day/month/year date format used by Multisite Ultimate. You can changed it to localize this date format to your language. the default value is d/m/Y, which is the format 31/12/2021. */
-				'L'    => __('d/m/Y', 'multisite-ultimate'),
+				/* translators: the day/month/year date format used by Ultimate Multisite. You can changed it to localize this date format to your language. the default value is d/m/Y, which is the format 31/12/2021. */
+				'L'    => __('d/m/Y', 'ultimate-multisite'),
 				'LL'   => $date_format,
 				'LLL'  => sprintf('%s %s', $date_format, $time_format),
 				'LLLL' => sprintf('%s %s', $date_format, $time_format),
@@ -302,30 +356,30 @@ class Scripts {
 		$strings = [
 			'relativeTime'   => [
 				// translators: %s is a relative future date.
-				'future' => __('in %s', 'multisite-ultimate'),
+				'future' => __('in %s', 'ultimate-multisite'),
 				// translators: %s is a relative past date.
-				'past'   => __('%s ago', 'multisite-ultimate'),
-				's'      => __('a few seconds', 'multisite-ultimate'),
+				'past'   => __('%s ago', 'ultimate-multisite'),
+				's'      => __('a few seconds', 'ultimate-multisite'),
 				// translators: %s is the number of seconds.
-				'ss'     => __('%d seconds', 'multisite-ultimate'),
-				'm'      => __('a minute', 'multisite-ultimate'),
+				'ss'     => __('%d seconds', 'ultimate-multisite'),
+				'm'      => __('a minute', 'ultimate-multisite'),
 				// translators: %s is the number of minutes.
-				'mm'     => __('%d minutes', 'multisite-ultimate'),
-				'h'      => __('an hour', 'multisite-ultimate'),
+				'mm'     => __('%d minutes', 'ultimate-multisite'),
+				'h'      => __('an hour', 'ultimate-multisite'),
 				// translators: %s is the number of hours.
-				'hh'     => __('%d hours', 'multisite-ultimate'),
-				'd'      => __('a day', 'multisite-ultimate'),
+				'hh'     => __('%d hours', 'ultimate-multisite'),
+				'd'      => __('a day', 'ultimate-multisite'),
 				// translators: %s is the number of days.
-				'dd'     => __('%d days', 'multisite-ultimate'),
-				'w'      => __('a week', 'multisite-ultimate'),
+				'dd'     => __('%d days', 'ultimate-multisite'),
+				'w'      => __('a week', 'ultimate-multisite'),
 				// translators: %s is the number of weeks.
-				'ww'     => __('%d weeks', 'multisite-ultimate'),
-				'M'      => __('a month', 'multisite-ultimate'),
+				'ww'     => __('%d weeks', 'ultimate-multisite'),
+				'M'      => __('a month', 'ultimate-multisite'),
 				// translators: %s is the number of months.
-				'MM'     => __('%d months', 'multisite-ultimate'),
-				'y'      => __('a year', 'multisite-ultimate'),
+				'MM'     => __('%d months', 'ultimate-multisite'),
+				'y'      => __('a year', 'ultimate-multisite'),
 				// translators: %s is the number of years.
-				'yy'     => __('%d years', 'multisite-ultimate'),
+				'yy'     => __('%d years', 'ultimate-multisite'),
 			],
 			'longDateFormat' => $long_date_formats,
 		];
@@ -336,7 +390,7 @@ class Scripts {
 	}
 
 	/**
-	 * Registers the default Multisite Ultimate styles.
+	 * Registers the default Ultimate Multisite styles.
 	 *
 	 * @since 2.0.0
 	 * @return void
@@ -350,6 +404,8 @@ class Scripts {
 		$this->register_style('wu-checkout', wu_get_asset('checkout.css', 'css'), []);
 
 		$this->register_style('wu-flags', wu_get_asset('flags.css', 'css'), []);
+
+		$this->register_style('wu-password', wu_get_asset('password.css', 'css'), ['dashicons']);
 	}
 
 	/**
@@ -361,6 +417,9 @@ class Scripts {
 	public function enqueue_default_admin_styles(): void {
 
 		wp_enqueue_style('wu-admin');
+
+		// Password field styles for AJAX-loaded modals (e.g., Add Customer).
+		wp_enqueue_style('wu-password');
 	}
 
 	/**
@@ -372,6 +431,9 @@ class Scripts {
 	public function enqueue_default_admin_scripts(): void {
 
 		wp_enqueue_script('wu-admin');
+
+		// Password toggle for AJAX-loaded modals (e.g., Add Customer).
+		wp_enqueue_script('wu-password-toggle');
 	}
 
 	/**
@@ -406,5 +468,168 @@ class Scripts {
 		}
 
 		return $classes;
+	}
+
+	/**
+	 * Get password requirements for client-side validation.
+	 *
+	 * Reads the admin setting for minimum password strength:
+	 * - medium: Requires strength level 3
+	 * - strong: Requires strength level 4
+	 * - super_strong: Requires strength level 4 plus additional rules
+	 *   (12+ chars, uppercase, lowercase, numbers, special characters)
+	 *
+	 * Also integrates with WPMU DEV Defender Pro when active.
+	 *
+	 * All settings are filterable for customization.
+	 *
+	 * @since 2.4.0
+	 * @return array Password requirements settings.
+	 */
+	protected function get_password_requirements(): array {
+
+		$defender_active = $this->is_defender_strong_password_active();
+
+		// Get admin setting for minimum password strength.
+		$strength_setting = wu_get_setting('minimum_password_strength', 'strong');
+
+		// Map setting to zxcvbn score.
+		$strength_map = [
+			'medium'       => 3,
+			'strong'       => 4,
+			'super_strong' => 4,
+		];
+
+		$default_strength = $strength_map[ $strength_setting ] ?? 4;
+
+		// Enable rules enforcement for super_strong or when Defender is active.
+		$is_super_strong = 'super_strong' === $strength_setting;
+		$default_enforce = $is_super_strong || $defender_active;
+
+		/**
+		 * Filter the minimum password strength required (zxcvbn score).
+		 *
+		 * Strength levels:
+		 * - 0, 1: Very weak
+		 * - 2: Weak
+		 * - 3: Medium
+		 * - 4: Strong (default)
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param int    $min_strength     The minimum strength level required.
+		 * @param string $strength_setting The admin setting value (medium, strong, super_strong).
+		 */
+		$min_strength = apply_filters('wu_minimum_password_strength', $default_strength, $strength_setting);
+
+		/**
+		 * Filter whether to enforce additional password rules.
+		 *
+		 * When true, enforces minimum length and character requirements.
+		 * Automatically enabled for "Super Strong" setting or when
+		 * Defender Pro's Strong Password feature is active.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param bool   $enforce_rules    Whether to enforce additional rules.
+		 * @param string $strength_setting The admin setting value.
+		 * @param bool   $defender_active  Whether Defender Pro Strong Password is active.
+		 */
+		$enforce_rules = apply_filters('wu_enforce_password_rules', $default_enforce, $strength_setting, $defender_active);
+
+		/**
+		 * Filter the minimum password length.
+		 *
+		 * Only enforced when wu_enforce_password_rules is true.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param int  $min_length    Minimum password length. Default 12 (matches Defender Pro).
+		 * @param bool $defender_active Whether Defender Pro Strong Password is active.
+		 */
+		$min_length = apply_filters('wu_minimum_password_length', 12, $defender_active);
+
+		/**
+		 * Filter whether to require uppercase letters in passwords.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param bool $require       Whether to require uppercase. Default true when rules enforced.
+		 * @param bool $defender_active Whether Defender Pro Strong Password is active.
+		 */
+		$require_uppercase = apply_filters('wu_password_require_uppercase', $enforce_rules, $defender_active);
+
+		/**
+		 * Filter whether to require lowercase letters in passwords.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param bool $require       Whether to require lowercase. Default true when rules enforced.
+		 * @param bool $defender_active Whether Defender Pro Strong Password is active.
+		 */
+		$require_lowercase = apply_filters('wu_password_require_lowercase', $enforce_rules, $defender_active);
+
+		/**
+		 * Filter whether to require numbers in passwords.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param bool $require       Whether to require numbers. Default true when rules enforced.
+		 * @param bool $defender_active Whether Defender Pro Strong Password is active.
+		 */
+		$require_number = apply_filters('wu_password_require_number', $enforce_rules, $defender_active);
+
+		/**
+		 * Filter whether to require special characters in passwords.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param bool $require       Whether to require special chars. Default true when rules enforced.
+		 * @param bool $defender_active Whether Defender Pro Strong Password is active.
+		 */
+		$require_special = apply_filters('wu_password_require_special', $enforce_rules, $defender_active);
+
+		return [
+			'strength_setting'  => $strength_setting,
+			'min_strength'      => absint($min_strength),
+			'enforce_rules'     => (bool) $enforce_rules,
+			'min_length'        => absint($min_length),
+			'require_uppercase' => (bool) $require_uppercase,
+			'require_lowercase' => (bool) $require_lowercase,
+			'require_number'    => (bool) $require_number,
+			'require_special'   => (bool) $require_special,
+		];
+	}
+
+	/**
+	 * Check if WPMU DEV Defender Pro's Strong Password feature is active.
+	 *
+	 * @since 2.4.0
+	 * @return bool True if Defender Strong Password is enabled.
+	 */
+	protected function is_defender_strong_password_active(): bool {
+
+		// Check if Defender is active.
+		if ( ! defined('DEFENDER_VERSION')) {
+			return false;
+		}
+
+		// Try to get Defender's Strong Password settings.
+		if ( ! function_exists('wd_di')) {
+			return false;
+		}
+
+		try {
+			$settings = wd_di()->get('WP_Defender\Model\Setting\Strong_Password');
+
+			if ($settings && method_exists($settings, 'is_active')) {
+				return $settings->is_active();
+			}
+		} catch (\Exception $e) {
+			// Defender class not available or error occurred.
+			return false;
+		}
+
+		return false;
 	}
 }

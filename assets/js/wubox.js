@@ -192,6 +192,18 @@ const createInlineBox = (boxWindow, boxOverlay, loaded, caption, params) => {
   setBoxPosition(boxWindow, params.width, params.height);
   loaded();
 };
+const showFormErrors = (form, errors) => {
+  const formId = form.getAttribute("id");
+  const errorApp = window["wu_" + formId + "_errors"];
+  if (errorApp) {
+    errorApp.errors = errors;
+  }
+  const formAppEl = document.querySelector('[data-wu-app="' + formId + '_errors"]');
+  if (formAppEl) {
+    formAppEl.setAttribute("tabindex", "-1");
+    formAppEl.focus();
+  }
+};
 const formSubmit = (form) => async (event) => {
   event.preventDefault();
   const textArea = form.querySelector("textarea[data-editor]");
@@ -206,13 +218,26 @@ const formSubmit = (form) => async (event) => {
   const submitButton = event.submitter.value;
   const formData = new FormData(form);
   formData.append("submit", submitButton);
-  const response = await fetch(form.getAttribute("action"), {
-    method: "POST",
-    body: formData,
-    headers: {
-      "X-Requested-With": "XMLHttpRequest"
+  let response;
+  try {
+    const fetchResponse = await fetch(form.getAttribute("action"), {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    });
+    const txt = await fetchResponse.text();
+    if (!fetchResponse.ok) {
+      throw new Error(fetchResponse.status + " " + fetchResponse.statusText);
     }
-  }).then((response2) => response2.text()).then((txt) => txt ? JSON.parse(txt) : null);
+    response = txt ? JSON.parse(txt) : null;
+  } catch (error) {
+    blocked_form.unblock();
+    const message = (typeof wuboxL10n !== "undefined" && wuboxL10n.server_error) ? wuboxL10n.server_error : "An unexpected error occurred. Please try again or contact support if the problem persists.";
+    showFormErrors(form, [{ code: "server-error", message }]);
+    return;
+  }
   if (response === null || response.data === null) {
     blocked_form.unblock();
     removeBox();
@@ -220,13 +245,7 @@ const formSubmit = (form) => async (event) => {
   }
   if (!response.success) {
     blocked_form.unblock();
-    const formId = form.getAttribute("id");
-    if (window["wu_" + formId + "_errors"]) {
-      window["wu_" + formId + "_errors"].errors = response.data;
-    }
-    const formApp = document.querySelector('[data-wu-app="' + formId + '_errors"]');
-    formApp == null ? void 0 : formApp.setAttribute("tabindex", "-1");
-    formApp == null ? void 0 : formApp.focus();
+    showFormErrors(form, response.data);
   }
   if (typeof response.data.tables === "object") {
     blocked_form.unblock();
@@ -416,14 +435,14 @@ const setBoxWidth = (width) => {
 window.wubox = {
   /**
    * Initializes the box.
-   * 
+   *
    * @param domChunk The DOM chunk to be used as the box content.
    * @param addGlobalListeners Whether or not to add global listeners.
    */
   init: initBox,
   /**
    * Progarmmatically shows the box.
-   * 
+   *
    * @param caption The title of the box.
    * @param url The URL to be loaded in the box.
    * @param imageGroup The image group to be used in the box.
@@ -431,7 +450,7 @@ window.wubox = {
   show: showBox,
   /**
    * Removes the current opened box.
-   * 
+   *
    */
   remove: removeBox,
   /**
@@ -446,5 +465,28 @@ window.wubox = {
 };
 window.addEventListener("DOMContentLoaded", () => {
   window.wubox.init(".wubox", true, true);
+
+  // Mark wubox as ready and process any queued early clicks
+  window.__wuboxReady = true;
+
+  // Remove the early click listener - no longer needed
+  if (window.__wuboxEarlyClickHandler) {
+    document.removeEventListener('click', window.__wuboxEarlyClickHandler, true);
+    delete window.__wuboxEarlyClickHandler;
+  }
+
+  if (window.__wuboxEarlyClicks && window.__wuboxEarlyClicks.length > 0) {
+    // Remove duplicates - only keep unique elements
+    const uniqueClicks = [...new Set(window.__wuboxEarlyClicks)];
+
+    uniqueClicks.forEach((target) => {
+      const caption = target.title || target.name || '';
+      const url = target.href || target.alt;
+      const imageGroup = target.rel || false;
+	  target.style.cursor = '';
+      window.wubox.show(caption, url, imageGroup);
+    });
+    window.__wuboxEarlyClicks = [];
+  }
 });
 })()

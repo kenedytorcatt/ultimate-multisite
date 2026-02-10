@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles Domain Mapping in Multisite Ultimate.
+ * Handles Domain Mapping in Ultimate Multisite.
  *
  * @package WP_Ultimo
  * @subpackage Domain_Mapping
@@ -15,7 +15,7 @@ use WP_Ultimo\Models\Domain;
 defined('ABSPATH') || exit;
 
 /**
- * Handles Domain Mapping in Multisite Ultimate.
+ * Handles Domain Mapping in Ultimate Multisite.
  *
  * @since 2.0.0
  */
@@ -27,7 +27,7 @@ class Domain_Mapping {
 	 * Keeps a copy of the current mapping.
 	 *
 	 * @since 2.0.0
-	 * @var \WP_Ultimo\Models\Domain
+	 * @var Domain
 	 */
 	public $current_mapping = null;
 
@@ -52,6 +52,13 @@ class Domain_Mapping {
 		} else {
 			$this->maybe_startup();
 		}
+
+		/*
+		 * Allow redirects to any host that belongs to this network
+		 * (either a mapped domain or a site's original domain).
+		 * Always run this to allow wp_safe_redirect in any context.
+		 */
+		add_filter('allowed_redirect_hosts', [$this, 'allow_network_redirect_hosts'], 20, 2);
 	}
 
 	/**
@@ -141,7 +148,7 @@ class Domain_Mapping {
 			do_action_deprecated('mercator_load', [], '2.0.0', 'wu_domain_mapping_load');
 		}
 
-		add_action(
+		add_filter(
 			'wu_sso_site_allowed_domains',
 			function ($domain_list, $site_id): array {
 
@@ -149,7 +156,7 @@ class Domain_Mapping {
 					[
 						'active'        => true,
 						'blog_id'       => $site_id,
-						'stage__not_in' => \WP_Ultimo\Models\Domain::INACTIVE_STAGES,
+						'stage__not_in' => Domain::INACTIVE_STAGES,
 						'fields'        => 'domain',
 					]
 				);
@@ -200,6 +207,69 @@ class Domain_Mapping {
 	}
 
 	/**
+	 * Extend allowed redirect hosts with any host present in the network.
+	 *
+	 * - If `$host` is already allowed, return as-is.
+	 * - Otherwise, allow when `$host` matches a mapped domain (including www/no-www variants),
+	 *   or when there is a site registered on the network using `$host` as its domain.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string[] $allowed_hosts Currently allowed hosts.
+	 * @param string   $host          Host being validated.
+	 * @return string[] Updated list of allowed hosts.
+	 */
+	public function allow_network_redirect_hosts($allowed_hosts, $host) {
+
+		// Basic sanity checks
+		if (empty($host)) {
+			return $allowed_hosts;
+		}
+
+		$host = strtolower($host);
+
+		// If already allowed, bail early
+		if (in_array($host, (array) $allowed_hosts, true)) {
+			return $allowed_hosts;
+		}
+
+		// 1) Check mapped domains (including www/no-www variants)
+		$domains_to_check = $this->get_www_and_nowww_versions($host);
+		$mapping          = Domain::get_by_domain($domains_to_check);
+
+		if ($mapping && ! is_wp_error($mapping)) {
+			$allowed_hosts[] = $host;
+			return array_values(array_unique($allowed_hosts));
+		}
+
+		// 2) Check if any site is registered with this domain on the network
+		$site = function_exists('get_site_by_path') ? get_site_by_path($host, '/') : null;
+
+		if ($site instanceof \WP_Site) {
+			$allowed_hosts[] = $host;
+			return array_values(array_unique($allowed_hosts));
+		}
+
+		// Fallback: try a lightweight site query by domain (if available in this context)
+		if (function_exists('get_sites')) {
+			$maybe = get_sites(
+				[
+					'number' => 1,
+					'domain' => $host,
+					'fields' => 'ids',
+				]
+			);
+
+			if (! empty($maybe)) {
+				$allowed_hosts[] = $host;
+				return array_values(array_unique($allowed_hosts));
+			}
+		}
+
+		return $allowed_hosts;
+	}
+
+	/**
 	 * Fixes the SSO target site in cases of domain mapping.
 	 *
 	 * @since 2.0.0
@@ -211,7 +281,7 @@ class Domain_Mapping {
 	public function fix_sso_target_site($target_site, $domain) {
 
 		if ( ! $target_site || ! $target_site->blog_id) {
-			$mapping = \WP_Ultimo\Models\Domain::get_by_domain($domain);
+			$mapping = Domain::get_by_domain($domain);
 
 			if ($mapping) {
 				$target_site = get_site($mapping->get_site_id());
@@ -251,7 +321,7 @@ class Domain_Mapping {
 	 *
 	 * @return void
 	 */
-	public function verify_dns_mapping($current_site, $domain, $path) {
+	public function verify_dns_mapping($current_site, $domain, $path) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 
 		// Nonce functions are unavailable and the wp_hash is basically the same.
 		if (isset($_REQUEST['async_check_dns_nonce'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -315,7 +385,7 @@ class Domain_Mapping {
 		 * be mapped too, simply filter here.
 		 *
 		 * @param boolean $is_active Should the mapping be treated as active?
-		 * @param \WP_Ultimo\Models\Domain $mapping Mapping that we're inspecting
+		 * @param Domain $mapping Mapping that we're inspecting
 		 * @param string $domain
 		 */
 		$is_active = apply_filters('wu_use_domain_mapping', $mapping->is_active(), $mapping, $domain);
@@ -324,6 +394,9 @@ class Domain_Mapping {
 		if ( ! $is_active) {
 			return $site;
 		}
+
+		// Store the mapping for later use
+		$this->current_mapping = $mapping;
 
 		// Fetch the actual data for the site
 		$mapped_site = $mapping->get_site();
@@ -382,7 +455,7 @@ class Domain_Mapping {
 			if (is_wp_error($error)) {
 
 				// translators: First placeholder is the mapping ID, second is the site ID.
-				$message = sprintf(__('Unable to delete mapping %1$d for site %2$d', 'multisite-ultimate'), $mapping->get_id(), $site->blog_id);
+				$message = sprintf(__('Unable to delete mapping %1$d for site %2$d', 'ultimate-multisite'), $mapping->get_id(), $site->blog_id);
 
 				trigger_error(esc_html($message), E_USER_WARNING); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
 			}
@@ -403,20 +476,13 @@ class Domain_Mapping {
 			return;
 		}
 
-		$real_domain = $current_site->domain;
-		$domain      = sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST']?? ''));
-
-		if ($domain === $real_domain) {
-
-			// Domain hasn't been mapped
-			return;
-		}
+		$domain = sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST']?? ''));
 
 		$domains = $this->get_www_and_nowww_versions($domain);
 
 		$mapping = Domain::get_by_domain($domains);
 
-		if (empty($mapping) || is_wp_error($mapping)) {
+		if (empty($mapping) || is_wp_error($mapping) || ! $mapping->get_path()) {
 			return;
 		}
 
@@ -424,6 +490,7 @@ class Domain_Mapping {
 
 		add_filter('site_url', [$this, 'mangle_url'], -10, 4);
 		add_filter('home_url', [$this, 'mangle_url'], -10, 4);
+		add_filter('option_siteurl', [$this, 'mangle_url'], 20);
 
 		add_filter('theme_file_uri', [$this, 'mangle_url']);
 		add_filter('stylesheet_directory_uri', [$this, 'mangle_url']);
@@ -456,8 +523,8 @@ class Domain_Mapping {
 		 * Instead, use the Domain_Mapping::apply_mapping_to_url method.
 		 *
 		 * @since 2.0.0
-		 * @param array The mangle callable.
-		 * @param self  This object.
+		 * @param callable $mangle_url The mangle callable.
+		 * @param self $domain_mapper This object.
 		 * @return void
 		 */
 		do_action('wu_domain_mapping_register_filters', [$this, 'mangle_url'], $this);
@@ -489,11 +556,11 @@ class Domain_Mapping {
 	/**
 	 * Replaces the URL.
 	 *
-	 * @since 2.0.0
+	 * @param string      $url URL to replace.
+	 * @param null|Domain $current_mapping The current mapping.
 	 *
-	 * @param string                        $url URL to replace.
-	 * @param null|\WP_Ultimo\Models\Domain $current_mapping The current mapping.
 	 * @return string
+	 * @since 2.0.0
 	 */
 	public function replace_url($url, $current_mapping = null) {
 
@@ -507,16 +574,18 @@ class Domain_Mapping {
 		}
 
 		// Get the site associated with the mapping
-		$site = $current_mapping->get_site();
+		$path = $current_mapping->get_path();
 
 		// If we don't have a valid site, return the original URL
-		if (! $site) {
+		if (! $path) {
 			return $url;
 		}
 
-		// Replace the domain
-		$domain_base = wp_parse_url($url, PHP_URL_HOST);
-		$domain      = rtrim($domain_base . '/' . $site->get_path(), '/');
+		// Replace the domain.
+		// wp_parse_url not available because this happens very early in the WP loading process.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
+		$domain_base = parse_url($url, PHP_URL_HOST);
+		$domain      = rtrim($domain_base . '/' . $path, '/');
 		$regex       = '#^(\w+://)' . preg_quote($domain, '#') . '#i';
 		$mangled     = preg_replace($regex, '${1}' . $current_mapping->get_domain(), $url);
 
@@ -529,7 +598,7 @@ class Domain_Mapping {
 			$mangled = preg_replace($regex, '${1}' . $current_mapping->get_domain(), $url);
 		}
 
-		$mangled = wu_replace_scheme($mangled, $current_mapping->is_secure() ? 'https://' : 'http://');
+		$mangled = wu_replace_scheme($mangled, $current_mapping->is_secure() || is_ssl() ? 'https://' : 'http://');
 
 		return $mangled;
 	}
@@ -552,12 +621,7 @@ class Domain_Mapping {
 		$current_mapping = $this->current_mapping;
 
 		// Check if we have a valid mapping for this site
-		if (empty($current_mapping) || $current_mapping->get_site_id() !== $site_id) {
-			return $url;
-		}
-
-		// Check if the site exists
-		if (! $current_mapping->get_site()) {
+		if (empty($current_mapping) || $current_mapping->get_blog_id() !== $site_id) {
 			return $url;
 		}
 

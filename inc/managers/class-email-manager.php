@@ -12,6 +12,7 @@
 namespace WP_Ultimo\Managers;
 
 use Psr\Log\LogLevel;
+use WP_Error;
 use WP_Ultimo\Managers\Base_Manager;
 use WP_Ultimo\Models\Email;
 use WP_Ultimo\Helpers\Sender;
@@ -40,7 +41,7 @@ class Email_Manager extends Base_Manager {
 	protected $slug = 'email';
 
 	/**
-	 * The model class associated to this manager.
+	 * The model class associated with this manager.
 	 *
 	 * @since 2.0.0
 	 * @var string
@@ -53,7 +54,7 @@ class Email_Manager extends Base_Manager {
 	 * @since 2.0.0
 	 * @var array
 	 */
-	protected $registered_default_system_emails;
+	protected $registered_default_system_emails = [];
 
 	/**
 	 * Instantiate the necessary hooks.
@@ -66,13 +67,6 @@ class Email_Manager extends Base_Manager {
 		$this->enable_rest_api();
 
 		$this->enable_wp_cli();
-
-		add_action(
-			'init',
-			function () {
-				$this->register_all_default_system_emails();
-			}
-		);
 
 		/*
 		 * Adds the Email fields
@@ -114,6 +108,25 @@ class Email_Manager extends Base_Manager {
 			'email' => wu_get_setting('from_email'),
 		];
 
+		if (empty($all_emails)) {
+			$every_email = wu_get_emails();
+			if (empty($every_email)) {
+				// No system emails registered, probably they weren't created during setup.
+				// Let's create them now
+				$this->create_all_system_emails();
+				$all_emails = wu_get_emails(
+					[
+						'event' => $slug,
+					]
+				);
+			}
+		}
+
+		if (empty($all_emails)) {
+			// translators: %s: event slug.
+			wu_log_add('mailer', sprintf(__('No emails found for event %s.', 'ultimate-multisite'), $slug));
+		}
+
 		/*
 		 * Loop through all the emails registered.
 		 */
@@ -133,7 +146,7 @@ class Email_Manager extends Base_Manager {
 			$to = $email->get_target_list($payload);
 
 			if (empty($to)) {
-				wu_log_add('mailer', __('No targets found.', 'multisite-ultimate'));
+				wu_log_add('mailer', __('No targets found.', 'ultimate-multisite'));
 
 				return;
 			}
@@ -218,8 +231,8 @@ class Email_Manager extends Base_Manager {
 			'emails',
 			'sender_header',
 			[
-				'title' => __('Sender Settings', 'multisite-ultimate'),
-				'desc'  => __('Change the settings of the email headers, like from and name.', 'multisite-ultimate'),
+				'title' => __('Sender Settings', 'ultimate-multisite'),
+				'desc'  => __('Change the settings of the email headers, like from and name.', 'ultimate-multisite'),
 				'type'  => 'header',
 			]
 		);
@@ -228,8 +241,8 @@ class Email_Manager extends Base_Manager {
 			'emails',
 			'from_name',
 			[
-				'title'       => __('"From" Name', 'multisite-ultimate'),
-				'desc'        => __('How the sender name will appear in emails sent by Multisite Ultimate.', 'multisite-ultimate'),
+				'title'       => __('"From" Name', 'ultimate-multisite'),
+				'desc'        => __('How the sender name will appear in emails sent by Ultimate Multisite.', 'ultimate-multisite'),
 				'type'        => 'text',
 				'placeholder' => get_network_option(null, 'site_name'),
 				'default'     => get_network_option(null, 'site_name'),
@@ -243,8 +256,8 @@ class Email_Manager extends Base_Manager {
 			'emails',
 			'from_email',
 			[
-				'title'       => __('"From" E-mail', 'multisite-ultimate'),
-				'desc'        => __('How the sender email will appear in emails sent by Multisite Ultimate.', 'multisite-ultimate'),
+				'title'       => __('"From" E-mail', 'ultimate-multisite'),
+				'desc'        => __('How the sender email will appear in emails sent by Ultimate Multisite.', 'ultimate-multisite'),
 				'type'        => 'email',
 				'placeholder' => get_network_option(null, 'admin_email'),
 				'default'     => get_network_option(null, 'admin_email'),
@@ -258,8 +271,8 @@ class Email_Manager extends Base_Manager {
 			'emails',
 			'template_header',
 			[
-				'title' => __('Template Settings', 'multisite-ultimate'),
-				'desc'  => __('Change the settings of the email templates.', 'multisite-ultimate'),
+				'title' => __('Template Settings', 'ultimate-multisite'),
+				'desc'  => __('Change the settings of the email templates.', 'ultimate-multisite'),
 				'type'  => 'header',
 			]
 		);
@@ -268,13 +281,13 @@ class Email_Manager extends Base_Manager {
 			'emails',
 			'email_template_type',
 			[
-				'title'     => __('Email Templates Style', 'multisite-ultimate'),
-				'desc'      => __('Choose if email body will be sent using the HTML template or in plain text.', 'multisite-ultimate'),
+				'title'     => __('Email Templates Style', 'ultimate-multisite'),
+				'desc'      => __('Choose if email body will be sent using the HTML template or in plain text.', 'ultimate-multisite'),
 				'type'      => 'select',
 				'default'   => 'html',
 				'options'   => [
-					'html'  => __('HTML Emails', 'multisite-ultimate'),
-					'plain' => __('Plain Emails', 'multisite-ultimate'),
+					'html'  => __('HTML Emails', 'ultimate-multisite'),
+					'plain' => __('Plain Emails', 'ultimate-multisite'),
 				],
 				'html_attr' => [
 					'v-model' => 'emails_template',
@@ -286,8 +299,8 @@ class Email_Manager extends Base_Manager {
 			'emails',
 			'expiring_header',
 			[
-				'title' => __('Expiring Notification Settings', 'multisite-ultimate'),
-				'desc'  => __('Change the settings for the expiring notification (trials and subscriptions) emails.', 'multisite-ultimate'),
+				'title' => __('Expiring Notification Settings', 'ultimate-multisite'),
+				'desc'  => __('Change the settings for the expiring notification (trials and subscriptions) emails.', 'ultimate-multisite'),
 				'type'  => 'header',
 			]
 		);
@@ -296,10 +309,10 @@ class Email_Manager extends Base_Manager {
 			'emails',
 			'expiring_days',
 			[
-				'title'       => __('Days to Expire', 'multisite-ultimate'),
-				'desc'        => __('Select when we should send the notification email. If you select 3 days, for example, a notification email will be sent to every membership (or trial period) expiring in the next 3 days. Memberships are checked hourly.', 'multisite-ultimate'),
+				'title'       => __('Days to Expire', 'ultimate-multisite'),
+				'desc'        => __('Select when we should send the notification email. If you select 3 days, for example, a notification email will be sent to every membership (or trial period) expiring in the next 3 days. Memberships are checked hourly.', 'ultimate-multisite'),
 				'type'        => 'number',
-				'placeholder' => __('e.g. 3', 'multisite-ultimate'),
+				'placeholder' => __('e.g. 3', 'ultimate-multisite'),
 				'html_attr'   => [
 					'v-model' => 'expiring_days',
 				],
@@ -325,13 +338,19 @@ class Email_Manager extends Base_Manager {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $args with the system email details to register.
-	 * @return bool
+	 * @param array|null $args with the system email details to register.
+	 * @return Email|null|WP_Error Returns Email object if created, null if already exists or invalid args, or WP_Error on failure.
 	 */
 	public function create_system_email($args) {
 
+		// Validate that args is an array and has required fields
+		if (! is_array($args) || empty($args['slug'])) {
+			return null;
+		}
+
+		// Check if email already exists
 		if ($this->is_created($args['slug'])) {
-			return;
+			return null; // Email already exists, no need to create
 		}
 
 		$email_args = wp_parse_args(
@@ -367,7 +386,6 @@ class Email_Manager extends Base_Manager {
 	 * @return void
 	 */
 	public function create_all_system_emails(): void {
-
 		$system_emails = wu_get_default_system_emails();
 
 		foreach ($system_emails as $email_key => $email_value) {
@@ -383,9 +401,6 @@ class Email_Manager extends Base_Manager {
 	 * @return void
 	 */
 	public function register_all_default_system_emails(): void {
-
-		// TODO: Don't render every email until they are used.
-
 		/*
 		 * Payment Successful - Admin
 		 */
@@ -394,7 +409,7 @@ class Email_Manager extends Base_Manager {
 				'event'   => 'payment_received',
 				'slug'    => 'payment_received_admin',
 				'target'  => 'admin',
-				'title'   => __('You got a new payment!', 'multisite-ultimate'),
+				'title'   => __('You got a new payment!', 'ultimate-multisite'),
 				'content' => wu_get_template_contents('emails/admin/payment-received'),
 			]
 		);
@@ -407,7 +422,7 @@ class Email_Manager extends Base_Manager {
 				'event'   => 'payment_received',
 				'slug'    => 'payment_received_customer',
 				'target'  => 'customer',
-				'title'   => __('We got your payment!', 'multisite-ultimate'),
+				'title'   => __('We got your payment!', 'ultimate-multisite'),
 				'content' => wu_get_template_contents('emails/customer/payment-received'),
 			]
 		);
@@ -420,7 +435,7 @@ class Email_Manager extends Base_Manager {
 				'event'   => 'site_published',
 				'target'  => 'admin',
 				'slug'    => 'site_published_admin',
-				'title'   => __('A new site was created on your Network!', 'multisite-ultimate'),
+				'title'   => __('A new site was created on your Network!', 'ultimate-multisite'),
 				'content' => wu_get_template_contents('emails/admin/site-published'),
 			]
 		);
@@ -433,7 +448,7 @@ class Email_Manager extends Base_Manager {
 				'event'   => 'site_published',
 				'target'  => 'customer',
 				'slug'    => 'site_published_customer',
-				'title'   => __('Your site is ready!', 'multisite-ultimate'),
+				'title'   => __('Your site is ready!', 'ultimate-multisite'),
 				'content' => wu_get_template_contents('emails/customer/site-published'),
 			]
 		);
@@ -446,7 +461,7 @@ class Email_Manager extends Base_Manager {
 				'event'   => 'confirm_email_address',
 				'target'  => 'customer',
 				'slug'    => 'confirm_email_address',
-				'title'   => __('Confirm your email address!', 'multisite-ultimate'),
+				'title'   => __('Confirm your email address!', 'ultimate-multisite'),
 				'content' => wu_get_template_contents('emails/customer/confirm-email-address'),
 			]
 		);
@@ -459,7 +474,7 @@ class Email_Manager extends Base_Manager {
 				'event'   => 'domain_created',
 				'target'  => 'admin',
 				'slug'    => 'domain_created_admin',
-				'title'   => __('A new domain was added to your Network!', 'multisite-ultimate'),
+				'title'   => __('A new domain was added to your Network!', 'ultimate-multisite'),
 				'content' => wu_get_template_contents('emails/admin/domain-created'),
 			]
 		);
@@ -472,7 +487,7 @@ class Email_Manager extends Base_Manager {
 				'event'   => 'renewal_payment_created',
 				'target'  => 'customer',
 				'slug'    => 'renewal_payment_created',
-				'title'   => __('You have a new pending payment!', 'multisite-ultimate'),
+				'title'   => __('You have a new pending payment!', 'ultimate-multisite'),
 				'content' => wu_get_template_contents('emails/customer/renewal-payment-created'),
 			]
 		);
@@ -489,6 +504,9 @@ class Email_Manager extends Base_Manager {
 	 * @return array All default system emails.
 	 */
 	public function get_default_system_emails($slug = '') {
+		if (empty($this->registered_default_system_emails)) {
+			$this->register_all_default_system_emails();
+		}
 
 		if ($slug && isset($this->registered_default_system_emails[ $slug ])) {
 			return $this->registered_default_system_emails[ $slug ];
@@ -501,11 +519,11 @@ class Email_Manager extends Base_Manager {
 	 * Check if the system email already exists.
 	 *
 	 * @param mixed $slug Email slug to use as reference.
-	 * @return bool Return email object or false.
+	 * @return bool True if email exists, false otherwise.
 	 */
 	public function is_created($slug): bool {
 
-		return (bool) wu_get_email_by('slug', $slug);
+		return wu_get_email_by('slug', $slug) !== false;
 	}
 
 	/**
@@ -514,9 +532,9 @@ class Email_Manager extends Base_Manager {
 	 * @since 2.0.0
 	 *
 	 * @param string $slug With the event slug.
-	 * @return array With the email template.
+	 * @return void
 	 */
-	public function get_event_placeholders($slug = '') {
+	public function get_event_placeholders($slug = ''): void {
 
 		$placeholders = [];
 
@@ -541,8 +559,6 @@ class Email_Manager extends Base_Manager {
 
 		if (wu_request('email_event')) {
 			wp_send_json($placeholders);
-		} else {
-			return $placeholders;
 		}
 	}
 
@@ -554,11 +570,11 @@ class Email_Manager extends Base_Manager {
 	 * @param array  $to Email targets.
 	 * @param string $subject Email subject.
 	 * @param string $template Email content.
-	 * @return mixed
+	 * @return void
 	 */
-	public function send_schedule_system_email($to, $subject, $template) {
+	public function send_schedule_system_email($to, $subject, $template): void {
 
-		return Sender::send_mail($to, $subject, $template);
+		Sender::send_mail($to, $subject, $template);
 	}
 
 	/**

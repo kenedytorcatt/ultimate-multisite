@@ -1,7 +1,18 @@
 <?php
+/**
+ * Handle access to addons.
+ */
 
 namespace WP_Ultimo;
 
+use Psr\Log\LogLevel;
+
+/**
+ * Addon Repository class for handling addon downloads and updates.
+ *
+ * This class manages the authentication and download process for
+ * premium addons from the WP Ultimo repository.
+ */
 class Addon_Repository {
 
 	private string $authorization_header = '';
@@ -87,13 +98,15 @@ class Addon_Repository {
 				$message = wp_remote_retrieve_response_message($request);
 
 				if (200 === absint($code) && 'OK' === $message) {
-					$response     = json_decode($body, true);
-					$access_token = $response['access_token'];
-					set_transient('wu-access-token', $response['access_token'], $response['expires_in']);
+					$response = json_decode($body, true);
+					if ( ! empty($response['access_token'])) {
+						$access_token = $response['access_token'];
+						set_transient('wu-access-token', $response['access_token'], $response['expires_in']);
+					}
 				}
 			}
 		}
-		return $access_token;
+		return $access_token ?: '';
 	}
 
 	/**
@@ -133,7 +146,8 @@ class Addon_Repository {
 			$code    = wp_remote_retrieve_response_code($request);
 			$message = wp_remote_retrieve_response_message($request);
 			if (is_wp_error($request)) {
-				throw new \Exception(esc_html($request->get_error_message()), (int) $request->get_error_code());
+				wu_log_add('api-calls', $request->get_error_message(), LogLevel::ERROR);
+				$this->delete_tokens();
 			}
 			if (200 === absint($code) && 'OK' === $message) {
 				$user = json_decode($body, true);
@@ -149,13 +163,13 @@ class Addon_Repository {
 	 * @param \WP_Upgrader $upgrader The WP_Upgrader instance.
 	 * @param array        $hook_extra Extra arguments passed to hooked filters.
 	 */
-	public function upgrader_pre_download(bool $reply, $package, \WP_Upgrader $upgrader, $hook_extra) {
+	public function upgrader_pre_download(bool $reply, $package, \WP_Upgrader $upgrader, $hook_extra) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		if (str_starts_with($package, MULTISITE_ULTIMATE_UPDATE_URL)) {
 			$access_token = $this->get_access_token();
 
 			if (empty($access_token)) {
 				// translators: %s the url for login.
-				return new \WP_Error('noauth', sprintf(__('You must <a href="%s" target="_parent">Login</a> first.', 'multisite-ultimate'), $this->get_oauth_url()));
+				return new \WP_Error('noauth', sprintf(__('You must <a href="%s" target="_parent">Connect to UltimateMultisite.com</a> first.', 'ultimate-multisite'), $this->get_oauth_url()));
 			}
 			$this->authorization_header = 'Bearer ' . $access_token;
 
@@ -173,8 +187,12 @@ class Addon_Repository {
 				return $response;
 			}
 
+			if (403 === absint($code)) {
+				return new \WP_Error('http_request_failed', esc_html__('403 Access Denied returned from server. Ensure you have an active subscription for this addon.', 'ultimate-multisite'));
+			}
+
 			if (! in_array(absint($code), [200, 302, 301], true)) {
-				return new \WP_Error('http_request_failed', esc_html__('Failed to connect to the update server. Please try again later.', 'multisite-ultimate'));
+				return new \WP_Error('http_request_failed', esc_html__('Failed to connect to the update server. Please try again later.', 'ultimate-multisite'));
 			}
 		}
 		return $reply;
@@ -220,15 +238,16 @@ class Addon_Repository {
 			set_transient('wu-access-token', $response['access_token'], $response['expires_in']);
 			wu_save_option('wu-refresh-token', $response['refresh_token']);
 			wp_admin_notice(
-				__('Successfully connected your site to MultisiteUltimate.com.', 'multisite-ultimate'),
+				__('Successfully connected your site to UltimateMultisite.com.', 'ultimate-multisite'),
 				[
 					'type'        => 'success',
 					'dismissible' => true,
 				]
 			);
+			delete_site_transient('wu-addons-list');
 		} else {
 			wp_admin_notice(
-				__('Failed to authenticate with MultisiteUltimate.com.', 'multisite-ultimate'),
+				__('Failed to authenticate with UltimateMultisite.com.', 'ultimate-multisite'),
 				[
 					'type'        => 'error',
 					'dismissible' => true,
@@ -256,5 +275,6 @@ class Addon_Repository {
 	public function delete_tokens(): void {
 		wu_delete_option('wu-refresh-token');
 		delete_transient('wu-access-token');
+		delete_site_transient('wu-addons-list');
 	}
 }

@@ -13,11 +13,11 @@ namespace WP_Ultimo;
 defined('ABSPATH') || exit;
 
 /**
- * Adds a lighter ajax option to Multisite Ultimate.
+ * Adds a lighter ajax option to Ultimate Multisite.
  *
  * @since 1.9.14
  */
-class Ajax {
+class Ajax implements \WP_Ultimo\Interfaces\Singleton {
 
 	use \WP_Ultimo\Traits\Singleton;
 
@@ -26,7 +26,7 @@ class Ajax {
 	 *
 	 * @since 2.0.0
 	 */
-	public function __construct() {
+	public function init(): void {
 		/*
 		 * Load search endpoints.
 		 */
@@ -104,16 +104,15 @@ class Ajax {
 			[
 				'model'   => 'membership',
 				'query'   => [],
+				'number'  => 100,
 				'exclude' => [], // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude
 			]
 		);
 
-		$query = array_merge(
-			$args['query'],
-			[
-				'number' => -1,
-			]
-		);
+		// Number can be in the query array or it's own. Code uses both.
+		if (empty($args['query']['number'])) {
+			$args['query']['number'] = $args['number'];
+		}
 
 		if ($args['exclude']) {
 			if (is_string($args['exclude'])) {
@@ -304,7 +303,7 @@ class Ajax {
 	}
 
 	/**
-	 * Search for Multisite Ultimate settings to help customers find them.
+	 * Search for Ultimate Multisite settings to help customers find them.
 	 *
 	 * @since 2.0.0
 	 *

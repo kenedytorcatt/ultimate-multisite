@@ -15,6 +15,7 @@ use WP_Ultimo\Models\Interfaces\Notable;
 use WP_Ultimo\Models\Membership;
 use WP_Ultimo\Models\Site;
 use WP_Ultimo\Models\Payment;
+use WP_User;
 
 // Exit if accessed directly
 defined('ABSPATH') || exit;
@@ -28,6 +29,26 @@ class Customer extends Base_Model implements Billable, Notable {
 
 	use Traits\Billable;
 	use Traits\Notable;
+
+	/**
+	 * Meta key for IP country.
+	 */
+	const META_IP_COUNTRY = 'ip_country';
+
+	/**
+	 * Meta key for has trialed status.
+	 */
+	const META_HAS_TRIALED = 'wu_has_trialed';
+
+	/**
+	 * Meta key for customer extra information.
+	 */
+	const META_EXTRA_INFORMATION = 'wu_customer_extra_information';
+
+	/**
+	 * Meta key for verification key.
+	 */
+	const META_VERIFICATION_KEY = 'wu_verification_key';
 
 	/**
 	 * User ID of the associated user.
@@ -116,6 +137,14 @@ class Customer extends Base_Model implements Billable, Notable {
 	protected $extra_information;
 
 	/**
+	 * Network ID for multinetwork support.
+	 *
+	 * @since 2.3.0
+	 * @var int|null
+	 */
+	protected $network_id;
+
+	/**
 	 * Query Class to the static query methods.
 	 *
 	 * @since 2.0.0
@@ -129,7 +158,7 @@ class Customer extends Base_Model implements Billable, Notable {
 	 * @since 2.2.0
 	 * @var string
 	 */
-	public $_user;
+	public $_user; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
 
 	/**
 	 * Set the validation rules for this particular model.
@@ -155,6 +184,7 @@ class Customer extends Base_Model implements Billable, Notable {
 			'ips'                => 'array',
 			'extra_information'  => 'default:',
 			'signup_form'        => 'default:',
+			'network_id'         => 'integer|nullable',
 		];
 	}
 
@@ -203,7 +233,7 @@ class Customer extends Base_Model implements Billable, Notable {
 		$user = $this->get_user();
 
 		if (empty($user)) {
-			return __('User Deleted', 'multisite-ultimate');
+			return __('User Deleted', 'ultimate-multisite');
 		}
 
 		return $user->display_name;
@@ -224,7 +254,7 @@ class Customer extends Base_Model implements Billable, Notable {
 			[
 				'company_name'    => $this->get_display_name(),
 				'billing_email'   => $this->get_email_address(),
-				'billing_country' => $this->get_meta('ip_country'),
+				'billing_country' => $this->get_meta(self::META_IP_COUNTRY),
 			]
 		);
 	}
@@ -242,7 +272,7 @@ class Customer extends Base_Model implements Billable, Notable {
 		$country = $billing_address->billing_country;
 
 		if ( ! $country) {
-			return $this->get_meta('ip_country');
+			return $this->get_meta(self::META_IP_COUNTRY);
 		}
 
 		return $country;
@@ -259,7 +289,7 @@ class Customer extends Base_Model implements Billable, Notable {
 		$user = $this->get_user();
 
 		if (empty($user)) {
-			return __('none', 'multisite-ultimate');
+			return __('none', 'ultimate-multisite');
 		}
 
 		return $user->user_login;
@@ -276,7 +306,7 @@ class Customer extends Base_Model implements Billable, Notable {
 		$user = $this->get_user();
 
 		if (empty($user)) {
-			return __('none', 'multisite-ultimate');
+			return __('none', 'ultimate-multisite');
 		}
 
 		return $user->user_email;
@@ -365,7 +395,7 @@ class Customer extends Base_Model implements Billable, Notable {
 			return true;
 		}
 
-		$this->has_trialed = $this->get_meta('wu_has_trialed');
+		$this->has_trialed = $this->get_meta(self::META_HAS_TRIALED);
 
 		if ( ! $this->has_trialed) {
 			$trial = wu_get_memberships(
@@ -378,7 +408,7 @@ class Customer extends Base_Model implements Billable, Notable {
 			);
 
 			if ( ! empty($trial)) {
-				$this->update_meta('wu_has_trialed', true);
+				$this->update_meta(self::META_HAS_TRIALED, true);
 
 				$this->has_trialed = true;
 			}
@@ -396,7 +426,7 @@ class Customer extends Base_Model implements Billable, Notable {
 	 */
 	public function set_has_trialed($has_trialed): void {
 
-		$this->meta['wu_has_trialed'] = $has_trialed;
+		$this->meta[ self::META_HAS_TRIALED ] = $has_trialed;
 
 		$this->has_trialed = $has_trialed;
 	}
@@ -524,7 +554,7 @@ class Customer extends Base_Model implements Billable, Notable {
 		}
 
 		if ($update_country_and_state) {
-			$this->update_meta('ip_country', $geolocation['country']);
+			$this->update_meta(self::META_IP_COUNTRY, $geolocation['country']);
 			$this->update_meta('ip_state', $geolocation['state']);
 		}
 
@@ -540,7 +570,7 @@ class Customer extends Base_Model implements Billable, Notable {
 	public function get_extra_information() {
 
 		if (null === $this->extra_information) {
-			$extra_information = (array) $this->get_meta('wu_customer_extra_information');
+			$extra_information = (array) $this->get_meta(self::META_EXTRA_INFORMATION);
 
 			$this->extra_information = array_filter($extra_information);
 		}
@@ -559,15 +589,15 @@ class Customer extends Base_Model implements Billable, Notable {
 
 		$extra_information = array_filter((array) $extra_information);
 
-		$this->extra_information                     = $extra_information;
-		$this->meta['wu_customer_extra_information'] = $extra_information;
+		$this->extra_information                    = $extra_information;
+		$this->meta[ self::META_EXTRA_INFORMATION ] = $extra_information;
 	}
 
 	/**
 	 * Returns the subscriptions attached to this customer.
 	 *
 	 * @since 2.0.0
-	 * @return array
+	 * @return Membership[]
 	 */
 	public function get_memberships() {
 
@@ -786,7 +816,7 @@ class Customer extends Base_Model implements Billable, Notable {
 
 		$hash = \WP_Ultimo\Helpers\Hash::encode($seed, 'verification-key');
 
-		return $this->update_meta('wu_verification_key', $hash);
+		return $this->update_meta(self::META_VERIFICATION_KEY, $hash);
 	}
 
 	/**
@@ -797,7 +827,7 @@ class Customer extends Base_Model implements Billable, Notable {
 	 */
 	public function get_verification_key() {
 
-		return $this->get_meta('wu_verification_key', false);
+		return $this->get_meta(self::META_VERIFICATION_KEY, false);
 	}
 
 	/**
@@ -808,7 +838,7 @@ class Customer extends Base_Model implements Billable, Notable {
 	 */
 	public function disable_verification_key() {
 
-		return $this->update_meta('wu_verification_key', false);
+		return $this->update_meta(self::META_VERIFICATION_KEY, false);
 	}
 
 	/**
@@ -873,5 +903,28 @@ class Customer extends Base_Model implements Billable, Notable {
 	public function set_signup_form($signup_form): void {
 
 		$this->signup_form = $signup_form;
+	}
+
+	/**
+	 * Get the network ID for multinetwork support.
+	 *
+	 * @since 2.3.0
+	 * @return int|null
+	 */
+	public function get_network_id() {
+
+		return $this->network_id ? absint($this->network_id) : null;
+	}
+
+	/**
+	 * Set the network ID for multinetwork support.
+	 *
+	 * @since 2.3.0
+	 * @param int|null $network_id Network ID.
+	 * @return void
+	 */
+	public function set_network_id($network_id): void {
+
+		$this->network_id = $network_id ? absint($network_id) : null;
 	}
 }

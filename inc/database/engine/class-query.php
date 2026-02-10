@@ -19,6 +19,8 @@ defined('ABSPATH') || exit;
  */
 class Query extends \BerlinDB\Database\Query {
 
+	use Network_Prefix;
+
 	/**
 	 * The prefix for the custom table.
 	 *
@@ -71,6 +73,8 @@ class Query extends \BerlinDB\Database\Query {
 	 */
 	public function __construct($query = []) {
 
+		$this->update_prefix_with_network_id();
+
 		$cache_group = $this->apply_prefix($this->cache_group, '-');
 
 		if ($this->global_cache && ! in_array($cache_group, self::$added_globals, true)) {
@@ -91,5 +95,25 @@ class Query extends \BerlinDB\Database\Query {
 	public function get_plural_name() {
 
 		return $this->item_name_plural;
+	}
+
+	/**
+	 * Get columns from an array of arguments.
+	 * Copy of the parent method of public access.
+	 *
+	 * @param array  $args     Arguments to filter columns by.
+	 * @param string $operator Optional. The logical operation to perform.
+	 * @param string $field    Optional. A field from the object to place
+	 *                         instead of the entire object. Default false.
+	 * @return array Array of column.
+	 */
+	public function get_columns($args = array(), $operator = 'and', $field = false) {
+		// Filter columns.
+		$filter = wp_filter_object_list($this->columns, $args, $operator, $field);
+
+		// Return column or false.
+		return ! empty($filter)
+			? array_values($filter)
+			: array();
 	}
 }

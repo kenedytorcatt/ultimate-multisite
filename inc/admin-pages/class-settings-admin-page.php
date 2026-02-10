@@ -1,6 +1,6 @@
 <?php
 /**
- * Multisite Ultimate Dashboard Admin Page.
+ * Ultimate Multisite Dashboard Admin Page.
  *
  * @package WP_Ultimo
  * @subpackage Admin_Pages
@@ -9,6 +9,7 @@
 
 namespace WP_Ultimo\Admin_Pages;
 
+use WP_Ultimo\Exception\Runtime_Exception;
 use WP_Ultimo\Settings;
 use WP_Ultimo\UI\Form;
 use WP_Ultimo\UI\Field;
@@ -17,7 +18,7 @@ use WP_Ultimo\UI\Field;
 defined('ABSPATH') || exit;
 
 /**
- * Multisite Ultimate Dashboard Admin Page.
+ * Ultimate Multisite Dashboard Admin Page.
  */
 class Settings_Admin_Page extends Wizard_Admin_Page {
 
@@ -138,7 +139,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 		wu_register_settings_side_panel(
 			'login-and-registration',
 			[
-				'title'  => __('Checkout Forms', 'multisite-ultimate'),
+				'title'  => __('Checkout Forms', 'ultimate-multisite'),
 				'render' => [$this, 'render_checkout_forms_side_panel'],
 			]
 		);
@@ -146,7 +147,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 		wu_register_settings_side_panel(
 			'sites',
 			[
-				'title'  => __('Template Previewer', 'multisite-ultimate'),
+				'title'  => __('Template Previewer', 'ultimate-multisite'),
 				'render' => [$this, 'render_site_template_side_panel'],
 			]
 		);
@@ -154,7 +155,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 		wu_register_settings_side_panel(
 			'sites',
 			[
-				'title'  => __('Placeholder Editor', 'multisite-ultimate'),
+				'title'  => __('Placeholder Editor', 'ultimate-multisite'),
 				'render' => [$this, 'render_site_placeholders_side_panel'],
 			]
 		);
@@ -162,7 +163,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 		wu_register_settings_side_panel(
 			'payment-gateways',
 			[
-				'title'  => __('Invoices', 'multisite-ultimate'),
+				'title'  => __('Invoices', 'ultimate-multisite'),
 				'render' => [$this, 'render_invoice_side_panel'],
 			]
 		);
@@ -170,7 +171,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 		wu_register_settings_side_panel(
 			'emails',
 			[
-				'title'  => __('System Emails', 'multisite-ultimate'),
+				'title'  => __('System Emails', 'ultimate-multisite'),
 				'render' => [$this, 'render_system_emails_side_panel'],
 			]
 		);
@@ -178,7 +179,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 		wu_register_settings_side_panel(
 			'emails',
 			[
-				'title'  => __('Email Template', 'multisite-ultimate'),
+				'title'  => __('Email Template', 'ultimate-multisite'),
 				'render' => [$this, 'render_email_template_side_panel'],
 			]
 		);
@@ -198,15 +199,15 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 			<div class="wu-p-4">
 
 				<span class="wu-text-gray-700 wu-font-bold wu-uppercase wu-tracking-wide wu-text-xs">
-					<?php esc_html_e('Checkout Forms', 'multisite-ultimate'); ?>
+					<?php esc_html_e('Checkout Forms', 'ultimate-multisite'); ?>
 				</span>
 
 				<div class="wu-py-2">
-					<img class="wu-w-full" alt="<?php esc_attr_e('Checkout Forms', 'multisite-ultimate'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/checkout-forms.webp')); ?>">
+					<img class="wu-w-full" alt="<?php esc_attr_e('Checkout Forms', 'ultimate-multisite'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/checkout-forms.webp')); ?>">
 				</div>
 
 				<p class="wu-text-gray-600 wu-p-0 wu-m-0">
-					<?php esc_html_e('You can create multiple Checkout Forms for different occasions (seasonal campaigns, launches, etc)!', 'multisite-ultimate'); ?>
+					<?php esc_html_e('You can create multiple Checkout Forms for different occasions (seasonal campaigns, launches, etc)!', 'ultimate-multisite'); ?>
 				</p>
 
 			</div>
@@ -215,7 +216,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 
 				<div class="wu-p-4 wu-bg-gray-100 wu-border-solid wu-border-0 wu-border-t wu-border-gray-300">
 					<a class="button wu-w-full wu-text-center" href="<?php echo esc_attr(wu_network_admin_url('wp-ultimo-checkout-forms')); ?>">
-						<?php esc_html_e('Manage Checkout Forms &rarr;', 'multisite-ultimate'); ?>
+						<?php esc_html_e('Manage Checkout Forms &rarr;', 'ultimate-multisite'); ?>
 					</a>
 				</div>
 
@@ -241,15 +242,15 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 			<div class="wu-p-4">
 
 				<span class="wu-text-gray-700 wu-font-bold wu-uppercase wu-tracking-wide wu-text-xs">
-					<?php esc_html_e('Customize the Template Previewer', 'multisite-ultimate'); ?>
+					<?php esc_html_e('Customize the Template Previewer', 'ultimate-multisite'); ?>
 				</span>
 
 				<div class="wu-py-2">
-					<img class="wu-w-full" alt="<?php esc_attr_e('Customize the Template Previewer', 'multisite-ultimate'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/site-template.webp')); ?>">
+					<img class="wu-w-full" alt="<?php esc_attr_e('Customize the Template Previewer', 'ultimate-multisite'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/site-template.webp')); ?>">
 				</div>
 
 				<p class="wu-text-gray-600 wu-p-0 wu-m-0">
-					<?php esc_html_e('Did you know that you can customize colors, logos, and more options of the Site Template Previewer top-bar?', 'multisite-ultimate'); ?>
+					<?php esc_html_e('Did you know that you can customize colors, logos, and more options of the Site Template Previewer top-bar?', 'ultimate-multisite'); ?>
 				</p>
 
 			</div>
@@ -258,7 +259,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 
 				<div class="wu-p-4 wu-bg-gray-100 wu-border-solid wu-border-0 wu-border-t wu-border-gray-300">
 					<a class="button wu-w-full wu-text-center" target="_blank" href="<?php echo esc_attr(wu_network_admin_url('wp-ultimo-customize-template-previewer')); ?>">
-						<?php esc_html_e('Go to Customizer &rarr;', 'multisite-ultimate'); ?>
+						<?php esc_html_e('Go to Customizer &rarr;', 'ultimate-multisite'); ?>
 					</a>
 				</div>
 
@@ -284,15 +285,15 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 			<div class="wu-p-4">
 
 				<span class="wu-text-gray-700 wu-font-bold wu-uppercase wu-tracking-wide wu-text-xs">
-					<?php esc_html_e('Customize the Template Placeholders', 'multisite-ultimate'); ?>
+					<?php esc_html_e('Customize the Template Placeholders', 'ultimate-multisite'); ?>
 				</span>
 
 				<div class="wu-py-2">
-					<img class="wu-w-full" alt="<?php esc_attr_e('Customize the Template Placeholders', 'multisite-ultimate'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/template-placeholders.webp')); ?>">
+					<img class="wu-w-full" alt="<?php esc_attr_e('Customize the Template Placeholders', 'ultimate-multisite'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/template-placeholders.webp')); ?>">
 				</div>
 
 				<p class="wu-text-gray-600 wu-p-0 wu-m-0">
-					<?php esc_html_e('If you are using placeholder substitutions inside your site templates, use this tool to add, remove, or change the default content of those placeholders.', 'multisite-ultimate'); ?>
+					<?php esc_html_e('If you are using placeholder substitutions inside your site templates, use this tool to add, remove, or change the default content of those placeholders.', 'ultimate-multisite'); ?>
 				</p>
 
 			</div>
@@ -301,7 +302,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 
 				<div class="wu-p-4 wu-bg-gray-100 wu-border-solid wu-border-0 wu-border-t wu-border-gray-300">
 					<a class="button wu-w-full wu-text-center" target="_blank" href="<?php echo esc_attr(wu_network_admin_url('wp-ultimo-template-placeholders')); ?>">
-						<?php esc_html_e('Edit Placeholders &rarr;', 'multisite-ultimate'); ?>
+						<?php esc_html_e('Edit Placeholders &rarr;', 'ultimate-multisite'); ?>
 					</a>
 				</div>
 
@@ -327,15 +328,15 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 			<div class="wu-p-4">
 
 				<span class="wu-text-gray-700 wu-font-bold wu-uppercase wu-tracking-wide wu-text-xs">
-					<?php esc_html_e('Customize the Invoice Template', 'multisite-ultimate'); ?>
+					<?php esc_html_e('Customize the Invoice Template', 'ultimate-multisite'); ?>
 				</span>
 
 				<div class="wu-py-2">
-					<img class="wu-w-full" alt="<?php esc_attr_e('Customize the Invoice Template', 'multisite-ultimate'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/invoice-template.webp')); ?>">
+					<img class="wu-w-full" alt="<?php esc_attr_e('Customize the Invoice Template', 'ultimate-multisite'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/invoice-template.webp')); ?>">
 				</div>
 
 				<p class="wu-text-gray-600 wu-p-0 wu-m-0">
-					<?php esc_html_e('Did you know that you can customize colors, logos, and more options of the Invoice PDF template?', 'multisite-ultimate'); ?>
+					<?php esc_html_e('Did you know that you can customize colors, logos, and more options of the Invoice PDF template?', 'ultimate-multisite'); ?>
 				</p>
 
 			</div>
@@ -344,7 +345,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 
 				<div class="wu-p-4 wu-bg-gray-100 wu-border-solid wu-border-0 wu-border-t wu-border-gray-300">
 					<a class="button wu-w-full wu-text-center" target="_blank" href="<?php echo esc_attr(wu_network_admin_url('wp-ultimo-customize-invoice-template')); ?>">
-						<?php esc_html_e('Go to Customizer &rarr;', 'multisite-ultimate'); ?>
+						<?php esc_html_e('Go to Customizer &rarr;', 'ultimate-multisite'); ?>
 					</a>
 				</div>
 
@@ -370,15 +371,15 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 			<div class="wu-p-4">
 
 				<span class="wu-text-gray-700 wu-font-bold wu-uppercase wu-tracking-wide wu-text-xs">
-					<?php esc_html_e('Customize System Emails', 'multisite-ultimate'); ?>
+					<?php esc_html_e('Customize System Emails', 'ultimate-multisite'); ?>
 				</span>
 
 				<div class="wu-py-2">
-					<img class="wu-w-full" alt="<?php esc_attr_e('Customize System Emails', 'multisite-ultimate'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/system-emails.webp')); ?>">
+					<img class="wu-w-full" alt="<?php esc_attr_e('Customize System Emails', 'ultimate-multisite'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/system-emails.webp')); ?>">
 				</div>
 
 				<p class="wu-text-gray-600 wu-p-0 wu-m-0">
-					<?php esc_html_e('You can completely customize the contents of the emails sent out by Multisite Ultimate when particular events occur, such as Account Creation, Payment Failures, etc.', 'multisite-ultimate'); ?>
+					<?php esc_html_e('You can completely customize the contents of the emails sent out by Ultimate Multisite when particular events occur, such as Account Creation, Payment Failures, etc.', 'ultimate-multisite'); ?>
 				</p>
 
 			</div>
@@ -387,7 +388,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 
 				<div class="wu-p-4 wu-bg-gray-100 wu-border-solid wu-border-0 wu-border-t wu-border-gray-300">
 					<a class="button wu-w-full wu-text-center" target="_blank" href="<?php echo esc_attr(wu_network_admin_url('wp-ultimo-emails')); ?>">
-						<?php esc_html_e('Customize System Emails &rarr;', 'multisite-ultimate'); ?>
+						<?php esc_html_e('Customize System Emails &rarr;', 'ultimate-multisite'); ?>
 					</a>
 				</div>
 
@@ -413,15 +414,15 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 			<div class="wu-p-4">
 
 				<span class="wu-text-gray-700 wu-font-bold wu-uppercase wu-tracking-wide wu-text-xs">
-					<?php esc_html_e('Customize Email Template', 'multisite-ultimate'); ?>
+					<?php esc_html_e('Customize Email Template', 'ultimate-multisite'); ?>
 				</span>
 
 				<div class="wu-py-2">
-					<img class="wu-w-full" alt="<?php esc_attr_e('Customize Email Template', 'multisite-ultimate'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/email-template.webp')); ?>">
+					<img class="wu-w-full" alt="<?php esc_attr_e('Customize Email Template', 'ultimate-multisite'); ?>" src="<?php echo esc_attr(wu_get_asset('sidebar/email-template.webp')); ?>">
 				</div>
 
 				<p class="wu-text-gray-600 wu-p-0 wu-m-0">
-					<?php esc_html_e('If your network is using the HTML email option, you can customize the look and feel of the email template.', 'multisite-ultimate'); ?>
+					<?php esc_html_e('If your network is using the HTML email option, you can customize the look and feel of the email template.', 'ultimate-multisite'); ?>
 				</p>
 
 			</div>
@@ -430,7 +431,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 
 				<div class="wu-p-4 wu-bg-gray-100 wu-border-solid wu-border-0 wu-border-t wu-border-gray-300">
 					<a class="button wu-w-full wu-text-center" target="_blank" href="<?php echo esc_attr(wu_network_admin_url('wp-ultimo-customize-email-template')); ?>">
-						<?php esc_html_e('Customize Email Template &rarr;', 'multisite-ultimate'); ?>
+						<?php esc_html_e('Customize Email Template &rarr;', 'ultimate-multisite'); ?>
 					</a>
 				</div>
 
@@ -451,7 +452,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 	 */
 	public function get_title() {
 
-		return __('Settings', 'multisite-ultimate');
+		return __('Settings', 'ultimate-multisite');
 	}
 
 	/**
@@ -462,7 +463,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 	 */
 	public function get_menu_title() {
 
-		return __('Settings', 'multisite-ultimate');
+		return __('Settings', 'ultimate-multisite');
 	}
 
 	/**
@@ -519,7 +520,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 	public function default_handler(): void {
 
 		if ( ! current_user_can('wu_edit_settings')) {
-			wp_die(esc_html__('You do not have the permissions required to change settings.', 'multisite-ultimate'));
+			wp_die(esc_html__('You do not have the permissions required to change settings.', 'ultimate-multisite'));
 		}
 
 		// Get all valid setting keys from sections
@@ -527,18 +528,20 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 		$allowed_fields = [];
 		foreach ($sections as $section) {
 			if (isset($section['fields'])) {
-				$allowed_fields = array_merge($allowed_fields, array_keys($section['fields']));
+				$allowed_fields = array_merge($allowed_fields, $section['fields']);
 			}
 		}
 
 		// Filter and sanitize $_POST to only include allowed setting fields
 		// Nonce processed in the calling method.
 		$filtered_data = [];
-		foreach ($allowed_fields as $field) {
+		foreach ($allowed_fields as $field => $field_data) {
 			if (isset($_POST[ $field ])) { // phpcs:ignore WordPress.Security.NonceVerification
 				$value = wp_unslash($_POST[ $field ]); // phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				if (is_array($value)) {
-					$filtered_data[ $field ] = array_map('sanitize_text_field', $value);
+					$filtered_data[ $field ] = wu_clean($value);
+				} elseif ( ! empty($field_data['allow_html'])) {
+					$filtered_data[ $field ] = sanitize_post_field('post_content', $value, $this->get_id(), 'db');
 				} else {
 					$filtered_data[ $field ] = sanitize_text_field($value);
 				}
@@ -570,7 +573,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 
 		$section = $this->current_section;
 
-		$fields = array_filter($section['fields'], fn($item) => current_user_can($item['capability']));
+		$fields = array_filter($section['fields'] ?? [], fn($item) => current_user_can($item['capability']));
 
 		uasort($fields, 'wu_sort_by_order');
 
@@ -579,7 +582,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 		 */
 		$fields['save'] = [
 			'type'            => 'submit',
-			'title'           => __('Save Settings', 'multisite-ultimate'),
+			'title'           => __('Save Settings', 'ultimate-multisite'),
 			'classes'         => 'button button-primary button-large wu-ml-auto wu-w-full md:wu-w-auto',
 			'wrapper_classes' => 'wu-sticky wu-bottom-0 wu-save-button wu-mr-px wu-w-full md:wu-w-auto',
 			'html_attr'       => [
@@ -608,5 +611,271 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 		);
 
 		$form->render();
+	}
+
+	/**
+	 * Overrides parent page_loaded to handle export/import functionality.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	public function page_loaded() {
+
+		$this->handle_export();
+		$this->handle_import_redirect();
+		$this->register_forms();
+
+		parent::page_loaded();
+	}
+
+	/**
+	 * Handle settings export request.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	protected function handle_export() {
+
+		if ( ! isset($_GET['wu_export_settings'])) {
+			return;
+		}
+		check_admin_referer('wu_export_settings');
+
+		// Check permissions
+		if ( ! current_user_can('wu_edit_settings')) {
+			wp_die(esc_html__('You do not have permission to export settings.', 'ultimate-multisite'));
+		}
+
+		$result = $this->export_settings();
+
+		$export_data = $result['data'];
+		$filename    = $result['filename'];
+
+		nocache_headers();
+
+		header('Content-Disposition: attachment; filename=' . $filename);
+		header('Pragma: no-cache');
+		header('Expires: 0');
+		wp_send_json($export_data, null, JSON_PRETTY_PRINT);
+
+		exit;
+	}
+
+	/**
+	 * Register import form.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	public function register_forms() {
+
+		wu_register_form(
+			'import_settings',
+			[
+				'render'     => [$this, 'render_import_settings_modal'],
+				'handler'    => [$this, 'handle_import_settings_modal'],
+				'capability' => 'wu_edit_settings',
+			]
+		);
+	}
+
+	/**
+	 * Render the import settings modal.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	public function render_import_settings_modal() {
+
+		$fields = [
+			'import_file_header' => [
+				'type'  => 'header',
+				'title' => __('Upload Settings File', 'ultimate-multisite'),
+				'desc'  => __('Select a JSON file previously exported from Ultimate Multisite.', 'ultimate-multisite'),
+			],
+			'import_file'        => [
+				'type'    => 'html',
+				'content' => '<input type="file" name="import_file" id="import_file" accept=".json" required class="wu-w-full" />',
+			],
+			'confirm'            => [
+				'type'      => 'toggle',
+				'title'     => __('I understand this will replace all current settings', 'ultimate-multisite'),
+				'desc'      => __('This action cannot be undone. Make sure you have a backup of your current settings.', 'ultimate-multisite'),
+				'value'     => false,
+				'html_attr' => [
+					'v-model' => 'confirm',
+				],
+			],
+			'submit_button'      => [
+				'type'            => 'submit',
+				'title'           => __('Import Settings', 'ultimate-multisite'),
+				'value'           => 'save',
+				'classes'         => 'button button-primary wu-w-full',
+				'wrapper_classes' => 'wu-items-end',
+				'html_attr'       => [
+					'v-bind:disabled' => '!confirm',
+				],
+			],
+		];
+
+		$form = new Form(
+			'import_settings',
+			$fields,
+			[
+				'views'                 => 'admin-pages/fields',
+				'classes'               => 'wu-modal-form wu-widget-list wu-striped wu-m-0',
+				'field_wrapper_classes' => 'wu-w-full wu-box-border wu-items-center wu-flex wu-justify-between wu-p-4 wu-m-0 wu-border-t wu-border-l-0 wu-border-r-0 wu-border-b-0 wu-border-gray-300 wu-border-solid',
+				'html_attr'             => [
+					'data-wu-app' => 'import_settings_modal',
+					'data-state'  => wp_json_encode(['confirm' => false]),
+					'enctype'     => 'multipart/form-data',
+				],
+			]
+		);
+
+		$form->render();
+	}
+
+	/**
+	 * Handle import settings form submission.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 * @throws Runtime_Exception When an error is found in the file.
+	 */
+	public function handle_import_settings_modal() {
+
+		try {
+			// Validate file upload
+			if ( ! isset($_FILES['import_file']) || empty($_FILES['import_file']['tmp_name'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				throw new Runtime_Exception('no_file');
+			}
+
+			// Validate and parse the file
+			$file = $_FILES['import_file']; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+			// Check for upload errors
+			if (UPLOAD_ERR_OK !== $file['error']) {
+				throw new Runtime_Exception('upload_error');
+			}
+
+			// Check file extension
+			$file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+			if ('json' !== $file_ext) {
+				throw new Runtime_Exception('invalid_file_type');
+			}
+
+			// Read and decode JSON
+			$json_content = file_get_contents($file['tmp_name']); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+			if (false === $json_content) {
+				throw new Runtime_Exception('read_error');
+			}
+
+			$data = json_decode($json_content, true);
+
+			if (null === $data) {
+				throw new Runtime_Exception('invalid_json');
+			}
+
+			// Validate structure
+			if ( ! isset($data['plugin']) || 'ultimate-multisite' !== $data['plugin']) {
+				throw new Runtime_Exception('invalid_format');
+			}
+
+			if ( ! isset($data['settings']) || ! is_array($data['settings'])) {
+				throw new Runtime_Exception('invalid_structure');
+			}
+		} catch ( Runtime_Exception $e ) {
+			wp_send_json_error(new \WP_Error($e->getMessage(), __('Something is wrong with the uploaded file.', 'ultimate-multisite')));
+		}
+
+		// Validate imported settings against allowed fields (same as default_handler)
+		$sections       = WP_Ultimo()->settings->get_sections();
+		$allowed_fields = [];
+		foreach ($sections as $section) {
+			if (isset($section['fields'])) {
+				$allowed_fields = array_merge($allowed_fields, array_keys($section['fields']));
+			}
+		}
+
+		$filtered_settings = array_intersect_key($data['settings'], array_flip($allowed_fields));
+
+		WP_Ultimo()->settings->save_settings($filtered_settings);
+
+		do_action('wu_settings_imported', $data['settings'], $data);
+
+		do_action('wu_settings_imported', $data['settings'], $data);
+
+		// Success
+		wp_send_json_success(
+			[
+				'redirect_url' => add_query_arg(
+					[
+						'tab'     => 'import-export',
+						'updated' => 1,
+					],
+					wu_network_admin_url('wp-ultimo-settings')
+				),
+			]
+		);
+	}
+
+	/**
+	 * Display a success message after import redirect.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	protected function handle_import_redirect() {
+
+		if ( ! isset($_GET['updated']) || 'import-export' !== wu_request('tab')) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+
+		add_action(
+			'wu_page_wizard_after_title',
+			function () {
+				?>
+			<div id="message" class="updated notice wu-admin-notice notice-success is-dismissible">
+				<p><?php esc_html_e('Settings successfully imported!', 'ultimate-multisite'); ?></p>
+			</div>
+				<?php
+			}
+		);
+	}
+
+	/**
+	 * Export settings to JSON format.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return array Array containing 'success' bool, 'data' string (JSON), and 'filename' string.
+	 */
+	private function export_settings() {
+
+		$settings = wu_get_all_settings();
+
+		$export_data = [
+			'version'    => \WP_Ultimo::VERSION,
+			'plugin'     => 'ultimate-multisite',
+			'timestamp'  => time(),
+			'site_url'   => get_site_url(),
+			'wp_version' => get_bloginfo('version'),
+			'settings'   => $settings,
+		];
+
+		$filename = sprintf(
+			'ultimate-multisite-settings-export-%s-%s.json',
+			gmdate('Y-m-d'),
+			get_current_site()->cookie_domain,
+		);
+
+		return [
+			'success'  => true,
+			'data'     => $export_data,
+			'filename' => $filename,
+		];
 	}
 }

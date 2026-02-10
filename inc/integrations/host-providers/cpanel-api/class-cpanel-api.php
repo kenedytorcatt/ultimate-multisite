@@ -9,7 +9,6 @@
 
 namespace WP_Ultimo\Integrations\Host_Providers\CPanel_API;
 
-
 defined('ABSPATH') || exit;
 
 /**
@@ -68,31 +67,47 @@ class CPanel_API {
 	private $log;
 
 	/**
+	 * API token for token-based authentication.
+	 *
+	 * @since 2.5.0
+	 * @var string|null
+	 */
+	private ?string $api_token = null;
+
+	/**
 	 * Creates the CPanel_API Object.
 	 *
 	 * @since 1.6.2
-	 * @param string  $username cPanel username.
-	 * @param string  $password cPanel password. Yep =(.
-	 * @param string  $host cPanel URL.
-	 * @param integer $port cPanel port.
-	 * @param boolean $log Log.
+	 * @param string      $username  cPanel username.
+	 * @param string|null $password  cPanel password (optional if using API token).
+	 * @param string      $host      cPanel URL.
+	 * @param integer     $port      cPanel port.
+	 * @param boolean     $log       Log.
+	 * @param string|null $api_token cPanel API token (recommended over password).
 	 */
 	public function __construct(
-		$username,
-		$password,
-		$host,
-		$port = 2083,
-		$log = false
+		string $username,
+		?string $password,
+		string $host,
+		int $port = 2083,
+		bool $log = false,
+		?string $api_token = null
 	) {
 
-		$this->username = $username;
-		$this->password = $password;
-		$this->host     = $host;
-		$this->port     = $port;
-		$this->log      = $log;
+		$this->username  = $username;
+		$this->password  = $password;
+		$this->host      = $host;
+		$this->port      = $port;
+		$this->log       = $log;
+		$this->api_token = $api_token;
 
-		// Signs up
-		$this->sign_in();
+		if (empty($this->api_token)) {
+			// Password auth needs session
+			$this->sign_in();
+		} else {
+			// Token auth - direct access, no session needed
+			$this->ex_page = $this->get_base_url() . '/execute/';
+		}
 	}
 
 
@@ -152,7 +167,7 @@ class CPanel_API {
 
 		if (is_wp_error($response)) {
 			// translators: %s is the error.
-			$this->log(sprintf(__('cPanel API Error: %s', 'multisite-ultimate'), $response->get_error_message()));
+			$this->log(sprintf(__('cPanel API Error: %s', 'ultimate-multisite'), $response->get_error_message()));
 			return false;
 		}
 
@@ -205,6 +220,55 @@ class CPanel_API {
 	}
 
 	/**
+	 * Sends a request using API token authentication.
+	 *
+	 * API tokens don't require session management - just an Authorization header.
+	 *
+	 * @since 2.5.0
+	 * @param string $url    URL endpoint.
+	 * @param array  $params Request parameters to send.
+	 * @return string|false Response body or false on error.
+	 */
+	private function request_with_token(string $url, array $params = []) {
+
+		$args = [
+			'timeout'   => 30,
+			'sslverify' => false,
+			'headers'   => [
+				'Authorization' => sprintf('cpanel %s:%s', $this->username, $this->api_token),
+				'Accept'        => 'application/json',
+			],
+		];
+
+		if (! empty($params)) {
+			$args['method'] = 'POST';
+			$args['body']   = $params;
+			$response       = wp_remote_post($url, $args);
+		} else {
+			$response = wp_remote_get($url, $args);
+		}
+
+		if (is_wp_error($response)) {
+			// translators: %s is the error.
+			$this->log(sprintf(__('cPanel API Error: %s', 'ultimate-multisite'), $response->get_error_message()));
+			return false;
+		}
+
+		return wp_remote_retrieve_body($response);
+	}
+
+	/**
+	 * Checks if using token-based authentication.
+	 *
+	 * @since 2.5.0
+	 * @return bool
+	 */
+	public function is_using_token_auth(): bool {
+
+		return ! empty($this->api_token);
+	}
+
+	/**
 	 * Signs in on the cPanel.
 	 *
 	 * @since 1.6.2
@@ -224,7 +288,7 @@ class CPanel_API {
 			$this->homepage = $this->get_base_url() . $reply['redirect'];
 			$this->ex_page  = $this->get_base_url() . "/{$this->cpsess}/execute/";
 		} else {
-			$this->log(__('Cannot connect to your cPanel server : Invalid Credentials', 'multisite-ultimate'));
+			$this->log(__('Cannot connect to your cPanel server : Invalid Credentials', 'ultimate-multisite'));
 		}
 	}
 
@@ -268,7 +332,13 @@ class CPanel_API {
 			$parameters = (http_build_query($parameters));
 		}
 
-		return json_decode((string) $this->request($this->ex_page . $module . '/' . $function_name . '?' . $parameters));
+		$url = $this->ex_page . $module . '/' . $function_name . '?' . $parameters;
+
+		if ($this->is_using_token_auth()) {
+			return json_decode((string) $this->request_with_token($url));
+		}
+
+		return json_decode((string) $this->request($url));
 	}
 
 	/**
@@ -286,6 +356,16 @@ class CPanel_API {
 			$parameters = '';
 		} else {
 			$parameters = (http_build_query($parameters));
+		}
+
+		if ($this->is_using_token_auth()) {
+			// Token auth uses a different URL structure for API2
+			$url = $this->get_base_url() . '/json-api/cpanel' .
+					'?cpanel_jsonapi_version=2' .
+					"&cpanel_jsonapi_func={$function_name}" .
+					"&cpanel_jsonapi_module={$module}&" . $parameters;
+
+			return json_decode((string) $this->request_with_token($url));
 		}
 
 		$url = $this->get_base_url() . $this->cpsess . '/json-api/cpanel' .
