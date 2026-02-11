@@ -136,7 +136,7 @@ class Current implements \WP_Ultimo\Interfaces\Singleton {
 	 * @since 2.0.0
 	 *
 	 * @param array $query_vars The WP_Query object.
-	 * @return \WP_Query
+	 * @return array
 	 */
 	public function add_query_vars($query_vars) {
 
@@ -332,7 +332,7 @@ class Current implements \WP_Ultimo\Interfaces\Singleton {
 		 * @since 2.0.9
 		 *
 		 * @param \WP_Ultimo\Models\Site $site The current site to set.
-		 * @param self The Current class instance.
+		 * @param self $current The Current class instance.
 		 * @return \WP_Ultimo\Models\Site
 		 */
 		$site = apply_filters('wu_current_set_site', $site, $this);
@@ -378,7 +378,7 @@ class Current implements \WP_Ultimo\Interfaces\Singleton {
 		 * @since 2.0.9
 		 *
 		 * @param \WP_Ultimo\Models\Customer $customer The current customer to set.
-		 * @param self The Current class instance.
+		 * @param self $current The Current class instance.
 		 * @return \WP_Ultimo\Models\Customer
 		 */
 		$customer = apply_filters('wu_current_set_customer', $customer, $this);
@@ -413,7 +413,7 @@ class Current implements \WP_Ultimo\Interfaces\Singleton {
 		 * @since 2.0.18
 		 *
 		 * @param \WP_Ultimo\Models\Membership $membership The current membership to set.
-		 * @param self The Current class instance.
+		 * @param self $current The Current class instance.
 		 * @return \WP_Ultimo\Models\Membership
 		 */
 		$membership = apply_filters('wu_current_set_membership', $membership, $this);

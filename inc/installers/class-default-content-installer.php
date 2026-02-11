@@ -384,6 +384,12 @@ class Default_Content_Installer extends Base_Installer {
 		 * Set page as the default registration page.
 		 */
 		wu_save_setting('default_registration_page', $page_id);
+
+		/*
+		 * Flush rewrite rules so checkout URL patterns
+		 * (e.g. /register/plan-slug) work immediately.
+		 */
+		flush_rewrite_rules(true);
 	}
 
 	/**

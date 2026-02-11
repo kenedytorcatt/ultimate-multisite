@@ -2360,6 +2360,11 @@ class Migrator extends Base_Installer {
 		wu_save_setting('default_registration_page', $page_id);
 
 		/*
+		 * Flush rewrite rules so checkout URL patterns work immediately.
+		 */
+		flush_rewrite_rules(true);
+
+		/*
 		 * Get post name based on setting for login page
 		 */
 		$login_page_slug = $this->get_old_setting('login_url', false);
