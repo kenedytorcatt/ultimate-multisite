@@ -227,14 +227,22 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 				'desc'  => __('Choose how you want your network sites to be organized:', 'multisite-ultimate'),
 			],
 			'subdomain_install'        => [
-				'type'    => 'radio',
+				'type'    => 'select',
 				'title'   => __('Site Structure', 'multisite-ultimate'),
-				'desc'    => __('Choose between subdirectories or subdomains for your network sites.', 'multisite-ultimate'),
+				'desc'    => __('Choose between subdomains or subdirectories for your network sites.', 'multisite-ultimate'),
 				'options' => [
-					'0' => sprintf(__('Sites will use sub-directories like %s (Recommended)', 'multisite-ultimate'), '<code>' . esc_html($base_domain) . '/site1</code>'),
-					'1' => sprintf(__('Sites will use sub-domains like %s (Requires wildcard DNS)', 'multisite-ultimate'), '<code>site1.' . esc_html($base_domain) . '</code>'),
+					'1' => sprintf(
+						/* translators: %s is an example subdomain URL like site1.example.com */
+						__('Sub-domains — e.g. %s (Recommended)', 'multisite-ultimate'),
+						'site1.' . esc_html($base_domain)
+					),
+					'0' => sprintf(
+						/* translators: %s is an example subdirectory URL like example.com/site1 */
+						__('Sub-directories — e.g. %s', 'multisite-ultimate'),
+						esc_html($base_domain) . '/site1'
+					),
 				],
-				'default' => '0',
+				'default' => '1',
 			],
 			'network_details_header'   => [
 				'type'  => 'header',
@@ -424,6 +432,7 @@ RewriteRule . index.php [L]';
 			<p class="wu-text-gray-600 wu-mb-4">
 				<?php
 				printf(
+					/* translators: %1$s is the wp-config.php filename, %2$s is the "Happy publishing" comment marker */
 					esc_html__('Add the following lines to your %1$s file, just before the %2$s comment:', 'multisite-ultimate'),
 					'<code>wp-config.php</code>',
 					'<code>/* That\'s all, stop editing! Happy publishing. */</code>'
@@ -480,16 +489,24 @@ RewriteRule . index.php [L]';
 	 */
 	protected function get_wp_config_path() {
 
+		global $wp_filesystem;
+
+		if ( ! $wp_filesystem) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+
+			WP_Filesystem();
+		}
+
 		$wp_config_path = ABSPATH . 'wp-config.php';
 
-		if (file_exists($wp_config_path) && is_writable($wp_config_path)) {
+		if ($wp_filesystem->exists($wp_config_path) && $wp_filesystem->is_writable($wp_config_path)) {
 			return $wp_config_path;
 		}
 
 		// WordPress supports wp-config.php one level above ABSPATH
 		$wp_config_path = trailingslashit(dirname(ABSPATH)) . 'wp-config.php';
 
-		if (file_exists($wp_config_path) && is_writable($wp_config_path)) {
+		if ($wp_filesystem->exists($wp_config_path) && $wp_filesystem->is_writable($wp_config_path)) {
 			return $wp_config_path;
 		}
 
