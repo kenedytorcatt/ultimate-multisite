@@ -56,9 +56,25 @@ jobs:
       - name: Install Composer dependencies
         run: composer install
 
-      - name: Set PHP version for wp-env
+      - name: Set PHP version and filter missing plugins for wp-env
         run: |
-          echo "{\"config\": {\"phpVersion\": \"${{ matrix.php }}\"}}" > .wp-env.override.json
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const config = JSON.parse(fs.readFileSync('.wp-env.json', 'utf8'));
+            const override = { config: { phpVersion: '${{ matrix.php }}' }, env: {} };
+            for (const [envName, envConfig] of Object.entries(config.env || {})) {
+              if (envConfig.plugins) {
+                const existing = envConfig.plugins.filter(p => {
+                  const resolved = path.resolve(p);
+                  return fs.existsSync(resolved);
+                });
+                override.env[envName] = { plugins: existing };
+              }
+            }
+            fs.writeFileSync('.wp-env.override.json', JSON.stringify(override, null, 2));
+            console.log('Override:', JSON.stringify(override, null, 2));
+          "
 
       - name: Start WordPress Test Environment
         run: npm run env:start:test
