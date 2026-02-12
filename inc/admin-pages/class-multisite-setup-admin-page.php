@@ -15,6 +15,8 @@ namespace WP_Ultimo\Admin_Pages;
 // Exit if accessed directly
 defined('ABSPATH') || exit;
 
+use WP_Ultimo\Installers\Multisite_Network_Installer;
+
 /**
  * Multisite Setup Admin Page.
  */
@@ -80,6 +82,7 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 		parent::__construct();
 
 		add_action('admin_enqueue_scripts', [$this, 'register_scripts']);
+		add_action('wp_ajax_wu_multisite_install', [$this, 'setup_install']);
 	}
 
 	/**
@@ -122,25 +125,26 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 
 		return [
 			'welcome'   => [
-				'title'       => __('Multisite Required', 'multisite-ultimate'),
-				'description' => implode(
-					'<br><br>',
-					[
-						__('WordPress Multisite is required for Multisite Ultimate to function properly.', 'multisite-ultimate'),
-						__('This wizard will guide you through enabling WordPress Multisite and configuring your network.', 'multisite-ultimate'),
-						__('We recommend creating a backup of your files and database before proceeding.', 'multisite-ultimate'),
-					]
-				),
-				'next_label'  => __('Get Started &rarr;', 'multisite-ultimate'),
-				'back'        => false,
-				'view'        => [$this, 'section_welcome'],
+				'title'      => __('Multisite Required', 'multisite-ultimate'),
+				'next_label' => __('Get Started &rarr;', 'multisite-ultimate'),
+				'back'       => false,
+				'view'       => [$this, 'section_welcome'],
 			],
 			'configure' => [
 				'title'       => __('Network Configuration', 'multisite-ultimate'),
 				'description' => __('Configure your network settings. These settings determine how your sites will be structured.', 'multisite-ultimate'),
-				'next_label'  => __('Create Network', 'multisite-ultimate'),
+				'next_label'  => __('Continue &rarr;', 'multisite-ultimate'),
 				'handler'     => [$this, 'handle_configure'],
 				'fields'      => [$this, 'get_network_configuration_fields'],
+				'back'        => true,
+			],
+			'install'   => [
+				'title'        => __('Installing Network', 'multisite-ultimate'),
+				'description'  => __('Setting up your WordPress Multisite network...', 'multisite-ultimate'),
+				'view'         => [$this, 'section_install'],
+				'next_label'   => __('Install', 'multisite-ultimate'),
+				'disable_next' => true,
+				'back'         => false,
 			],
 			'complete'  => [
 				'title'       => __('Setup Complete', 'multisite-ultimate'),
@@ -160,50 +164,7 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 	 */
 	public function section_welcome(): void {
 
-		?>
-		<div class="wu-mb-6">
-			<h3 class="wu-text-lg wu-font-semibold wu-text-gray-900 wu-mb-3">
-				<?php esc_html_e('What is WordPress Multisite?', 'multisite-ultimate'); ?>
-			</h3>
-			<ul class="wu-list-disc wu-list-inside wu-text-gray-600 wu-space-y-2">
-				<li><?php esc_html_e('Create multiple websites from a single WordPress installation', 'multisite-ultimate'); ?></li>
-				<li><?php esc_html_e('Share themes, plugins, and users across all sites in the network', 'multisite-ultimate'); ?></li>
-				<li><?php esc_html_e('Manage all sites from a central network administration panel', 'multisite-ultimate'); ?></li>
-				<li><?php esc_html_e('Perfect foundation for Website-as-a-Service platforms', 'multisite-ultimate'); ?></li>
-			</ul>
-		</div>
-
-		<div class="wu-mb-6">
-			<h3 class="wu-text-lg wu-font-semibold wu-text-gray-900 wu-mb-3">
-				<?php esc_html_e('What happens next?', 'multisite-ultimate'); ?>
-			</h3>
-			<p class="wu-text-gray-600 wu-mb-4">
-				<?php esc_html_e('This wizard will guide you through the process of enabling WordPress Multisite. We will:', 'multisite-ultimate'); ?>
-			</p>
-			<ol class="wu-list-decimal wu-list-inside wu-text-gray-600 wu-space-y-2">
-				<li><?php esc_html_e('Configure your network settings (subdomain or subdirectory structure)', 'multisite-ultimate'); ?></li>
-				<li><?php esc_html_e('Automatically modify your wp-config.php file (if we have write access)', 'multisite-ultimate'); ?></li>
-				<li><?php esc_html_e('Create the necessary database tables', 'multisite-ultimate'); ?></li>
-				<li><?php esc_html_e('Complete the multisite setup process', 'multisite-ultimate'); ?></li>
-			</ol>
-		</div>
-
-		<div class="wu-bg-blue-50 wu-border wu-border-blue-200 wu-rounded-lg wu-p-4">
-			<div class="wu-flex">
-				<div class="wu-flex-shrink-0">
-					<span class="dashicons dashicons-info wu-text-blue-500"></span>
-				</div>
-				<div class="wu-ml-3">
-					<h4 class="wu-text-sm wu-font-medium wu-text-blue-800">
-						<?php esc_html_e('Important Notice', 'multisite-ultimate'); ?>
-					</h4>
-					<p class="wu-text-sm wu-text-blue-700 wu-mt-1">
-						<?php esc_html_e('This process will make changes to your WordPress installation. We recommend creating a backup of your files and database before proceeding.', 'multisite-ultimate'); ?>
-					</p>
-				</div>
-			</div>
-		</div>
-		<?php
+		wu_get_template('wizards/multisite-setup/welcome');
 
 		$this->render_submit_box();
 	}
@@ -253,14 +214,14 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 				'title'       => __('Network Title', 'multisite-ultimate'),
 				'desc'        => __('This will be the title of your network.', 'multisite-ultimate'),
 				'placeholder' => __('Enter network title', 'multisite-ultimate'),
-				'default'     => get_option('blogname'),
+				'value'       => get_option('blogname') . ' Network',
 			],
 			'email'                    => [
 				'type'        => 'email',
 				'title'       => __('Network Admin Email', 'multisite-ultimate'),
 				'desc'        => __('This email address will be used for network administration.', 'multisite-ultimate'),
 				'placeholder' => __('Enter admin email', 'multisite-ultimate'),
-				'default'     => $user->user_email,
+				'value'       => $user->user_email,
 			],
 			'backup_warning'           => [
 				'type' => 'note',
@@ -270,8 +231,8 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 							<span class="dashicons dashicons-warning wu-text-yellow-500"></span>
 						</div>
 						<div class="wu-ml-3">
-							<h4 class="wu-text-sm wu-font-medium wu-text-yellow-800">' . __('Before You Continue', 'multisite-ultimate') . '</h4>
-							<p class="wu-text-sm wu-text-yellow-700 wu-mt-1">' . __('Please ensure you have a recent backup of your website files and database. The multisite setup process will modify your wp-config.php file and create new database tables.', 'multisite-ultimate') . '</p>
+							<h4 class="wu-text-sm wu-font-medium wu-text-yellow-800">' . esc_html__('Before You Continue', 'multisite-ultimate') . '</h4>
+							<p class="wu-text-sm wu-text-yellow-700 wu-mt-1">' . esc_html__('Please ensure you have a recent backup of your website files and database. The multisite setup process will modify your wp-config.php file and create new database tables.', 'multisite-ultimate') . '</p>
 						</div>
 					</div>
 				</div>',
@@ -281,6 +242,9 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 
 	/**
 	 * Handles the network configuration form submission.
+	 *
+	 * Validates inputs, stores the configuration in a transient,
+	 * and redirects to the install step.
 	 *
 	 * @since 2.0.0
 	 * @return void
@@ -295,27 +259,101 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 		$sitename          = sanitize_text_field(wu_request('sitename', ''));
 		$email             = sanitize_email(wu_request('email', ''));
 
-		// Store values in transients for completion page
-		set_transient('wu_multisite_subdomain_install', $subdomain_install, 300);
-		set_transient('wu_multisite_sitename', $sitename, 300);
-		set_transient('wu_multisite_email', $email, 300);
+		$home_url = get_option('home');
+		$base     = wp_parse_url(trailingslashit($home_url), PHP_URL_PATH);
+		$domain   = wp_parse_url($home_url, PHP_URL_HOST);
+		$port     = wp_parse_url($home_url, PHP_URL_PORT);
 
-		// Try to enable multisite
-		$wp_config_modified = $this->modify_wp_config();
-		$network_created    = false;
-
-		if ($wp_config_modified) {
-			// Create the network
-			$network_created = $this->create_network($subdomain_install, $sitename, $email);
+		if ($port) {
+			$domain .= ':' . $port;
 		}
 
-		// Store results
-		set_transient('wu_multisite_wp_config_modified', $wp_config_modified, 300);
-		set_transient('wu_multisite_network_created', $network_created, 300);
+		set_transient(
+			Multisite_Network_Installer::CONFIG_TRANSIENT,
+			[
+				'subdomain_install' => $subdomain_install,
+				'sitename'          => $sitename,
+				'email'             => $email,
+				'domain'            => $domain,
+				'base'              => $base,
+			],
+			HOUR_IN_SECONDS
+		);
 
-		// Redirect to completion step
 		wp_safe_redirect($this->get_next_section_link());
 		exit;
+	}
+
+	/**
+	 * Renders the install section with AJAX-driven installation steps.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	public function section_install(): void {
+
+		$installer = Multisite_Network_Installer::get_instance();
+		$steps     = $installer->get_steps();
+
+		wp_localize_script('wu-setup-wizard', 'wu_setup', $steps);
+
+		wp_localize_script(
+			'wu-setup-wizard',
+			'wu_setup_settings',
+			[
+				'dry_run'               => false,
+				'ajax_action'           => 'wu_multisite_install',
+				'generic_error_message' => __('A server error happened while processing this item.', 'ultimate-multisite'),
+			]
+		);
+
+		wp_enqueue_script('wu-setup-wizard');
+
+		echo wu_get_template_contents( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			'wizards/setup/installation_steps',
+			[
+				'page'   => $this,
+				'steps'  => $steps,
+				'checks' => false,
+			]
+		);
+
+		?>
+		<!-- Submit Box -->
+		<div class="wu-flex wu-justify-between wu-bg-gray-100 wu--m-in wu-mt-4 wu-p-4 wu-overflow-hidden wu-border-t wu-border-solid wu-border-l-0 wu-border-r-0 wu-border-b-0 wu-border-gray-300">
+			<div class="wu-text-right wu-relative wu-w-full">
+				<button name="next" value="1" class="wu-next-button button button-primary button-large wu-ml-2" disabled="disabled">
+					<?php esc_html_e('Install', 'multisite-ultimate'); ?>
+				</button>
+			</div>
+		</div>
+		<!-- End Submit Box -->
+		<?php
+	}
+
+	/**
+	 * Handles the AJAX request for multisite installation steps.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	public function setup_install(): void {
+
+		if (! current_user_can('manage_options')) {
+			wp_send_json_error(new \WP_Error('not-allowed', __('Permission denied.', 'ultimate-multisite')));
+		}
+
+		$installer_slug = wu_request('installer', '');
+
+		$installer = Multisite_Network_Installer::get_instance();
+
+		$result = $installer->handle(true, $installer_slug, $this);
+
+		if (is_wp_error($result)) {
+			wp_send_json_error($result);
+		}
+
+		wp_send_json_success();
 	}
 
 	/**
@@ -326,10 +364,9 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 	 */
 	public function section_complete(): void {
 
-		$wp_config_modified = get_transient('wu_multisite_wp_config_modified');
-		$network_created    = get_transient('wu_multisite_network_created');
+		$result = wu_request('result', ''); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-		if ($network_created && $wp_config_modified) :
+		if ('success' === $result || is_multisite()) :
 			?>
 			<div class="wu-bg-green-50 wu-border wu-border-green-200 wu-rounded-lg wu-p-4 wu-mb-6">
 				<div class="wu-flex">
@@ -357,13 +394,6 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 		else :
 			$this->display_manual_instructions();
 		endif;
-
-		// Clean up transients
-		delete_transient('wu_multisite_wp_config_modified');
-		delete_transient('wu_multisite_network_created');
-		delete_transient('wu_multisite_subdomain_install');
-		delete_transient('wu_multisite_sitename');
-		delete_transient('wu_multisite_email');
 	}
 
 	/**
@@ -376,7 +406,12 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 
 		$home_url          = get_option('home');
 		$base_domain       = wp_parse_url($home_url, PHP_URL_HOST);
-		$subdomain_install = get_transient('wu_multisite_subdomain_install');
+		$port              = wp_parse_url($home_url, PHP_URL_PORT);
+		$subdomain_install = defined('SUBDOMAIN_INSTALL') ? SUBDOMAIN_INSTALL : true; // @phpstan-ignore phpstanWP.wpConstant.fetch
+
+		if ($port) {
+			$base_domain .= ':' . $port;
+		}
 
 		$wp_config_constants = "define( 'WP_ALLOW_MULTISITE', true );
 define( 'MULTISITE', true );
@@ -433,17 +468,18 @@ RewriteRule . index.php [L]';
 				<?php
 				printf(
 					/* translators: %1$s is the wp-config.php filename, %2$s is the "Happy publishing" comment marker */
-					esc_html__('Add the following lines to your %1$s file, just before the %2$s comment:', 'multisite-ultimate'),
+					esc_html__('Add the following lines to your %1$s file, just before the comment %2$s:', 'multisite-ultimate'),
 					'<code>wp-config.php</code>',
 					'<code>/* That\'s all, stop editing! Happy publishing. */</code>'
 				);
 				?>
 			</p>
 			<div class="wu-bg-gray-50 wu-border wu-border-gray-200 wu-rounded-lg wu-p-4 wu-mb-4">
-				<pre class="wu-text-sm wu-overflow-x-auto"><code><?php echo esc_html($wp_config_constants); ?></code></pre>
+				<pre class="wu-text-sm wu-overflow-x-auto"><code class="wu-p-0"><?php echo esc_html($wp_config_constants); ?></code></pre>
 			</div>
 		</div>
 
+		<?php if (got_url_rewrite()) : ?>
 		<div class="wu-mb-6">
 			<h3 class="wu-text-lg wu-font-semibold wu-text-gray-900 wu-mb-3">
 				<?php esc_html_e('Step 2: Add to .htaccess', 'multisite-ultimate'); ?>
@@ -455,6 +491,7 @@ RewriteRule . index.php [L]';
 				<pre class="wu-text-sm wu-overflow-x-auto"><code><?php echo esc_html($htaccess_rules); ?></code></pre>
 			</div>
 		</div>
+		<?php endif; ?>
 
 		<div class="wu-bg-blue-50 wu-border wu-border-blue-200 wu-rounded-lg wu-p-4 wu-mb-6">
 			<div class="wu-flex">
@@ -473,185 +510,12 @@ RewriteRule . index.php [L]';
 		</div>
 
 		<div class="wu-flex wu-justify-center">
-			<a href="<?php echo esc_url(admin_url()); ?>" class="wu-inline-flex wu-items-center wu-px-4 wu-py-2 wu-border wu-border-transparent wu-text-sm wu-font-medium wu-rounded-md wu-text-white wu-bg-green-600 hover:wu-bg-green-700 wu-transition-colors">
+			<a href="<?php echo esc_url(admin_url('admin.php?page=wp-ultimo-multisite-setup&step=complete')); ?>" class="wu-inline-flex wu-items-center wu-px-4 wu-py-2 wu-border wu-border-transparent wu-text-sm wu-font-medium wu-rounded-md wu-text-white wu-bg-green-600 hover:wu-bg-green-700 wu-transition-colors">
 				<?php esc_html_e('Refresh and Check Again', 'multisite-ultimate'); ?>
 				<span class="dashicons dashicons-update wu-ml-1"></span>
 			</a>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Resolves the wp-config.php path, checking both ABSPATH and one level above.
-	 *
-	 * @since 2.0.0
-	 * @return string|false The path to wp-config.php, or false if not found/writable.
-	 */
-	protected function get_wp_config_path() {
-
-		global $wp_filesystem;
-
-		if ( ! $wp_filesystem) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-
-			WP_Filesystem();
-		}
-
-		$wp_config_path = ABSPATH . 'wp-config.php';
-
-		if ($wp_filesystem->exists($wp_config_path) && $wp_filesystem->is_writable($wp_config_path)) {
-			return $wp_config_path;
-		}
-
-		// WordPress supports wp-config.php one level above ABSPATH
-		$wp_config_path = trailingslashit(dirname(ABSPATH)) . 'wp-config.php';
-
-		if ($wp_filesystem->exists($wp_config_path) && $wp_filesystem->is_writable($wp_config_path)) {
-			return $wp_config_path;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Attempts to modify wp-config.php to enable multisite.
-	 *
-	 * @since 2.0.0
-	 * @return bool Whether the modification was successful.
-	 */
-	protected function modify_wp_config(): bool {
-
-		$wp_config_path = $this->get_wp_config_path();
-
-		if (false === $wp_config_path) {
-			return false;
-		}
-
-		$config_content = file_get_contents($wp_config_path);
-
-		if (false === $config_content) {
-			return false;
-		}
-
-		// Check if WP_ALLOW_MULTISITE is already actively defined (not commented out)
-		if (preg_match('/^\s*define\s*\(\s*[\'"]WP_ALLOW_MULTISITE[\'"]/m', $config_content)) {
-			return true; // Already configured
-		}
-
-		// Find the location to insert the constant
-		$search          = "/* That's all, stop editing! Happy publishing. */";
-		$insert_position = strpos($config_content, $search);
-
-		if (false === $insert_position) {
-			// Fallback: look for the wp-settings.php include
-			$search          = "require_once ABSPATH . 'wp-settings.php';";
-			$insert_position = strpos($config_content, $search);
-		}
-
-		if (false === $insert_position) {
-			return false; // Can't find a safe place to insert
-		}
-
-		$constant_to_add = "\n// Multisite Ultimate: Enable WordPress Multisite\ndefine( 'WP_ALLOW_MULTISITE', true );\n\n";
-
-		$new_content = substr_replace($config_content, $constant_to_add, $insert_position, 0);
-
-		return file_put_contents($wp_config_path, $new_content) !== false;
-	}
-
-	/**
-	 * Creates the multisite network.
-	 *
-	 * @since 2.0.0
-	 * @param bool   $subdomain_install Whether to use subdomains.
-	 * @param string $sitename Network title.
-	 * @param string $email Network admin email.
-	 * @return bool Whether the network creation was successful.
-	 */
-	protected function create_network(bool $subdomain_install, string $sitename, string $email): bool {
-
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-
-		// Load network functions
-		if (! function_exists('install_network')) {
-			require_once ABSPATH . 'wp-admin/includes/network.php';
-		}
-
-		try {
-			// Create network tables
-			install_network();
-
-			$base   = wp_parse_url(trailingslashit(get_option('home')), PHP_URL_PATH);
-			$domain = wp_parse_url(get_option('home'), PHP_URL_HOST);
-
-			// Populate network
-			$result = populate_network(1, $domain, $email, $sitename, $base, $subdomain_install);
-
-			if (is_wp_error($result)) {
-				return false;
-			}
-
-			// Add final multisite constants to wp-config.php
-			return $this->add_final_multisite_constants($subdomain_install, $domain);
-		} catch (\Exception $e) {
-			return false;
-		}
-	}
-
-	/**
-	 * Adds the final multisite constants to wp-config.php.
-	 *
-	 * @since 2.0.0
-	 * @param bool   $subdomain_install Whether subdomains are used.
-	 * @param string $domain The main domain.
-	 * @return bool Whether the modification was successful.
-	 */
-	protected function add_final_multisite_constants(bool $subdomain_install, string $domain): bool {
-
-		$wp_config_path = $this->get_wp_config_path();
-
-		if (false === $wp_config_path) {
-			return false;
-		}
-
-		$config_content = file_get_contents($wp_config_path);
-
-		if (false === $config_content) {
-			return false;
-		}
-
-		// Check if MULTISITE is already actively defined (not commented out)
-		if (preg_match('/^\s*define\s*\(\s*[\'"]MULTISITE[\'"]/m', $config_content)) {
-			return true; // Already configured
-		}
-
-		$constants_to_add  = "\n// Multisite Ultimate: Multisite Configuration\n";
-		$constants_to_add .= "define( 'MULTISITE', true );\n";
-		$constants_to_add .= "define( 'SUBDOMAIN_INSTALL', " . ($subdomain_install ? 'true' : 'false') . " );\n";
-		$constants_to_add .= "define( 'DOMAIN_CURRENT_SITE', '{$domain}' );\n";
-		$constants_to_add .= "define( 'PATH_CURRENT_SITE', '/' );\n";
-		$constants_to_add .= "define( 'SITE_ID_CURRENT_SITE', 1 );\n";
-		$constants_to_add .= "define( 'BLOG_ID_CURRENT_SITE', 1 );\n\n";
-
-		// Find the location to insert the constants (after WP_ALLOW_MULTISITE) using regex for flexible spacing
-		if (preg_match('/define\s*\(\s*[\'"]WP_ALLOW_MULTISITE[\'"]\s*,\s*true\s*\)\s*;/i', $config_content, $matches, PREG_OFFSET_CAPTURE)) {
-			$insert_position = $matches[0][1] + strlen($matches[0][0]);
-			$new_content     = substr_replace($config_content, $constants_to_add, $insert_position, 0);
-
-			return file_put_contents($wp_config_path, $new_content) !== false;
-		}
-
-		// Fallback: insert before "That's all" comment
-		$search          = "/* That's all, stop editing! Happy publishing. */";
-		$insert_position = strpos($config_content, $search);
-
-		if (false !== $insert_position) {
-			$new_content = substr_replace($config_content, $constants_to_add, $insert_position, 0);
-
-			return file_put_contents($wp_config_path, $new_content) !== false;
-		}
-
-		return false;
 	}
 
 	/**
@@ -665,6 +529,12 @@ RewriteRule . index.php [L]';
 		if (get_current_screen()->id !== 'toplevel_page_wp-ultimo-multisite-setup') {
 			return;
 		}
+
+		wp_enqueue_script('wu-block-ui', wu_get_asset('lib/jquery.blockUI.js', 'js'), ['jquery'], \WP_Ultimo::VERSION, true);
+
+		wp_enqueue_script('wu-setup-wizard-extra', wu_get_asset('setup-wizard-extra.js', 'js'), ['jquery'], wu_get_version(), true);
+
+		wp_register_script('wu-setup-wizard', wu_get_asset('setup-wizard.js', 'js'), ['jquery'], wu_get_version(), true);
 
 		wp_add_inline_script(
 			'jquery',

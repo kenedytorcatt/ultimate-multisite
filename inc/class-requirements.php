@@ -327,7 +327,7 @@ class Requirements {
 	 */
 	public static function notice_not_multisite(): void {
 
-		printf('<div class="notice notice-error"><p>%s <a href="https://wordpress.org/support/article/create-a-network/">%s &rarr;</a></p></div>', esc_html__('Ultimate Multisite requires a multisite install to run properly. To know more about WordPress Networks, visit this link:', 'ultimate-multisite'), esc_html__('Create a Network', 'ultimate-multisite'));
+		printf('<div class="notice notice-error"><p>%s <a href="%s">%s &rarr;</a></p></div>', esc_html__('Ultimate Multisite requires a multisite install to run properly.', 'ultimate-multisite'), esc_url(admin_url('admin.php?page=wp-ultimo-multisite-setup')), esc_html__('Run the Multisite Setup Wizard', 'ultimate-multisite'));
 	}
 
 	/**

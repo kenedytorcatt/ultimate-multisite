@@ -15,6 +15,7 @@ defined('ABSPATH') || exit;
 use WP_Ultimo\Installers\Migrator;
 use WP_Ultimo\Installers\Core_Installer;
 use WP_Ultimo\Installers\Default_Content_Installer;
+use WP_Ultimo\Installers\Multisite_Network_Installer;
 use WP_Ultimo\Installers\Recommended_Plugins_Installer;
 use WP_Ultimo\Logger;
 use WP_Ultimo\Requirements;
@@ -124,8 +125,7 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 
 			add_action('admin_enqueue_scripts', [$this, 'register_scripts']);
 		}
-
-		add_action('init', [$this, 'start_init']);
+		parent::__construct();
 
 		add_action('admin_action_download_migration_logs', [$this, 'download_migration_logs']);
 
@@ -137,18 +137,34 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 		/*
 		 * Load installers
 		 */
-		add_action('wu_handle_ajax_installers', [Core_Installer::get_instance(), 'handle'], 10, 3);
-		add_action('wu_handle_ajax_installers', [Default_Content_Installer::get_instance(), 'handle'], 10, 3);
-		add_action('wu_handle_ajax_installers', [Recommended_Plugins_Installer::get_instance(), 'handle'], 10, 3);
-		add_action('wu_handle_ajax_installers', [Migrator::get_instance(), 'handle'], 10, 3);
-
-		/*
-		 * Redirect on activation
-		 */
-		add_action('wu_activation', [$this, 'redirect_to_wizard']);
-		add_action('admin_init', [$this, 'redirect_to_wizard']);
+		add_filter('wu_handle_ajax_installers', [Core_Installer::get_instance(), 'handle'], 10, 3);
+		add_filter('wu_handle_ajax_installers', [Default_Content_Installer::get_instance(), 'handle'], 10, 3);
+		add_filter('wu_handle_ajax_installers', [Recommended_Plugins_Installer::get_instance(), 'handle'], 10, 3);
+		add_filter('wu_handle_ajax_installers', [Migrator::get_instance(), 'handle'], 10, 3);
+		add_filter('wu_handle_ajax_installers', [Multisite_Network_Installer::get_instance(), 'handle'], 10, 3);
 
 		add_action('admin_init', [$this, 'alert_incomplete_installation']);
+		add_action('admin_init', [$this, 'redirect_multisite_setup_to_setup_wizard']);
+	}
+
+	/**
+	 * Redirects requests to the old multisite setup page to this setup wizard.
+	 *
+	 * Once multisite is enabled, the Multisite_Setup_Admin_Page is no longer
+	 * registered. Bookmarks or login redirects pointing to its URL would 403.
+	 * This catches those requests and redirects to the main setup wizard.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	public function redirect_multisite_setup_to_setup_wizard(): void {
+
+		if (wu_request('page') !== 'wp-ultimo-multisite-setup' || ! is_multisite()) {
+			return;
+		}
+
+		wp_safe_redirect(wu_network_admin_url('wp-ultimo-setup'));
+		exit;
 	}
 
 	/**
@@ -215,33 +231,6 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 	public function set_settings(): void {
 
 		WP_Ultimo()->settings->default_sections();
-	}
-
-	/**
-	 * Redirects to the wizard, if we need to.
-	 *
-	 * @since 2.0.0
-	 * @return void
-	 */
-	public function redirect_to_wizard(): void {
-
-		if (wp_doing_ajax() || ! current_user_can('manage_options')) {
-			return;
-		}
-
-		// If multisite is not enabled, redirect to multisite setup page
-		if ( ! is_multisite() && wu_request('page') !== 'wp-ultimo-multisite-setup') {
-			wp_safe_redirect(admin_url('admin.php?page=wp-ultimo-multisite-setup'));
-
-			exit;
-		}
-
-		// If multisite is enabled but setup is not finished, redirect to setup wizard
-		if ( is_multisite() && ! Requirements::run_setup() && wu_request('page') !== 'wp-ultimo-setup') {
-			wp_safe_redirect(wu_network_admin_url('wp-ultimo-setup'));
-
-			exit;
-		}
 	}
 
 	/**

@@ -77,7 +77,7 @@ class Recommended_Plugins_Installer extends Base_Installer {
 	 * @param bool|\WP_Error $status    Current status passed through the filter chain.
 	 * @param string         $installer The installer slug (e.g. `install_plugin_user-switching`).
 	 * @param object         $wizard    Wizard page instance.
-	 * @return void
+	 * @return bool|\WP_Error
 	 */
 	public function handle($status, $installer, $wizard) {
 
@@ -88,13 +88,15 @@ class Recommended_Plugins_Installer extends Base_Installer {
 				$result = $this->install_wporg_plugin($plugin_slug);
 
 				if (is_wp_error($result)) {
-					return;
+					return $result;
 				}
 			} catch (\Throwable $e) {
 				wu_log_add(\WP_Ultimo::LOG_HANDLE, $e->getMessage(), LogLevel::ERROR);
+
+				return new \WP_Error($installer, $e->getMessage());
 			}
 
-			return;
+			return $status;
 		}
 
 		if (str_starts_with($installer, 'activate_plugin_')) {
@@ -104,14 +106,18 @@ class Recommended_Plugins_Installer extends Base_Installer {
 				$result = $this->activate_plugin($plugin_slug);
 
 				if (is_wp_error($result)) {
-					return;
+					return $result;
 				}
 			} catch (\Throwable $e) {
 				wu_log_add(\WP_Ultimo::LOG_HANDLE, $e->getMessage(), LogLevel::ERROR);
+
+				return new \WP_Error($installer, $e->getMessage());
 			}
 
-			return;
+			return $status;
 		}
+
+		return $status;
 	}
 
 	/**

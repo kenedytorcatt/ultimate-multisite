@@ -145,19 +145,24 @@ final class WP_Ultimo {
 		 */
 		$this->load_public_apis();
 
-		/*
-		 * Setup Wizard
-		 */
-		new WP_Ultimo\Admin_Pages\Setup_Wizard_Admin_Page();
+		add_action(
+			'init',
+			function () {
+				new WP_Ultimo\Admin_Pages\Setup_Wizard_Admin_Page();
+			}
+		);
 
 		/*
-		 * Multisite Setup for non-multisite installations
+		 * Multisite Setup page. On non-multisite installs, this shows the setup
+		 * wizard. On multisite, it just registers a redirect to the main setup
+		 * wizard so old URLs (bookmarks, login redirects) don't 403.
 		 */
-		if ( ! is_multisite()) {
-			add_action('init', function() {
+		add_action(
+			'init',
+			function () {
 				new WP_Ultimo\Admin_Pages\Multisite_Setup_Admin_Page();
-			});
-		}
+			}
+		);
 
 		/*
 		 * Loads the Ultimate Multisite settings helper class.
