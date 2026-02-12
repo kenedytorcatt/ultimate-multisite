@@ -1,0 +1,633 @@
+<?php
+
+namespace WP_Ultimo\SSO;
+
+/**
+ * Unit tests for SSO class.
+ *
+ * Covers utility methods, filter integrations, early return guards,
+ * and the JSONP Content-Type header fix.
+ */
+class SSO_Test extends \WP_UnitTestCase {
+
+	protected function setUp(): void {
+		parent::setUp();
+
+		add_filter('wu_sso_enabled', '__return_true');
+
+		add_filter(
+			'wu_sso_salt',
+			function () {
+				return 'test-salt';
+			}
+		);
+	}
+
+	protected function tearDown(): void {
+		remove_all_filters('wu_sso_enabled');
+		remove_all_filters('wu_sso_salt');
+		remove_all_filters('wu_sso_get_strategy');
+		remove_all_filters('wu_sso_get_url_path');
+		remove_all_filters('mercator.sso.enabled');
+
+		unset($_REQUEST['return_type']);
+		unset($_REQUEST['broker']);
+		unset($_REQUEST['sso_verify']);
+		unset($_COOKIE['wu_sso_denied']);
+
+		parent::tearDown();
+	}
+
+	// ------------------------------------------------------------------
+	// is_enabled
+	// ------------------------------------------------------------------
+
+	public function test_is_enabled_returns_true_when_filter_returns_true(): void {
+		$sso = SSO::get_instance();
+
+		$this->assertTrue($sso->is_enabled());
+	}
+
+	public function test_is_enabled_returns_false_when_filter_returns_false(): void {
+		remove_all_filters('wu_sso_enabled');
+		add_filter('wu_sso_enabled', '__return_false');
+
+		$sso = SSO::get_instance();
+
+		$this->assertFalse($sso->is_enabled());
+	}
+
+	// ------------------------------------------------------------------
+	// force_secure_login_cookie
+	// ------------------------------------------------------------------
+
+	public function test_force_secure_login_cookie_returns_boolean(): void {
+		$sso    = SSO::get_instance();
+		$result = $sso->force_secure_login_cookie();
+
+		$this->assertIsBool($result);
+	}
+
+	// ------------------------------------------------------------------
+	// get_url_path
+	// ------------------------------------------------------------------
+
+	public function test_get_url_path_defaults_to_sso(): void {
+		$sso = SSO::get_instance();
+
+		$this->assertSame('sso', $sso->get_url_path());
+	}
+
+	public function test_get_url_path_appends_action(): void {
+		$sso = SSO::get_instance();
+
+		$this->assertSame('sso-grant', $sso->get_url_path('grant'));
+		$this->assertSame('sso-login', $sso->get_url_path('login'));
+	}
+
+	public function test_get_url_path_respects_filter(): void {
+		add_filter(
+			'wu_sso_get_url_path',
+			function () {
+				return 'mysso';
+			}
+		);
+
+		$sso = SSO::get_instance();
+
+		$this->assertSame('mysso', $sso->get_url_path());
+		$this->assertSame('mysso-grant', $sso->get_url_path('grant'));
+	}
+
+	// ------------------------------------------------------------------
+	// encode / decode
+	// ------------------------------------------------------------------
+
+	public function test_encode_returns_non_numeric_string(): void {
+		$sso     = SSO::get_instance();
+		$encoded = $sso->encode(42, $sso->salt());
+
+		$this->assertIsString($encoded);
+		$this->assertNotSame('42', $encoded);
+	}
+
+	public function test_decode_returns_original_value(): void {
+		$sso     = SSO::get_instance();
+		$salt    = $sso->salt();
+		$encoded = $sso->encode(999, $salt);
+		$decoded = $sso->decode($encoded, $salt);
+
+		$this->assertSame(999, $decoded);
+	}
+
+	public function test_different_salts_produce_different_encodings(): void {
+		$sso = SSO::get_instance();
+
+		$enc_a = $sso->encode(1, 'salt-a');
+		$enc_b = $sso->encode(1, 'salt-b');
+
+		$this->assertNotSame($enc_a, $enc_b);
+	}
+
+	// ------------------------------------------------------------------
+	// get_strategy
+	// ------------------------------------------------------------------
+
+	public function test_get_strategy_returns_string(): void {
+		$sso = SSO::get_instance();
+
+		$strategy = $sso->get_strategy();
+
+		$this->assertContains($strategy, ['ajax', 'redirect']);
+	}
+
+	public function test_get_strategy_respects_filter(): void {
+		add_filter(
+			'wu_sso_get_strategy',
+			function () {
+				return 'ajax';
+			}
+		);
+
+		$sso = SSO::get_instance();
+
+		$this->assertSame('ajax', $sso->get_strategy());
+	}
+
+	// ------------------------------------------------------------------
+	// get_return_type
+	// ------------------------------------------------------------------
+
+	public function test_get_return_type_defaults_to_redirect(): void {
+		unset($_REQUEST['return_type']);
+
+		$sso = SSO::get_instance();
+
+		$this->assertSame('redirect', $sso->get_return_type());
+	}
+
+	public function test_get_return_type_accepts_jsonp(): void {
+		$_REQUEST['return_type'] = 'jsonp';
+
+		$sso = SSO::get_instance();
+
+		$this->assertSame('jsonp', $sso->get_return_type());
+	}
+
+	public function test_get_return_type_accepts_json(): void {
+		$_REQUEST['return_type'] = 'json';
+
+		$sso = SSO::get_instance();
+
+		$this->assertSame('json', $sso->get_return_type());
+	}
+
+	public function test_get_return_type_rejects_invalid_and_defaults_to_redirect(): void {
+		$_REQUEST['return_type'] = 'xml';
+
+		$sso = SSO::get_instance();
+
+		$this->assertSame('redirect', $sso->get_return_type());
+	}
+
+	// ------------------------------------------------------------------
+	// add_sso_removable_query_args
+	// ------------------------------------------------------------------
+
+	public function test_add_sso_removable_query_args_adds_sso_path(): void {
+		$sso  = SSO::get_instance();
+		$args = $sso->add_sso_removable_query_args([]);
+
+		$this->assertContains('sso', $args);
+	}
+
+	public function test_add_sso_removable_query_args_preserves_existing(): void {
+		$sso  = SSO::get_instance();
+		$args = $sso->add_sso_removable_query_args(['existing_arg']);
+
+		$this->assertContains('existing_arg', $args);
+		$this->assertContains('sso', $args);
+	}
+
+	// ------------------------------------------------------------------
+	// target_user_id
+	// ------------------------------------------------------------------
+
+	public function test_set_and_get_target_user_id(): void {
+		$sso = SSO::get_instance();
+
+		$this->assertNull($sso->get_target_user_id());
+
+		$sso->set_target_user_id(42);
+		$this->assertSame(42, $sso->get_target_user_id());
+
+		// Reset for other tests.
+		$sso->set_target_user_id(null);
+	}
+
+	// ------------------------------------------------------------------
+	// calculate_secret_from_date
+	// ------------------------------------------------------------------
+
+	public function test_calculate_secret_produces_consistent_hash(): void {
+		$sso = SSO::get_instance();
+
+		$secret_a = $sso->calculate_secret_from_date('2024-06-15 12:30:00');
+		$secret_b = $sso->calculate_secret_from_date('2024-06-15 12:30:00');
+
+		$this->assertSame($secret_a, $secret_b);
+	}
+
+	public function test_calculate_secret_differs_for_different_dates(): void {
+		$sso = SSO::get_instance();
+
+		$secret_a = $sso->calculate_secret_from_date('2024-01-01 00:00:00');
+		$secret_b = $sso->calculate_secret_from_date('2024-12-31 23:59:59');
+
+		$this->assertNotSame($secret_a, $secret_b);
+	}
+
+	public function test_calculate_secret_throws_on_invalid_date(): void {
+		$sso = SSO::get_instance();
+
+		$this->expectException(\WP_Ultimo\SSO\Exception\SSO_Exception::class);
+
+		$sso->calculate_secret_from_date('garbage');
+	}
+
+	// ------------------------------------------------------------------
+	// with_sso (static)
+	// ------------------------------------------------------------------
+
+	public function test_with_sso_adds_sso_login_param(): void {
+		$url    = 'https://example.com/checkout';
+		$result = SSO::with_sso($url);
+
+		$this->assertStringContainsString('sso=login', $result);
+	}
+
+	public function test_with_sso_preserves_existing_query_params(): void {
+		$url    = 'https://example.com/checkout?plan=pro';
+		$result = SSO::with_sso($url);
+
+		$this->assertStringContainsString('plan=pro', $result);
+		$this->assertStringContainsString('sso=login', $result);
+	}
+
+	public function test_with_sso_returns_original_url_when_disabled(): void {
+		remove_all_filters('wu_sso_enabled');
+		add_filter('wu_sso_enabled', '__return_false');
+
+		$url    = 'https://example.com/checkout';
+		$result = SSO::with_sso($url);
+
+		$this->assertSame($url, $result);
+	}
+
+	// ------------------------------------------------------------------
+	// get_final_return_url
+	// ------------------------------------------------------------------
+
+	public function test_get_final_return_url_includes_done_and_wp_login(): void {
+		$sso = SSO::get_instance();
+		$url = 'https://example.com/sso?redirect_to=https%3A%2F%2Fexample.com%2Fdashboard';
+
+		$final = $sso->get_final_return_url($url);
+
+		$this->assertStringContainsString('sso=done', $final);
+		$this->assertStringContainsString('wp-login.php', $final);
+		$this->assertStringContainsString('redirect_to=', $final);
+	}
+
+	public function test_get_final_return_url_strips_sso_path_from_url_path(): void {
+		$sso   = SSO::get_instance();
+		$url   = 'https://sub.example.com/sso';
+		$final = $sso->get_final_return_url($url);
+
+		// The path portion should not end with /sso/.
+		$parsed_path = wp_parse_url($final, PHP_URL_PATH);
+		$this->assertStringNotContainsString('/sso/', $parsed_path);
+	}
+
+	// ------------------------------------------------------------------
+	// get_broker_by_id
+	// ------------------------------------------------------------------
+
+	public function test_get_broker_by_id_returns_null_for_invalid_id(): void {
+		$sso = SSO::get_instance();
+
+		$this->assertNull($sso->get_broker_by_id('completely-invalid'));
+	}
+
+	public function test_get_broker_by_id_returns_array_for_valid_site(): void {
+		$blog_id = get_current_blog_id();
+
+		$sso    = SSO::get_instance();
+		$coded  = $sso->encode($blog_id, $sso->salt());
+		$result = $sso->get_broker_by_id($coded);
+
+		$this->assertIsArray($result);
+		$this->assertArrayHasKey('secret', $result);
+		$this->assertArrayHasKey('domains', $result);
+		$this->assertIsArray($result['domains']);
+		$this->assertNotEmpty($result['domains']);
+	}
+
+	// ------------------------------------------------------------------
+	// handle_broker early returns
+	// ------------------------------------------------------------------
+
+	public function test_handle_broker_returns_early_on_main_site(): void {
+		// On the main site, handle_broker should return without doing anything.
+		$this->assertTrue(is_main_site(), 'Test expects to run on main site');
+
+		$sso = SSO::get_instance();
+
+		// Should return without exit — no exception, no redirect.
+		$sso->handle_broker('redirect');
+
+		// If we reach here, the early return worked.
+		$this->assertTrue(true);
+	}
+
+	// ------------------------------------------------------------------
+	// handle_broker sets wu_sso_denied cookie on failure
+	// ------------------------------------------------------------------
+
+	/**
+	 * Verify that the source code sets the wu_sso_denied cookie
+	 * when sso_verify is 'invalid', preventing redirect loops.
+	 */
+	public function test_handle_broker_source_sets_denied_cookie_on_invalid_verify(): void {
+		$source = file_get_contents(
+			dirname(__DIR__, 3) . '/inc/sso/class-sso.php'
+		);
+
+		// The 'invalid' === $verify_code branch must setcookie('wu_sso_denied', ...)
+		$pattern = "/'invalid'\s*===\s*\\\$verify_code.*?setcookie\(\s*'wu_sso_denied'/s";
+		$this->assertMatchesRegularExpression(
+			$pattern,
+			$source,
+			'handle_broker must set wu_sso_denied cookie when sso_verify is invalid'
+		);
+	}
+
+	/**
+	 * Verify that $_COOKIE['wu_sso_denied'] is also set for the current request,
+	 * so that later code (handle_auth_redirect, enqueue_script) sees it immediately.
+	 */
+	public function test_handle_broker_source_sets_cookie_superglobal_on_invalid_verify(): void {
+		$source = file_get_contents(
+			dirname(__DIR__, 3) . '/inc/sso/class-sso.php'
+		);
+
+		$pattern = "/'invalid'\s*===\s*\\\$verify_code.*?\\\$_COOKIE\s*\[\s*'wu_sso_denied'\s*\]/s";
+		$this->assertMatchesRegularExpression(
+			$pattern,
+			$source,
+			'handle_broker must set $_COOKIE[wu_sso_denied] for the current request'
+		);
+	}
+
+	/**
+	 * Verify that the invalid verify branch redirects to return_url
+	 * instead of leaving the user on the /sso 404 page.
+	 */
+	public function test_handle_broker_source_redirects_to_return_url_on_invalid_verify(): void {
+		$source = file_get_contents(
+			dirname(__DIR__, 3) . '/inc/sso/class-sso.php'
+		);
+
+		$pattern = "/'invalid'\s*===\s*\\\$verify_code.*?wp_safe_redirect\s*\(\s*\\\$return_url/s";
+		$this->assertMatchesRegularExpression(
+			$pattern,
+			$source,
+			'handle_broker must redirect to return_url when sso_verify is invalid'
+		);
+	}
+
+	// ------------------------------------------------------------------
+	// handle_requests early return
+	// ------------------------------------------------------------------
+
+	public function test_handle_requests_returns_early_without_sso_action(): void {
+		// With no SSO-related request params, handle_requests should return immediately.
+		$sso = SSO::get_instance();
+
+		$sso->handle_requests();
+
+		// If we reach here without exit, the early return worked.
+		$this->assertTrue(true);
+	}
+
+	// ------------------------------------------------------------------
+	// Session handler
+	// ------------------------------------------------------------------
+
+	public function test_session_handler_is_active_returns_false(): void {
+		$sso     = SSO::get_instance();
+		$handler = new SSO_Session_Handler($sso);
+
+		$this->assertFalse($handler->isActive());
+	}
+
+	public function test_session_handler_get_id_reads_broker_param(): void {
+		$_REQUEST['broker'] = 'test-broker-id';
+
+		$sso     = SSO::get_instance();
+		$handler = new SSO_Session_Handler($sso);
+
+		$this->assertSame('test-broker-id', $handler->getId());
+	}
+
+	public function test_session_handler_start_throws_when_not_logged_in(): void {
+		wp_set_current_user(0);
+
+		$this->expectException(\WP_Ultimo\SSO\Exception\SSO_Session_Exception::class);
+		$this->expectExceptionCode(401);
+
+		$sso     = SSO::get_instance();
+		$handler = new SSO_Session_Handler($sso);
+
+		$handler->start();
+	}
+
+	public function test_session_handler_resume_sets_target_user_id_from_transient(): void {
+		$user_id = self::factory()->user->create();
+		$site_id = get_current_blog_id();
+
+		$sso     = SSO::get_instance();
+		$salt    = $sso->salt();
+		$broker  = $sso->encode($site_id, $salt);
+
+		set_site_transient("sso-{$broker}-{$site_id}", $user_id, 180);
+
+		$handler = new SSO_Session_Handler($sso);
+		$handler->resume($broker);
+
+		$this->assertSame($user_id, $sso->get_target_user_id());
+
+		// Clean up.
+		$sso->set_target_user_id(null);
+		delete_site_transient("sso-{$broker}-{$site_id}");
+	}
+
+	public function test_session_handler_resume_does_not_set_user_when_transient_missing(): void {
+		$sso  = SSO::get_instance();
+		$salt = $sso->salt();
+
+		// Reset target.
+		$sso->set_target_user_id(null);
+
+		$broker = $sso->encode(9999, $salt);
+
+		$handler = new SSO_Session_Handler($sso);
+		$handler->resume($broker);
+
+		$this->assertNull($sso->get_target_user_id());
+	}
+
+	// ------------------------------------------------------------------
+	// SSO Broker
+	// ------------------------------------------------------------------
+
+	public function test_broker_get_attach_url_includes_required_params(): void {
+		$sso = SSO::get_instance();
+
+		$blog_id   = get_current_blog_id();
+		$blog      = get_blog_details($blog_id);
+		$date      = $blog ? $blog->registered : '2024-01-01 00:00:00';
+		$secret    = $sso->calculate_secret_from_date($date);
+		$url       = trailingslashit(network_home_url()) . $sso->get_url_path('grant');
+		$broker_id = $sso->encode($blog_id, $sso->salt());
+		$broker    = new SSO_Broker($url, $broker_id, $secret);
+		$broker    = $broker->withTokenIn(new \ArrayObject());
+
+		$attach_url = $broker->getAttachUrl(['return_url' => 'https://example.com/page']);
+
+		$parts = wp_parse_url($attach_url);
+		parse_str($parts['query'] ?? '', $query);
+
+		$this->assertArrayHasKey('broker', $query);
+		$this->assertArrayHasKey('token', $query);
+		$this->assertArrayHasKey('checksum', $query);
+		$this->assertSame('https://example.com/page', $query['return_url']);
+	}
+
+	public function test_broker_is_must_redirect_call_returns_false_initially(): void {
+		$sso = SSO::get_instance();
+
+		$blog_id   = get_current_blog_id();
+		$blog      = get_blog_details($blog_id);
+		$date      = $blog ? $blog->registered : '2024-01-01 00:00:00';
+		$secret    = $sso->calculate_secret_from_date($date);
+		$url       = trailingslashit(network_home_url()) . $sso->get_url_path('grant');
+		$broker_id = $sso->encode($blog_id, $sso->salt());
+		$broker    = new SSO_Broker($url, $broker_id, $secret);
+		$broker    = $broker->withTokenIn(new \ArrayObject());
+
+		$this->assertFalse($broker->is_must_redirect_call());
+	}
+
+	// ------------------------------------------------------------------
+	// JSONP Content-Type header (the bug fix we are validating)
+	// ------------------------------------------------------------------
+
+	/**
+	 * Verify that the JSONP branch in handle_server sets the
+	 * Content-Type: application/javascript header in the source code.
+	 *
+	 * Since handle_server calls exit(), we cannot run it directly in
+	 * a unit test. Instead we verify the source contains the header
+	 * call before the printf to guard against regressions.
+	 */
+	public function test_handle_server_source_sets_javascript_content_type_for_jsonp(): void {
+		$source = file_get_contents(
+			dirname(__DIR__, 3) . '/inc/sso/class-sso.php'
+		);
+
+		// Find the handle_server JSONP branch.
+		$pattern = "/if\s*\(\s*'jsonp'\s*===\s*\\\$response_type\s*\)\s*\{.*?header\(\s*'Content-Type:\s*application\/javascript/s";
+		$this->assertMatchesRegularExpression(
+			$pattern,
+			$source,
+			'handle_server JSONP branch must set Content-Type: application/javascript header'
+		);
+	}
+
+	/**
+	 * Verify that the JSONP branch in handle_broker also sets the
+	 * Content-Type: application/javascript header.
+	 */
+	public function test_handle_broker_source_sets_javascript_content_type_for_jsonp(): void {
+		$source = file_get_contents(
+			dirname(__DIR__, 3) . '/inc/sso/class-sso.php'
+		);
+
+		// There should be two JSONP blocks with the header — count them.
+		$count = preg_match_all(
+			"/header\(\s*'Content-Type:\s*application\/javascript;\s*charset=utf-8'\s*\)/",
+			$source
+		);
+
+		$this->assertSame(
+			2,
+			$count,
+			'Both JSONP response paths (handle_server and handle_broker) must set the Content-Type header'
+		);
+	}
+
+	// ------------------------------------------------------------------
+	// cache() returns PSR-16 cache
+	// ------------------------------------------------------------------
+
+	public function test_cache_returns_psr16_compatible_instance(): void {
+		$sso   = SSO::get_instance();
+		$cache = $sso->cache();
+
+		$this->assertInstanceOf(\Psr\SimpleCache\CacheInterface::class, $cache);
+	}
+
+	// ------------------------------------------------------------------
+	// build_server_request
+	// ------------------------------------------------------------------
+
+	public function test_build_server_request_returns_psr7_instance(): void {
+		$sso     = SSO::get_instance();
+		$request = $sso->build_server_request('GET');
+
+		$this->assertInstanceOf(\Psr\Http\Message\ServerRequestInterface::class, $request);
+	}
+
+	// ------------------------------------------------------------------
+	// get_server
+	// ------------------------------------------------------------------
+
+	public function test_get_server_returns_server_instance(): void {
+		$sso    = SSO::get_instance();
+		$server = $sso->get_server();
+
+		$this->assertInstanceOf(\Jasny\SSO\Server\Server::class, $server);
+	}
+
+	// ------------------------------------------------------------------
+	// add_additional_origins
+	// ------------------------------------------------------------------
+
+	public function test_add_additional_origins_includes_main_site_domain(): void {
+		global $current_site;
+
+		$sso     = SSO::get_instance();
+		$origins = $sso->add_additional_origins([]);
+
+		$this->assertContains("http://{$current_site->domain}", $origins);
+		$this->assertContains("https://{$current_site->domain}", $origins);
+	}
+
+	public function test_add_additional_origins_preserves_existing_origins(): void {
+		$sso     = SSO::get_instance();
+		$origins = $sso->add_additional_origins(['https://existing.com']);
+
+		$this->assertContains('https://existing.com', $origins);
+	}
+}

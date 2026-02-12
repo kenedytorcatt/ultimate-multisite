@@ -56,22 +56,25 @@ jobs:
       - name: Install Composer dependencies
         run: composer install
 
-      - name: Configure wp-env for CI
+      - name: Set PHP version and filter missing plugins for wp-env
         run: |
           node -e "
             const fs = require('fs');
-            const cfg = JSON.parse(fs.readFileSync('.wp-env.json', 'utf8'));
-            // Remove addons and mappings that don't exist in CI
-            for (const env of Object.values(cfg.env || {})) {
-              env.plugins = (env.plugins || []).filter(p => !p.includes('addons/'));
-              env.mappings = {};
-              // Remove SUNRISE config since sunrise.php mapping is gone
-              if (env.config) delete env.config.SUNRISE;
+            const path = require('path');
+            const config = JSON.parse(fs.readFileSync('.wp-env.json', 'utf8'));
+            const override = { config: { phpVersion: '${{ matrix.php }}' }, env: {} };
+            for (const [envName, envConfig] of Object.entries(config.env || {})) {
+              if (envConfig.plugins) {
+                const existing = envConfig.plugins.filter(p => {
+                  const resolved = path.resolve(p);
+                  return fs.existsSync(resolved);
+                });
+                override.env[envName] = { plugins: existing };
+              }
             }
-            cfg.config = { ...(cfg.config || {}), phpVersion: '${{ matrix.php }}' };
-            fs.writeFileSync('.wp-env.json', JSON.stringify(cfg, null, 2));
+            fs.writeFileSync('.wp-env.override.json', JSON.stringify(override, null, 2));
+            console.log('Override:', JSON.stringify(override, null, 2));
           "
-          cat .wp-env.json
 
       - name: Start WordPress Test Environment
         run: npm run env:start:test

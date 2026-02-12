@@ -71,7 +71,7 @@ class Base_Installer {
 	 * @param bool|\WP_Error $status Status of the installer.
 	 * @param string         $installer The installer name.
 	 * @param object         $wizard Wizard class.
-	 * @return void
+	 * @return bool|\WP_Error
 	 */
 	public function handle($status, $installer, $wizard) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 
@@ -85,7 +85,7 @@ class Base_Installer {
 		* No installer on this class.
 		*/
 		if ( ! is_callable($callable)) {
-			return;
+			return $status;
 		}
 
 		try {
@@ -95,9 +95,12 @@ class Base_Installer {
 		} catch (\Throwable $e) {
 			$wpdb->query('ROLLBACK'); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			wu_log_add(\WP_Ultimo::LOG_HANDLE, $e->getMessage(), LogLevel::ERROR);
-			return;
+
+			return new \WP_Error($installer, $e->getMessage());
 		}
 
 		$wpdb->query('COMMIT'); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		return $status;
 	}
 }

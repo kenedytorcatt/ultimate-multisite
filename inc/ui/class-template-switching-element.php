@@ -169,7 +169,8 @@ class Template_Switching_Element extends Base_Element {
 			'order'           => 99,
 			'wrapper_classes' => 'sm:wu-p-0 sm:wu-block',
 			'classes'         => '',
-			'desc'            => sprintf('<div class="wu-p-4 wu-bg-blue-100 wu-text-grey-600">%s</div>', __('Want to add customized template selection templates?<br><a target="_blank" class="wu-no-underline" href="https://github.com/superdav42/wp-multisite-waas/wiki/Customize-Checkout-Flow">See how you can do that here</a>.', 'ultimate-multisite')),
+			// translators: %s the doc url
+			'desc'            => sprintf('<div class="wu-p-4 wu-bg-blue-100 wu-text-grey-600">%s</div>', sprintf(__('Want to add customized template selection templates?<br><a target="_blank" class="wu-no-underline" href="%s">See how you can do that here</a>.', 'ultimate-multisite'), esc_url(wu_get_documentation_url('wp-ultimo-checkout-forms')))),
 		];
 
 		return $fields;

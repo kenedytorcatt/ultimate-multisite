@@ -423,6 +423,12 @@ class Multiple_Accounts_Compat {
 			return $user;
 		}
 
+		// On the main site, we don't need to scope email lookups
+		// to a specific sub-site. Let WordPress handle it normally.
+		if (is_main_site()) {
+			return $user;
+		}
+
 		// Sets the right user to be returned;
 		$user = $this->get_right_user($username, $password);
 

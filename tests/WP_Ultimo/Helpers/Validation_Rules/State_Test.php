@@ -13,6 +13,7 @@ use WP_UnitTestCase;
 
 /**
  * Test State validation rule.
+
  */
 class State_Test extends WP_UnitTestCase {
 

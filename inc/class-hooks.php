@@ -89,6 +89,24 @@ class Hooks {
 			 * @return void
 			 */
 			do_action('wu_activation');
+
+			if (wp_doing_ajax() || ! current_user_can('manage_options')) {
+				return;
+			}
+
+			// If multisite is not enabled, redirect to multisite setup page
+			if ( ! is_multisite() && wu_request('page') !== 'wp-ultimo-multisite-setup') {
+				wp_safe_redirect(admin_url('admin.php?page=wp-ultimo-multisite-setup'));
+
+				exit;
+			}
+
+			// If multisite is enabled but setup is not finished, redirect to setup wizard
+			if (is_multisite() && ! Requirements::run_setup() && wu_request('page') !== 'wp-ultimo-setup') {
+				wp_safe_redirect(wu_network_admin_url('wp-ultimo-setup'));
+
+				exit;
+			}
 		}
 	}
 

@@ -35,7 +35,25 @@ class Documentation implements \WP_Ultimo\Interfaces\Singleton {
 	 *
 	 * @var string
 	 */
-	protected $default_link = 'https://github.com/superdav42/wp-multisite-waas/wiki';
+	protected $default_link = 'https://ultimatemultisite.com/docs/';
+
+	/**
+	 * Map of WordPress locale prefixes to Docusaurus locale codes.
+	 *
+	 * @var array<string, string>
+	 */
+	protected static array $locale_map = [
+		'es'    => 'es',
+		'fr'    => 'fr',
+		'de'    => 'de',
+		'pt_BR' => 'pt-BR',
+		'ja'    => 'ja',
+		'zh_CN' => 'zh-Hans',
+		'ru'    => 'ru',
+		'it'    => 'it',
+		'ko'    => 'ko',
+		'nl'    => 'nl',
+	];
 
 	/**
 	 * Set the default links.
@@ -45,45 +63,77 @@ class Documentation implements \WP_Ultimo\Interfaces\Singleton {
 	 */
 	public function init(): void {
 
+		$base = $this->get_docs_base_url();
+
+		$this->default_link = $base;
+
 		$links = [];
 
 		// Ultimate Multisite Dashboard
-		$links['wp-ultimo'] = 'https://github.com/superdav42/wp-multisite-waas/wiki';
+		$links['wp-ultimo'] = $base;
 
 		// Settings Page
-		$links['wp-ultimo-settings'] = 'https://github.com/superdav42/wp-multisite-waas/wiki';
+		$links['wp-ultimo-settings'] = $base;
 
 		// Checkout Pages
-		$links['wp-ultimo-checkout-forms']         = 'https://github.com/superdav42/wp-multisite-waas/wiki/checkout-forms';
-		$links['wp-ultimo-edit-checkout-form']     = 'https://github.com/superdav42/wp-multisite-waas/wiki/checkout-forms';
-		$links['wp-ultimo-populate-site-template'] = 'https://github.com/superdav42/wp-multisite-waas/wiki/Pre-populate-Site-Template';
+		$links['wp-ultimo-checkout-forms']         = $base . 'user-guide/configuration/checkout-forms';
+		$links['wp-ultimo-edit-checkout-form']     = $base . 'user-guide/configuration/checkout-forms';
+		$links['wp-ultimo-populate-site-template'] = $base . 'user-guide/configuration/site-templates';
 
 		// Products
-		$links['wp-ultimo-products']     = 'https://github.com/superdav42/wp-multisite-waas/wiki/creating-your-first-subscription-product-v2';
-		$links['wp-ultimo-edit-product'] = 'https://github.com/superdav42/wp-multisite-waas/wiki/creating-your-first-subscription-product-v2';
+		$links['wp-ultimo-products']     = $base . 'user-guide/configuration/creating-your-first-subscription-product';
+		$links['wp-ultimo-edit-product'] = $base . 'user-guide/configuration/creating-your-first-subscription-product';
 
 		// Memberships
-		$links['wp-ultimo-memberships']     = 'https://github.com/superdav42/wp-multisite-waas/wiki/managing-memberships-v2';
-		$links['wp-ultimo-edit-membership'] = 'https://github.com/superdav42/wp-multisite-waas/wiki/managing-memberships-v2';
+		$links['wp-ultimo-memberships']     = $base . 'user-guide/administration/managing-memberships';
+		$links['wp-ultimo-edit-membership'] = $base . 'user-guide/administration/managing-memberships';
 
 		// Payments
-		$links['wp-ultimo-payments']     = 'https://github.com/superdav42/wp-multisite-waas/wiki/managing-payments-and-invoices';
-		$links['wp-ultimo-edit-payment'] = 'https://github.com/superdav42/wp-multisite-waas/wiki/managing-payments-and-invoices';
+		$links['wp-ultimo-payments']     = $base . 'user-guide/administration/managing-payments-and-invoices';
+		$links['wp-ultimo-edit-payment'] = $base . 'user-guide/administration/managing-payments-and-invoices';
 
 		// WP Config Closte Instructions
-		$links['wp-ultimo-closte-config'] = 'https://github.com/superdav42/wp-multisite-waas/wiki/Closte-Integration';
+		$links['wp-ultimo-closte-config'] = $base . 'user-guide/host-integrations/closte';
 
 		// Requirements
-		$links['wp-ultimo-requirements'] = 'https://github.com/superdav42/wp-multisite-waas/wiki/wp-ultimo-requirements';
+		$links['wp-ultimo-requirements'] = $base . 'user-guide/getting-started/requirements';
 
 		// Installer - Migrator
-		$links['installation-errors'] = 'https://github.com/superdav42/wp-multisite-waas/wiki/error-installing-the-sunrise-file';
-		$links['migration-errors']    = 'https://github.com/superdav42/wp-multisite-waas/wiki/migrating-from-v1';
+		$links['installation-errors'] = $base . 'user-guide/troubleshooting/sunrise-file-error';
+		$links['migration-errors']    = $base . 'user-guide/migration/migrating-from-v1';
 
 		// Multiple Accounts
-		$links['multiple-accounts'] = 'https://github.com/superdav42/wp-multisite-waas/wiki/Multiple-Accounts';
+		$links['multiple-accounts'] = $base . 'user-guide/configuration/customizing-your-registration-form';
 
 		$this->links = apply_filters('wu_documentation_links_list', $links);
+	}
+
+	/**
+	 * Get the locale-aware base URL for the documentation site.
+	 *
+	 * @since 2.3.0
+	 * @return string
+	 */
+	protected function get_docs_base_url(): string {
+
+		$base = 'https://ultimatemultisite.com/docs/';
+
+		$wp_locale = determine_locale();
+
+		// Try exact match first (e.g., pt_BR)
+		if (isset(self::$locale_map[ $wp_locale ])) {
+			return $base . self::$locale_map[ $wp_locale ] . '/';
+		}
+
+		// Try language-only match (e.g., es_ES -> es, fr_FR -> fr)
+		$lang = substr($wp_locale, 0, 2);
+
+		if (isset(self::$locale_map[ $lang ])) {
+			return $base . self::$locale_map[ $lang ] . '/';
+		}
+
+		// Default to English (no locale prefix)
+		return $base;
 	}
 
 	/**
