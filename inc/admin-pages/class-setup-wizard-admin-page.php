@@ -141,30 +141,8 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 		add_filter('wu_handle_ajax_installers', [Default_Content_Installer::get_instance(), 'handle'], 10, 3);
 		add_filter('wu_handle_ajax_installers', [Recommended_Plugins_Installer::get_instance(), 'handle'], 10, 3);
 		add_filter('wu_handle_ajax_installers', [Migrator::get_instance(), 'handle'], 10, 3);
-		add_filter('wu_handle_ajax_installers', [Multisite_Network_Installer::get_instance(), 'handle'], 10, 3);
 
 		add_action('admin_init', [$this, 'alert_incomplete_installation']);
-		add_action('admin_init', [$this, 'redirect_multisite_setup_to_setup_wizard']);
-	}
-
-	/**
-	 * Redirects requests to the old multisite setup page to this setup wizard.
-	 *
-	 * Once multisite is enabled, the Multisite_Setup_Admin_Page is no longer
-	 * registered. Bookmarks or login redirects pointing to its URL would 403.
-	 * This catches those requests and redirects to the main setup wizard.
-	 *
-	 * @since 2.0.0
-	 * @return void
-	 */
-	public function redirect_multisite_setup_to_setup_wizard(): void {
-
-		if (wu_request('page') !== 'wp-ultimo-multisite-setup' || ! is_multisite()) {
-			return;
-		}
-
-		wp_safe_redirect(wu_network_admin_url('wp-ultimo-setup'));
-		exit;
 	}
 
 	/**
@@ -587,40 +565,6 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 		$fields = array_merge($payment_fields);
 
 		return apply_filters('wu_setup_get_payment_settings', $fields);
-	}
-
-	/**
-	 * Render the installation steps table.
-	 *
-	 * @since 2.0.0
-	 *
-	 * @param array   $steps The list of steps.
-	 * @param boolean $checks If we should add the checkbox for selection or not.
-	 * @return string
-	 */
-	public function render_installation_steps($steps, $checks = true) {
-
-		wp_localize_script('wu-setup-wizard', 'wu_setup', $steps);
-
-		wp_localize_script(
-			'wu-setup-wizard',
-			'wu_setup_settings',
-			[
-				'dry_run'               => wu_request('dry-run', true),
-				'generic_error_message' => __('A server error happened while processing this item.', 'ultimate-multisite'),
-			]
-		);
-
-		wp_enqueue_script('wu-setup-wizard');
-
-		return wu_get_template_contents(
-			'wizards/setup/installation_steps',
-			[
-				'page'   => $this,
-				'steps'  => $steps,
-				'checks' => $checks,
-			]
-		);
 	}
 
 	/**

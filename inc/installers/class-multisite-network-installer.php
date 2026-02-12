@@ -40,8 +40,6 @@ class Multisite_Network_Installer extends Base_Installer {
 	 */
 	public function get_steps() {
 
-		global $wpdb;
-
 		$has_multisite_constant = defined('WP_ALLOW_MULTISITE') && WP_ALLOW_MULTISITE;
 		$has_network_tables     = $this->check_network_tables_exist();
 		$has_wp_config_updated  = defined('MULTISITE') && MULTISITE; // @phpstan-ignore phpstanWP.wpConstant.fetch
@@ -74,17 +72,8 @@ class Multisite_Network_Installer extends Base_Installer {
 				'success'     => __('Success!', 'ultimate-multisite'),
 				'help'        => '',
 			],
-			'cookie_fix'       => [
-				'done'        => $has_wp_config_updated,
-				'title'       => __('Fix Cookies', 'ultimate-multisite'),
-				'description' => __('Ensures site URL is correct to prevent cookie issues after activation.', 'ultimate-multisite'),
-				'pending'     => __('Pending', 'ultimate-multisite'),
-				'installing'  => __('Fixing cookies...', 'ultimate-multisite'),
-				'success'     => __('Success!', 'ultimate-multisite'),
-				'help'        => '',
-			],
 			'network_activate' => [
-				'done'        => $this->is_network_activated(),
+				'done'        => is_plugin_active_for_network(WP_ULTIMO_PLUGIN_BASENAME),
 				'title'       => __('Network Activate Plugin', 'ultimate-multisite'),
 				'description' => __('Network-activates Ultimate Multisite so it runs across the entire network.', 'ultimate-multisite'),
 				'pending'     => __('Pending', 'ultimate-multisite'),
@@ -93,47 +82,6 @@ class Multisite_Network_Installer extends Base_Installer {
 				'help'        => '',
 			],
 		];
-	}
-
-	/**
-	 * Checks whether Ultimate Multisite is network-activated.
-	 *
-	 * Uses direct DB query because this may run before multisite
-	 * is active in the current PHP process.
-	 *
-	 * @since 2.0.0
-	 * @return bool
-	 */
-	protected function is_network_activated(): bool {
-
-		global $wpdb;
-
-		$sitemeta_table = $wpdb->base_prefix . 'sitemeta';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$table_exists = $wpdb->get_var(
-			$wpdb->prepare('SHOW TABLES LIKE %s', $sitemeta_table)
-		);
-
-		if ($table_exists !== $sitemeta_table) {
-			return false;
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$active_plugins = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT meta_value FROM $sitemeta_table WHERE site_id = 1 AND meta_key = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'active_sitewide_plugins'
-			)
-		);
-
-		if (empty($active_plugins)) {
-			return false;
-		}
-
-		$active_plugins = maybe_unserialize($active_plugins);
-
-		return is_array($active_plugins) && isset($active_plugins['ultimate-multisite/ultimate-multisite.php']);
 	}
 
 	/**
@@ -248,15 +196,14 @@ class Multisite_Network_Installer extends Base_Installer {
 		}
 
 		// Fix siteurl trailing slash to prevent cookie hash change.
-		// Is this really needed?
-		// $wpdb->update(
-		// $wpdb->sitemeta,
-		// ['meta_value' => untrailingslashit(get_option('siteurl'))], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-		// [
-		// 'site_id'  => 1,
-		// 'meta_key' => 'siteurl', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-		// ]
-		// );
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->sitemeta,
+			['meta_value' => untrailingslashit(get_option('siteurl'))], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			[
+				'site_id'  => 1,
+				'meta_key' => 'siteurl', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			]
+		);
 	}
 
 	/**
@@ -292,44 +239,7 @@ class Multisite_Network_Installer extends Base_Installer {
 				throw new \Exception(esc_html($result->get_error_message()));
 			}
 		}
-	}
-
-	/**
-	 * Step 4: Verify and fix the siteurl trailing slash in sitemeta.
-	 *
-	 * This is an idempotent safety check to ensure the cookie hash
-	 * remains consistent after multisite activation.
-	 *
-	 * @since 2.0.0
-	 * @throws \Exception When the fix fails.
-	 * @return void
-	 */
-	public function _install_cookie_fix(): void { // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
-
-		global $wpdb;
-
-		$sitemeta_table = $wpdb->base_prefix . 'sitemeta';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$table_exists = $wpdb->get_var(
-			$wpdb->prepare('SHOW TABLES LIKE %s', $sitemeta_table)
-		);
-
-		if ($table_exists !== $sitemeta_table) {
-			return;
-		}
-
-		$siteurl = get_option('siteurl');
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update(
-			$sitemeta_table,
-			['meta_value' => untrailingslashit($siteurl)], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-			[
-				'site_id'  => 1,
-				'meta_key' => 'siteurl', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-			]
-		);
+		wp_cache_flush();
 	}
 
 	/**
@@ -343,73 +253,17 @@ class Multisite_Network_Installer extends Base_Installer {
 	 * @return void
 	 */
 	public function _install_network_activate(): void { // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
-
-		if ($this->is_network_activated()) {
+		// If already active, succeed early.
+		if (is_plugin_active(WP_ULTIMO_PLUGIN_FILE)) {
 			return;
 		}
 
-		global $wpdb;
+		// Activate the plugin.
+		$result = activate_plugin(WP_ULTIMO_PLUGIN_FILE, '', true);
 
-		$sitemeta_table = $wpdb->base_prefix . 'sitemeta';
-		$plugin         = 'ultimate-multisite/ultimate-multisite.php';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$table_exists = $wpdb->get_var(
-			$wpdb->prepare('SHOW TABLES LIKE %s', $sitemeta_table)
-		);
-
-		if ($table_exists !== $sitemeta_table) {
-			throw new \Exception(esc_html__('The sitemeta table does not exist. Network tables must be created first.', 'ultimate-multisite'));
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$active_plugins = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT meta_value FROM $sitemeta_table WHERE site_id = 1 AND meta_key = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'active_sitewide_plugins'
-			)
-		);
-
-		$active_plugins = ! empty($active_plugins) ? maybe_unserialize($active_plugins) : [];
-
-		if (! is_array($active_plugins)) {
-			$active_plugins = [];
-		}
-
-		$active_plugins[ $plugin ] = time();
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$existing = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM $sitemeta_table WHERE site_id = 1 AND meta_key = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'active_sitewide_plugins'
-			)
-		);
-
-		if ($existing) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$result = $wpdb->update(
-				$sitemeta_table,
-				['meta_value' => maybe_serialize($active_plugins)], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-				[
-					'site_id'  => 1,
-					'meta_key' => 'active_sitewide_plugins', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				]
-			);
-		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$result = $wpdb->insert(
-				$sitemeta_table,
-				[
-					'site_id'    => 1,
-					'meta_key'   => 'active_sitewide_plugins', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-					'meta_value' => maybe_serialize($active_plugins), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-				]
-			);
-		}
-
-		if (false === $result) {
-			throw new \Exception(esc_html__('Failed to network-activate Ultimate Multisite.', 'ultimate-multisite'));
+		if (is_wp_error($result)) {
+			// translators: %s full error message.
+			throw new \Exception(sprintf(esc_html__('Failed to network-activate Ultimate Multisite: %s', 'ultimate-multisite'), esc_html($result->get_error_message())));
 		}
 	}
 }

@@ -15,6 +15,7 @@ namespace WP_Ultimo\Admin_Pages;
 // Exit if accessed directly
 defined('ABSPATH') || exit;
 
+use WP_Ultimo\Installers\Core_Installer;
 use WP_Ultimo\Installers\Multisite_Network_Installer;
 
 /**
@@ -82,7 +83,10 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 		parent::__construct();
 
 		add_action('admin_enqueue_scripts', [$this, 'register_scripts']);
-		add_action('wp_ajax_wu_multisite_install', [$this, 'setup_install']);
+		/**
+		 * Same route as main setup wiz, but we run  first to use different caps
+		 */
+		add_action('wp_ajax_wu_setup_install', [$this, 'setup_install'], 5);
 	}
 
 	/**
@@ -141,10 +145,15 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 			'install'   => [
 				'title'        => __('Installing Network', 'multisite-ultimate'),
 				'description'  => __('Setting up your WordPress Multisite network...', 'multisite-ultimate'),
-				'view'         => [$this, 'section_install'],
-				'next_label'   => __('Install', 'multisite-ultimate'),
+				'next_label'   => Core_Installer::get_instance()->all_done() ? __('Begin Ultimate Multisite Setup &rarr;', 'ultimate-multisite') : __('Install', 'ultimate-multisite'),
 				'disable_next' => true,
 				'back'         => false,
+				'fields'       => [
+					'terms' => [
+						'type' => 'note',
+						'desc' => fn() => $this->render_installation_steps(Multisite_Network_Installer::get_instance()->get_steps(), false),
+					],
+				],
 			],
 			'complete'  => [
 				'title'       => __('Setup Complete', 'multisite-ultimate'),
@@ -282,78 +291,6 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 
 		wp_safe_redirect($this->get_next_section_link());
 		exit;
-	}
-
-	/**
-	 * Renders the install section with AJAX-driven installation steps.
-	 *
-	 * @since 2.0.0
-	 * @return void
-	 */
-	public function section_install(): void {
-
-		$installer = Multisite_Network_Installer::get_instance();
-		$steps     = $installer->get_steps();
-
-		wp_localize_script('wu-setup-wizard', 'wu_setup', $steps);
-
-		wp_localize_script(
-			'wu-setup-wizard',
-			'wu_setup_settings',
-			[
-				'dry_run'               => false,
-				'ajax_action'           => 'wu_multisite_install',
-				'generic_error_message' => __('A server error happened while processing this item.', 'ultimate-multisite'),
-			]
-		);
-
-		wp_enqueue_script('wu-setup-wizard');
-
-		echo wu_get_template_contents( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			'wizards/setup/installation_steps',
-			[
-				'page'   => $this,
-				'steps'  => $steps,
-				'checks' => false,
-			]
-		);
-
-		?>
-		<!-- Submit Box -->
-		<div class="wu-flex wu-justify-between wu-bg-gray-100 wu--m-in wu-mt-4 wu-p-4 wu-overflow-hidden wu-border-t wu-border-solid wu-border-l-0 wu-border-r-0 wu-border-b-0 wu-border-gray-300">
-			<div class="wu-text-right wu-relative wu-w-full">
-				<button name="next" value="1" class="wu-next-button button button-primary button-large wu-ml-2" disabled="disabled">
-					<?php esc_html_e('Install', 'multisite-ultimate'); ?>
-				</button>
-			</div>
-		</div>
-		<!-- End Submit Box -->
-		<?php
-	}
-
-	/**
-	 * Handles the AJAX request for multisite installation steps.
-	 *
-	 * @since 2.0.0
-	 * @return void
-	 */
-	public function setup_install(): void {
-
-		if (! current_user_can('manage_options')) {
-			wp_send_json_error(new \WP_Error('not-allowed', __('Permission denied.', 'ultimate-multisite')));
-		}
-
-		$installer_slug = wu_request('installer', '');
-
-		$installer = Multisite_Network_Installer::get_instance();
-
-		$result = $installer->handle(true, $installer_slug, $this);
-
-		if (is_wp_error($result)) {
-			wp_send_json_error($result);
-		}
-
-		wp_send_json_success();
 	}
 
 	/**
@@ -519,6 +456,36 @@ RewriteRule . index.php [L]';
 	}
 
 	/**
+	 * Handles the ajax actions for installers and migrators.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	public function setup_install(): void {
+
+		if ( ! current_user_can('manage_options') ) {
+			wp_send_json_error(new \WP_Error('not-allowed', __('Permission denied.', 'ultimate-multisite')));
+
+			exit;
+		}
+
+		$installer                   = wu_request('installer', '');
+		$multisite_network_installer = Multisite_Network_Installer::get_instance();
+		$steps                       = $multisite_network_installer->get_steps();
+		if ( ! isset($steps[ $installer ])) {
+			return;
+		}
+
+		$status = $multisite_network_installer->handle(true, $installer, $this);
+
+		if (is_wp_error($status)) {
+			wp_send_json_error($status);
+		}
+
+		wp_send_json_success();
+	}
+
+	/**
 	 * Register page scripts and styles.
 	 *
 	 * @since 2.0.0
@@ -535,27 +502,5 @@ RewriteRule . index.php [L]';
 		wp_enqueue_script('wu-setup-wizard-extra', wu_get_asset('setup-wizard-extra.js', 'js'), ['jquery'], wu_get_version(), true);
 
 		wp_register_script('wu-setup-wizard', wu_get_asset('setup-wizard.js', 'js'), ['jquery'], wu_get_version(), true);
-
-		wp_add_inline_script(
-			'jquery',
-			'
-			// Copy to clipboard functionality
-			document.addEventListener("DOMContentLoaded", function() {
-				document.querySelectorAll("button[onclick*=\'navigator.clipboard.writeText\']").forEach(function(button) {
-					button.addEventListener("click", function() {
-						var textarea = this.nextElementSibling;
-						if (textarea && textarea.tagName === "TEXTAREA") {
-							navigator.clipboard.writeText(textarea.value).then(function() {
-								button.textContent = "Copied!";
-								setTimeout(function() {
-									button.textContent = "Copy to clipboard";
-								}, 2000);
-							});
-						}
-					});
-				});
-			});
-		'
-		);
 	}
 }
