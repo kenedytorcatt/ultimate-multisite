@@ -246,7 +246,7 @@ function wu_get_days_in_cycle($duration_unit, $duration) {
  * Field types are types of field (duh!) that can be
  * added to the checkout flow and other forms inside Ultimate Multisite.
  *
- * @see https://github.com/superdav42/wp-multisite-waas/wiki/Add-Custom-Field-Types
+ * @see https://ultimatemultisite.com/docs/developer/hooks/Filters/wu_checkout_field_types
  *
  * @since 2.0.0
  *
@@ -274,7 +274,7 @@ function wu_register_field_type($field_type_id, $field_type_class_name) {
  * Ultimate Multisite to be used as the final representation of a given
  * checkout field.
  *
- * @see https://github.com/superdav42/wp-multisite-waas/wiki/Customize-Checkout-Flow
+ * @see https://ultimatemultisite.com/docs/user-guide/configuration/customizing-your-registration-form
  *
  * @since 2.0.0
  *

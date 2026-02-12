@@ -146,11 +146,6 @@ final class WP_Ultimo {
 		$this->load_public_apis();
 
 		/*
-		 * Setup Wizard
-		 */
-		new WP_Ultimo\Admin_Pages\Setup_Wizard_Admin_Page();
-
-		/*
 		 * Loads the Ultimate Multisite settings helper class.
 		 */
 		$this->settings = WP_Ultimo\Settings::get_instance();
@@ -165,7 +160,16 @@ final class WP_Ultimo {
 		 * Everything we need to run our setup install needs top be loaded before this
 		 * and have no dependencies outside of the classes loaded so far.
 		 */
-		if (WP_Ultimo\Requirements::met() === false || WP_Ultimo\Requirements::run_setup() === false) {
+		if (WP_Ultimo\Requirements::met() === false || WP_Ultimo\Requirements::run_setup() === false || ($_GET['page'] ?? '') === 'wp-ultimo-multisite-setup') { // phpcs:ignore WordPress.Security
+			// Use wizard to setup multisite.
+			add_action(
+				'init',
+				function () {
+					new WP_Ultimo\Admin_Pages\Setup_Wizard_Admin_Page();
+					new WP_Ultimo\Admin_Pages\Multisite_Setup_Admin_Page();
+				}
+			);
+
 			return;
 		}
 
@@ -796,6 +800,8 @@ final class WP_Ultimo {
 		new WP_Ultimo\Tax\Dashboard_Taxes_Tab();
 
 		new WP_Ultimo\Admin_Pages\Addons_Admin_Page();
+
+		new WP_Ultimo\Admin_Pages\Setup_Wizard_Admin_Page();
 	}
 
 	/**

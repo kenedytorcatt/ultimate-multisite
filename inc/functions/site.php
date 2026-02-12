@@ -13,9 +13,13 @@ defined('ABSPATH') || exit;
  * Returns the current site.
  *
  * @since 2.0.0
- * @return \WP_Ultimo\Models\Site
+ * @return \WP_Ultimo\Models\Site|null
  */
 function wu_get_current_site() {
+
+	if ( ! is_multisite()) {
+		return null;
+	}
 
 	static $sites = array();
 	$blog_id      = get_current_blog_id();

@@ -46,7 +46,7 @@ class Configuration_Checker {
 			return;
 		}
 		// Only check on subdomain installs
-		if ( ! is_subdomain_install()) {
+		if ( ! is_multisite() || ! is_subdomain_install()) {
 			return;
 		}
 

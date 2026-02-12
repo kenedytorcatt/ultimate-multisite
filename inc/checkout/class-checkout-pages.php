@@ -55,6 +55,9 @@ class Checkout_Pages {
 		if (is_main_site()) {
 			add_action('before_signup_header', [$this, 'redirect_to_registration_page']);
 
+			add_action('save_post_page', [$this, 'maybe_flush_rewrite_rules_on_page_save'], 20);
+			add_action('wp_trash_post', [$this, 'maybe_flush_rewrite_rules_on_page_trash']);
+
 			if ( ! $use_custom_login) {
 				return;
 			}
@@ -151,6 +154,51 @@ class Checkout_Pages {
 			update_post_meta($post_id, '_wu_force_elements_loading', sanitize_text_field(wp_unslash($_POST['_wu_force_elements_loading'])));
 		} else {
 			delete_post_meta($post_id, '_wu_force_elements_loading');
+		}
+	}
+
+	/**
+	 * Flush rewrite rules when a signup page is saved and its slug may have changed.
+	 *
+	 * The checkout rewrite rules depend on the registration page slug,
+	 * so they must be refreshed whenever a signup page is modified.
+	 *
+	 * @since 2.3.0
+	 *
+	 * @param int $post_id The post ID.
+	 * @return void
+	 */
+	public function maybe_flush_rewrite_rules_on_page_save(int $post_id): void {
+
+		if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+			return;
+		}
+
+		$signup_page_ids = array_filter(array_map('absint', array_values($this->get_signup_pages())));
+
+		if (in_array(absint($post_id), $signup_page_ids, true)) {
+			flush_rewrite_rules();
+		}
+	}
+
+	/**
+	 * Flush rewrite rules when a signup page is trashed.
+	 *
+	 * @since 2.3.0
+	 *
+	 * @param int $post_id The post ID.
+	 * @return void
+	 */
+	public function maybe_flush_rewrite_rules_on_page_trash(int $post_id): void {
+
+		if (get_post_type($post_id) !== 'page') {
+			return;
+		}
+
+		$signup_page_ids = array_filter(array_map('absint', array_values($this->get_signup_pages())));
+
+		if (in_array(absint($post_id), $signup_page_ids, true)) {
+			flush_rewrite_rules();
 		}
 	}
 

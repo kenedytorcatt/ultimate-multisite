@@ -18,7 +18,7 @@ The documentation is organized into the following categories:
 
 ## How to Use This Documentation
 
-You can browse the documentation directly on GitHub by visiting the [Wiki](https://github.com/superdav42/wp-multisite-waas/wiki).
+You can browse the documentation at [ultimatemultisite.com/docs](https://ultimatemultisite.com/docs/).
 
 ### Automatic Sync
 

@@ -44,7 +44,15 @@ class WP_Config {
 
 		$line = $this->find_injected_line($config, $constant);
 
-		$content = str_pad(sprintf("define( '%s', '%s' );", $constant, $value), 50) . '// Automatically injected by Ultimate Multisite;';
+		if (is_bool($value)) {
+			$formatted_value = $value ? 'true' : 'false';
+		} elseif (is_int($value)) {
+			$formatted_value = (string) $value;
+		} else {
+			$formatted_value = "'{$value}'";
+		}
+
+		$content = str_pad(sprintf("define( '%s', %s );", $constant, $formatted_value), 50) . '// Automatically injected by Ultimate Multisite;';
 
 		if (false === $line) {
 
