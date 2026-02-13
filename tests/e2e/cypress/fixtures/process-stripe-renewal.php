@@ -99,7 +99,7 @@ try {
 
 	// 7. Get invoice total (convert from Stripe cents)
 	$currency_multiplier = function_exists('wu_stripe_get_currency_multiplier')
-		? wu_stripe_get_currency_multiplier()
+		? wu_stripe_get_currency_multiplier(strtoupper($renewal_invoice->currency))
 		: 100;
 
 	$total = $renewal_invoice->amount_paid / $currency_multiplier;
