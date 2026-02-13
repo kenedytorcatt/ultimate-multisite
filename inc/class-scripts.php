@@ -401,7 +401,7 @@ class Scripts {
 
 		$this->register_style('wu-admin', wu_get_asset('admin.css', 'css'), ['wu-styling']);
 
-		$this->register_style('wu-checkout', wu_get_asset('checkout.css', 'css'), []);
+		$this->register_style('wu-checkout', wu_get_asset('checkout.css', 'css'), ['wu-styling']);
 
 		$this->register_style('wu-flags', wu_get_asset('flags.css', 'css'), []);
 
