@@ -124,7 +124,7 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 				'title'   => __('Stripe Connect (Recommended)', 'ultimate-multisite'),
 				'desc'    => __('Connect your Stripe account securely with one click. This provides easier setup and automatic configuration.', 'ultimate-multisite'),
 				'type'    => 'html',
-				'content' => $this->get_oauth_connection_html(),
+				'content' => [$this, 'render_oauth_connection'],
 				'require' => [
 					'active_gateways' => 'stripe',
 				],
@@ -851,21 +851,22 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 	}
 
 	/**
-	 * Get OAuth connection status HTML.
+	 * Render OAuth connection status HTML.
 	 *
 	 * Displays either the connected status with account ID and disconnect button,
 	 * or a "Connect with Stripe" button for new connections.
+	 * When an OAuth error occurred during admin_init, it is shown inline.
 	 *
 	 * @since 2.x.x
-	 * @return string HTML content for the OAuth connection status
+	 * @return void
 	 */
-	protected function get_oauth_connection_html(): string {
+	public function render_oauth_connection(): void {
 		$is_oauth   = $this->is_using_oauth();
 		$account_id = $this->oauth_account_id;
 
 		if ($is_oauth && ! empty($account_id)) {
 			// Connected state
-			return sprintf(
+			printf(
 				'<div class="wu-oauth-status wu-connected wu-p-4 wu-bg-green-50 wu-border wu-border-green-200 wu-rounded">
 					<div class="wu-flex wu-items-center wu-mb-2">
 						<span class="dashicons dashicons-yes-alt wu-text-green-600 wu-mr-2"></span>
@@ -880,10 +881,20 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 				esc_url($this->get_disconnect_url()),
 				esc_html__('Disconnect', 'ultimate-multisite')
 			);
+
+			return;
+		}
+
+		// Error display
+		if (! empty($this->oauth_error)) {
+			printf(
+				'<div class="wu-p-3 wu-bg-red-100 wu-text-red-600 wu-rounded wu-mb-3 wu-text-sm">%s</div>',
+				esc_html($this->oauth_error)
+			);
 		}
 
 		// Disconnected state - show connect button
-		return sprintf(
+		printf(
 			'<div class="wu-oauth-status wu-disconnected wu-p-4 wu-bg-blue-50 wu-border wu-border-blue-200 wu-rounded">
 				<p class="wu-text-sm wu-text-gray-700 wu-mb-3">%s</p>
 				<a href="%s" class="button button-primary">

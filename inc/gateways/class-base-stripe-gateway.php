@@ -106,6 +106,14 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	protected $oauth_account_id = '';
 
 	/**
+	 * OAuth error message to display inline on settings page.
+	 *
+	 * @since 2.x.x
+	 * @var string
+	 */
+	protected string $oauth_error = '';
+
+	/**
 	 * Authentication mode: 'direct' or 'oauth'.
 	 *
 	 * @since 2.x.x
@@ -316,7 +324,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	 */
 	public function get_connect_authorization_url(string $state = ''): string {
 		$proxy_url  = $this->get_proxy_url();
-		$return_url = admin_url('admin.php?page=wu-settings&tab=payment-gateways');
+		$return_url = network_admin_url('admin.php?page=wp-ultimo-settings&tab=payment-gateways');
 
 		// Call proxy to initialize OAuth
 		$response = wp_remote_post(
@@ -337,12 +345,16 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		);
 
 		if (is_wp_error($response)) {
+			$this->oauth_error = __('Could not reach the Stripe Connect service. Please check that your server can make outbound HTTPS requests and try again.', 'ultimate-multisite');
+
 			return '';
 		}
 
 		$data = json_decode(wp_remote_retrieve_body($response), true);
 
 		if (empty($data['oauthUrl'])) {
+			$this->oauth_error = __('Unable to start the Stripe Connect authorization. Please try again or use direct API keys instead.', 'ultimate-multisite');
+
 			return '';
 		}
 
@@ -364,12 +376,12 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	protected function get_oauth_init_url(): string {
 		return add_query_arg(
 			[
-				'page'              => 'wu-settings',
+				'page'              => 'wp-ultimo-settings',
 				'tab'               => 'payment-gateways',
 				'stripe_oauth_init' => '1',
 				'_wpnonce'          => wp_create_nonce('stripe_oauth_init'),
 			],
-			admin_url('admin.php')
+			network_admin_url('admin.php')
 		);
 	}
 
@@ -382,12 +394,12 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	protected function get_disconnect_url(): string {
 		return add_query_arg(
 			[
-				'page'              => 'wu-settings',
+				'page'              => 'wp-ultimo-settings',
 				'tab'               => 'payment-gateways',
 				'stripe_disconnect' => '1',
 				'_wpnonce'          => wp_create_nonce('stripe_disconnect'),
 			],
-			admin_url('admin.php')
+			network_admin_url('admin.php')
 		);
 	}
 
@@ -399,7 +411,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	 */
 	public function handle_oauth_callbacks(): void {
 		// Handle OAuth init (user clicked Connect button)
-		if (isset($_GET['stripe_oauth_init'], $_GET['_wpnonce']) && isset($_GET['page']) && 'wu-settings' === $_GET['page']) {
+		if (isset($_GET['stripe_oauth_init'], $_GET['_wpnonce']) && isset($_GET['page']) && 'wp-ultimo-settings' === $_GET['page']) {
 			if (wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'stripe_oauth_init')) {
 				// Now make the proxy call and redirect to OAuth URL
 				$oauth_url = $this->get_connect_authorization_url();
@@ -408,11 +420,14 @@ class Base_Stripe_Gateway extends Base_Gateway {
 					wp_safe_redirect($oauth_url);
 					exit;
 				}
+
+				// oauth_error was set by get_connect_authorization_url();
+				// fall through so the settings page renders the error inline.
 			}
 		}
 
 		// Handle OAuth callback from proxy (encrypted code)
-		if (isset($_GET['wcs_stripe_code'], $_GET['wcs_stripe_state']) && isset($_GET['page']) && 'wu-settings' === $_GET['page']) {
+		if (isset($_GET['wcs_stripe_code'], $_GET['wcs_stripe_state']) && isset($_GET['page']) && 'wp-ultimo-settings' === $_GET['page']) {
 			$encrypted_code = sanitize_text_field(wp_unslash($_GET['wcs_stripe_code']));
 			$state          = sanitize_text_field(wp_unslash($_GET['wcs_stripe_state']));
 
@@ -425,7 +440,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		}
 
 		// Handle disconnect
-		if (isset($_GET['stripe_disconnect'], $_GET['_wpnonce']) && isset($_GET['page']) && 'wu-settings' === $_GET['page']) {
+		if (isset($_GET['stripe_disconnect'], $_GET['_wpnonce']) && isset($_GET['page']) && 'wp-ultimo-settings' === $_GET['page']) {
 			if (wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'stripe_disconnect')) {
 				$this->handle_disconnect();
 			}
@@ -460,20 +475,26 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		);
 
 		if (is_wp_error($response)) {
-			wp_die(esc_html__('Failed to connect to proxy server', 'ultimate-multisite'));
+			$this->oauth_error = __('Could not reach the Stripe Connect service to complete authorization. Please check your server\'s outbound connectivity and try again.', 'ultimate-multisite');
+
+			return;
 		}
 
 		$status_code = wp_remote_retrieve_response_code($response);
 		$body        = wp_remote_retrieve_body($response);
 
 		if (200 !== $status_code) {
-			wp_die(esc_html__('Failed to obtain access token', 'ultimate-multisite'));
+			$this->oauth_error = __('Stripe Connect authorization was not accepted. The link may have expired — please try connecting again.', 'ultimate-multisite');
+
+			return;
 		}
 
 		$data = json_decode($body, true);
 
-		if (empty($data['accessToken']) || empty($data['accountId'])) {
-			wp_die(esc_html__('Invalid response from proxy', 'ultimate-multisite'));
+		if (empty($data['accountId'])) {
+			$this->oauth_error = __('Received an unexpected response while completing Stripe Connect. Please try again or use direct API keys instead.', 'ultimate-multisite');
+
+			return;
 		}
 
 		// Delete state after successful exchange
@@ -497,11 +518,11 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		// Redirect back to settings
 		$redirect_url = add_query_arg(
 			[
-				'page'             => 'wu-settings',
+				'page'             => 'wp-ultimo-settings',
 				'tab'              => 'payment-gateways',
 				'stripe_connected' => '1',
 			],
-			admin_url('admin.php')
+			network_admin_url('admin.php')
 		);
 
 		wp_safe_redirect($redirect_url);
@@ -548,11 +569,11 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		// Redirect back to settings
 		$redirect_url = add_query_arg(
 			[
-				'page'                => 'wu-settings',
+				'page'                => 'wp-ultimo-settings',
 				'tab'                 => 'payment-gateways',
 				'stripe_disconnected' => '1',
 			],
-			admin_url('admin.php')
+			network_admin_url('admin.php')
 		);
 
 		wp_safe_redirect($redirect_url);
@@ -580,6 +601,23 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		 */
 		add_action('init', [$this, 'maybe_redirect_to_portal'], 11);
 		add_action('wp', [$this, 'maybe_redirect_to_portal'], 11);
+
+		add_filter('allowed_redirect_hosts', [$this, 'allow_stripe_redirect_host']);
+	}
+
+	/**
+	 * Allow redirects to Stripe's Connect OAuth domain.
+	 *
+	 * @since 2.x.x
+	 *
+	 * @param string[] $hosts An array of allowed host names.
+	 * @return string[]
+	 */
+	public function allow_stripe_redirect_host(array $hosts): array {
+
+		$hosts[] = 'connect.stripe.com';
+
+		return $hosts;
 	}
 
 	/**

@@ -418,13 +418,13 @@ class Gateway_Manager extends Base_Manager {
 		/*
 		 * Stripe Payments
 		 */
-		$stripe_desc = __('Stripe is a suite of payment APIs that powers commerce for businesses of all sizes, including subscription management.', 'ultimate-multisite');
-		wu_register_gateway('stripe', __('Stripe', 'ultimate-multisite'), $stripe_desc, Stripe_Gateway::class);
+		$stripe_desc = __('Accept payments in hundreds of currencies with many express checkout methods or local payment methods.', 'ultimate-multisite');
+		wu_register_gateway('stripe', __('Stripe (Recommended)', 'ultimate-multisite'), $stripe_desc, Stripe_Gateway::class);
 
 		/*
 		 * Stripe Checkout Payments
 		 */
-		$stripe_checkout_desc = __('Stripe Checkout is the hosted solution for checkouts using Stripe.', 'ultimate-multisite');
+		$stripe_checkout_desc = __('Redirect to collect payment information on Stripe\'s Checkout page.', 'ultimate-multisite');
 		wu_register_gateway('stripe-checkout', __('Stripe Checkout', 'ultimate-multisite'), $stripe_checkout_desc, Stripe_Checkout_Gateway::class);
 
 		/*
