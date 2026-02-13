@@ -89,6 +89,8 @@ const stripeElements = function (publicKey) {
 				? 'confirmPayment'
 				: 'confirmSetup';
 
+			// Only pass name and email — Stripe's Payment Element
+			// already collects country and postal code natively.
 			const confirmParams = {
 				elements: elements,
 				confirmParams: {
@@ -97,10 +99,6 @@ const stripeElements = function (publicKey) {
 						billing_details: {
 							name: results.customer.display_name,
 							email: results.customer.user_email,
-							address: {
-								country: results.customer.billing_address_data.billing_country,
-								postal_code: results.customer.billing_address_data.billing_zip_code,
-							},
 						},
 					},
 				},
