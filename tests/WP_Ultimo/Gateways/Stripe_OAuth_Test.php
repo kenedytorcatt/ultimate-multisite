@@ -292,7 +292,7 @@ class Stripe_OAuth_Test extends WP_UnitTestCase {
 
 		$this->assertStringContainsString('stripe_disconnect=1', $url);
 		$this->assertStringContainsString('_wpnonce=', $url);
-		$this->assertStringContainsString('page=wu-settings', $url);
+		$this->assertStringContainsString('page=wp-ultimo-settings', $url);
 		$this->assertStringContainsString('tab=payment-gateways', $url);
 	}
 }
