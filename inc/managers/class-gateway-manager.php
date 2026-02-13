@@ -725,6 +725,11 @@ class Gateway_Manager extends Base_Manager {
 
 		$result = $gateway->verify_and_complete_payment($payment_id);
 
+		if (! is_array($result)) {
+			wu_log_add('stripe', sprintf('Scheduled payment verification for payment %d: unexpected result type', $payment_id), LogLevel::WARNING);
+			return;
+		}
+
 		wu_log_add(
 			'stripe',
 			sprintf(
