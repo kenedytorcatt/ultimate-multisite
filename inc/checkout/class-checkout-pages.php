@@ -802,34 +802,7 @@ class Checkout_Pages {
 
 		wp_enqueue_script('wu-payment-status-poll');
 
-		// Add inline CSS for the status messages
-		wp_add_inline_style(
-			'wu-checkout',
-			'
-			.wu-payment-status {
-				padding: 12px 16px;
-				border-radius: 6px;
-				margin-bottom: 16px;
-				font-weight: 500;
-			}
-			.wu-payment-status-pending,
-			.wu-payment-status-checking {
-				background-color: #fef3cd;
-				color: #856404;
-				border: 1px solid #ffc107;
-			}
-			.wu-payment-status-completed {
-				background-color: #d4edda;
-				color: #155724;
-				border: 1px solid #28a745;
-			}
-			.wu-payment-status-timeout,
-			.wu-payment-status-error {
-				background-color: #f8d7da;
-				color: #721c24;
-				border: 1px solid #f5c6cb;
-			}
-		'
-		);
+		// Enqueue checkout styles for payment status messages.
+		wp_enqueue_style('wu-checkout');
 	}
 }
