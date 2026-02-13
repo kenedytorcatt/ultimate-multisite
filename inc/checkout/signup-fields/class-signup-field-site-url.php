@@ -330,13 +330,12 @@ class Signup_Field_Site_Url extends Base_Signup_Field {
 		];
 
 		if ($attributes['display_field_attachments']) {
-			$checkout_fields['site_url']['classes'] .= ' xs:wu-rounded-none';
+			$checkout_fields['site_url']['classes'] .= ' wu-input-grouped';
 
 			$checkout_fields['site_url']['prefix'] = ' ';
 
 			$checkout_fields['site_url']['prefix_html_attr'] = [
-				'class'   => 'wu-flex wu-items-center wu-px-3 wu-mt-1 sm:wu-mb-1 wu-border-box wu-font-mono wu-justify-center sm:wu-border-r-0',
-				'style'   => 'background-color: rgba(0, 0, 0, 0.008); border: 1px solid #eee; margin-right: -1px; font-size: 90%;',
+				'class'   => 'wu-input-addon wu-input-addon-prefix wu-mt-1 sm:wu-mb-1',
 				'v-html'  => 'is_subdomain ? "https://" : "https://" + site_domain + "/"',
 				'v-cloak' => 1,
 			];
@@ -344,8 +343,7 @@ class Signup_Field_Site_Url extends Base_Signup_Field {
 			$checkout_fields['site_url']['suffix'] = ' ';
 
 			$checkout_fields['site_url']['suffix_html_attr'] = [
-				'class'   => 'wu-flex wu-items-center wu-px-3 sm:wu-mt-1 wu-mb-1 wu-border-box wu-font-mono wu-justify-center sm:wu-border-l-0',
-				'style'   => 'background-color: rgba(0, 0, 0, 0.008); border: 1px solid #eee; margin-left: -1px; font-size: 90%;',
+				'class'   => 'wu-input-addon wu-input-addon-suffix sm:wu-mt-1 wu-mb-1',
 				'v-html'  => '"." + site_domain',
 				'v-cloak' => 1,
 				'v-show'  => 'is_subdomain',
