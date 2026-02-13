@@ -19,3 +19,6 @@ ultimate-multisite.zip
 # Code coverage
 coverage.xml
 coverage-html/
+
+# Local test scripts with secrets
+run-tests.sh

@@ -4,36 +4,60 @@ namespace WP_Ultimo\Managers;
 
 use WP_Ultimo\Models\Payment;
 use WP_Ultimo\Models\Customer;
+use WP_Ultimo\Database\Memberships\Membership_Status;
 use WP_Ultimo\Database\Payments\Payment_Status;
 use WP_Ultimo\Invoices\Invoice;
 use WP_UnitTestCase;
 
 class Payment_Manager_Test extends WP_UnitTestCase {
 
-	private static $customer;
-	private static $payment;
+	private static Customer $customer;
+	private static Payment $payment;
 	private Payment_Manager $payment_manager;
 
 	public static function set_up_before_class() {
 		parent::set_up_before_class();
 
-		// Create a simple payment object for testing
-		// We'll use minimal setup to avoid complex dependencies
-		self::$payment = new Payment();
-		self::$payment->set_customer_id(1);
-		self::$payment->set_membership_id(1);
-		self::$payment->set_currency('USD');
-		self::$payment->set_subtotal(100.00);
-		self::$payment->set_total(100.00);
-		self::$payment->set_status(Payment_Status::COMPLETED);
-		self::$payment->set_gateway('manual');
+		self::$customer = wu_create_customer(
+			[
+				'username' => 'invoicetest',
+				'email'    => 'invoicetest@example.com',
+				'password' => 'password123',
+			]
+		);
 
-		// Save the payment and generate a hash
-		$saved = self::$payment->save();
-		if (! $saved) {
-			// If save fails, just set a fake hash for testing
-			self::$payment->set_hash('test_payment_hash_' . uniqid());
-		}
+		$product = wu_create_product(
+			[
+				'name'         => 'Test Plan',
+				'slug'         => 'test-plan-' . wp_generate_uuid4(),
+				'pricing_type' => 'paid',
+				'amount'       => 100,
+				'currency'     => 'USD',
+				'recurring'    => false,
+				'type'         => 'plan',
+			]
+		);
+
+		$membership = wu_create_membership(
+			[
+				'customer_id' => self::$customer->get_id(),
+				'plan_id'     => $product->get_id(),
+				'status'      => Membership_Status::ACTIVE,
+			]
+		);
+
+		self::$payment = wu_create_payment(
+			[
+				'customer_id'   => self::$customer->get_id(),
+				'membership_id' => $membership->get_id(),
+				'product_id'    => $product->get_id(),
+				'currency'      => 'USD',
+				'subtotal'      => 100.00,
+				'total'         => 100.00,
+				'status'        => Payment_Status::COMPLETED,
+				'gateway'       => 'manual',
+			]
+		);
 	}
 
 	public function set_up() {
@@ -42,194 +66,101 @@ class Payment_Manager_Test extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test invoice_viewer method with valid parameters and correct nonce.
-	 * Since creating a valid payment with proper hash is complex in the test environment,
-	 * we'll test that the method correctly validates the nonce and fails appropriately.
+	 * Test invoice_viewer method with non-existent payment reference.
 	 */
-	public function test_invoice_viewer_with_valid_parameters(): void {
-		// Use a test hash that won't be found in the database
-		$payment_hash = 'test_payment_hash_12345';
-		$nonce        = wp_create_nonce('see_invoice');
-
-		// Mock the request parameters
+	public function test_invoice_viewer_with_nonexistent_payment(): void {
 		$_REQUEST['action']    = 'invoice';
-		$_REQUEST['reference'] = $payment_hash;
-		$_REQUEST['key']       = $nonce;
+		$_REQUEST['reference'] = 'nonexistent_hash';
 
 		$reflection = new \ReflectionClass($this->payment_manager);
 		$method     = $reflection->getMethod('invoice_viewer');
 
-		// Only call setAccessible() on PHP < 8.1 where it's needed
 		if (PHP_VERSION_ID < 80100) {
 			$method->setAccessible(true);
 		}
 
-		// The method should pass nonce validation but fail on payment lookup
-		// This confirms that our nonce validation logic is working correctly
 		$this->expectException(\WPDieException::class);
 		$this->expectExceptionMessage('This invoice does not exist.');
 
 		$method->invoke($this->payment_manager);
 
-		// Clean up request parameters
-		unset($_REQUEST['action'], $_REQUEST['reference'], $_REQUEST['key']);
+		unset($_REQUEST['action'], $_REQUEST['reference']);
 	}
 
 	/**
-	 * Test invoice_viewer method with invalid nonce.
+	 * Test invoice_viewer denies access to unauthorized users.
 	 */
-	public function test_invoice_viewer_with_invalid_nonce(): void {
-		$payment_hash  = self::$payment->get_hash();
-		$invalid_nonce = 'invalid_nonce';
-
-		// Mock the request parameters
+	public function test_invoice_viewer_with_unauthorized_user(): void {
 		$_REQUEST['action']    = 'invoice';
-		$_REQUEST['reference'] = $payment_hash;
-		$_REQUEST['key']       = $invalid_nonce;
+		$_REQUEST['reference'] = self::$payment->get_hash();
+
+		// Switch to a non-admin user with no customer record.
+		$user_id = self::factory()->user->create(['role' => 'subscriber']);
+		wp_set_current_user($user_id);
 
 		$reflection = new \ReflectionClass($this->payment_manager);
 		$method     = $reflection->getMethod('invoice_viewer');
 
-		// Only call setAccessible() on PHP < 8.1 where it's needed
 		if (PHP_VERSION_ID < 80100) {
 			$method->setAccessible(true);
 		}
 
-		// Expect wp_die to be called with permission error
 		$this->expectException(\WPDieException::class);
 		$this->expectExceptionMessage('You do not have permissions to access this file.');
 
 		$method->invoke($this->payment_manager);
 
-		// Clean up request parameters
-		unset($_REQUEST['action'], $_REQUEST['reference'], $_REQUEST['key']);
-	}
-
-	/**
-	 * Test invoice_viewer method with non-existent payment reference.
-	 */
-	public function test_invoice_viewer_with_nonexistent_payment(): void {
-		$invalid_hash = 'nonexistent_hash';
-		$nonce        = wp_create_nonce('see_invoice');
-
-		// Mock the request parameters
-		$_REQUEST['action']    = 'invoice';
-		$_REQUEST['reference'] = $invalid_hash;
-		$_REQUEST['key']       = $nonce;
-
-		$reflection = new \ReflectionClass($this->payment_manager);
-		$method     = $reflection->getMethod('invoice_viewer');
-
-		// Only call setAccessible() on PHP < 8.1 where it's needed
-		if (PHP_VERSION_ID < 80100) {
-			$method->setAccessible(true);
-		}
-
-		// Expect wp_die to be called with invoice not found error
-		$this->expectException(\WPDieException::class);
-		$this->expectExceptionMessage('This invoice does not exist.');
-
-		$method->invoke($this->payment_manager);
-
-		// Clean up request parameters
-		unset($_REQUEST['action'], $_REQUEST['reference'], $_REQUEST['key']);
+		unset($_REQUEST['action'], $_REQUEST['reference']);
 	}
 
 	/**
 	 * Test invoice_viewer method with missing action parameter.
 	 */
 	public function test_invoice_viewer_with_missing_action(): void {
-		// Don't set action parameter
 		$_REQUEST['reference'] = self::$payment->get_hash();
-		$_REQUEST['key']       = wp_create_nonce('see_invoice');
 
 		$reflection = new \ReflectionClass($this->payment_manager);
 		$method     = $reflection->getMethod('invoice_viewer');
 
-		// Only call setAccessible() on PHP < 8.1 where it's needed
 		if (PHP_VERSION_ID < 80100) {
 			$method->setAccessible(true);
 		}
 
-		// Method should return early without doing anything
 		ob_start();
 		$method->invoke($this->payment_manager);
 		$output = ob_get_clean();
 
 		$this->assertEmpty($output, 'Method should return early when action parameter is missing');
 
-		// Clean up request parameters
-		unset($_REQUEST['reference'], $_REQUEST['key']);
+		unset($_REQUEST['reference']);
 	}
 
 	/**
 	 * Test invoice_viewer method with missing reference parameter.
 	 */
 	public function test_invoice_viewer_with_missing_reference(): void {
-		// Set action but not reference
 		$_REQUEST['action'] = 'invoice';
-		$_REQUEST['key']    = wp_create_nonce('see_invoice');
 
 		$reflection = new \ReflectionClass($this->payment_manager);
 		$method     = $reflection->getMethod('invoice_viewer');
 
-		// Only call setAccessible() on PHP < 8.1 where it's needed
 		if (PHP_VERSION_ID < 80100) {
 			$method->setAccessible(true);
 		}
 
-		// Method should return early without doing anything
 		ob_start();
 		$method->invoke($this->payment_manager);
 		$output = ob_get_clean();
 
 		$this->assertEmpty($output, 'Method should return early when reference parameter is missing');
 
-		// Clean up request parameters
-		unset($_REQUEST['action'], $_REQUEST['key']);
-	}
-
-	/**
-	 * Test invoice_viewer method with missing key parameter.
-	 */
-	public function test_invoice_viewer_with_missing_key(): void {
-		// Set action and reference but not key
-		$_REQUEST['action']    = 'invoice';
-		$_REQUEST['reference'] = self::$payment->get_hash();
-
-		$reflection = new \ReflectionClass($this->payment_manager);
-		$method     = $reflection->getMethod('invoice_viewer');
-
-		// Only call setAccessible() on PHP < 8.1 where it's needed
-		if (PHP_VERSION_ID < 80100) {
-			$method->setAccessible(true);
-		}
-
-		// Method should return early without doing anything
-		ob_start();
-		$method->invoke($this->payment_manager);
-		$output = ob_get_clean();
-
-		$this->assertEmpty($output, 'Method should return early when key parameter is missing');
-
-		// Clean up request parameters
-		unset($_REQUEST['action'], $_REQUEST['reference']);
+		unset($_REQUEST['action']);
 	}
 
 	public static function tear_down_after_class() {
-		global $wpdb;
 
-		// Clean up test data
-		if (self::$payment) {
-			self::$payment->delete();
-		}
-		if (self::$customer) {
-			self::$customer->delete();
-		}
-
-		// Clean up database tables
-		$wpdb->query("TRUNCATE TABLE {$wpdb->prefix}wu_payments");
-		$wpdb->query("TRUNCATE TABLE {$wpdb->prefix}wu_customers");
+		self::$payment->delete();
+		self::$customer->delete();
 
 		parent::tear_down_after_class();
 	}

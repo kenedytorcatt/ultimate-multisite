@@ -270,6 +270,19 @@ class Signup_Field_Billing_Address extends Base_Signup_Field {
 			$field['wrapper_classes']              = trim(wu_get_isset($field, 'wrapper_classes', '') . ' ' . $attributes['element_classes']);
 			$field['wrapper_html_attr']['v-show']  = 'order.should_collect_payment';
 			$field['wrapper_html_attr']['v-cloak'] = 1;
+
+			/*
+			 * When zip_and_country is enabled, remove the billing address fields
+			 * from the DOM when any Stripe gateway is selected. Stripe's Payment
+			 * Element and Stripe Checkout both collect Country and ZIP natively.
+			 *
+			 * Uses v-if (not v-show) so the inputs are removed from the DOM
+			 * entirely, preventing them from being submitted with the form
+			 * and triggering server-side required validation.
+			 */
+			if ($zip_only) {
+				$field['wrapper_html_attr']['v-if'] = "!(gateway && gateway.startsWith('stripe'))";
+			}
 		}
 
 		uasort($fields, 'wu_sort_by_order');

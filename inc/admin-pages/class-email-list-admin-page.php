@@ -272,12 +272,39 @@ class Email_List_Admin_Page extends List_Admin_Page {
 			'payload' => $payload,
 		];
 
+		/*
+		 * Add the invoice attachment for test emails, matching the real email behavior.
+		 */
+		if (isset($payload['payment_id']) && wu_get_setting('attach_invoice_pdf', true)) {
+			$invoice_payment = wu_get_payment($payload['payment_id']);
+
+			if ( ! $invoice_payment) {
+				$invoice_payment = wu_mock_payment();
+			}
+
+			$file_name = 'invoice-' . $invoice_payment->get_hash() . '.pdf';
+
+			\WP_Ultimo\Managers\Email_Manager::get_instance()->attach_invoice_pdf($invoice_payment, $file_name, $args['subject']);
+		}
+
+		$mail_error = null;
+
+		$capture_error = function ($wp_error) use (&$mail_error) {
+			$mail_error = $wp_error;
+		};
+
+		add_action('wp_mail_failed', $capture_error);
+
 		$send_mail = wu_send_mail($from, $to, $args);
 
-		if ( ! $send_mail) {
-			$error = new \WP_Error('error', __('Something wrong happened with your test.', 'ultimate-multisite'));
+		remove_action('wp_mail_failed', $capture_error);
 
-			wp_send_json_error($error);
+		if ( ! $send_mail) {
+			$message = $mail_error instanceof \WP_Error
+				? $mail_error->get_error_message()
+				: __('Something wrong happened with your test.', 'ultimate-multisite');
+
+			wp_send_json_error(new \WP_Error('error', $message));
 		}
 
 		$page = wu_request('page', 'list');
