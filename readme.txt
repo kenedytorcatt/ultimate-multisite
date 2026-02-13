@@ -230,7 +230,18 @@ Version [2.4.11] - Released on 2026-XX-XX
 - New: Pay-What-You-Want (PWYW) pricing with per-product custom amounts and recurring options.
 - New: Billing-period controls for discount codes and membership creation.
 - New: Better error page for customers and admins.
+- New: Stripe Connect via secure proxy server — platform credentials no longer distributed in plugin code.
+- New: Stripe Checkout Element with automatic billing address handling and removal of application fees.
+- New: Multisite Setup Wizard — guides single-site installs through enabling and configuring WordPress Multisite.
+- New: Form field normalization CSS with CSS custom properties for consistent checkout and login styling across all themes and page builders.
 - Fix: Problems with choosing country and state in checkout.
+- Fix: Duplicate Country/ZIP fields appearing on Stripe checkout.
+- Fix: Invoice PDF download failing with expired nonce.
+- Fix: Settings page crash on PHP 8.4.
+- Fix: Single-site compatibility issues and dashboard widget setup status detection.
+- Fix: Rewrite rules now flushed when signup pages are created or modified.
+- Improved: 40+ new unit tests covering signup fields, admin pages, database enums, and more.
+- Improved: Stripe checkout and subscription renewal E2E tests.
 
 Version [2.4.10] - Released on 2026-01-23
 - New: Configurable minimum password strength setting with Medium, Strong, and Super Strong options.
