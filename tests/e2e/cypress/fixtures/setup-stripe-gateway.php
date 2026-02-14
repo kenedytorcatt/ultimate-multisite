@@ -35,7 +35,7 @@ echo wp_json_encode(
 	[
 		'success'         => true,
 		'active_gateways' => wu_get_setting('active_gateways', []),
-		'sandbox_mode'    => wu_get_setting('stripe_sandbox_mode'),
+		'sandbox_mode'    => wu_get_setting('stripe_sandbox_mode', false),
 		'pk_key_set'      => !empty(wu_get_setting('stripe_test_pk_key')),
 		'sk_key_set'      => !empty(wu_get_setting('stripe_test_sk_key')),
 	]

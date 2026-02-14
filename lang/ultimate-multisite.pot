@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Ultimate Multisite – WordPress Multisite SaaS & WaaS Platform 2.4.11-beta.3\n"
+"Project-Id-Version: Ultimate Multisite – WordPress Multisite SaaS & WaaS Platform 2.4.10\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ultimate-multisite\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-02-08T01:11:53+00:00\n"
+"POT-Creation-Date: 2026-02-05T19:55:33+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ultimate-multisite\n"
@@ -82,33 +82,33 @@ msgid "You are trying to download an add-on from an insecure URL"
 msgstr ""
 
 #: inc/admin-pages/class-addons-admin-page.php:270
-#: inc/admin-pages/class-addons-admin-page.php:452
+#: inc/admin-pages/class-addons-admin-page.php:450
 msgid "All Add-ons"
 msgstr ""
 
 #. translators: %s error message.
-#: inc/admin-pages/class-addons-admin-page.php:316
+#: inc/admin-pages/class-addons-admin-page.php:314
 #, php-format
 msgid "Failed to fetch addons from API: %s"
 msgstr ""
 
 #. translators: %s error message.
-#: inc/admin-pages/class-addons-admin-page.php:316
+#: inc/admin-pages/class-addons-admin-page.php:314
 msgid "no addons returned"
 msgstr ""
 
-#: inc/admin-pages/class-addons-admin-page.php:354
-#: inc/admin-pages/class-addons-admin-page.php:365
+#: inc/admin-pages/class-addons-admin-page.php:352
+#: inc/admin-pages/class-addons-admin-page.php:363
 #: views/base/settings.php:188
 msgid "Add-ons"
 msgstr ""
 
-#: inc/admin-pages/class-addons-admin-page.php:456
+#: inc/admin-pages/class-addons-admin-page.php:454
 #: inc/installers/class-default-content-installer.php:284
 msgid "Premium"
 msgstr ""
 
-#: inc/admin-pages/class-addons-admin-page.php:460
+#: inc/admin-pages/class-addons-admin-page.php:458
 #: inc/admin-pages/class-product-edit-admin-page.php:300
 #: inc/installers/class-default-content-installer.php:264
 #: inc/list-tables/class-membership-list-table-widget.php:166
@@ -120,37 +120,37 @@ msgstr ""
 msgid "Free"
 msgstr ""
 
-#: inc/admin-pages/class-addons-admin-page.php:464
+#: inc/admin-pages/class-addons-admin-page.php:462
 msgid "Gateways"
 msgstr ""
 
-#: inc/admin-pages/class-addons-admin-page.php:468
+#: inc/admin-pages/class-addons-admin-page.php:466
 msgid "Growth & Scaling"
 msgstr ""
 
-#: inc/admin-pages/class-addons-admin-page.php:472
-#: inc/class-settings.php:1554
-#: inc/class-settings.php:1555
+#: inc/admin-pages/class-addons-admin-page.php:470
+#: inc/class-settings.php:1542
+#: inc/class-settings.php:1543
 msgid "Integrations"
 msgstr ""
 
-#: inc/admin-pages/class-addons-admin-page.php:476
+#: inc/admin-pages/class-addons-admin-page.php:474
 msgid "Customization"
 msgstr ""
 
-#: inc/admin-pages/class-addons-admin-page.php:480
+#: inc/admin-pages/class-addons-admin-page.php:478
 msgid "Admin Themes"
 msgstr ""
 
-#: inc/admin-pages/class-addons-admin-page.php:484
+#: inc/admin-pages/class-addons-admin-page.php:482
 msgid "Monetization"
 msgstr ""
 
-#: inc/admin-pages/class-addons-admin-page.php:488
+#: inc/admin-pages/class-addons-admin-page.php:486
 msgid "Migrators"
 msgstr ""
 
-#: inc/admin-pages/class-addons-admin-page.php:492
+#: inc/admin-pages/class-addons-admin-page.php:490
 msgid "Marketplace"
 msgstr ""
 
@@ -772,7 +772,7 @@ msgstr ""
 #: inc/admin-pages/class-checkout-form-edit-admin-page.php:1245
 #: inc/admin-pages/class-discount-code-edit-admin-page.php:252
 #: inc/admin-pages/class-email-edit-admin-page.php:294
-#: inc/class-settings.php:1765
+#: inc/class-settings.php:1753
 msgid "Advanced Options"
 msgstr ""
 
@@ -1141,7 +1141,7 @@ msgstr ""
 #: inc/admin-pages/class-product-edit-admin-page.php:843
 #: inc/checkout/signup-fields/class-signup-field-period-selection.php:216
 #: inc/checkout/signup-fields/class-signup-field-select.php:179
-#: inc/class-settings.php:1165
+#: inc/class-settings.php:1153
 #: inc/list-tables/class-membership-line-item-list-table.php:139
 #: inc/list-tables/class-payment-line-item-list-table.php:82
 #: views/checkout/templates/order-bump/simple.php:49
@@ -1230,8 +1230,8 @@ msgstr ""
 #: inc/admin-pages/class-membership-list-admin-page.php:311
 #: inc/admin-pages/class-membership-list-admin-page.php:322
 #: inc/admin-pages/class-membership-list-admin-page.php:333
-#: inc/class-settings.php:978
-#: inc/class-settings.php:979
+#: inc/class-settings.php:966
+#: inc/class-settings.php:967
 #: inc/debug/class-debug.php:195
 #: inc/list-tables/class-customer-list-table.php:244
 #: inc/list-tables/class-membership-list-table-widget.php:42
@@ -1328,8 +1328,8 @@ msgstr ""
 #: inc/admin-pages/class-payment-list-admin-page.php:255
 #: inc/admin-pages/class-payment-list-admin-page.php:266
 #: inc/admin-pages/class-top-admin-nav-menu.php:115
-#: inc/class-settings.php:1385
-#: inc/class-settings.php:1386
+#: inc/class-settings.php:1373
+#: inc/class-settings.php:1374
 #: inc/debug/class-debug.php:263
 #: inc/list-tables/class-payment-list-table-widget.php:42
 #: inc/list-tables/class-payment-list-table.php:42
@@ -1342,8 +1342,8 @@ msgstr ""
 #: inc/admin-pages/class-site-list-admin-page.php:517
 #: inc/admin-pages/class-site-list-admin-page.php:528
 #: inc/admin-pages/class-site-list-admin-page.php:539
-#: inc/class-settings.php:1225
-#: inc/class-settings.php:1226
+#: inc/class-settings.php:1213
+#: inc/class-settings.php:1214
 #: inc/debug/class-debug.php:212
 #: inc/list-tables/class-site-list-table.php:45
 #: inc/managers/class-limitation-manager.php:276
@@ -2884,7 +2884,7 @@ msgid "Instructions"
 msgstr ""
 
 #: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:155
-#: inc/integrations/class-integration-registry.php:355
+#: inc/integrations/class-integration-registry.php:354
 msgid "Configuration"
 msgstr ""
 
@@ -4479,8 +4479,8 @@ msgid "This action cannot be undone. Make sure you have a backup of your current
 msgstr ""
 
 #: inc/admin-pages/class-settings-admin-page.php:711
-#: inc/class-settings.php:1636
-#: inc/class-settings.php:1649
+#: inc/class-settings.php:1624
+#: inc/class-settings.php:1637
 msgid "Import Settings"
 msgstr ""
 
@@ -4654,7 +4654,7 @@ msgid "WordPress Cron"
 msgstr ""
 
 #: inc/admin-pages/class-setup-wizard-admin-page.php:683
-#: inc/integrations/class-integration-registry.php:345
+#: inc/integrations/class-integration-registry.php:344
 msgid "Activated"
 msgstr ""
 
@@ -4752,7 +4752,7 @@ msgid "Tell your customers what this site is about."
 msgstr ""
 
 #: inc/admin-pages/class-site-edit-admin-page.php:358
-#: inc/class-settings.php:1235
+#: inc/class-settings.php:1223
 msgid "Site Options"
 msgstr ""
 
@@ -5048,7 +5048,7 @@ msgstr ""
 #: inc/admin-pages/class-system-info-admin-page.php:479
 #: inc/admin-pages/class-system-info-admin-page.php:484
 #: inc/admin-pages/class-system-info-admin-page.php:489
-#: inc/class-settings.php:1754
+#: inc/class-settings.php:1742
 msgid "Disabled"
 msgstr ""
 
@@ -8614,7 +8614,7 @@ msgstr ""
 
 #: inc/class-orphaned-tables-manager.php:140
 #: inc/class-orphaned-users-manager.php:133
-#: inc/class-settings.php:1673
+#: inc/class-settings.php:1661
 msgid "Warning:"
 msgstr ""
 
@@ -8748,23 +8748,19 @@ msgstr ""
 msgid "special character"
 msgstr ""
 
-#: inc/class-scripts.php:313
-msgid "An unexpected error occurred. Please try again or contact support if the problem persists."
-msgstr ""
-
 #. translators: the day/month/year date format used by Ultimate Multisite. You can changed it to localize this date format to your language. the default value is d/m/Y, which is the format 31/12/2021.
-#: inc/class-scripts.php:349
+#: inc/class-scripts.php:348
 msgid "d/m/Y"
 msgstr ""
 
 #. translators: %s is a relative future date.
-#: inc/class-scripts.php:359
+#: inc/class-scripts.php:358
 #, php-format
 msgid "in %s"
 msgstr ""
 
 #. translators: %s is a relative past date.
-#: inc/class-scripts.php:361
+#: inc/class-scripts.php:360
 #: inc/functions/date.php:156
 #: inc/list-tables/class-base-list-table.php:851
 #: views/admin-pages/fields/field-text-display.php:43
@@ -8773,72 +8769,72 @@ msgstr ""
 msgid "%s ago"
 msgstr ""
 
-#: inc/class-scripts.php:362
+#: inc/class-scripts.php:361
 msgid "a few seconds"
 msgstr ""
 
 #. translators: %s is the number of seconds.
-#: inc/class-scripts.php:364
+#: inc/class-scripts.php:363
 #, php-format
 msgid "%d seconds"
 msgstr ""
 
-#: inc/class-scripts.php:365
+#: inc/class-scripts.php:364
 msgid "a minute"
 msgstr ""
 
 #. translators: %s is the number of minutes.
-#: inc/class-scripts.php:367
+#: inc/class-scripts.php:366
 #, php-format
 msgid "%d minutes"
 msgstr ""
 
-#: inc/class-scripts.php:368
+#: inc/class-scripts.php:367
 msgid "an hour"
 msgstr ""
 
 #. translators: %s is the number of hours.
-#: inc/class-scripts.php:370
+#: inc/class-scripts.php:369
 #, php-format
 msgid "%d hours"
 msgstr ""
 
-#: inc/class-scripts.php:371
+#: inc/class-scripts.php:370
 msgid "a day"
 msgstr ""
 
 #. translators: %s is the number of days.
-#: inc/class-scripts.php:373
+#: inc/class-scripts.php:372
 #, php-format
 msgid "%d days"
 msgstr ""
 
-#: inc/class-scripts.php:374
+#: inc/class-scripts.php:373
 msgid "a week"
 msgstr ""
 
 #. translators: %s is the number of weeks.
-#: inc/class-scripts.php:376
+#: inc/class-scripts.php:375
 #, php-format
 msgid "%d weeks"
 msgstr ""
 
-#: inc/class-scripts.php:377
+#: inc/class-scripts.php:376
 msgid "a month"
 msgstr ""
 
 #. translators: %s is the number of months.
-#: inc/class-scripts.php:379
+#: inc/class-scripts.php:378
 #, php-format
 msgid "%d months"
 msgstr ""
 
-#: inc/class-scripts.php:380
+#: inc/class-scripts.php:379
 msgid "a year"
 msgstr ""
 
 #. translators: %s is the number of years.
-#: inc/class-scripts.php:382
+#: inc/class-scripts.php:381
 #, php-format
 msgid "%d years"
 msgstr ""
@@ -8902,7 +8898,7 @@ msgid "Currency Options"
 msgstr ""
 
 #: inc/class-settings.php:636
-#: inc/class-settings.php:1396
+#: inc/class-settings.php:1384
 msgid "The following options affect how prices are displayed on the frontend, the backend and in reports."
 msgstr ""
 
@@ -8965,487 +8961,479 @@ msgstr ""
 msgid "Allow Ultimate Multisite to collect anonymous usage data and error reports to help us improve the plugin. We collect: PHP version, WordPress version, plugin version, network type (subdomain/subdirectory), aggregate counts (sites, memberships), active gateways, and error logs. We never collect personal data, customer information, or domain names. <a href=\"%s\" target=\"_blank\" rel=\"noopener noreferrer\">Learn more</a>."
 msgstr ""
 
-#: inc/class-settings.php:731
-msgid "Beta Updates"
-msgstr ""
-
-#: inc/class-settings.php:732
-msgid "Opt in to receive pre-release versions of Ultimate Multisite and its add-ons. Beta versions may contain bugs or incomplete features."
-msgstr ""
-
-#: inc/class-settings.php:747
-#: inc/class-settings.php:748
+#: inc/class-settings.php:735
+#: inc/class-settings.php:736
 msgid "Login & Registration"
 msgstr ""
 
-#: inc/class-settings.php:757
+#: inc/class-settings.php:745
 msgid "Login and Registration Options"
 msgstr ""
 
-#: inc/class-settings.php:758
+#: inc/class-settings.php:746
 msgid "Options related to registration and login behavior."
 msgstr ""
 
-#: inc/class-settings.php:767
+#: inc/class-settings.php:755
 msgid "Enable Registration"
 msgstr ""
 
-#: inc/class-settings.php:768
+#: inc/class-settings.php:756
 msgid "Turning this toggle off will disable registration in all checkout forms across the network."
 msgstr ""
 
-#: inc/class-settings.php:778
+#: inc/class-settings.php:766
 msgid "Email verification"
 msgstr ""
 
-#: inc/class-settings.php:779
+#: inc/class-settings.php:767
 msgid "Controls if email verification is required during registration. If set, sites will not be created until the customer email verification status is changed to verified."
 msgstr ""
 
-#: inc/class-settings.php:782
+#: inc/class-settings.php:770
 msgid "Never require email verification"
 msgstr ""
 
-#: inc/class-settings.php:783
+#: inc/class-settings.php:771
 msgid "Only for free plans"
 msgstr ""
 
-#: inc/class-settings.php:784
+#: inc/class-settings.php:772
 msgid "Always require email verification"
 msgstr ""
 
-#: inc/class-settings.php:805
+#: inc/class-settings.php:793
 msgid "Default Registration Page"
 msgstr ""
 
-#: inc/class-settings.php:806
-#: inc/class-settings.php:838
-#: inc/class-settings.php:990
-#: inc/class-settings.php:1247
+#: inc/class-settings.php:794
+#: inc/class-settings.php:826
+#: inc/class-settings.php:978
+#: inc/class-settings.php:1235
 msgid "Search pages on the main site..."
 msgstr ""
 
-#: inc/class-settings.php:807
-#: inc/class-settings.php:991
-#: inc/class-settings.php:1248
+#: inc/class-settings.php:795
+#: inc/class-settings.php:979
+#: inc/class-settings.php:1236
 msgid "Only published pages on the main site are available for selection, and you need to make sure they contain a [wu_checkout] shortcode."
 msgstr ""
 
-#: inc/class-settings.php:825
+#: inc/class-settings.php:813
 msgid "Use Custom Login Page"
 msgstr ""
 
-#: inc/class-settings.php:826
+#: inc/class-settings.php:814
 msgid "Turn this toggle on to select a custom page to be used as the login page."
 msgstr ""
 
-#: inc/class-settings.php:837
+#: inc/class-settings.php:825
 msgid "Default Login Page"
 msgstr ""
 
-#: inc/class-settings.php:839
+#: inc/class-settings.php:827
 msgid "Only published pages on the main site are available for selection, and you need to make sure they contain a [wu_login_form] shortcode."
 msgstr ""
 
-#: inc/class-settings.php:859
+#: inc/class-settings.php:847
 msgid "Obfuscate the Original Login URL (wp-login.php)"
 msgstr ""
 
-#: inc/class-settings.php:860
+#: inc/class-settings.php:848
 msgid "If this option is enabled, we will display a 404 error when a user tries to access the original wp-login.php link. This is useful to prevent brute-force attacks."
 msgstr ""
 
-#: inc/class-settings.php:873
+#: inc/class-settings.php:861
 msgid "Use Sub-site logo on Login Page"
 msgstr ""
 
-#: inc/class-settings.php:874
+#: inc/class-settings.php:862
 msgid "Toggle this option to replace the WordPress logo on the sub-site login page with the logo set for that sub-site. If unchecked, the network logo will be used instead."
 msgstr ""
 
-#: inc/class-settings.php:887
+#: inc/class-settings.php:875
 msgid "Force Synchronous Site Publication"
 msgstr ""
 
-#: inc/class-settings.php:888
+#: inc/class-settings.php:876
 msgid "By default, when a new pending site needs to be converted into a real network site, the publishing process happens via Job Queue, asynchronously. Enable this option to force the publication to happen in the same request as the signup. Be careful, as this can cause timeouts depending on the size of the site templates being copied."
 msgstr ""
 
-#: inc/class-settings.php:898
+#: inc/class-settings.php:886
 msgid "Password Strength"
 msgstr ""
 
-#: inc/class-settings.php:899
+#: inc/class-settings.php:887
 msgid "Configure password strength requirements for user registration."
 msgstr ""
 
-#: inc/class-settings.php:908
+#: inc/class-settings.php:896
 msgid "Minimum Password Strength"
 msgstr ""
 
-#: inc/class-settings.php:909
+#: inc/class-settings.php:897
 msgid "Set the minimum password strength required during registration and password reset. \"Super Strong\" requires at least 12 characters, including uppercase, lowercase, numbers, and special characters."
 msgstr ""
 
-#: inc/class-settings.php:913
+#: inc/class-settings.php:901
 msgid "Medium"
 msgstr ""
 
-#: inc/class-settings.php:914
+#: inc/class-settings.php:902
 msgid "Strong"
 msgstr ""
 
-#: inc/class-settings.php:915
+#: inc/class-settings.php:903
 msgid "Super Strong (12+ chars, mixed case, numbers, symbols)"
 msgstr ""
 
-#: inc/class-settings.php:924
-#: inc/class-settings.php:1691
-#: inc/class-settings.php:1692
+#: inc/class-settings.php:912
+#: inc/class-settings.php:1679
+#: inc/class-settings.php:1680
 msgid "Other Options"
 msgstr ""
 
-#: inc/class-settings.php:925
+#: inc/class-settings.php:913
 msgid "Other registration-related options."
 msgstr ""
 
-#: inc/class-settings.php:934
+#: inc/class-settings.php:922
 msgid "Default Role"
 msgstr ""
 
-#: inc/class-settings.php:935
+#: inc/class-settings.php:923
 msgid "Set the role to be applied to the user during the signup process."
 msgstr ""
 
-#: inc/class-settings.php:946
+#: inc/class-settings.php:934
 msgid "Add Users to the Main Site as well?"
 msgstr ""
 
-#: inc/class-settings.php:947
+#: inc/class-settings.php:935
 msgid "Enabling this option will also add the user to the main site of your network."
 msgstr ""
 
-#: inc/class-settings.php:957
+#: inc/class-settings.php:945
 msgid "Add to Main Site with Role..."
 msgstr ""
 
-#: inc/class-settings.php:958
+#: inc/class-settings.php:946
 msgid "Select the role Ultimate Multisite should use when adding the user to the main site of your network. Be careful."
 msgstr ""
 
-#: inc/class-settings.php:989
+#: inc/class-settings.php:977
 msgid "Default Membership Update Page"
 msgstr ""
 
-#: inc/class-settings.php:1009
+#: inc/class-settings.php:997
 msgid "Block Frontend Access"
 msgstr ""
 
-#: inc/class-settings.php:1010
+#: inc/class-settings.php:998
 msgid "Block the frontend access of network sites after a membership is no longer active."
 msgstr ""
 
-#: inc/class-settings.php:1011
+#: inc/class-settings.php:999
 msgid "By default, if a user does not pay and the account goes inactive, only the admin panel will be blocked, but the user's site will still be accessible on the frontend. If enabled, this option will also block frontend access in those cases."
 msgstr ""
 
-#: inc/class-settings.php:1021
+#: inc/class-settings.php:1009
 msgid "Frontend Block Grace Period"
 msgstr ""
 
-#: inc/class-settings.php:1022
+#: inc/class-settings.php:1010
 msgid "Select the number of days Ultimate Multisite should wait after the membership goes inactive before blocking the frontend access. Leave 0 to block immediately after the membership becomes inactive."
 msgstr ""
 
-#: inc/class-settings.php:1036
+#: inc/class-settings.php:1024
 msgid "Frontend Block Page"
 msgstr ""
 
-#: inc/class-settings.php:1037
+#: inc/class-settings.php:1025
 msgid "Select a page on the main site to redirect user if access is blocked"
 msgstr ""
 
-#: inc/class-settings.php:1057
+#: inc/class-settings.php:1045
 msgid "Enable Multiple Memberships per Customer"
 msgstr ""
 
-#: inc/class-settings.php:1058
+#: inc/class-settings.php:1046
 msgid "Enabling this option will allow your users to create more than one membership."
 msgstr ""
 
-#: inc/class-settings.php:1068
+#: inc/class-settings.php:1056
 msgid "Enable Multiple Sites per Membership"
 msgstr ""
 
-#: inc/class-settings.php:1069
+#: inc/class-settings.php:1057
 msgid "Enabling this option will allow your customers to create more than one site. You can limit how many sites your users can create in a per plan basis."
 msgstr ""
 
-#: inc/class-settings.php:1079
+#: inc/class-settings.php:1067
 msgid "Block Sites on Downgrade"
 msgstr ""
 
-#: inc/class-settings.php:1080
+#: inc/class-settings.php:1068
 msgid "Choose how Ultimate Multisite should handle client sites above their plan quota on downgrade."
 msgstr ""
 
-#: inc/class-settings.php:1084
+#: inc/class-settings.php:1072
 msgid "Keep sites as is (do nothing)"
 msgstr ""
 
-#: inc/class-settings.php:1085
+#: inc/class-settings.php:1073
 msgid "Block only frontend access"
 msgstr ""
 
-#: inc/class-settings.php:1086
+#: inc/class-settings.php:1074
 msgid "Block only backend access"
 msgstr ""
 
-#: inc/class-settings.php:1087
+#: inc/class-settings.php:1075
 msgid "Block both frontend and backend access"
 msgstr ""
 
-#: inc/class-settings.php:1099
+#: inc/class-settings.php:1087
 msgid "Move Posts on Downgrade"
 msgstr ""
 
-#: inc/class-settings.php:1100
+#: inc/class-settings.php:1088
 msgid "Select how you want to handle the posts above the quota on downgrade. This will apply to all post types with quotas set."
 msgstr ""
 
-#: inc/class-settings.php:1104
+#: inc/class-settings.php:1092
 msgid "Keep posts as is (do nothing)"
 msgstr ""
 
-#: inc/class-settings.php:1105
+#: inc/class-settings.php:1093
 msgid "Move posts above the new quota to the Trash"
 msgstr ""
 
-#: inc/class-settings.php:1106
+#: inc/class-settings.php:1094
 msgid "Mark posts above the new quota as Drafts"
 msgstr ""
 
-#: inc/class-settings.php:1116
+#: inc/class-settings.php:1104
 msgid "Emulated Post Types"
 msgstr ""
 
-#: inc/class-settings.php:1117
+#: inc/class-settings.php:1105
 msgid "Emulates the registering of a custom post type to be able to create limits for it without having to activate plugins on the main site."
 msgstr ""
 
-#: inc/class-settings.php:1126
+#: inc/class-settings.php:1114
 msgid "By default, Ultimate Multisite only allows super admins to limit post types that are registered on the main site. This makes sense from a technical stand-point but it also forces you to have plugins network-activated in order to be able to set limitations for their custom post types. Using this option, you can emulate the registering of a post type. This will register them on the main site and allow you to create limits for them on your products."
 msgstr ""
 
-#: inc/class-settings.php:1137
+#: inc/class-settings.php:1125
 msgid "Add the first post type using the button below."
 msgstr ""
 
-#: inc/class-settings.php:1171
+#: inc/class-settings.php:1159
 msgid "Post Type Slug"
 msgstr ""
 
-#: inc/class-settings.php:1172
+#: inc/class-settings.php:1160
 msgid "e.g. product"
 msgstr ""
 
-#: inc/class-settings.php:1181
+#: inc/class-settings.php:1169
 msgid "Post Type Label"
 msgstr ""
 
-#: inc/class-settings.php:1182
+#: inc/class-settings.php:1170
 msgid "e.g. Products"
 msgstr ""
 
-#: inc/class-settings.php:1198
+#: inc/class-settings.php:1186
 msgid "+ Add Post Type"
 msgstr ""
 
-#: inc/class-settings.php:1236
+#: inc/class-settings.php:1224
 msgid "Configure certain aspects of how network Sites behave."
 msgstr ""
 
-#: inc/class-settings.php:1246
+#: inc/class-settings.php:1234
 msgid "Default New Site Page"
 msgstr ""
 
-#: inc/class-settings.php:1266
+#: inc/class-settings.php:1254
 msgid "Enable Visits Limitation & Counting"
 msgstr ""
 
-#: inc/class-settings.php:1267
+#: inc/class-settings.php:1255
 msgid "Enabling this option will add visits limitation settings to the plans and add the functionality necessary to count site visits on the front-end."
 msgstr ""
 
-#: inc/class-settings.php:1277
+#: inc/class-settings.php:1265
 msgid "Enable Screenshot Generator"
 msgstr ""
 
-#: inc/class-settings.php:1278
+#: inc/class-settings.php:1266
 msgid "With this option is enabled, Ultimate Multisite will take a screenshot for every newly created site on your network and set the resulting image as that site's featured image. This features requires a valid license key to work and it is not supported for local sites."
 msgstr ""
 
-#: inc/class-settings.php:1288
+#: inc/class-settings.php:1276
 msgid "WordPress Features"
 msgstr ""
 
-#: inc/class-settings.php:1289
+#: inc/class-settings.php:1277
 msgid "Override default WordPress settings for network Sites."
 msgstr ""
 
-#: inc/class-settings.php:1298
+#: inc/class-settings.php:1286
 msgid "Enable Plugins Menu"
 msgstr ""
 
-#: inc/class-settings.php:1299
+#: inc/class-settings.php:1287
 msgid "Do you want to let users on the network to have access to the Plugins page, activating plugins for their sites? If this option is disabled, the customer will not be able to manage the site plugins."
 msgstr ""
 
-#: inc/class-settings.php:1300
+#: inc/class-settings.php:1288
 msgid "You can select which plugins the user will be able to use for each plan."
 msgstr ""
 
-#: inc/class-settings.php:1310
+#: inc/class-settings.php:1298
 msgid "Add New Users"
 msgstr ""
 
-#: inc/class-settings.php:1311
+#: inc/class-settings.php:1299
 msgid "Allow site administrators to add new users to their site via the \"Users → Add New\" page."
 msgstr ""
 
-#: inc/class-settings.php:1312
+#: inc/class-settings.php:1300
 msgid "You can limit the number of users allowed for each plan."
 msgstr ""
 
-#: inc/class-settings.php:1322
+#: inc/class-settings.php:1310
 msgid "Site Template Options"
 msgstr ""
 
-#: inc/class-settings.php:1323
+#: inc/class-settings.php:1311
 msgid "Configure certain aspects of how Site Templates behave."
 msgstr ""
 
-#: inc/class-settings.php:1332
+#: inc/class-settings.php:1320
 msgid "Allow Template Switching"
 msgstr ""
 
-#: inc/class-settings.php:1333
+#: inc/class-settings.php:1321
 msgid "Enabling this option will add an option on your client's dashboard to switch their site template to another one available on the catalog of available templates. The data is lost after a switch as the data from the new template is copied over."
 msgstr ""
 
-#: inc/class-settings.php:1343
+#: inc/class-settings.php:1331
 msgid "Allow Users to use their own Sites as Templates"
 msgstr ""
 
-#: inc/class-settings.php:1344
+#: inc/class-settings.php:1332
 msgid "Enabling this option will add the user own sites to the template screen, allowing them to create a new site based on the content and customizations they made previously."
 msgstr ""
 
-#: inc/class-settings.php:1357
+#: inc/class-settings.php:1345
 msgid "Copy Media on Template Duplication?"
 msgstr ""
 
-#: inc/class-settings.php:1358
+#: inc/class-settings.php:1346
 msgid "Checking this option will copy the media uploaded on the template site to the newly created site. This can be overridden on each of the plans."
 msgstr ""
 
-#: inc/class-settings.php:1368
+#: inc/class-settings.php:1356
 msgid "Prevent Search Engines from indexing Site Templates"
 msgstr ""
 
-#: inc/class-settings.php:1369
+#: inc/class-settings.php:1357
 msgid "Checking this option will discourage search engines from indexing all the Site Templates on your network."
 msgstr ""
 
-#: inc/class-settings.php:1395
+#: inc/class-settings.php:1383
 msgid "Payment Settings"
 msgstr ""
 
-#: inc/class-settings.php:1406
+#: inc/class-settings.php:1394
 msgid "Force Auto-Renew"
 msgstr ""
 
-#: inc/class-settings.php:1407
+#: inc/class-settings.php:1395
 msgid "Enable this option if you want to make sure memberships are created with auto-renew activated whenever the selected gateway supports it. Disabling this option will show an auto-renew option during checkout."
 msgstr ""
 
-#: inc/class-settings.php:1418
+#: inc/class-settings.php:1406
 msgid "Allow Trials without Payment Method"
 msgstr ""
 
-#: inc/class-settings.php:1419
+#: inc/class-settings.php:1407
 msgid "By default, Ultimate Multisite asks customers to add a payment method on sign-up even if a trial period is present. Enable this option to only ask for a payment method when the trial period is over."
 msgstr ""
 
-#: inc/class-settings.php:1430
+#: inc/class-settings.php:1418
 msgid "Send Invoice on Payment Confirmation"
 msgstr ""
 
-#: inc/class-settings.php:1431
+#: inc/class-settings.php:1419
 msgid "Enabling this option will attach a PDF invoice (marked paid) with the payment confirmation email. This option does not apply to the Manual Gateway, which sends invoices regardless of this option."
 msgstr ""
 
-#: inc/class-settings.php:1432
+#: inc/class-settings.php:1420
 msgid "The invoice files will be saved on the wp-content/uploads/wu-invoices folder."
 msgstr ""
 
-#: inc/class-settings.php:1442
+#: inc/class-settings.php:1430
 msgid "Invoice Numbering Scheme"
 msgstr ""
 
-#: inc/class-settings.php:1443
+#: inc/class-settings.php:1431
 msgid "What should Ultimate Multisite use as the invoice number?"
 msgstr ""
 
-#: inc/class-settings.php:1448
+#: inc/class-settings.php:1436
 msgid "Payment Reference Code"
 msgstr ""
 
-#: inc/class-settings.php:1449
+#: inc/class-settings.php:1437
 msgid "Sequential Number"
 msgstr ""
 
-#: inc/class-settings.php:1458
+#: inc/class-settings.php:1446
 msgid "Next Invoice Number"
 msgstr ""
 
-#: inc/class-settings.php:1459
+#: inc/class-settings.php:1447
 msgid "This number will be used as the invoice number for the next invoice generated on the system. It is incremented by one every time a new invoice is created. You can change it and save it to reset the invoice sequential number to a specific value."
 msgstr ""
 
-#: inc/class-settings.php:1473
+#: inc/class-settings.php:1461
 msgid "Invoice Number Prefix"
 msgstr ""
 
-#: inc/class-settings.php:1474
+#: inc/class-settings.php:1462
 msgid "INV00"
 msgstr ""
 
 #. translators: %%YEAR%%, %%MONTH%%, and %%DAY%% are placeholders but are replaced before shown to the user but are used as examples.
-#: inc/class-settings.php:1476
+#: inc/class-settings.php:1464
 #, php-format
 msgid "Use %%YEAR%%, %%MONTH%%, and %%DAY%% to create a dynamic placeholder. E.g. %%YEAR%%-%%MONTH%%-INV will become %s."
 msgstr ""
 
-#: inc/class-settings.php:1490
+#: inc/class-settings.php:1478
 #: inc/ui/class-jumper.php:209
 msgid "Payment Gateways"
 msgstr ""
 
-#: inc/class-settings.php:1491
+#: inc/class-settings.php:1479
 msgid "Activate and configure the installed payment gateways in this section."
 msgstr ""
 
-#: inc/class-settings.php:1506
-#: inc/class-settings.php:1507
+#: inc/class-settings.php:1494
+#: inc/class-settings.php:1495
 #: inc/list-tables/class-broadcast-list-table.php:481
 #: inc/list-tables/class-email-list-table.php:40
 #: inc/ui/class-jumper.php:211
 msgid "Emails"
 msgstr ""
 
-#: inc/class-settings.php:1522
-#: inc/class-settings.php:1523
+#: inc/class-settings.php:1510
+#: inc/class-settings.php:1511
 #: inc/integrations/providers/closte/class-closte-domain-mapping.php:48
 #: inc/integrations/providers/cloudflare/class-cloudflare-domain-mapping.php:47
 #: inc/integrations/providers/cloudways/class-cloudways-domain-mapping.php:47
@@ -9461,139 +9449,139 @@ msgstr ""
 msgid "Domain Mapping"
 msgstr ""
 
-#: inc/class-settings.php:1538
-#: inc/class-settings.php:1539
+#: inc/class-settings.php:1526
+#: inc/class-settings.php:1527
 msgid "Single Sign-On"
 msgstr ""
 
-#: inc/class-settings.php:1564
+#: inc/class-settings.php:1552
 msgid "Hosting or Panel Providers"
 msgstr ""
 
-#: inc/class-settings.php:1565
+#: inc/class-settings.php:1553
 msgid "Configure and manage the integration with your Hosting or Panel Provider."
 msgstr ""
 
-#: inc/class-settings.php:1581
+#: inc/class-settings.php:1569
 msgid "Import/Export"
 msgstr ""
 
-#: inc/class-settings.php:1582
+#: inc/class-settings.php:1570
 msgid "Export your settings to a JSON file or import settings from a previously exported file."
 msgstr ""
 
-#: inc/class-settings.php:1593
-#: inc/class-settings.php:1618
+#: inc/class-settings.php:1581
+#: inc/class-settings.php:1606
 msgid "Export Settings"
 msgstr ""
 
-#: inc/class-settings.php:1594
+#: inc/class-settings.php:1582
 msgid "Download all your Ultimate Multisite settings as a JSON file for backup or migration purposes."
 msgstr ""
 
-#: inc/class-settings.php:1606
+#: inc/class-settings.php:1594
 msgid "The exported file will contain all ultimate multisite settings defined on this page. This includes general settings, payment gateway configurations, email settings, domain mapping settings, and all other plugin configurations. It does not include products, sites, domains, customers and other entities."
 msgstr ""
 
-#: inc/class-settings.php:1637
+#: inc/class-settings.php:1625
 msgid "Upload a previously exported JSON file to restore settings."
 msgstr ""
 
-#: inc/class-settings.php:1650
+#: inc/class-settings.php:1638
 msgid "Import and Replace All Settings"
 msgstr ""
 
-#: inc/class-settings.php:1674
+#: inc/class-settings.php:1662
 msgid "Importing settings will replace ALL current settings with the values from the uploaded file. This action cannot be undone. We recommend exporting your current settings as a backup before importing."
 msgstr ""
 
-#: inc/class-settings.php:1702
+#: inc/class-settings.php:1690
 msgid "Miscellaneous"
 msgstr ""
 
-#: inc/class-settings.php:1703
+#: inc/class-settings.php:1691
 msgid "Other options that do not fit anywhere else."
 msgstr ""
 
-#: inc/class-settings.php:1714
+#: inc/class-settings.php:1702
 msgid "Hide UI Tours"
 msgstr ""
 
-#: inc/class-settings.php:1715
+#: inc/class-settings.php:1703
 msgid "The UI tours showed by Ultimate Multisite should permanently hide themselves after being seen but if they persist for whatever reason, toggle this option to force them into their viewed state - which will prevent them from showing up again."
 msgstr ""
 
-#: inc/class-settings.php:1727
+#: inc/class-settings.php:1715
 msgid "Disable \"Hover to Zoom\""
 msgstr ""
 
-#: inc/class-settings.php:1728
+#: inc/class-settings.php:1716
 msgid "By default, Ultimate Multisite adds a \"hover to zoom\" feature, allowing network admins to see larger version of site screenshots and other images across the UI in full-size when hovering over them. You can disable that feature here. Preview tags like the above are not affected."
 msgstr ""
 
-#: inc/class-settings.php:1738
+#: inc/class-settings.php:1726
 msgid "Logging"
 msgstr ""
 
-#: inc/class-settings.php:1739
+#: inc/class-settings.php:1727
 msgid "Log Ultimate Multisite data. This is useful for debugging purposes."
 msgstr ""
 
-#: inc/class-settings.php:1748
+#: inc/class-settings.php:1736
 msgid "Logging Level"
 msgstr ""
 
-#: inc/class-settings.php:1749
+#: inc/class-settings.php:1737
 msgid "Select the level of logging you want to use."
 msgstr ""
 
-#: inc/class-settings.php:1753
+#: inc/class-settings.php:1741
 msgid "PHP Default"
 msgstr ""
 
-#: inc/class-settings.php:1755
+#: inc/class-settings.php:1743
 msgid "Errors Only"
 msgstr ""
 
-#: inc/class-settings.php:1756
+#: inc/class-settings.php:1744
 msgid "Everything"
 msgstr ""
 
-#: inc/class-settings.php:1766
+#: inc/class-settings.php:1754
 msgid "Change the plugin and wordpress behavior."
 msgstr ""
 
-#: inc/class-settings.php:1781
+#: inc/class-settings.php:1769
 msgid "Run Migration Again"
 msgstr ""
 
-#: inc/class-settings.php:1783
+#: inc/class-settings.php:1771
 msgid "Rerun the Migration Wizard if you experience data-loss after migrate."
 msgstr ""
 
-#: inc/class-settings.php:1786
+#: inc/class-settings.php:1774
 msgid "<b>Important:</b> This process can have unexpected behavior with your current Ultimo models.<br>We recommend that you create a backup before continue."
 msgstr ""
 
-#: inc/class-settings.php:1789
+#: inc/class-settings.php:1777
 msgid "Migrate"
 msgstr ""
 
-#: inc/class-settings.php:1812
+#: inc/class-settings.php:1800
 msgid "Security Mode"
 msgstr ""
 
 #. Translators: Placeholder adds the security mode key and current site url with query string
-#: inc/class-settings.php:1814
+#: inc/class-settings.php:1802
 #, php-format
 msgid "Only Ultimate Multisite and other must-use plugins will run on your WordPress install while this option is enabled.<div class=\"wu-mt-2\"><b>Important:</b> Copy the following URL to disable security mode if something goes wrong and this page becomes unavailable:<code>%2$s</code></div>"
 msgstr ""
 
-#: inc/class-settings.php:1825
+#: inc/class-settings.php:1813
 msgid "Remove Data on Uninstall"
 msgstr ""
 
-#: inc/class-settings.php:1826
+#: inc/class-settings.php:1814
 msgid "Remove all saved data for Ultimate Multisite when the plugin is uninstalled."
 msgstr ""
 
@@ -16328,35 +16316,35 @@ msgid "Plugin not found."
 msgstr ""
 
 #. translators: %s is the name of a host provider (e.g. Cloudways, WPMUDev, Closte...).
-#: inc/integrations/class-integration-registry.php:358
+#: inc/integrations/class-integration-registry.php:357
 #, php-format
 msgid "%s Integration"
 msgstr ""
 
-#: inc/integrations/class-integration-registry.php:362
+#: inc/integrations/class-integration-registry.php:361
 msgid "Go to the setup wizard to setup this integration."
 msgstr ""
 
 #. translators: %1$s will be replaced with the integration title. E.g. RunCloud
-#: inc/integrations/class-integration-registry.php:394
+#: inc/integrations/class-integration-registry.php:393
 #, php-format
 msgid "It looks like you are using %1$s as your hosting provider, yet the %1$s integration module is not active. In order for the domain mapping integration to work with %1$s, you might want to activate that module."
 msgstr ""
 
 #. translators: %s is the integration name.
-#: inc/integrations/class-integration-registry.php:399
+#: inc/integrations/class-integration-registry.php:398
 #, php-format
 msgid "Activate %s"
 msgstr ""
 
 #. translators: %s is the integration name.
-#: inc/integrations/class-integration-registry.php:412
+#: inc/integrations/class-integration-registry.php:411
 #, php-format
 msgid "The %s integration module is active but not properly configured. Please complete the setup."
 msgstr ""
 
 #. translators: %s is the integration name.
-#: inc/integrations/class-integration-registry.php:417
+#: inc/integrations/class-integration-registry.php:416
 #, php-format
 msgid "Setup %s"
 msgstr ""
@@ -22294,7 +22282,7 @@ msgid "Use Site Tools or contact support for cPanel credentials"
 msgstr ""
 
 #: views/wizards/host-integrations/cpanel-instructions.php:134
-msgid "Hosting.com, InMotion:"
+msgid "A2 Hosting, InMotion:"
 msgstr ""
 
 #: views/wizards/host-integrations/cpanel-instructions.php:134

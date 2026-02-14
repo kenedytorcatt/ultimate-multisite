@@ -193,7 +193,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		 * As the toggle return a string with a int value,
 		 * we need to convert this first to int then to bool.
 		 */
-		$this->test_mode = (bool) (int) wu_get_setting("{$id}_sandbox_mode", true);
+		$this->test_mode = (bool) (int) wu_get_setting("{$id}_sandbox_mode", false);
 
 		$this->setup_api_keys($id);
 
@@ -271,13 +271,90 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	}
 
 	/**
-	 * Checks if using OAuth authentication.
+	 * Adds application fee to Stripe payment intent arguments.
 	 *
-	 * @since 2.x.x
-	 * @return bool
+	 * @since 2.4.11
+	 *
+	 * @param array               $intent_args The payment intent arguments.
+	 * @param Base_Stripe_Gateway $gateway The gateway instance.
+	 * @return array
 	 */
-	public function is_using_oauth(): bool {
-		return 'oauth' === $this->authentication_mode && $this->is_connect_enabled;
+	public function add_application_fee_to_intent(array $intent_args, $gateway): array {
+
+		if (! $gateway->should_apply_application_fee()) {
+			return $intent_args;
+		}
+
+		if (empty($intent_args['amount']) || $intent_args['amount'] <= 0) {
+			return $intent_args;
+		}
+
+		$intent_args['application_fee_amount'] = (int) round(
+			$intent_args['amount'] * $gateway->get_application_fee_percent() / 100
+		);
+
+		return $intent_args;
+	}
+
+	/**
+	 * Adds application fee to Stripe subscription arguments.
+	 *
+	 * @since 2.4.11
+	 *
+	 * @param array               $sub_args The subscription arguments.
+	 * @param Base_Stripe_Gateway $gateway The gateway instance.
+	 * @return array
+	 */
+	public function add_application_fee_to_subscription(array $sub_args, $gateway): array {
+
+		if (! $gateway->should_apply_application_fee()) {
+			return $sub_args;
+		}
+
+		$sub_args['application_fee_percent'] = $gateway->get_application_fee_percent();
+
+		return $sub_args;
+	}
+
+	/**
+	 * Adds application fee to Stripe Checkout session data.
+	 *
+	 * Handles both subscription and one-time payment modes.
+	 *
+	 * @since 2.4.11
+	 *
+	 * @param array               $data The checkout session arguments.
+	 * @param Base_Stripe_Gateway $gateway The gateway instance.
+	 * @return array
+	 */
+	public function add_application_fee_to_checkout(array $data, $gateway): array {
+
+		if (! $gateway->should_apply_application_fee()) {
+			return $data;
+		}
+
+		if (isset($data['subscription_data'])) {
+			// Subscription mode — use percentage.
+			$data['subscription_data']['application_fee_percent'] = $gateway->get_application_fee_percent();
+		} elseif (! empty($data['line_items'])) {
+			// One-time payment mode — calculate from line items total.
+			$total = 0;
+
+			foreach ($data['line_items'] as $item) {
+				$quantity   = $item['quantity'] ?? 1;
+				$unit_price = $item['price_data']['unit_amount'] ?? 0;
+
+				$total += $unit_price * $quantity;
+			}
+
+			if ($total > 0) {
+				$data['payment_intent_data']['application_fee_amount'] = (int) round(
+					$total * $gateway->get_application_fee_percent() / 100
+				);
+			}
+		}
+
+		return $data;
 	}
 
 	/**
@@ -603,6 +680,11 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		add_action('wp', [$this, 'maybe_redirect_to_portal'], 11);
 
 		add_filter('allowed_redirect_hosts', [$this, 'allow_stripe_redirect_host']);
+
+		// Application fee filters for Stripe Connect.
+		add_filter('wu_stripe_create_payment_intent_args', [$this, 'add_application_fee_to_intent'], 10, 2);
+		add_filter('wu_stripe_create_subscription_args', [$this, 'add_application_fee_to_subscription'], 10, 2);
+		add_filter('wu_stripe_checkout_subscription_data', [$this, 'add_application_fee_to_checkout'], 10, 2);
 	}
 
 	/**
@@ -2127,6 +2209,38 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		}
 	}
 
+
+	/**
+	 * Checks if using OAuth authentication.
+	 *
+	 * @since 2.x.x
+	 * @return bool
+	 */
+	public function is_using_oauth(): bool {
+		return 'oauth' === $this->authentication_mode && $this->is_connect_enabled;
+	}
+
+	/**
+	 * It's nice to be paid for hard work.
+	 *
+	 * The fee only applies when using Stripe Connect (OAuth mode) and
+	 * the site owner has not purchased any addon from ultimatemultisite.com.
+	 *
+	 * @since 2.4.11
+	 * @return bool
+	 */
+	public function should_apply_application_fee(): bool {
+
+		if (! $this->is_using_oauth()) {
+			return false;
+		}
+
+		$addon_repo = \WP_Ultimo::get_instance()->get_addon_repository();
+
+		return ! $addon_repo->has_addon_purchase();
+	}
+
+
 	/**
 	 * Process a refund.
 	 *
@@ -2191,6 +2305,17 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		 * that the refund was successful.
 		 */
 		return true;
+	}
+
+	/**
+	 * Gets the application fee percentage for Stripe Connect payments.
+	 *
+	 * @since 2.4.11
+	 * @return float
+	 */
+	public function get_application_fee_percent(): float {
+
+		return 3.0;
 	}
 
 	/**

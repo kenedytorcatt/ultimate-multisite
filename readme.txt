@@ -195,6 +195,7 @@ This plugin connects to external services to provide optional functionality. All
 
 **Stripe**
 - Processes card payments and subscriptions
+- When using the Stripe integration, a 3% fee per-transaction is applied to support ongoing development. This fee is waived for sites that have purchased any addon from ultimatemultisite.com. The fee is collected by Stripe as part of the payment and does not affect the amount charged to your customers.
 - https://stripe.com/privacy
 
 **PayPal**

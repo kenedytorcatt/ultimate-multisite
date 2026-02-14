@@ -101,6 +101,23 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 			]
 		);
 
+		wu_register_settings_field(
+			'payment-gateways',
+			'stripe_sandbox_mode',
+			[
+				'title'     => __('Stripe Sandbox Mode', 'ultimate-multisite'),
+				'desc'      => __('Toggle this to put Stripe on sandbox mode. This is useful for testing and making sure Stripe is correctly setup to handle your payments.', 'ultimate-multisite'),
+				'type'      => 'toggle',
+				'default'   => 0,
+				'html_attr' => [
+					'v-model' => 'stripe_sandbox_mode',
+				],
+				'require'   => [
+					'active_gateways' => 'stripe',
+				],
+			]
+		);
+
 		// OAuth Connect Section
 		wu_register_settings_field(
 			'payment-gateways',
@@ -142,23 +159,6 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 				'default'   => 0,
 				'html_attr' => [
 					'v-model' => 'stripe_show_direct_keys',
-				],
-				'require'   => [
-					'active_gateways' => 'stripe',
-				],
-			]
-		);
-
-		wu_register_settings_field(
-			'payment-gateways',
-			'stripe_sandbox_mode',
-			[
-				'title'     => __('Stripe Sandbox Mode', 'ultimate-multisite'),
-				'desc'      => __('Toggle this to put Stripe on sandbox mode. This is useful for testing and making sure Stripe is correctly setup to handle your payments.', 'ultimate-multisite'),
-				'type'      => 'toggle',
-				'default'   => 1,
-				'html_attr' => [
-					'v-model' => 'stripe_sandbox_mode',
 				],
 				'require'   => [
 					'active_gateways' => 'stripe',
@@ -881,32 +881,54 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 				esc_url($this->get_disconnect_url()),
 				esc_html__('Disconnect', 'ultimate-multisite')
 			);
+		} else {
 
-			return;
-		}
+			// Error display
+			if ( ! empty($this->oauth_error)) {
+				printf(
+					'<div class="wu-p-3 wu-bg-red-100 wu-text-red-600 wu-rounded wu-mb-3 wu-text-sm">%s</div>',
+					esc_html($this->oauth_error)
+				);
+			}
 
-		// Error display
-		if (! empty($this->oauth_error)) {
+			// Disconnected state - show connect button
 			printf(
-				'<div class="wu-p-3 wu-bg-red-100 wu-text-red-600 wu-rounded wu-mb-3 wu-text-sm">%s</div>',
-				esc_html($this->oauth_error)
-			);
-		}
-
-		// Disconnected state - show connect button
-		printf(
-			'<div class="wu-oauth-status wu-disconnected wu-p-4 wu-bg-blue-50 wu-border wu-border-blue-200 wu-rounded">
+				'<div class="wu-oauth-status wu-disconnected wu-p-4 wu-bg-blue-50 wu-border wu-border-blue-200 wu-rounded">
 				<p class="wu-text-sm wu-text-gray-700 wu-mb-3">%s</p>
 				<a href="%s" class="button button-primary">
-					<span class="dashicons dashicons-admin-links wu-mr-1"></span>
+					<span class="dashicons dashicons-admin-links wu-mr-1 wu-mt-1"></span>
 					%s
 				</a>
 				<p class="wu-text-xs wu-text-gray-500 wu-mt-2">%s</p>
 			</div>',
-			esc_html__('Connect your Stripe account with one click.', 'ultimate-multisite'),
-			esc_url($this->get_oauth_init_url()),
-			esc_html__('Connect with Stripe', 'ultimate-multisite'),
-			esc_html__('You will be redirected to Stripe to securely authorize the connection.', 'ultimate-multisite')
-		);
+				esc_html__('Connect your Stripe account with one click.', 'ultimate-multisite'),
+				esc_url($this->get_oauth_init_url()),
+				esc_html__('Connect with Stripe', 'ultimate-multisite'),
+				esc_html__('You will be redirected to Stripe to securely authorize the connection.', 'ultimate-multisite'),
+			);
+		}
+		// Fee notice for connected state.
+		if ( ! \WP_Ultimo::get_instance()->get_addon_repository()->has_addon_purchase()) {
+			printf(
+				'<div class="wu-py-3">
+						%s <br>
+						<a href="%s" target="_blank" rel="noopener">%s</a>
+					</div>',
+				esc_html(
+					sprintf(
+					/* translators: %s: the fee percentage */
+						__('There is a %s%% fee per-transaction to use the Stripe integration included in the free Ultimate Multisite plugin.', 'ultimate-multisite'),
+						number_format_i18n($this->get_application_fee_percent(), 0)
+					)
+				),
+				esc_url(network_admin_url('admin.php?page=wp-ultimo-addons')),
+				esc_html__('Remove this fee by purchasing any addon and connecting your store.', 'ultimate-multisite')
+			);
+		} else {
+			printf(
+				'<p class="wu-text-xs wu-text-green-700 wu-mt-2">%s</p>',
+				esc_html__('No application fee — thank you for your support!', 'ultimate-multisite')
+			);
+		}
 	}
 }
