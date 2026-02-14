@@ -48,6 +48,9 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 		// Handle OAuth callbacks and disconnects
 		add_action('admin_init', [$this, 'handle_oauth_callbacks']);
 
+		// Redirect to OAuth init after settings save when connect button was clicked
+		add_filter('wu_settings_save_redirect', [$this, 'maybe_redirect_to_stripe_oauth'], 10, 2);
+
 		add_filter(
 			'wu_customer_payment_methods',
 			function ($fields, $customer): array {
@@ -61,6 +64,29 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 			10,
 			2
 		);
+	}
+
+	/**
+	 * Redirect to Stripe OAuth init URL after settings are saved.
+	 *
+	 * When the user clicks the "Connect with Stripe" button, the settings form
+	 * is submitted first (saving sandbox mode, active gateways, etc.), then
+	 * this filter redirects to the OAuth init URL instead of the normal
+	 * settings page.
+	 *
+	 * @since 2.x.x
+	 *
+	 * @param string $redirect_url The default redirect URL.
+	 * @param array  $saved_data   The saved settings data.
+	 * @return string
+	 */
+	public function maybe_redirect_to_stripe_oauth(string $redirect_url, array $saved_data): string {
+
+		if (empty($_POST['wu_connect_stripe'])) { // phpcs:ignore WordPress.Security.NonceVerification
+			return $redirect_url;
+		}
+
+		return $this->get_oauth_init_url();
 	}
 
 	/**
@@ -891,18 +917,17 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 				);
 			}
 
-			// Disconnected state - show connect button
+			// Disconnected state - show connect button (submits form to save settings first)
 			printf(
 				'<div class="wu-oauth-status wu-disconnected wu-p-4 wu-bg-blue-50 wu-border wu-border-blue-200 wu-rounded">
 				<p class="wu-text-sm wu-text-gray-700 wu-mb-3">%s</p>
-				<a href="%s" class="button button-primary">
+				<button type="submit" name="wu_connect_stripe" value="1" class="button button-primary">
 					<span class="dashicons dashicons-admin-links wu-mr-1 wu-mt-1"></span>
 					%s
-				</a>
+				</button>
 				<p class="wu-text-xs wu-text-gray-500 wu-mt-2">%s</p>
 			</div>',
 				esc_html__('Connect your Stripe account with one click.', 'ultimate-multisite'),
-				esc_url($this->get_oauth_init_url()),
 				esc_html__('Connect with Stripe', 'ultimate-multisite'),
 				esc_html__('You will be redirected to Stripe to securely authorize the connection.', 'ultimate-multisite'),
 			);
