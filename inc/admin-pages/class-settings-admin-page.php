@@ -554,7 +554,23 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 
 		WP_Ultimo()->settings->save_settings($filtered_data);
 
-		wp_safe_redirect(add_query_arg('updated', 1, wu_get_current_url()));
+		$redirect_url = add_query_arg('updated', 1, wu_get_current_url());
+
+		/**
+		 * Filters the redirect URL after settings are saved.
+		 *
+		 * Allows gateways or other components to redirect elsewhere
+		 * after a settings save (e.g. to initiate an OAuth flow).
+		 *
+		 * @since 2.x.x
+		 *
+		 * @param string $redirect_url The default redirect URL.
+		 * @param array  $filtered_data The saved settings data.
+		 * @return string
+		 */
+		$redirect_url = apply_filters('wu_settings_save_redirect', $redirect_url, $filtered_data);
+
+		wp_safe_redirect($redirect_url);
 
 		exit;
 	}
