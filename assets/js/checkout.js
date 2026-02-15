@@ -795,7 +795,6 @@
 						this.password_strength_checker = new window.WU_PasswordStrength({
 							pass1: pass1_el,
 							result: jQuery('#pass-strength-result'),
-							minStrength: 3,
 							onValidityChange(isValid) {
 
 								that.valid_password = isValid;
@@ -1077,6 +1076,11 @@
 
 					// Setup inline login handlers if prompt is visible
 					this.setup_inline_login_handlers();
+
+					// Re-initialize password strength if field appeared after mount
+					if (! this.password_strength_checker && jQuery('#field-password').length) {
+						this.init_password_strength();
+					}
 
 				});
 
