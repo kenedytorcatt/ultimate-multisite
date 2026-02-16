@@ -167,8 +167,14 @@ class Credential_Store {
 			return '';
 		}
 
-		$key       = self::get_sodium_key();
-		$decrypted = sodium_crypto_secretbox_open($encrypted, $nonce, $key);
+		try {
+			$key       = self::get_sodium_key();
+			$decrypted = sodium_crypto_secretbox_open($encrypted, $nonce, $key);
+		} catch (\SodiumException $e) {
+			wu_log_add('credential-store', 'Sodium decryption failed: ' . $e->getMessage(), \Psr\Log\LogLevel::ERROR);
+
+			return '';
+		}
 
 		return false === $decrypted ? '' : $decrypted;
 	}

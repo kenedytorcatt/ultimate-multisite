@@ -462,7 +462,7 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 
 			$sections['defaults'] = [
 				'title'        => __('Default Content', 'ultimate-multisite'),
-				'description'  => __('Starting from scratch can be scarry, specially when first starting out. In this step, you can create default content to have a starting point for your network. Everything can be customized later.', 'ultimate-multisite'),
+				'description'  => __('Starting from scratch can be scary, especially when first starting out. In this step, you can create default content to have a starting point for your network. Everything can be customized later.', 'ultimate-multisite'),
 				'next_label'   => Default_Content_Installer::get_instance()->all_done() ? __('Go to the Next Step &rarr;', 'ultimate-multisite') : __('Install', 'ultimate-multisite'),
 				'disable_next' => true,
 				'fields'       => [
