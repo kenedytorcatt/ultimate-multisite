@@ -1834,6 +1834,7 @@ class Checkout {
 			'sign_in'              => __('Sign in', 'ultimate-multisite'),
 			'forgot_password'      => __('Forgot password?', 'ultimate-multisite'),
 			'cancel'               => __('Cancel', 'ultimate-multisite'),
+			'email_exists'         => __('A customer with the same email address or username already exists.', 'ultimate-multisite'),
 		];
 
 		/*
