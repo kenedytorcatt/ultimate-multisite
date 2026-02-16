@@ -785,6 +785,7 @@ class Checkout_Pages {
 			[
 				'payment_hash'     => $payment_hash,
 				'ajax_url'         => admin_url('admin-ajax.php'),
+				'nonce'            => wp_create_nonce('wu_payment_status_poll'),
 				'poll_interval'    => 3000, // 3 seconds
 				'max_attempts'     => 20, // 60 seconds total
 				'should_poll'      => $is_pending,

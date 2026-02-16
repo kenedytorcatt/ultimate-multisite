@@ -3,7 +3,7 @@ describe("Stripe Gateway Checkout Flow", () => {
 	const customerData = {
 		username: `stripecust${timestamp}`,
 		email: `stripecust${timestamp}@test.com`,
-		password: "TestPassword123!",
+		password: "xK9#mL2$vN5@qR",
 	};
 	const siteData = {
 		title: "Stripe Test Site",

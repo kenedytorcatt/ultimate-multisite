@@ -3,7 +3,7 @@ describe("Free Trial Checkout Flow", () => {
 	const customerData = {
 		username: `trialcust${timestamp}`,
 		email: `trialcust${timestamp}@test.com`,
-		password: "TestPassword123!",
+		password: "xK9#mL2$vN5@qR",
 	};
 	const siteData = {
 		title: "Trial Test Site",

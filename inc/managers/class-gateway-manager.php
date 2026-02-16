@@ -115,9 +115,9 @@ class Gateway_Manager extends Base_Manager {
 
 		/*
 		 * AJAX endpoint for payment status polling (fallback for webhooks).
+		 * Requires authentication — only logged-in users can poll.
 		 */
 		add_action('wp_ajax_wu_check_payment_status', [$this, 'ajax_check_payment_status']);
-		add_action('wp_ajax_nopriv_wu_check_payment_status', [$this, 'ajax_check_payment_status']);
 
 		/*
 		 * Action Scheduler handler for payment verification fallback.
@@ -594,6 +594,8 @@ class Gateway_Manager extends Base_Manager {
 	 * @return void
 	 */
 	public function ajax_check_payment_status(): void {
+
+		check_ajax_referer('wu_payment_status_poll', 'nonce');
 
 		$payment_hash = wu_request('payment_hash');
 

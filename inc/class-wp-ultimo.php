@@ -1020,9 +1020,15 @@ final class WP_Ultimo {
 		// PUC builds the URL from metadataUrl + query args, then passes it to wp_remote_get.
 		// We can't modify the URL through http_request_args, so we use a one-time
 		// pre_http_request filter to intercept and re-issue the request with beta=1.
+		static $is_redirecting = false;
+
+		if ($is_redirecting) {
+			return $args;
+		}
+
 		add_filter(
 			'pre_http_request',
-			$redirect = function ($pre, $r, $request_url) use ($url, $args, &$redirect) {
+			$redirect = function ($pre, $r, $request_url) use ($url, $args, &$redirect, &$is_redirecting) {
 
 				remove_filter('pre_http_request', $redirect, 9);
 
@@ -1030,9 +1036,12 @@ final class WP_Ultimo {
 					return $pre;
 				}
 
-				$beta_url = add_query_arg('beta', '1', $request_url);
+				$is_redirecting = true;
+				$beta_url       = add_query_arg('beta', '1', $request_url);
+				$result         = wp_remote_get($beta_url, $args);
+				$is_redirecting = false;
 
-				return wp_remote_get($beta_url, $args);
+				return $result;
 			},
 			9,
 			3
@@ -1087,6 +1096,16 @@ final class WP_Ultimo {
 		}
 
 		if (empty($package_url)) {
+			return $transient;
+		}
+
+		// Only trust downloads from GitHub domains
+		$allowed_hosts = ['github.com', 'objects.githubusercontent.com'];
+		$package_host  = wp_parse_url($package_url, PHP_URL_HOST);
+
+		if (! $package_host || ! in_array($package_host, $allowed_hosts, true)) {
+			wu_log_add('beta-updates', sprintf('Rejected beta update package URL with untrusted host: %s', $package_url), \Psr\Log\LogLevel::WARNING);
+
 			return $transient;
 		}
 

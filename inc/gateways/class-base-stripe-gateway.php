@@ -193,7 +193,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		 * As the toggle return a string with a int value,
 		 * we need to convert this first to int then to bool.
 		 */
-		$this->test_mode = (bool) (int) wu_get_setting("{$id}_sandbox_mode", false);
+		$this->test_mode = (bool) (int) wu_get_setting("{$id}_sandbox_mode", true);
 
 		$this->setup_api_keys($id);
 
@@ -505,15 +505,24 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 		// Handle OAuth callback from proxy (encrypted code)
 		if (isset($_GET['wcs_stripe_code'], $_GET['wcs_stripe_state']) && isset($_GET['page']) && 'wp-ultimo-settings' === $_GET['page']) {
+			if (! current_user_can('manage_network')) {
+				return;
+			}
+
 			$encrypted_code = sanitize_text_field(wp_unslash($_GET['wcs_stripe_code']));
 			$state          = sanitize_text_field(wp_unslash($_GET['wcs_stripe_state']));
 
 			// Verify CSRF state
 			$expected_state = get_option('wu_stripe_oauth_state');
 
-			if ($expected_state && $expected_state === $state) {
-				$this->exchange_code_for_keys($encrypted_code);
+			if (! $expected_state || ! hash_equals($expected_state, $state)) {
+				return;
 			}
+
+			// Delete state immediately to prevent replay attacks
+			delete_option('wu_stripe_oauth_state');
+
+			$this->exchange_code_for_keys($encrypted_code);
 		}
 
 		// Handle disconnect
@@ -573,9 +582,6 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 			return;
 		}
-
-		// Delete state after successful exchange
-		delete_option('wu_stripe_oauth_state');
 
 		$id = wu_replace_dashes($this->get_id());
 
