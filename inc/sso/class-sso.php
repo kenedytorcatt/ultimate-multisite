@@ -764,7 +764,7 @@ class SSO {
 			'expiration_in_days' => 5 / (24 * 60), // cookie expires in 5 mins.
 			'filtered_url'       => remove_query_arg($removable_query_args, $this->get_current_url()),
 			'img_folder'         => dirname((string) wu_get_asset('img', 'img')),
-			'use_overlay'        => $this->get_setting('enable_sso_loading_overlay', true),
+			'use_overlay'        => $this->get_setting('enable_sso_loading_overlay', false),
 		];
 
 		wp_localize_script('wu-sso', 'wu_sso_config', $options);
