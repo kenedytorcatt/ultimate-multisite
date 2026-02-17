@@ -56,9 +56,9 @@ class ServerPilot_Domain_Mapping extends Base_Capability_Module implements Domai
 
 		return [
 			'will'     => [
-				/* translators: %s is the hosting provider name */
+				// translators: %s: hosting provider name.
 				sprintf(__('Send API calls to %s servers with domain names added to this network', 'ultimate-multisite'), 'ServerPilot'),
-				/* translators: %s is the hosting provider name */
+				// translators: %s: hosting provider name.
 				sprintf(__('Fetch and install a SSL certificate on %s platform after the domain is added.', 'ultimate-multisite'), 'ServerPilot'),
 			],
 			'will_not' => [],

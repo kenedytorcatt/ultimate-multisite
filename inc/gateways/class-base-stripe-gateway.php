@@ -1171,6 +1171,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 				}
 			}
 
+			// translators: %1$s: HTTP error code, %2$s: error message.
 			wu_log_add('stripe', sprintf(__('Failed to add stripe webhook: %1$s, %2$s', 'ultimate-multisite'), $error_code, $e->getMessage()));
 		}
 	}

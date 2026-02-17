@@ -1098,12 +1098,19 @@ class Line_Item implements \JsonSerializable {
 			return '';
 		}
 
-		$description = sprintf(
-			// translators: %1$s the duration, and %2$s the duration unit (day, week, month, etc)
-			_n('%2$s', 'every %1$s %2$s', $this->get_duration(), 'ultimate-multisite'), // phpcs:ignore
-			$this->get_duration(),
-			wu_get_translatable_string(($this->get_duration() <= 1 ? $this->get_duration_unit() : $this->get_duration_unit() . 's'))
-		);
+		$duration      = $this->get_duration();
+		$duration_unit = wu_get_translatable_string($duration <= 1 ? $this->get_duration_unit() : $this->get_duration_unit() . 's');
+
+		if ($duration <= 1) {
+			$description = $duration_unit;
+		} else {
+			$description = sprintf(
+				// translators: %1$s: the duration number, %2$s: the duration unit (days, weeks, months, etc).
+				__('every %1$s %2$s', 'ultimate-multisite'),
+				$duration,
+				$duration_unit
+			);
+		}
 
 		return $description;
 	}
