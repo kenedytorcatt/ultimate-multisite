@@ -45,6 +45,17 @@ trait WP_CLI {
 	}
 
 	/**
+	 * Returns a human-readable label for this entity, used in WP-CLI descriptions.
+	 *
+	 * @since 2.3.0
+	 * @return string
+	 */
+	protected function get_wp_cli_label(): string {
+
+		return str_replace('_', ' ', $this->get_wp_cli_command_base());
+	}
+
+	/**
 	 * Registers the routes. Should be called by the entity
 	 * to actually enable the REST API.
 	 *
@@ -58,15 +69,49 @@ trait WP_CLI {
 
 		$wp_cli_root = 'wu';
 
+		static $root_registered = false;
+
+		if ( ! $root_registered && class_exists('\WP_CLI\Dispatcher\CommandNamespace')) {
+			\WP_CLI::add_command(
+				$wp_cli_root,
+				'\WP_CLI\Dispatcher\CommandNamespace',
+				[
+					'shortdesc' => __('Ultimate Multisite commands.', 'ultimate-multisite'),
+				]
+			);
+
+			$root_registered = true;
+		}
+
+		$command_base = $this->get_wp_cli_command_base();
+		$label        = $this->get_wp_cli_label();
+
+		if (class_exists('\WP_CLI\Dispatcher\CommandNamespace')) {
+			\WP_CLI::add_command(
+				"{$wp_cli_root} {$command_base}",
+				'\WP_CLI\Dispatcher\CommandNamespace',
+				[
+					/* translators: %s: the entity label, e.g. "customer" or "checkout form" */
+					'shortdesc' => sprintf(__('Manages %ss.', 'ultimate-multisite'), $label),
+				]
+			);
+		}
+
 		$this->set_wp_cli_enabled_sub_commands();
 
 		foreach ($this->wp_cli_enabled_sub_commands as $sub_command => $sub_command_data) {
+			$args = [
+				'synopsis' => $sub_command_data['synopsis'],
+			];
+
+			if ( ! empty($sub_command_data['shortdesc'])) {
+				$args['shortdesc'] = $sub_command_data['shortdesc'];
+			}
+
 			\WP_CLI::add_command(
-				"{$wp_cli_root} {$this->get_wp_cli_command_base()} {$sub_command}",
+				"{$wp_cli_root} {$command_base} {$sub_command}",
 				$sub_command_data['callback'],
-				[
-					'synopsis' => $sub_command_data['synopsis'],
-				]
+				$args
 			);
 		}
 	}
@@ -76,21 +121,33 @@ trait WP_CLI {
 	 */
 	public function set_wp_cli_enabled_sub_commands(): void {
 
+		$label = $this->get_wp_cli_label();
+
 		$sub_commands = [
 			'get'    => [
-				'callback' => [$this, 'wp_cli_get_item'],
+				'callback'  => [$this, 'wp_cli_get_item'],
+				/* translators: %s: the entity label, e.g. "customer" or "checkout form" */
+				'shortdesc' => sprintf(__('Gets a %s by ID.', 'ultimate-multisite'), $label),
 			],
 			'list'   => [
-				'callback' => [$this, 'wp_cli_get_items'],
+				'callback'  => [$this, 'wp_cli_get_items'],
+				/* translators: %s: the entity label, e.g. "customer" or "checkout form" */
+				'shortdesc' => sprintf(__('Lists %ss.', 'ultimate-multisite'), $label),
 			],
 			'create' => [
-				'callback' => [$this, 'wp_cli_create_item'],
+				'callback'  => [$this, 'wp_cli_create_item'],
+				/* translators: %s: the entity label, e.g. "customer" or "checkout form" */
+				'shortdesc' => sprintf(__('Creates a new %s.', 'ultimate-multisite'), $label),
 			],
 			'update' => [
-				'callback' => [$this, 'wp_cli_update_item'],
+				'callback'  => [$this, 'wp_cli_update_item'],
+				/* translators: %s: the entity label, e.g. "customer" or "checkout form" */
+				'shortdesc' => sprintf(__('Updates an existing %s.', 'ultimate-multisite'), $label),
 			],
 			'delete' => [
-				'callback' => [$this, 'wp_cli_delete_item'],
+				'callback'  => [$this, 'wp_cli_delete_item'],
+				/* translators: %s: the entity label, e.g. "customer" or "checkout form" */
+				'shortdesc' => sprintf(__('Deletes an existing %s.', 'ultimate-multisite'), $label),
 			],
 		];
 
