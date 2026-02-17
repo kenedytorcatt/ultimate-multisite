@@ -199,6 +199,31 @@ We recommend running this in a staging environment before updating your producti
 
 ## 📝 Recent Changes
 
+### Version [2.4.11] - Released on 2026-02-16
+- New: Settings API for remote settings management.
+- New: Pay-What-You-Want (PWYW) pricing with per-product custom amounts and recurring options.
+- New: Billing-period controls for discount codes and membership creation.
+- New: Better error page for customers and admins.
+- New: Stripe Connect via secure proxy server — platform credentials no longer distributed in plugin code.
+- New: Stripe Checkout Element with automatic billing address handling and removal of application fees.
+- New: Multisite Setup Wizard — guides single-site installs through enabling and configuring WordPress Multisite.
+- New: Modular hosting integration system with encrypted credential storage.
+- New: Form field normalization CSS for consistent checkout and login styling across all themes and page builders.
+- Fix: Password strength setting not being applied during checkout.
+- Fix: Encoded characters stripped from URLs during SSO and domain mapping redirects.
+- Fix: Inline login prompt stability and missing validation for existing emails at checkout.
+- Fix: Site title field error caused by third-party plugin conflicts.
+- Fix: URL replacement failing for Elementor content on subdirectory multisite installs.
+- Fix: Country and state selection issues in checkout.
+- Fix: Duplicate Country/ZIP fields appearing on Stripe checkout.
+- Fix: Invoice PDF download failing with expired nonce.
+- Fix: Settings page crash on PHP 8.4.
+- Fix: Single-site compatibility issues and dashboard widget setup status detection.
+- Fix: Rewrite rules now flushed when signup pages are created or modified.
+- Improved: Admin pages no longer loaded on frontend and cron requests for better performance.
+- Improved: Security hardening for input validation, credential storage, and cart processing.
+- Improved: Expanded automated test coverage across checkout, payments, and admin functionality.
+
 ### Version [2.4.10] - Released on 2026-01-23
 - New: Configurable minimum password strength setting with Medium, Strong, and Super Strong options.
 - New: Super Strong password requirements include 12+ characters, uppercase, lowercase, numbers, and special characters - compatible with WPMU DEV Defender Pro rules.

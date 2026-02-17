@@ -5,7 +5,7 @@ Tags: ultimate multisite, wordpress multisite, multisite plugin, multisite saas,
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.4.10
+Stable tag: 2.4.11
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -226,7 +226,7 @@ No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
 
-Version [2.4.11] - Released on 2026-XX-XX
+Version [2.4.11] - Released on 2026-02-16
 - New: Settings API for remote settings management.
 - New: Pay-What-You-Want (PWYW) pricing with per-product custom amounts and recurring options.
 - New: Billing-period controls for discount codes and membership creation.
