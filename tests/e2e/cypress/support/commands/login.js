@@ -28,8 +28,11 @@ Cypress.Commands.add("loginByApi", (username, password) => {
 
 Cypress.Commands.add("loginByForm", (username, password) => {
   cy.session(["loginByForm", username, password], () => {
-    cy.visit("/wp-admin/");
-    cy.location("pathname").should("contain", "/wp-login.php");
+    cy.visit("/wp-login.php");
+    // Handle both default wp-login.php and custom login page (/login/)
+    cy.location("pathname").should("satisfy", (path) => {
+      return path.includes("/wp-login.php") || path.includes("/login");
+    });
     cy.get("#rememberme").should("be.visible").and("not.be.checked").click();
     cy.get("#user_login").should("be.visible").setValue(username);
     cy.get("#user_pass")
@@ -38,6 +41,7 @@ Cypress.Commands.add("loginByForm", (username, password) => {
       .type("{enter}");
     cy.location("pathname")
       .should("not.contain", "/wp-login.php")
+      .and("not.contain", "/login")
       .and("equal", "/wp-admin/");
   });
 });

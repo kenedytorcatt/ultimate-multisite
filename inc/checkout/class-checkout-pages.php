@@ -579,7 +579,7 @@ class Checkout_Pages {
 	 * @param bool   $force_reauth If we need to force reauth.
 	 * @return string
 	 */
-	public function filter_login_url($login_url, $redirect, $force_reauth = false) {
+	public function filter_login_url($login_url, $redirect, $force_reauth = false) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 
 		/**
 		 * Fix incompatibility with UIPress, making sure we only filter after wp_loaded ran.
@@ -594,28 +594,26 @@ class Checkout_Pages {
 			return $login_url;
 		}
 
-		$params = [];
-
-		$old_url_params = wp_parse_url($login_url, PHP_URL_QUERY);
-
-		wp_parse_str($old_url_params, $params);
-
 		$new_login_url = $this->get_page_url('login');
 
 		if ( ! $new_login_url) {
 			return $login_url;
 		}
 
-		if ($params) {
-			$new_login_url = add_query_arg($params, $new_login_url);
-		}
+		/*
+		 * Preserve the raw query string from the original login URL
+		 * to avoid URL decoding issues. wp_parse_str() + add_query_arg()
+		 * decodes percent-encoded values like %2F without re-encoding them,
+		 * which causes parameters inside redirect_to to leak as top-level
+		 * query params (e.g., path=%2Fanalytics%2Foverview leaking out of
+		 * the redirect_to value). By preserving the raw query string, we
+		 * maintain the original encoding. WordPress's wp_login_url() already
+		 * adds redirect_to and reauth before this filter runs.
+		 */
+		$raw_query = wp_parse_url($login_url, PHP_URL_QUERY);
 
-		if ($redirect) {
-			$new_login_url = add_query_arg('redirect_to', rawurlencode($redirect), $new_login_url);
-		}
-
-		if ($force_reauth) {
-			$new_login_url = add_query_arg('reauth', 1, $new_login_url);
+		if ($raw_query) {
+			$new_login_url .= (str_contains($new_login_url, '?') ? '&' : '?') . $raw_query;
 		}
 
 		return $new_login_url;
@@ -785,6 +783,7 @@ class Checkout_Pages {
 			[
 				'payment_hash'     => $payment_hash,
 				'ajax_url'         => admin_url('admin-ajax.php'),
+				'nonce'            => wp_create_nonce('wu_payment_status_poll'),
 				'poll_interval'    => 3000, // 3 seconds
 				'max_attempts'     => 20, // 60 seconds total
 				'should_poll'      => $is_pending,

@@ -55,9 +55,9 @@ class Closte_Domain_Mapping extends Base_Capability_Module implements Domain_Map
 
 		return [
 			'will'     => [
-				/* translators: %s is the hosting provider name (e.g. Closte) */
+				// translators: %s: hosting provider name.
 				sprintf(__('Send API calls to %s servers with domain names added to this network', 'ultimate-multisite'), 'Closte'),
-				/* translators: %s is the hosting provider name (e.g. Closte) */
+				// translators: %s: hosting provider name.
 				sprintf(__('Fetch and install a SSL certificate on %s platform after the domain is added.', 'ultimate-multisite'), 'Closte'),
 			],
 			'will_not' => [],

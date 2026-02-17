@@ -795,7 +795,6 @@
 						this.password_strength_checker = new window.WU_PasswordStrength({
 							pass1: pass1_el,
 							result: jQuery('#pass-strength-result'),
-							minStrength: 3,
 							onValidityChange(isValid) {
 
 								that.valid_password = isValid;
@@ -813,10 +812,18 @@
 				}, 500),
 				check_user_exists(field_type, value) {
 
+					// Don't let other field checks interfere with an active email prompt
+					if (this.show_login_prompt && this.login_prompt_field === 'email' && field_type !== 'email') {
+						return;
+					}
+
 					// Don't check if value is too short
 					if (! value || value.length < 3) {
 
-						this.show_login_prompt = false;
+						if (this.login_prompt_field === field_type) {
+							this.show_login_prompt = false;
+							this.remove_field_error(field_type === 'email' ? 'email_address' : 'username');
+						}
 
 						return;
 
@@ -840,16 +847,23 @@
 							that.show_login_prompt = true;
 							that.login_prompt_field = field_type;
 
-						} else {
+							that.add_field_error(field_type === 'email' ? 'email_address' : 'username', wu_checkout.i18n.email_exists);
+
+						} else if (that.login_prompt_field === field_type) {
 
 							that.show_login_prompt = false;
+							that.remove_field_error(field_type === 'email' ? 'email_address' : 'username');
 
 						}
 
 					}, function(error) {
 
 						that.checking_user_exists = false;
-						that.show_login_prompt = false;
+
+						if (that.login_prompt_field === field_type) {
+							that.show_login_prompt = false;
+							that.remove_field_error(field_type === 'email' ? 'email_address' : 'username');
+						}
 
 					});
 
@@ -915,6 +929,25 @@
 					return false;
 
 				},
+				add_field_error(field_code, message) {
+
+					this.remove_field_error(field_code);
+
+					this.errors.push({
+						code: field_code,
+						message,
+					});
+
+				},
+				remove_field_error(field_code) {
+
+					this.errors = this.errors.filter(function(e) {
+
+						return e.code !== field_code;
+
+					});
+
+				},
 				dismiss_login_prompt() {
 
 					this.show_login_prompt = false;
@@ -929,6 +962,19 @@
 					// Setup handlers for both email and username field types
 					[ 'email', 'username' ].forEach(function(fieldType) {
 
+						const loginPromptContainer = document.getElementById('wu-inline-login-prompt-' + fieldType);
+
+						if (! loginPromptContainer) {
+							return;
+						}
+
+						// Only attach handlers once per container
+						if (loginPromptContainer.dataset.wuHandlersAttached) {
+							return;
+						}
+
+						loginPromptContainer.dataset.wuHandlersAttached = '1';
+
 						const passwordField = document.getElementById('wu-inline-login-password-' + fieldType);
 						const submitButton = document.getElementById('wu-inline-login-submit-' + fieldType);
 
@@ -936,32 +982,35 @@
 							return;
 						}
 
-						const dismissButton = document.getElementById('wu-dismiss-login-prompt-' + fieldType);
 						const errorDiv = document.getElementById('wu-login-error-' + fieldType);
-						const loginPromptContainer = document.getElementById('wu-inline-login-prompt-' + fieldType);
 
-						// Remove any existing listeners to avoid duplicates
-						const newSubmitButton = submitButton.cloneNode(true);
-						submitButton.parentNode.replaceChild(newSubmitButton, submitButton);
+						function showError(message) {
 
-						const newPasswordField = passwordField.cloneNode(true);
-						passwordField.parentNode.replaceChild(newPasswordField, passwordField);
+							errorDiv.textContent = message;
+							errorDiv.classList.remove('wu-hidden');
+
+						}
+
+						function hideError() {
+
+							errorDiv.classList.add('wu-hidden');
+
+						}
+
 						function handleError(error) {
 
-							newSubmitButton.disabled = false;
-							newSubmitButton.textContent = wu_checkout.i18n.sign_in || 'Sign in';
+							submitButton.disabled = false;
+							submitButton.textContent = wu_checkout.i18n.sign_in || 'Sign in';
 
 							if (error.data && error.data.message) {
 
-								errorDiv.textContent = error.data.message;
+								showError(error.data.message);
 
 							} else {
 
-								errorDiv.textContent = wu_checkout.i18n.login_failed || 'Login failed. Please try again.';
+								showError(wu_checkout.i18n.login_failed || 'Login failed. Please try again.');
 
 							}
-
-							errorDiv.style.display = 'block';
 
 						}
 
@@ -971,20 +1020,19 @@
 							e.stopPropagation();
 							e.stopImmediatePropagation();
 
-							const password = newPasswordField.value;
+							const password = passwordField.value;
 
 							if (! password) {
 
-								errorDiv.textContent = wu_checkout.i18n.password_required || 'Password is required';
-								errorDiv.style.display = 'block';
+								showError(wu_checkout.i18n.password_required || 'Password is required');
 
 								return false;
 
 							}
 
-							newSubmitButton.disabled = true;
-							newSubmitButton.innerHTML = '<span class="spinner is-active wu-inline-block" style="float: none; width: 16px; height: 16px; margin: 0 4px 0 0;"></span>' + (wu_checkout.i18n.logging_in || 'Logging in...');
-							errorDiv.style.display = 'none';
+							submitButton.disabled = true;
+							submitButton.innerHTML = '<span class="spinner is-active wu-inline-block" style="float: none; width: 16px; height: 16px; margin: 0 4px 0 0;"></span>' + (wu_checkout.i18n.logging_in || 'Logging in...');
+							hideError();
 
 							const username_or_email = fieldType === 'email' ? that.email_address : that.username;
 
@@ -1015,31 +1063,27 @@
 						}
 
 						// Stop all events from bubbling out of the login prompt
-						if (loginPromptContainer) {
+						loginPromptContainer.addEventListener('click', function(e) {
 
-							loginPromptContainer.addEventListener('click', function(e) {
+							e.stopPropagation();
 
-								e.stopPropagation();
+						});
 
-							});
+						loginPromptContainer.addEventListener('keydown', function(e) {
 
-							loginPromptContainer.addEventListener('keydown', function(e) {
+							e.stopPropagation();
 
-								e.stopPropagation();
+						});
 
-							});
+						loginPromptContainer.addEventListener('keyup', function(e) {
 
-							loginPromptContainer.addEventListener('keyup', function(e) {
+							e.stopPropagation();
 
-								e.stopPropagation();
+						});
 
-							});
+						submitButton.addEventListener('click', handleLogin);
 
-						}
-
-						newSubmitButton.addEventListener('click', handleLogin);
-
-						newPasswordField.addEventListener('keydown', function(e) {
+						passwordField.addEventListener('keydown', function(e) {
 
 							if (e.key === 'Enter') {
 
@@ -1048,20 +1092,6 @@
 							}
 
 						});
-
-						if (dismissButton) {
-
-							dismissButton.addEventListener('click', function(e) {
-
-								e.preventDefault();
-								e.stopPropagation();
-								that.show_login_prompt = false;
-								that.inline_login_password = '';
-								newPasswordField.value = '';
-
-							});
-
-						}
 
 					});
 
@@ -1077,6 +1107,11 @@
 
 					// Setup inline login handlers if prompt is visible
 					this.setup_inline_login_handlers();
+
+					// Re-initialize password strength if field appeared after mount
+					if (! this.password_strength_checker && jQuery('#field-password').length) {
+						this.init_password_strength();
+					}
 
 				});
 
@@ -1159,6 +1194,11 @@
 
 			},
 			watch: {
+				email_address: _.debounce(function(new_value) {
+
+					this.check_user_exists('email', new_value);
+
+				}, 500),
 				products(new_value, old_value) {
 
 					this.on_change_product(new_value, old_value);

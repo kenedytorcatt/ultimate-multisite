@@ -234,7 +234,6 @@ class Signup_Field_Email extends Base_Signup_Field {
 				'wrapper_classes'   => wu_get_isset($attributes, 'wrapper_element_classes', ''),
 				'classes'           => wu_get_isset($attributes, 'element_classes', ''),
 				'html_attr'         => [
-					'@blur'   => "check_user_exists_debounced('email', email_address)",
 					'v-model' => 'email_address',
 				],
 				'wrapper_html_attr' => [

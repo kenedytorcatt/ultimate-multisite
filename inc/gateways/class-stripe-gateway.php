@@ -134,7 +134,7 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 				'title'     => __('Stripe Sandbox Mode', 'ultimate-multisite'),
 				'desc'      => __('Toggle this to put Stripe on sandbox mode. This is useful for testing and making sure Stripe is correctly setup to handle your payments.', 'ultimate-multisite'),
 				'type'      => 'toggle',
-				'default'   => 0,
+				'default'   => 1,
 				'html_attr' => [
 					'v-model' => 'stripe_sandbox_mode',
 				],

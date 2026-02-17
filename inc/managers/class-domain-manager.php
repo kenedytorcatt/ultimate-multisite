@@ -534,7 +534,7 @@ class Domain_Manager extends Base_Manager {
 				'title'   => __('Enable SSO Loading Overlay', 'ultimate-multisite'),
 				'desc'    => __('When active, a loading overlay will be added on-top of the site currently being viewed while the SSO auth loopback is performed on the background.', 'ultimate-multisite'),
 				'type'    => 'toggle',
-				'default' => 1,
+				'default' => 0,
 				'require' => [
 					'enable_sso' => true,
 				],

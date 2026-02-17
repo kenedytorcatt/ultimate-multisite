@@ -468,6 +468,19 @@ class Settings_Endpoint {
 		];
 
 		/**
+		 * Patterns that indicate a setting key is sensitive.
+		 * Any key containing one of these substrings is considered sensitive.
+		 */
+		$sensitive_patterns = [
+			'_access_token',
+			'_refresh_token',
+			'_sk_key',
+			'_secret',
+			'password',
+			'_api_key',
+		];
+
+		/**
 		 * Filter the list of sensitive settings that should not be exposed via API.
 		 *
 		 * @since 2.4.0
@@ -477,7 +490,18 @@ class Settings_Endpoint {
 		 */
 		$sensitive_settings = apply_filters('wu_api_sensitive_settings', $sensitive_settings, $setting_key);
 
-		return in_array($setting_key, $sensitive_settings, true);
+		if (in_array($setting_key, $sensitive_settings, true)) {
+			return true;
+		}
+
+		// Pattern-based matching for credential-like keys
+		foreach ($sensitive_patterns as $pattern) {
+			if (str_contains($setting_key, $pattern)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

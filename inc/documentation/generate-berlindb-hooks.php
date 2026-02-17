@@ -344,6 +344,18 @@ $output_file = __DIR__ . '/berlindb-dynamic-hooks.php';
 $prefix      = 'wu';
 $src         = $query_php_relative;
 
+// Build a map of hook-key → line number inside Query.php for @see tags.
+$hook_lines = [
+	'transition'     => find_line_number($query_php_absolute, '/do_action\(\s*\$key_action/'),
+	'pre_get'        => find_line_number($query_php_absolute, '/pre_get_.*item_name_plural/'),
+	'parse_query'    => find_line_number($query_php_absolute, '/parse_.*item_name_plural.*_query/'),
+	'query_clauses'  => find_line_number($query_php_absolute, '/item_name_plural.*_query_clauses/'),
+	'search_columns' => find_line_number($query_php_absolute, '/item_name_plural.*_search_columns/'),
+	'the_items'      => find_line_number($query_php_absolute, '/the_.*item_name_plural/'),
+	'filter_item'    => find_line_number($query_php_absolute, '/filter_.*item_name.*_item/'),
+	'found_query'    => find_line_number($query_php_absolute, '/found_.*item_name_plural.*_query/'),
+];
+
 ob_start();
 
 echo "<?php\n";

@@ -141,12 +141,16 @@ class Product_List_Table extends Base_List_Table {
 		if ($item->is_recurring()) {
 			$duration = $item->get_duration();
 
-			$message = sprintf(
-				// translators: %1$s the duration, and %2$s the duration unit (day, week, month, etc)
-				_n('every %2$s', 'every %1$s %2$s', $duration, 'ultimate-multisite'), // phpcs:ignore
-				$duration,
-				$item->get_duration_unit()
-			);
+			if ($duration <= 1) {
+				$message = $item->get_duration_unit();
+			} else {
+				$message = sprintf(
+					// translators: %1$s: the duration number, %2$s: the duration unit (days, weeks, months, etc).
+					__('every %1$s %2$s', 'ultimate-multisite'),
+					$duration,
+					$item->get_duration_unit()
+				);
+			}
 
 			if ( ! $item->is_forever_recurring()) {
 				$billing_cycles_message = sprintf(

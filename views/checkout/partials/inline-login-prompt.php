@@ -12,18 +12,10 @@ defined('ABSPATH') || exit;
 ?>
 
 <div id="wu-inline-login-prompt-<?php echo esc_attr($field_type); ?>" class="wu-bg-blue-50 wu-border wu-border-blue-200 wu-rounded wu-p-4 wu-mt-2 wu-mb-4">
-	<div class="wu-flex wu-items-center wu-justify-between wu-mb-3">
+	<div class="wu-mb-3">
 		<p class="wu-m-0 wu-font-semibold wu-text-blue-900 wu-text-sm">
 			<?php esc_html_e('Already have an account?', 'ultimate-multisite'); ?>
 		</p>
-		<button
-			type="button"
-			id="wu-dismiss-login-prompt-<?php echo esc_attr($field_type); ?>"
-			class="wu-text-gray-500 hover:wu-text-gray-700 wu-text-2xl wu-leading-none wu-cursor-pointer wu-border-0 wu-bg-transparent wu-p-0"
-			aria-label="<?php esc_attr_e('Close', 'ultimate-multisite'); ?>"
-		>
-			&times;
-		</button>
 	</div>
 
 	<div class="wu-mb-3">
@@ -39,7 +31,7 @@ defined('ABSPATH') || exit;
 		/>
 	</div>
 
-	<div id="wu-login-error-<?php echo esc_attr($field_type); ?>" class="wu-bg-red-100 wu-text-red-800 wu-p-3 wu-rounded wu-text-sm wu-mb-3" style="display: none;">
+	<div id="wu-login-error-<?php echo esc_attr($field_type); ?>" class="wu-bg-red-100 wu-text-red-800 wu-p-3 wu-rounded wu-text-sm wu-mb-3 wu-hidden">
 	</div>
 
 	<div class="wu-flex wu-flex-wrap wu-items-center wu-justify-between wu-gap-2">

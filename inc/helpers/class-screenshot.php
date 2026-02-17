@@ -29,7 +29,10 @@ class Screenshot {
 	 * @param string $domain Original site domain.
 	 */
 	public static function api_url($domain): string {
-		return 'https://image.thum.io/get/' . $domain;
+
+		$url = 'https://image.thum.io/get/width/1280/crop/960/noanimate/' . $domain;
+
+		return apply_filters('wu_screenshot_api_url', $url, $domain);
 	}
 
 	/**

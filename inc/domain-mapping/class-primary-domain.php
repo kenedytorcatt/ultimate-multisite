@@ -155,26 +155,27 @@ class Primary_Domain {
 
 		$mapped_url_to_compare = $mapped_url['host'];
 
-		$query_args = [];
-
-		if (wu_get_isset($current_url, 'query')) {
-			wp_parse_str($current_url['query'], $query_args);
-		}
-
 		$redirect_url = false;
 
 		if ('force_map' === $redirect_settings && $current_url_to_compare !== $mapped_url_to_compare) {
 			$redirect_url = Domain_Mapping::get_instance()->replace_url(wu_get_current_url(), $mapped_domain);
-
-			$query_args = array_map(fn($value) => Domain_Mapping::get_instance()->replace_url($value, $mapped_domain), $query_args);
 		} elseif ('force_network' === $redirect_settings && $current_url_to_compare === $mapped_url_to_compare) {
 			$redirect_url = wu_restore_original_url(wu_get_current_url(), $site->get_id());
-
-			$query_args = array_map(fn($value) => wu_restore_original_url($value, $site->get_id()), $query_args);
 		}
 
 		if ($redirect_url) {
-			wp_redirect(add_query_arg($query_args, $redirect_url)); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
+			/*
+			 * Use the redirect URL directly instead of parsing and rebuilding
+			 * query args with wp_parse_str() + add_query_arg(). That approach
+			 * URL-decodes percent-encoded values like %2F without re-encoding
+			 * them, breaking URLs that use encoded slashes in query parameters
+			 * (e.g., WooCommerce analytics path=%2Fanalytics%2Foverview).
+			 *
+			 * replace_url() and wu_restore_original_url() already handle the
+			 * full URL including the query string, so separate query arg
+			 * processing is not needed.
+			 */
+			wp_redirect($redirect_url); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
 
 			exit;
 		}

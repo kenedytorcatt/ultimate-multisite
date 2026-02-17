@@ -370,8 +370,8 @@ class Cart implements \JsonSerializable {
 		$this->currency       = $this->attributes->currency;
 		$this->duration       = $this->attributes->duration;
 		$this->duration_unit  = $this->attributes->duration_unit;
-		$this->custom_amounts = is_array($this->attributes->custom_amounts) ? $this->attributes->custom_amounts : [];
-		$this->pwyw_recurring = is_array($this->attributes->pwyw_recurring) ? $this->attributes->pwyw_recurring : [];
+		$this->custom_amounts = self::sanitize_pwyw_amounts(is_array($this->attributes->custom_amounts) ? $this->attributes->custom_amounts : []);
+		$this->pwyw_recurring = self::sanitize_pwyw_recurring(is_array($this->attributes->pwyw_recurring) ? $this->attributes->pwyw_recurring : []);
 
 		/*
 		 * Loads the current customer, if it exists.
@@ -1773,6 +1773,29 @@ class Cart implements \JsonSerializable {
 					return false;
 				}
 
+				/**
+				 * Maximum allowed amount for PWYW products.
+				 *
+				 * @since 2.4.11
+				 * @param float   $max_amount The maximum allowed amount.
+				 * @param \WP_Ultimo\Models\Product $product The product.
+				 */
+				$max_amount = (float) apply_filters('wu_pwyw_maximum_amount', 50000.00, $product);
+
+				if ($custom_amount > $max_amount) {
+					$this->errors->add(
+						'pwyw-above-maximum',
+						sprintf(
+							// translators: %1$s is the product name, %2$s is the maximum amount formatted as currency
+							__('The amount for %1$s cannot exceed %2$s.', 'ultimate-multisite'),
+							$product->get_name(),
+							wu_format_currency($max_amount, $product->get_currency())
+						)
+					);
+
+					return false;
+				}
+
 				$amount = (float) $custom_amount;
 			} else {
 				// Use suggested amount as default
@@ -2991,5 +3014,57 @@ class Cart implements \JsonSerializable {
 		$product_id = (int) $product_id;
 
 		return (bool) wu_get_isset($this->pwyw_recurring, $product_id, false);
+	}
+
+	/**
+	 * Sanitize PWYW custom amounts array from user input.
+	 *
+	 * Ensures all keys are integers (product IDs) and all values are non-negative floats.
+	 *
+	 * @since 2.4.11
+	 * @param array $amounts Raw amounts array from request.
+	 * @return array<int, float> Sanitized amounts.
+	 */
+	private static function sanitize_pwyw_amounts(array $amounts): array {
+
+		$clean = [];
+
+		foreach ($amounts as $key => $value) {
+			$product_id = (int) $key;
+
+			if ($product_id <= 0 || ! is_scalar($value)) {
+				continue;
+			}
+
+			$clean[ $product_id ] = max(0.0, (float) $value);
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * Sanitize PWYW recurring choices array from user input.
+	 *
+	 * Ensures all keys are integers (product IDs) and all values are booleans.
+	 *
+	 * @since 2.4.11
+	 * @param array $recurring Raw recurring array from request.
+	 * @return array<int, bool> Sanitized recurring choices.
+	 */
+	private static function sanitize_pwyw_recurring(array $recurring): array {
+
+		$clean = [];
+
+		foreach ($recurring as $key => $value) {
+			$product_id = (int) $key;
+
+			if ($product_id <= 0 || ! is_scalar($value)) {
+				continue;
+			}
+
+			$clean[ $product_id ] = (bool) $value;
+		}
+
+		return $clean;
 	}
 }
