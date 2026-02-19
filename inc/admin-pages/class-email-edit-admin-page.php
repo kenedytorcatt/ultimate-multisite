@@ -475,9 +475,9 @@ class Email_Edit_Admin_Page extends Edit_Admin_Page {
 	 * Handles the toggles.
 	 *
 	 * @since 2.0.0
-	 * @return void
+	 * @return bool
 	 */
-	public function handle_save(): void {
+	public function handle_save(): bool {
 
 		$_POST['schedule'] = wu_request('schedule');
 
@@ -485,7 +485,7 @@ class Email_Edit_Admin_Page extends Edit_Admin_Page {
 
 		$_POST['custom_sender'] = wu_request('custom_sender');
 
-		parent::handle_save();
+		return parent::handle_save();
 	}
 
 	/**

@@ -572,9 +572,9 @@ class Domain_Edit_Admin_Page extends Edit_Admin_Page {
 	 * Should implement the processes necessary to save the changes made to the object.
 	 *
 	 * @since 2.0.0
-	 * @return void
+	 * @return bool
 	 */
-	public function handle_save(): void {
+	public function handle_save(): bool {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verification happens in parent::handle_save()
 		if ( ! wu_request('primary_domain')) {
@@ -593,6 +593,6 @@ class Domain_Edit_Admin_Page extends Edit_Admin_Page {
 
 		wu_enqueue_async_action('wu_async_process_domain_stage', ['domain_id' => $this->get_object()->get_id()], 'domain');
 
-		parent::handle_save();
+		return parent::handle_save();
 	}
 }
