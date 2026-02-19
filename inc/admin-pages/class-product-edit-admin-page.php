@@ -1159,9 +1159,9 @@ class Product_Edit_Admin_Page extends Edit_Admin_Page {
 	 * Should implement the processes necessary to save the changes made to the object.
 	 *
 	 * @since 2.0.0
-	 * @return void
+	 * @return bool
 	 */
-	public function handle_save(): void {
+	public function handle_save(): bool {
 		/*
 		 * Set the recurring value to zero if the toggle is disabled.
 		 */
@@ -1212,6 +1212,6 @@ class Product_Edit_Admin_Page extends Edit_Admin_Page {
 			$_POST['taxable'] = 0;
 		}
 
-		parent::handle_save();
+		return parent::handle_save();
 	}
 }
