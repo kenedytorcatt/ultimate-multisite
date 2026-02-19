@@ -1530,7 +1530,7 @@ class Checkout_Form_Edit_Admin_Page extends Edit_Admin_Page {
 		 */
 		ob_start();
 
-		parent::handle_save();
+		$result = parent::handle_save();
 
 		$object = $this->get_object();
 
@@ -1547,7 +1547,7 @@ class Checkout_Form_Edit_Admin_Page extends Edit_Admin_Page {
 		}
 
 		wp_ob_end_flush_all();
-		return true;
+		return $result;
 	}
 
 	/**

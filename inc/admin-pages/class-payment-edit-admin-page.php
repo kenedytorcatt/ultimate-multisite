@@ -1310,9 +1310,9 @@ class Payment_Edit_Admin_Page extends Edit_Admin_Page {
 	 *
 	 * @todo: This can not be handled here.
 	 * @since 2.0.0
-	 * @return void
+	 * @return bool
 	 */
-	public function handle_save(): void {
+	public function handle_save(): bool {
 
 		$this->get_object()->recalculate_totals()->save();
 
@@ -1328,6 +1328,6 @@ class Payment_Edit_Admin_Page extends Edit_Admin_Page {
 			}
 		}
 
-		parent::handle_save();
+		return parent::handle_save();
 	}
 }
