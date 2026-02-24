@@ -10,7 +10,7 @@
 			mounted: function() {
 				var that = this;
 				this.loading = true;
-				
+
 				setTimeout(() => {
 					$.ajax({
 						url: ajaxurl,
@@ -20,10 +20,14 @@
 							integration: wu_integration_test_data.integration_id,
 						},
 						success: function(response) {
-							console.log(response);
 							that.loading = false;
 							that.success = response.success;
 							that.results = response.data;
+						},
+						error: function() {
+							that.loading = false;
+							that.success = false;
+							that.results = wu_integration_test_data.error_message || 'Connection test failed. Please try again.';
 						}
 					});
 				}, 1000);
