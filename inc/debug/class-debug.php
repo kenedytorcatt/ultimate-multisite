@@ -57,6 +57,8 @@ class Debug {
 	public function add_additional_hooks(): void {
 
 		add_action('wu_header_left', [$this, 'add_debug_links']);
+
+		add_action('wp_footer', [$this, 'render_checkout_autofill_button']);
 	}
 
 	/**
@@ -943,6 +945,81 @@ class Debug {
 		$events_table = "{$wpdb->base_prefix}wu_events";
 
 		$this->reset_table($events_table, $ids);
+	}
+
+	/**
+	 * Renders a button at the top of the checkout form that fills fields with random data.
+	 *
+	 * @since 2.4.11
+	 * @return void
+	 */
+	public function render_checkout_autofill_button(): void {
+
+		?>
+		<button
+			type="button"
+			id="wu-debug-autofill"
+			style="position:fixed;bottom:20px;right:20px;z-index:99999;padding:8px 18px;background:#7c3aed;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.3);"
+		>
+			&#9881; Fill with random data
+		</button>
+		<script>
+		(function() {
+			var btn = document.getElementById('wu-debug-autofill');
+			if (!document.getElementById('wu_form')) {
+				btn.style.display = 'none';
+				return;
+			}
+			btn.addEventListener('click', function() {
+			var r = Math.random().toString(36).substring(2, 8);
+			var form = document.getElementById('wu_form');
+			var vue = form ? form.__vue__ : null;
+
+			if (!vue) {
+				return;
+			}
+
+			// Select paid plan via Vue method
+			vue.add_plan(2);
+
+			// Set all fields
+			vue.username = 'user' + r;
+			vue.email_address = 'user' + r + '@test.com';
+			vue.site_title = 'Test Site ' + r;
+			vue.subdomain_url = 'site' + r;
+			vue.gateway = 'stripe';
+
+			// Generate a strong password
+			var pw_value = 'Tst!' + r + '9Zk#' + Math.floor(Math.random() * 900 + 100);
+			var pw = document.getElementById('field-password');
+			if (pw) {
+				pw.value = pw_value;
+				pw.dispatchEvent(new Event('input', {bubbles: true}));
+			}
+			var pc = document.getElementById('field-password_conf');
+			if (pc) {
+				pc.value = pw_value;
+				pc.dispatchEvent(new Event('input', {bubbles: true}));
+			}
+
+			// Show test card hint near Stripe Payment Element once it loads
+			setTimeout(function() {
+				var paymentEl = document.getElementById('payment-element');
+				if (paymentEl) {
+					var hint = document.getElementById('wu-debug-stripe-hint');
+					if (!hint) {
+						hint = document.createElement('div');
+						hint.id = 'wu-debug-stripe-hint';
+						hint.style.cssText = 'margin-top:8px;padding:8px 12px;background:#f0e6ff;border:1px solid #7c3aed;border-radius:4px;font-size:12px;color:#333;';
+						hint.innerHTML = '<strong>Test card:</strong> 4242 4242 4242 4242 &nbsp; Exp: 12/34 &nbsp; CVC: 123 &nbsp; ZIP: 12345';
+						paymentEl.parentNode.appendChild(hint);
+					}
+				}
+			}, 3000);
+		});
+		})();
+		</script>
+		<?php
 	}
 
 	/**
