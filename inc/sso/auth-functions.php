@@ -189,7 +189,7 @@ if ( ! function_exists('auth_redirect') ) :
 		 */
 		$secure = apply_filters('secure_auth_redirect', $secure); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
-		$request_uri = sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'] ?? ''));
+		$request_uri = wp_unslash($_SERVER['REQUEST_URI'] ?? ''); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$host        = sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'] ?? ''));
 		// If https is required and request is http, redirect.
 		if ( $secure && ! is_ssl() && str_contains($request_uri, 'wp-admin') ) {

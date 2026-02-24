@@ -385,7 +385,7 @@ class SSO {
 		$_SERVER['REQUEST_URI'] = str_replace(
 			'https://a.com/',
 			'',
-			remove_query_arg('sso', 'https://a.com/' . sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'] ?? '')))
+			remove_query_arg('sso', 'https://a.com/' . wp_unslash($_SERVER['REQUEST_URI'] ?? '')) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		);
 		return null;
 	}
