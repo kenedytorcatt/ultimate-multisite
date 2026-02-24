@@ -83,6 +83,10 @@ class ServerPilot_Integration extends Integration {
 				'title'       => __('ServerPilot API Key', 'ultimate-multisite'),
 				'desc'        => __('The API Key retrieved in the previous step.', 'ultimate-multisite'),
 				'placeholder' => __('e.g. eYP0Jo3Fzzm5SOZCi5nLR0Mki2lbYZ', 'ultimate-multisite'),
+				'type'        => 'password',
+				'html_attr'   => [
+					'autocomplete' => 'new-password',
+				],
 			],
 			'WU_SERVER_PILOT_APP_ID'    => [
 				'title'       => __('ServerPilot App ID', 'ultimate-multisite'),

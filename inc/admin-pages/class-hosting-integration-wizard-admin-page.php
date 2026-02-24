@@ -388,24 +388,6 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 
 		wp_enqueue_script('wu-vue');
 
-		wu_get_template(
-			'wizards/host-integrations/test',
-			[
-				'screen'      => get_current_screen(),
-				'page'        => $this,
-				'integration' => $this->integration,
-			]
-		);
-	}
-
-	/**
-	 * Register the script for the test page.
-	 *
-	 * @return void
-	 */
-	public function register_scripts() {
-		parent::register_scripts();
-
 		wp_enqueue_script(
 			'wu-integration-test',
 			wu_get_asset('integration-test.js', 'js'),
@@ -420,9 +402,19 @@ class Hosting_Integration_Wizard_Admin_Page extends Wizard_Admin_Page {
 			'wu-integration-test',
 			'var wu_integration_test_data = {
 				integration_id: "' . esc_js($this->integration->get_id()) . '",
-				waiting_message: "' . esc_js(__('Waiting for results...', 'ultimate-multisite')) . '"
+				waiting_message: "' . esc_js(__('Waiting for results...', 'ultimate-multisite')) . '",
+				error_message: "' . esc_js(__('Connection test failed. Please try again.', 'ultimate-multisite')) . '"
 			};',
 			'before'
+		);
+
+		wu_get_template(
+			'wizards/host-integrations/test',
+			[
+				'screen'      => get_current_screen(),
+				'page'        => $this,
+				'integration' => $this->integration,
+			]
 		);
 	}
 }

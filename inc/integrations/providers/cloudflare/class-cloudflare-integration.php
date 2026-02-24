@@ -86,6 +86,10 @@ class Cloudflare_Integration extends Integration {
 			'WU_CLOUDFLARE_API_KEY' => [
 				'title'       => __('API Key', 'ultimate-multisite'),
 				'placeholder' => __('e.g. xKGbxxVDpdcUv9dUzRf4i4ngv0QNf1wCtbehiec_o', 'ultimate-multisite'),
+				'type'        => 'password',
+				'html_attr'   => [
+					'autocomplete' => 'new-password',
+				],
 			],
 		];
 	}
