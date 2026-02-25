@@ -573,9 +573,8 @@ class Debug {
 			add_filter('wu_tour_finished', '__return_false');
 
 			add_action(
-				'plugins_loaded',
+				'init',
 				function () {
-
 					do_action('wp_ultimo_debug');
 				}
 			);
