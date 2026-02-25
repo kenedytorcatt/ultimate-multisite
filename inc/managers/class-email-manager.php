@@ -481,6 +481,58 @@ class Email_Manager extends Base_Manager {
 			]
 		);
 
+		/*
+		 * Payment Failed - Customer
+		 */
+		$this->register_default_system_email(
+			[
+				'event'   => 'payment_failed',
+				'slug'    => 'payment_failed_customer',
+				'target'  => 'customer',
+				'title'   => __('Your payment could not be processed', 'ultimate-multisite'),
+				'content' => wu_get_template_contents('emails/customer/payment-failed'),
+			]
+		);
+
+		/*
+		 * Payment Failed - Admin
+		 */
+		$this->register_default_system_email(
+			[
+				'event'   => 'payment_failed',
+				'slug'    => 'payment_failed_admin',
+				'target'  => 'admin',
+				'title'   => __('A recurring payment has failed!', 'ultimate-multisite'),
+				'content' => wu_get_template_contents('emails/admin/payment-failed'),
+			]
+		);
+
+		/*
+		 * Membership Expired - Customer
+		 */
+		$this->register_default_system_email(
+			[
+				'event'   => 'membership_expired',
+				'slug'    => 'membership_expired_customer',
+				'target'  => 'customer',
+				'title'   => __('Your membership has expired', 'ultimate-multisite'),
+				'content' => wu_get_template_contents('emails/customer/membership-expired'),
+			]
+		);
+
+		/*
+		 * Membership Expired - Admin
+		 */
+		$this->register_default_system_email(
+			[
+				'event'   => 'membership_expired',
+				'slug'    => 'membership_expired_admin',
+				'target'  => 'admin',
+				'title'   => __('A membership has expired!', 'ultimate-multisite'),
+				'content' => wu_get_template_contents('emails/admin/membership-expired'),
+			]
+		);
+
 		do_action('wu_system_emails_after_register');
 	}
 

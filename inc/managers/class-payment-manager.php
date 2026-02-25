@@ -105,11 +105,24 @@ class Payment_Manager extends Base_Manager {
 	 */
 	public function handle_payment_success($payment, $membership, $gateway): void {
 
-		$payload = array_merge(
-			wu_generate_event_payload('payment', $payment),
-			wu_generate_event_payload('membership', $membership),
-			wu_generate_event_payload('customer', $membership->get_customer())
-		);
+		$payload = wu_generate_event_payload('payment', $payment);
+
+		if ($membership) {
+			$payload = array_merge(
+				$payload,
+				wu_generate_event_payload('membership', $membership),
+				wu_generate_event_payload('customer', $membership->get_customer())
+			);
+		} else {
+			$customer = $payment->get_customer();
+
+			if ($customer) {
+				$payload = array_merge(
+					$payload,
+					wu_generate_event_payload('customer', $customer)
+				);
+			}
+		}
 
 		wu_do_event('payment_received', $payload);
 	}

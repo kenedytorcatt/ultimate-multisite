@@ -84,6 +84,14 @@ function wu_get_checkout_form_by_slug($checkout_form_slug) {
 		$checkout_form->set_settings($checkout_fields);
 
 		return $checkout_form;
+	} elseif ('wu-pay-invoice' === $checkout_form_slug) {
+		$checkout_form = new \WP_Ultimo\Models\Checkout_Form();
+
+		$checkout_fields = Checkout_Form::pay_invoice_form_fields();
+
+		$checkout_form->set_settings($checkout_fields);
+
+		return $checkout_form;
 	}
 
 	return \WP_Ultimo\Models\Checkout_Form::get_by('slug', $checkout_form_slug);

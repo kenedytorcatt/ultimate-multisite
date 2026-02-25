@@ -138,7 +138,13 @@ class Account_Admin_Page extends Base_Customer_Facing_Admin_Page {
 			return;
 		}
 
-		$update_message = apply_filters('wu_account_update_message', __('Your account was successfully updated.', 'ultimate-multisite'), $update_type);
+		if ('payment_method' === $update_type) {
+			$update_message = __('Your payment method was successfully updated.', 'ultimate-multisite');
+		} else {
+			$update_message = __('Your account was successfully updated.', 'ultimate-multisite');
+		}
+
+		$update_message = apply_filters('wu_account_update_message', $update_message, $update_type);
 
 		WP_Ultimo()->notices->add($update_message);
 	}

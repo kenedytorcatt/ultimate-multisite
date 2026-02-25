@@ -198,6 +198,38 @@ abstract class Base_Gateway {
 		return $this->id;
 	}
 
+	/**
+	 * Returns payment method display info for the given membership.
+	 *
+	 * Gateways that support displaying the payment method (e.g. card brand + last4)
+	 * should override this method.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param \WP_Ultimo\Models\Membership $membership The membership.
+	 * @return array{brand: string, last4: string}|null Payment method info, or null.
+	 */
+	public function get_payment_method_display($membership): ?array {
+		unset($membership);
+		return null;
+	}
+
+	/**
+	 * Returns a URL for changing the payment method for the given membership.
+	 *
+	 * Gateways that support payment method changes (e.g. Stripe Billing Portal)
+	 * should override this method.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param \WP_Ultimo\Models\Membership $membership The membership.
+	 * @return string|null The URL, or null if not supported.
+	 */
+	public function get_change_payment_method_url($membership) {
+		unset($membership);
+		return null;
+	}
+
 	/*
 	 * Required Methods.
 	 *
