@@ -511,6 +511,7 @@ final class WP_Ultimo {
 		\WP_Ultimo\UI\Current_Membership_Element::get_instance();
 		\WP_Ultimo\UI\Billing_Info_Element::get_instance();
 		\WP_Ultimo\UI\Invoices_Element::get_instance();
+		\WP_Ultimo\UI\Payment_Methods_Element::get_instance();
 		\WP_Ultimo\UI\Site_Actions_Element::get_instance();
 
 		\WP_Ultimo\UI\Account_Summary_Element::get_instance();
