@@ -799,7 +799,6 @@ final class WP_Ultimo {
 		new WP_Ultimo\Admin_Pages\Customer_Panel\Add_New_Site_Admin_Page();
 		new WP_Ultimo\Admin_Pages\Customer_Panel\Checkout_Admin_Page();
 		new WP_Ultimo\Admin_Pages\Customer_Panel\Template_Switching_Admin_Page();
-		new WP_Ultimo\Admin_Pages\Customer_Panel\Addon_Catalog_Admin_Page();
 
 		new WP_Ultimo\Tax\Dashboard_Taxes_Tab();
 
