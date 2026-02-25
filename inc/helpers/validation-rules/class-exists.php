@@ -53,6 +53,11 @@ class Exists extends Rule {
 			]
 		);
 
+		// Allow 0/empty as "no association" for optional foreign keys.
+		if (empty($value)) {
+			return true;
+		}
+
 		$column = $this->parameter('column');
 		$model  = $this->parameter('model');
 
