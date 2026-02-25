@@ -11,9 +11,9 @@
 
 namespace WP_Ultimo\Gateways;
 
+use Stripe\Exception\ApiErrorException;
 use Stripe\PaymentMethod;
-use Stripe;
-use WP_Ultimo\Checkout\Cart;
+use WP_Ultimo\Exception\Runtime_Exception;
 
 // Exit if accessed directly
 defined('ABSPATH') || exit;
@@ -206,8 +206,10 @@ class Stripe_Checkout_Gateway extends Base_Stripe_Gateway {
 	 * intents for Stripe to make the experience more
 	 * streamlined.
 	 *
+	 * @return \WP_Error|array
+	 * @throws Runtime_Exception Something happened creating the client.
+	 * @throws ApiErrorException Something bag happened sending an API request.
 	 * @since 2.0.0
-	 * @return void|array
 	 */
 	public function run_preflight() {
 
@@ -293,27 +295,92 @@ class Stripe_Checkout_Gateway extends Base_Stripe_Gateway {
 			'metadata'                   => $metadata,
 		];
 
-		if ($this->order->should_auto_renew()) {
-			$stripe_cart               = $this->build_stripe_cart($this->order);
-			$stripe_non_recurring_cart = $this->build_non_recurring_cart($this->order);
+		if ($this->order->should_auto_renew() && $this->order->has_recurring()) {
+			$subscription_data['mode'] = 'subscription';
+
+			$stripe_cart = $this->build_stripe_cart($this->order);
+
+			if (is_wp_error($stripe_cart)) {
+				return $stripe_cart;
+			}
 
 			/*
-			 * Adds recurring stuff.
+			 * In subscription mode, recurring items go in line_items
+			 * with their plan/price IDs. The deprecated subscription_data[items]
+			 * parameter has been replaced by line_items.
 			 */
-			$subscription_data['subscription_data'] = [
-				'items' => array_values($stripe_cart),
-			];
+			$line_items = [];
+
+			foreach (array_values($stripe_cart) as $plan_data) {
+				$item = [
+					'price'    => $plan_data['plan'],
+					'quantity' => 1,
+				];
+
+				if ( ! empty($plan_data['tax_rates'])) {
+					$item['tax_rates'] = $plan_data['tax_rates'];
+				}
+
+				$line_items[] = $item;
+			}
+
+			/*
+			 * Add non-recurring items (setup fees, etc.)
+			 */
+			$stripe_non_recurring_cart = $this->build_non_recurring_cart($this->order);
+
+			$line_items = array_merge($line_items, $stripe_non_recurring_cart);
+
+			$subscription_data['line_items']        = $line_items;
+			$subscription_data['subscription_data'] = [];
+
+			/**
+			 * If its a downgrade, we need to set as a trial,
+			 * billing_cycle_anchor isn't supported by Checkout.
+			 * (https://stripe.com/docs/api/checkout/sessions/create)
+			 */
+			if ($this->order->get_cart_type() === 'downgrade') {
+				$next_charge      = $this->order->get_billing_next_charge_date();
+				$next_charge_date = \DateTime::createFromFormat('U', $next_charge);
+				$current_time     = new \DateTime();
+
+				if ($current_time < $next_charge_date) {
+
+					// The `trial_end` date has to be at least 2 days in the future.
+					$next_charge = $next_charge_date->diff($current_time)->days > 2 ? $next_charge : strtotime('+2 days');
+
+					$subscription_data['subscription_data']['trial_end'] = $next_charge;
+				}
+			}
+
+			/*
+			 * Handle trial periods.
+			 */
+			if ($this->order->has_trial()) {
+				$subscription_data['subscription_data']['trial_end'] = $this->order->get_billing_start_date();
+			}
 		} else {
+			$subscription_data['mode'] = 'payment';
+
 			/*
 			 * Create non-recurring only cart.
 			 */
 			$stripe_non_recurring_cart = $this->build_non_recurring_cart($this->order, true);
-		}
 
-		/*
-		 * Add non-recurring line items
-		 */
-		$subscription_data['line_items'] = $stripe_non_recurring_cart;
+			/*
+			 * If there are no payable line items (e.g. $0 checkout with 100% coupon),
+			 * Stripe Checkout cannot process this. Return an error so the
+			 * checkout falls back gracefully.
+			 */
+			if (empty($stripe_non_recurring_cart)) {
+				return new \WP_Error(
+					'stripe-checkout-no-items',
+					__('No payable items for Stripe Checkout. The order total may be zero.', 'ultimate-multisite')
+				);
+			}
+
+			$subscription_data['line_items'] = $stripe_non_recurring_cart;
+		}
 
 		/**
 		 * If we have pro-rata credit (in case of an upgrade, for example)
@@ -325,32 +392,6 @@ class Stripe_Checkout_Gateway extends Base_Stripe_Gateway {
 			$subscription_data['discounts'] = [
 				['coupon' => $s_coupon],
 			];
-		}
-
-		/**
-		 * If its a downgrade, we need to set as a trial,
-		 * billing_cycle_anchor isn't supported by Checkout.
-		 * (https://stripe.com/docs/api/checkout/sessions/create)
-		 */
-		if ($this->order->get_cart_type() === 'downgrade') {
-			$next_charge      = $this->order->get_billing_next_charge_date();
-			$next_charge_date = \DateTime::createFromFormat('U', $next_charge);
-			$current_time     = new \DateTime();
-
-			if ($current_time < $next_charge_date) {
-
-				// The `trial_end` date has to be at least 2 days in the future.
-				$next_charge = $next_charge_date->diff($current_time)->days > 2 ? $next_charge : strtotime('+2 days');
-
-				$subscription_data['subscription_data']['trial_end'] = $next_charge;
-			}
-		}
-
-		/*
-		 * Handle trial periods.
-		 */
-		if ($this->order->has_trial() && $this->order->has_recurring()) {
-			$subscription_data['subscription_data']['trial_end'] = $this->order->get_billing_start_date();
 		}
 
 		$session = $this->get_stripe_client()->checkout->sessions->create(apply_filters('wu_stripe_checkout_subscription_data', $subscription_data, $this));
