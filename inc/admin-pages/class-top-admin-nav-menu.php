@@ -195,31 +195,60 @@ class Top_Admin_Nav_Menu {
 		 */
 		$settings_tabs = Settings::get_instance()->get_sections();
 
-		$has_addons = false;
+		$addon_tabs = [];
 
 		foreach ($settings_tabs as $tab => $tab_info) {
 			if (wu_get_isset($tab_info, 'invisible')) {
 				continue;
 			}
 
-			$parent = 'wp-ultimo-settings';
-
 			if (wu_get_isset($tab_info, 'addon', false)) {
-				$parent = 'wp-ultimo-settings-addons';
+				$addon_tabs[ $tab ] = $tab_info;
+
+				continue;
 			}
 
-			$settings_tab = [
-				'id'     => 'wp-ultimo-settings-' . $tab,
-				'parent' => $parent,
-				'title'  => $tab_info['title'],
-				'href'   => network_admin_url('admin.php?page=wp-ultimo-settings&tab=') . $tab,
-				'meta'   => [
-					'class' => 'wp-ultimo-top-menu',
-					'title' => __('Go to the settings page', 'ultimate-multisite'),
-				],
-			];
+			$wp_admin_bar->add_node(
+				[
+					'id'     => 'wp-ultimo-settings-' . $tab,
+					'parent' => 'wp-ultimo-settings',
+					'title'  => $tab_info['title'],
+					'href'   => network_admin_url('admin.php?page=wp-ultimo-settings&tab=') . $tab,
+					'meta'   => [
+						'class' => 'wp-ultimo-top-menu',
+						'title' => __('Go to the settings page', 'ultimate-multisite'),
+					],
+				]
+			);
+		}
 
-			$wp_admin_bar->add_node($settings_tab);
+		if ($addon_tabs) {
+			$wp_admin_bar->add_node(
+				[
+					'id'     => 'wp-ultimo-settings-addons',
+					'parent' => 'wp-ultimo-settings',
+					'group'  => true,
+					'title'  => __('Addon Settings', 'ultimate-multisite'),
+					'meta'   => [
+						'class' => 'ab-sub-secondary',
+					],
+				]
+			);
+
+			foreach ($addon_tabs as $tab => $tab_info) {
+				$wp_admin_bar->add_node(
+					[
+						'id'     => 'wp-ultimo-settings-' . $tab,
+						'parent' => 'wp-ultimo-settings-addons',
+						'title'  => $tab_info['title'],
+						'href'   => network_admin_url('admin.php?page=wp-ultimo-settings&tab=') . $tab,
+						'meta'   => [
+							'class' => 'wp-ultimo-top-menu',
+							'title' => __('Go to the settings page', 'ultimate-multisite'),
+						],
+					]
+				);
+			}
 		}
 	}
 }
