@@ -97,7 +97,7 @@ class Payment_List_Admin_Page_Test extends WP_UnitTestCase {
 		$links = $this->page->action_links();
 
 		$this->assertIsArray($links);
-		$this->assertCount(1, $links);
+		$this->assertCount(2, $links);
 	}
 
 	/**
