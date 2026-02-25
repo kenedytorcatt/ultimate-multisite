@@ -1,7 +1,7 @@
 === Ultimate Multisite – WordPress Multisite SaaS & WaaS Platform ===
 Contributors: aanduque, superdav42, vvwb, surferking
 Donate link: https://github.com/sponsors/superdav42/
-Tags: ultimate multisite, wordpress multisite, multisite plugin, multisite saas, waas, domain mapping, wp ultimo
+Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
@@ -9,7 +9,7 @@ Stable tag: 2.4.11
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Ultimate Multisite is a WordPress Multisite plugin that turns your network into a complete Website-as-a-Service (WaaS) platform with subscriptions, site provisioning, domain mapping, and customer management.
+Ultimate Multisite turns your WordPress network into a WaaS platform with subscriptions, site provisioning, and domain mapping.
 
 == Description ==
 
@@ -225,6 +225,9 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.4.11] - Released on 2026-XX-XX
+- Fix: %2F being striped breaking some WC Urls.
+- Improved: Support for changing payment methods of the membership.
 
 Version [2.4.11] - Released on 2026-02-16
 - New: Settings API for remote settings management.
