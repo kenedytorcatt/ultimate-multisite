@@ -9,6 +9,11 @@
 	<exclude-pattern>/dependencies/</exclude-pattern>
 	<exclude-pattern>/../wordpress/</exclude-pattern>
 
+	<!-- Test files use PHPUnit naming conventions (PascalCase), not WordPress file naming. -->
+	<rule ref="WordPress.Files.FileName">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+
 	<!-- How to scan -->
 	<!-- Usage instructions: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Usage -->
 	<!-- Annotated ruleset: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Annotated-ruleset.xml -->

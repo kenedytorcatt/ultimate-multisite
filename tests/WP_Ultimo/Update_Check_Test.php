@@ -122,15 +122,17 @@ class Update_Check_Test extends WP_UnitTestCase {
 		$args = [
 			'timeout' => 30,
 			'body'    => [
-				'plugins' => wp_json_encode([
-					'plugins' => [
-						$this->plugin_file => [
-							'Name'    => 'Ultimate Multisite',
-							'Version' => '2.4.11',
+				'plugins' => wp_json_encode(
+					[
+						'plugins' => [
+							$this->plugin_file => [
+								'Name'    => 'Ultimate Multisite',
+								'Version' => '2.4.11',
+							],
 						],
-					],
-					'active'  => [ $this->plugin_file ],
-				]),
+						'active'  => [$this->plugin_file],
+					]
+				),
 			],
 		];
 
@@ -184,11 +186,11 @@ class Update_Check_Test extends WP_UnitTestCase {
 	public function test_beta_update_filter_does_not_remove_wporg_data(): void {
 
 		// Create a mock transient with WordPress.org data
-		$transient                    = new \stdClass();
-		$transient->last_checked      = time();
-		$transient->checked           = [ $this->plugin_file => '2.4.10' ];
-		$transient->response          = [];
-		$transient->no_update         = [];
+		$transient                                  = new \stdClass();
+		$transient->last_checked                    = time();
+		$transient->checked                         = [$this->plugin_file => '2.4.10'];
+		$transient->response                        = [];
+		$transient->no_update                       = [];
 		$transient->no_update[ $this->plugin_file ] = (object) [
 			'id'          => 'w.org/plugins/ultimate-multisite',
 			'slug'        => 'ultimate-multisite',
