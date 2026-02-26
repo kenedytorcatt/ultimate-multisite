@@ -356,7 +356,7 @@ class Stripe_Checkout_Gateway extends Base_Stripe_Gateway {
 			/*
 			 * Handle trial periods.
 			 */
-			if ($this->order->has_trial()) {
+			elseif ($this->order->has_trial()) {
 				$subscription_data['subscription_data']['trial_end'] = $this->order->get_billing_start_date();
 			}
 		} else {

@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.4.11
+Stable tag: 2.4.12
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -225,8 +225,8 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
-Version [2.4.11] - Released on 2026-XX-XX
-- Fix: %2F being striped breaking some WC Urls.
+Version [2.4.12] - Released on 2026-XX-XX
+- Fix: %2F being stripped breaking some WC Urls.
 - Improved: Support for changing payment methods of the membership.
 
 Version [2.4.11] - Released on 2026-02-16
