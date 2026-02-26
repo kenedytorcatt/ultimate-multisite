@@ -97,12 +97,18 @@ class CPanel_Integration extends Integration {
 			],
 			'WU_CPANEL_API_TOKEN' => [
 				'type'        => 'password',
+				'html_attr'   => [
+					'autocomplete' => 'new-password',
+				],
 				'title'       => __('cPanel API Token (Recommended)', 'ultimate-multisite'),
 				'desc'        => __('Create in cPanel → Security → Manage API Tokens. More secure than password authentication.', 'ultimate-multisite'),
 				'placeholder' => __('e.g. U7HMR63FHY282DQZ4H5BIH16JLYSO01M', 'ultimate-multisite'),
 			],
 			'WU_CPANEL_PASSWORD'  => [
 				'type'        => 'password',
+				'html_attr'   => [
+					'autocomplete' => 'new-password',
+				],
 				'title'       => __('cPanel Password (Alternative)', 'ultimate-multisite'),
 				'desc'        => __('Only required if not using an API token above. If you use SSO to access cPanel, you may need to request direct credentials from your host.', 'ultimate-multisite'),
 				'placeholder' => __('password', 'ultimate-multisite'),

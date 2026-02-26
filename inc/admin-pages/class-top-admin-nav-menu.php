@@ -191,35 +191,66 @@ class Top_Admin_Nav_Menu {
 		}
 
 		/*
-		 * Add the sub-menus.
+		 * Add the settings sub-menus.
 		 */
-		$settings_tabs = Settings::get_instance()->get_sections();
+		if (current_user_can('wu_read_settings')) {
+			$settings_tabs = Settings::get_instance()->get_sections();
 
-		$has_addons = false;
+			$addon_tabs = [];
 
-		foreach ($settings_tabs as $tab => $tab_info) {
-			if (wu_get_isset($tab_info, 'invisible')) {
-				continue;
+			foreach ($settings_tabs as $tab => $tab_info) {
+				if (wu_get_isset($tab_info, 'invisible')) {
+					continue;
+				}
+
+				if (wu_get_isset($tab_info, 'addon', false)) {
+					$addon_tabs[ $tab ] = $tab_info;
+
+					continue;
+				}
+
+				$wp_admin_bar->add_node(
+					[
+						'id'     => 'wp-ultimo-settings-' . $tab,
+						'parent' => 'wp-ultimo-settings',
+						'title'  => $tab_info['title'],
+						'href'   => network_admin_url('admin.php?page=wp-ultimo-settings&tab=') . $tab,
+						'meta'   => [
+							'class' => 'wp-ultimo-top-menu',
+							'title' => __('Go to the settings page', 'ultimate-multisite'),
+						],
+					]
+				);
 			}
 
-			$parent = 'wp-ultimo-settings';
+			if ($addon_tabs) {
+				$wp_admin_bar->add_node(
+					[
+						'id'     => 'wp-ultimo-settings-addons',
+						'parent' => 'wp-ultimo-settings',
+						'group'  => true,
+						'title'  => __('Addon Settings', 'ultimate-multisite'),
+						'meta'   => [
+							'class' => 'ab-sub-secondary',
+						],
+					]
+				);
 
-			if (wu_get_isset($tab_info, 'addon', false)) {
-				$parent = 'wp-ultimo-settings-addons';
+				foreach ($addon_tabs as $tab => $tab_info) {
+					$wp_admin_bar->add_node(
+						[
+							'id'     => 'wp-ultimo-settings-' . $tab,
+							'parent' => 'wp-ultimo-settings-addons',
+							'title'  => $tab_info['title'],
+							'href'   => network_admin_url('admin.php?page=wp-ultimo-settings&tab=') . $tab,
+							'meta'   => [
+								'class' => 'wp-ultimo-top-menu',
+								'title' => __('Go to the settings page', 'ultimate-multisite'),
+							],
+						]
+					);
+				}
 			}
-
-			$settings_tab = [
-				'id'     => 'wp-ultimo-settings-' . $tab,
-				'parent' => $parent,
-				'title'  => $tab_info['title'],
-				'href'   => network_admin_url('admin.php?page=wp-ultimo-settings&tab=') . $tab,
-				'meta'   => [
-					'class' => 'wp-ultimo-top-menu',
-					'title' => __('Go to the settings page', 'ultimate-multisite'),
-				],
-			];
-
-			$wp_admin_bar->add_node($settings_tab);
 		}
 	}
 }

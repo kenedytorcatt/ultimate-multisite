@@ -786,6 +786,13 @@
 
 					} // end if;
 
+					// If the strength meter element doesn't exist, skip validation
+					if (! jQuery('#pass-strength-result').length) {
+
+						return;
+
+					} // end if;
+
 					// Use the shared WU_PasswordStrength utility
 					if (typeof window.WU_PasswordStrength !== 'undefined') {
 

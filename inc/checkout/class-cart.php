@@ -1696,8 +1696,12 @@ class Cart implements \JsonSerializable {
 		 * want access this to fetch price variations.
 		 */
 		if (empty($this->duration) || $product->is_recurring() === false) {
-			$this->duration      = $product->get_duration();
-			$this->duration_unit = $product->get_duration_unit();
+			// Products with independent billing cycles (e.g. domain registrations)
+			// should not set the cart's duration, as they bill on their own schedule.
+			if ( ! wu_has_independent_billing_cycle($product->get_type())) {
+				$this->duration      = $product->get_duration();
+				$this->duration_unit = $product->get_duration_unit();
+			}
 		}
 
 		if (empty($this->currency)) {

@@ -53,6 +53,11 @@ class Exists extends Rule {
 			]
 		);
 
+		// Allow explicit "no association" sentinels for optional foreign keys.
+		if ($value === null || $value === '' || $value === 0 || $value === '0') {
+			return true;
+		}
+
 		$column = $this->parameter('column');
 		$model  = $this->parameter('model');
 

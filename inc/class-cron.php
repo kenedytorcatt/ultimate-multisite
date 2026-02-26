@@ -223,14 +223,14 @@ class Cron implements \WP_Ultimo\Interfaces\Singleton {
 	 *
 	 * @param int  $membership_id The membership id.
 	 * @param bool $trial If the membership was in a trial state before.
-	 * @return \WP_Error|bool
+	 * @return void
 	 */
 	public function async_create_renewal_payment($membership_id, $trial = false) {
 
 		$membership = wu_get_membership($membership_id);
 
 		if (empty($membership)) {
-			return false;
+			return;
 		}
 
 		/*
@@ -272,10 +272,8 @@ class Cron implements \WP_Ultimo\Interfaces\Singleton {
 
 			wu_do_event('renewal_payment_created', $payload);
 
-			return $saved;
+			return;
 		}
-
-		return true;
 	}
 
 	/**
@@ -332,14 +330,14 @@ class Cron implements \WP_Ultimo\Interfaces\Singleton {
 	 * @since 2.0.0
 	 *
 	 * @param int $membership_id The membership ID.
-	 * @return \WP_Error|true
+	 * @return void
 	 */
 	public function async_mark_membership_as_expired($membership_id) {
 
 		$membership = wu_get_membership($membership_id);
 
 		if (empty($membership)) {
-			return false;
+			return;
 		}
 
 		/*
@@ -354,6 +352,19 @@ class Cron implements \WP_Ultimo\Interfaces\Singleton {
 		 */
 		$membership->set_skip_validation(true);
 
-		return $membership->save();
+		$result = $membership->save();
+
+		if ( ! is_wp_error($result) && $result) {
+			$customer = $membership->get_customer();
+
+			if ($customer) {
+				$payload = array_merge(
+					wu_generate_event_payload('membership', $membership),
+					wu_generate_event_payload('customer', $customer)
+				);
+
+				wu_do_event('membership_expired', $payload);
+			}
+		}
 	}
 }

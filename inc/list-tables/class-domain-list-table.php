@@ -84,6 +84,16 @@ class Domain_List_Table extends Base_List_Table {
 
 		$html = "<span class='wu-font-mono'><strong>{$domain}</strong></span>";
 
+		/**
+		 * Filters the HTML output for the domain column.
+		 *
+		 * @since 2.4.0
+		 *
+		 * @param string                    $html The column HTML.
+		 * @param \WP_Ultimo\Models\Domain  $item The domain object.
+		 */
+		$html = apply_filters('wu_domain_list_column_domain', $html, $item);
+
 		$actions = [
 			'edit'   => sprintf('<a href="%s">%s</a>', wu_network_admin_url('wp-ultimo-edit-domain', $url_atts), __('Edit', 'ultimate-multisite')),
 			'delete' => sprintf('<a title="%s" class="wubox" href="%s">%s</a>', __('Delete', 'ultimate-multisite'), wu_get_form_url('delete_modal', $url_atts), __('Delete', 'ultimate-multisite')),

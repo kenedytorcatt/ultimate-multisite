@@ -177,7 +177,7 @@ class Site_Actions_Element extends Base_Element {
 		$fields['show_change_payment_method'] = [
 			'type'    => 'toggle',
 			'title'   => __('Show Change Payment Method', 'ultimate-multisite'),
-			'desc'    => __('Toggle to show/hide the option to cancel the current payment method.', 'ultimate-multisite'),
+			'desc'    => __('Toggle to show/hide the option to change the current payment method.', 'ultimate-multisite'),
 			'tooltip' => '',
 			'value'   => 1,
 		];
@@ -355,10 +355,10 @@ class Site_Actions_Element extends Base_Element {
 		);
 
 		wu_register_form(
-			'cancel_payment_method',
+			'change_payment_method',
 			[
-				'render'     => [$this, 'render_cancel_payment_method'],
-				'handler'    => [$this, 'handle_cancel_payment_method'],
+				'render'     => [$this, 'render_change_payment_method'],
+				'handler'    => [$this, 'handle_change_payment_method'],
 				'capability' => 'exist',
 			]
 		);
@@ -437,18 +437,23 @@ class Site_Actions_Element extends Base_Element {
 		$payment_gateway = $this->membership ? $this->membership->get_gateway() : false;
 
 		if (wu_get_isset($atts, 'show_change_payment_method') && $payment_gateway) {
-			$actions['cancel_payment_method'] = [
-				'label'        => __('Cancel Current Payment Method', 'ultimate-multisite'),
-				'icon_classes' => 'dashicons-wu-edit wu-align-middle',
-				'classes'      => 'wubox',
-				'href'         => wu_get_form_url(
-					'cancel_payment_method',
-					[
-						'membership'   => $this->membership->get_hash(),
-						'redirect_url' => wu_get_current_url(),
-					]
-				),
-			];
+			$gateway    = wu_get_gateway($payment_gateway);
+			$change_url = $gateway ? $gateway->get_change_payment_method_url($this->membership) : null;
+
+			if ($change_url) {
+				$actions['change_payment_method'] = [
+					'label'        => __('Change Payment Method', 'ultimate-multisite'),
+					'icon_classes' => 'dashicons-wu-edit wu-align-middle',
+					'classes'      => 'wubox',
+					'href'         => wu_get_form_url(
+						'change_payment_method',
+						[
+							'membership'   => $this->membership->get_hash(),
+							'redirect_url' => wu_get_current_url(),
+						]
+					),
+				];
+			}
 		}
 
 		return apply_filters('wu_element_get_site_actions', $actions, $atts, $this->site, $this->membership);
@@ -999,12 +1004,15 @@ class Site_Actions_Element extends Base_Element {
 	}
 
 	/**
-	 * Renders the cancel payment method modal.
+	 * Renders the change payment method modal.
 	 *
-	 * @since 2.1.2
+	 * Shows a description and a button that redirects the customer
+	 * to the gateway's payment method update page.
+	 *
+	 * @since 2.5.0
 	 * @return void
 	 */
-	public function render_cancel_payment_method(): void {
+	public function render_change_payment_method(): void {
 
 		$membership = wu_get_membership_by_hash(wu_request('membership'));
 
@@ -1016,8 +1024,23 @@ class Site_Actions_Element extends Base_Element {
 
 		$customer = wu_get_current_customer();
 
-		if ( ! is_super_admin() && (! $customer || $customer->get_id() !== $membership->get_customer_id())) {
+		if ( ! $error && ! is_super_admin() && (! $customer || $customer->get_id() !== $membership->get_customer_id())) {
 			$error = __('You are not allowed to do this.', 'ultimate-multisite');
+		}
+
+		$gateway_id = $membership ? $membership->get_gateway() : '';
+		$gateway    = ! empty($gateway_id) ? wu_get_gateway($gateway_id) : null;
+		$change_url = $gateway ? $gateway->get_change_payment_method_url($membership) : null;
+
+		if ( ! $error && ! $change_url) {
+			$error = __('This payment method does not support online changes.', 'ultimate-multisite');
+		}
+
+		// Store redirect URL so gateways can redirect back after payment method change.
+		$redirect_url = wu_request('redirect_url', '');
+
+		if ($redirect_url) {
+			update_user_meta(get_current_user_id(), '_wu_change_payment_redirect', esc_url_raw($redirect_url));
 		}
 
 		if ( ! empty($error)) {
@@ -1029,7 +1052,7 @@ class Site_Actions_Element extends Base_Element {
 			];
 
 			$form = new \WP_Ultimo\UI\Form(
-				'cancel_payment_method',
+				'change_payment_method',
 				$error_field,
 				[
 					'views'                 => 'admin-pages/fields',
@@ -1043,55 +1066,43 @@ class Site_Actions_Element extends Base_Element {
 			return;
 		}
 
+		$payment_info = $gateway->get_payment_method_display($membership);
+
+		$description = __('You will be redirected to update your payment details.', 'ultimate-multisite');
+
+		if ($payment_info) {
+			$description = sprintf(
+				/* translators: 1: card brand (e.g. Visa), 2: last 4 digits */
+				__('Your current payment method is %1$s ending in %2$s.<br />', 'ultimate-multisite'),
+				'<strong>' . esc_html($payment_info['brand']) . '</strong>',
+				'<strong>' . esc_html($payment_info['last4']) . '</strong>'
+			) . $description;
+		}
+
 		$fields = [
-			'membership'    => [
-				'type'  => 'hidden',
-				'value' => wu_request('membership'),
-			],
-			'redirect_url'  => [
-				'type'  => 'hidden',
-				'value' => wu_request('redirect_url'),
-			],
-			'confirm'       => [
-				'type'      => 'toggle',
-				'title'     => __('Confirm Payment Method Cancellation', 'ultimate-multisite'),
-				'desc'      => __('This action can not be undone.', 'ultimate-multisite'),
-				'html_attr' => [
-					'v-model' => 'confirmed',
-				],
-			],
-			'wu-when'       => [
-				'type'  => 'hidden',
-				'value' => base64_encode('init'), // phpcs:ignore
+			'description'   => [
+				'type' => 'note',
+				'desc' => $description,
 			],
 			'submit_button' => [
-				'type'            => 'submit',
-				'title'           => __('Cancel Payment Method', 'ultimate-multisite'),
-				'placeholder'     => __('Cancel Payment Method', 'ultimate-multisite'),
-				'value'           => 'save',
-				'classes'         => 'button button-primary wu-w-full',
+				'type'            => 'link',
+				'display_value'   => __('Change Payment Method', 'ultimate-multisite'),
+				'classes'         => 'button button-primary wu-w-full wu-text-center',
 				'wrapper_classes' => 'wu-items-end',
 				'html_attr'       => [
-					'v-bind:disabled' => '!confirmed',
+					'href'   => $change_url,
+					'target' => '_top',
 				],
 			],
 		];
 
 		$form = new \WP_Ultimo\UI\Form(
-			'cancel_payment_method',
+			'change_payment_method',
 			$fields,
 			[
 				'views'                 => 'admin-pages/fields',
 				'classes'               => 'wu-modal-form wu-widget-list wu-striped wu-m-0 wu-mt-0',
 				'field_wrapper_classes' => 'wu-w-full wu-box-border wu-items-center wu-flex wu-justify-between wu-p-4 wu-m-0 wu-border-t wu-border-l-0 wu-border-r-0 wu-border-b-0 wu-border-gray-300 wu-border-solid',
-				'html_attr'             => [
-					'data-wu-app' => 'cancel_payment_method',
-					'data-state'  => wu_convert_to_state(
-						[
-							'confirmed' => false,
-						]
-					),
-				],
 			]
 		);
 
@@ -1099,55 +1110,14 @@ class Site_Actions_Element extends Base_Element {
 	}
 
 	/**
-	 * Handles the payment method cancellation.
+	 * Handles the change payment method form.
 	 *
-	 * @since 2.1.2
+	 * This is a no-op since the modal just redirects via a link button.
+	 *
+	 * @since 2.5.0
 	 * @return void
 	 */
-	public function handle_cancel_payment_method(): void {
-
-		$membership = wu_get_membership_by_hash(wu_request('membership'));
-
-		if ( ! $membership) {
-			$error = new \WP_Error('error', __('An unexpected error happened.', 'ultimate-multisite'));
-
-			wp_send_json_error($error);
-
-			return;
-		}
-
-		$customer = wu_get_current_customer();
-
-		if ( ! is_super_admin() && (! $customer || $customer->get_id() !== $membership->get_customer_id())) {
-			$error = new \WP_Error('error', __('You are not allowed to do this.', 'ultimate-multisite'));
-
-			wp_send_json_error($error);
-
-			return;
-		}
-
-		$membership->set_gateway('');
-		$membership->set_gateway_subscription_id('');
-		$membership->set_gateway_customer_id('');
-		$membership->set_auto_renew(false);
-
-		$membership->save();
-
-		$redirect_url = wu_request('redirect_url');
-
-		$redirect_url = add_query_arg(
-			[
-				'payment_gateway_cancelled' => true,
-			],
-			$redirect_url ?? user_admin_url()
-		);
-
-		wp_send_json_success(
-			[
-				'redirect_url' => $redirect_url,
-			]
-		);
-	}
+	public function handle_change_payment_method(): void {}
 
 	/**
 	 * Renders the cancel payment method modal.
@@ -1330,6 +1300,22 @@ class Site_Actions_Element extends Base_Element {
 
 		$reason = wu_get_isset($cancellation_options, wu_request('cancellation_reason'), '');
 		try {
+			/*
+			 * Cancel the subscription on the payment gateway before
+			 * cancelling the membership. This ensures the external
+			 * subscription (e.g., WooCommerce Subscriptions, Stripe)
+			 * is properly cancelled and won't continue to charge.
+			 */
+			$gateway_id = $membership->get_gateway();
+
+			if ( ! empty($gateway_id)) {
+				$gateway = wu_get_gateway($gateway_id);
+
+				if ($gateway) {
+					$gateway->process_cancellation($membership, $customer);
+				}
+			}
+
 			$membership->cancel($reason);
 		} catch (\Exception $e) {
 			wp_send_json_error(

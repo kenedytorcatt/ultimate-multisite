@@ -250,11 +250,11 @@ defined('ABSPATH') || exit;
 
 				<div class="wu-bg-gray-100 wu-p-4 wu-rounded wu-mb-2 sm:wu-flex wu-items-center">
 
-				<div class="wu-flex-shrink-0 sm:wu-mr-4 wu-mb-4 sm:wu-mb-0">
+					<div class="wu-flex-shrink sm:wu-mr-4">
 
 					<img
-					class="wu-w-full sm:wu-w-16 sm:wu-h-16 wu-rounded wu-object-cover"
-					src="<?php echo esc_attr($site->get_featured_image('wu-thumb-medium')); ?>"
+					class="wu-mb-4 sm:wu-mb-0 wu-rounded"
+					src="<?php echo esc_attr($site->get_featured_image('thumbnail')); ?>"
 					alt="Thumbnail of Site" />
 
 				</div>

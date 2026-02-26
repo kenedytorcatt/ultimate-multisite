@@ -173,8 +173,21 @@ class Multisite_Network_Installer extends Base_Installer {
 		}
 
 		// On a single-site install, $wpdb doesn't have multisite table names set.
-		foreach ($wpdb->ms_global_tables as $table) {
+		// Explicitly set the core WordPress multisite tables that install_network()
+		// and wp_get_db_schema('global') reference via $wpdb->tablename interpolation.
+		// We cannot rely solely on $wpdb->ms_global_tables because plugins may have
+		// appended custom entries while the core defaults could be missing.
+		$wp_ms_tables = ['blogs', 'blogmeta', 'signups', 'site', 'sitemeta', 'registration_log'];
+
+		foreach ($wp_ms_tables as $table) {
 			$wpdb->$table = $wpdb->base_prefix . $table;
+		}
+
+		// Also set any additional tables registered in ms_global_tables (e.g. by addons).
+		foreach ($wpdb->ms_global_tables as $table) {
+			if (! isset($wpdb->$table)) {
+				$wpdb->$table = $wpdb->base_prefix . $table;
+			}
 		}
 
 		install_network();

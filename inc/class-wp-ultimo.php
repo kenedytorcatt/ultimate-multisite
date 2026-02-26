@@ -459,7 +459,9 @@ final class WP_Ultimo {
 		/*
 		 * Loads the debugger tools
 		 */
-		WP_Ultimo\Debug\Debug::get_instance();
+		if (defined('WP_ULTIMO_DEBUG') && WP_ULTIMO_DEBUG) {
+			WP_Ultimo\Debug\Debug::get_instance();
+		}
 
 		/*
 		 * Loads the Jumper UI
@@ -509,6 +511,7 @@ final class WP_Ultimo {
 		\WP_Ultimo\UI\Current_Membership_Element::get_instance();
 		\WP_Ultimo\UI\Billing_Info_Element::get_instance();
 		\WP_Ultimo\UI\Invoices_Element::get_instance();
+		\WP_Ultimo\UI\Payment_Methods_Element::get_instance();
 		\WP_Ultimo\UI\Site_Actions_Element::get_instance();
 
 		\WP_Ultimo\UI\Account_Summary_Element::get_instance();

@@ -18,7 +18,7 @@ use Psr\Log\LogLevel;
  * @since 2.0.0
  * @return string
  */
-function wu_get_version() {
+function wu_get_version(): string {
 
 	return class_exists(\WP_Ultimo::class) ? \WP_Ultimo::VERSION : '';
 }
@@ -29,7 +29,7 @@ function wu_get_version() {
  * @since 2.0.11
  * @return bool
  */
-function wu_is_debug() {
+function wu_is_debug(): bool {
 
 	return defined('WP_ULTIMO_DEBUG') && WP_ULTIMO_DEBUG;
 }
@@ -40,7 +40,7 @@ function wu_is_debug() {
  * @since 2.0.0
  * @return bool
  */
-function wu_is_must_use() {
+function wu_is_must_use(): bool {
 
 	return defined('WP_ULTIMO_IS_MUST_USE') && WP_ULTIMO_IS_MUST_USE;
 }
@@ -50,7 +50,7 @@ function wu_is_must_use() {
  *
  * If the key is not set, returns the $default parameter.
  * This function is a helper to serve as a shorthand for the tedious
- * and ugly $var = isset($array['key'])) ? $array['key'] : $default.
+ * and ugly $var = isset($array['key']) ? $array['key'] : $default.
  * Using this, that same line becomes wu_get_isset($array, 'key', $default);
  *
  * Since PHP 7.4, this can be replaced by the null-coalesce operator (??)
@@ -61,9 +61,10 @@ function wu_is_must_use() {
  * @param array|object $array_or_obj Array or object to check key.
  * @param string       $key Key to check.
  * @param mixed        $default_value Default value, if the key is not set.
+ *
  * @return mixed
  */
-function wu_get_isset($array_or_obj, $key, $default_value = false) {
+function wu_get_isset($array_or_obj, string $key, $default_value = false) {
 
 	if ( ! is_array($array_or_obj)) {
 		$array_or_obj = (array) $array_or_obj;
@@ -75,10 +76,11 @@ function wu_get_isset($array_or_obj, $key, $default_value = false) {
 /**
  * Returns the main site id for the network.
  *
- * @since 2.0.0
  * @return int
+ * @throws Runtime_Exception If ms_loaded did not happen.
+ * @since 2.0.0
  */
-function wu_get_main_site_id() {
+function wu_get_main_site_id(): int {
 
 	_wu_require_hook('ms_loaded');
 
@@ -88,11 +90,12 @@ function wu_get_main_site_id() {
 /**
  * This function return 'slugfied' options terms to be used as options ids.
  *
- * @since 0.0.1
  * @param string $term Returns a string based on the term and this plugin slug.
+ *
  * @return string
+ * @since 0.0.1
  */
-function wu_slugify($term) {
+function wu_slugify(string $term): string {
 
 	return "wp-ultimo_$term";
 }
@@ -100,10 +103,11 @@ function wu_slugify($term) {
 /**
  * Returns the full path to the plugin folder.
  *
- * @since 2.0.11
  * @param string $dir Path relative to the plugin root you want to access.
+ *
+ * @since 2.0.11
  */
-function wu_path($dir): string {
+function wu_path(string $dir): string {
 
 	return WP_ULTIMO_PLUGIN_DIR . $dir;
 }
@@ -111,11 +115,12 @@ function wu_path($dir): string {
 /**
  * Returns the URL to the plugin folder.
  *
- * @since 2.0.11
  * @param string $dir Path relative to the plugin root you want to access.
+ *
  * @return string
+ * @since 2.0.11
  */
-function wu_url($dir) {
+function wu_url(string $dir): string {
 
 	return apply_filters('wp_ultimo_url', WP_ULTIMO_PLUGIN_URL . $dir);
 }
@@ -123,13 +128,13 @@ function wu_url($dir) {
 /**
  * Shorthand to retrieving variables from $_GET, $_POST and $_REQUEST;
  *
- * @since 2.0.0
- *
  * @param string $key Key to retrieve.
  * @param mixed  $default_value Default value, when the variable is not available.
+ *
  * @return mixed
+ * @since 2.0.0
  */
-function wu_request($key, $default_value = false) {
+function wu_request(string $key, $default_value = false) {
 
 	$value = isset($_REQUEST[ $key ]) ? wu_clean(stripslashes_deep($_REQUEST[ $key ])) : $default_value; // phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
@@ -139,13 +144,13 @@ function wu_request($key, $default_value = false) {
 /**
  * Throws an exception if a given hook was not yet run.
  *
- * @since 2.0.11
- *
  * @param string $hook The hook to check. Defaults to 'ms_loaded'.
- * @throws Runtime_Exception When the hook has not yet run.
+ *
  * @return void
+ * @throws Runtime_Exception When the hook has not yet run.
+ * @since 2.0.11
  */
-function _wu_require_hook($hook = 'ms_loaded') { // phpcs:ignore
+function _wu_require_hook(string $hook = 'ms_loaded'): void { // phpcs:ignore
 
 	if ( ! did_action($hook)) {
 		$message = "This function can not yet be run as it relies on processing that happens on hook {$hook}.";
@@ -163,7 +168,7 @@ function _wu_require_hook($hook = 'ms_loaded') { // phpcs:ignore
  * @since 2.0.11
  * @return boolean
  */
-function wu_are_code_comments_available() {
+function wu_are_code_comments_available(): bool {
 
 	static $res;
 
@@ -198,14 +203,14 @@ function wu_path_join(...$parts): string {
 /**
  * Add a log entry to chosen file.
  *
- * @since 2.0.0
- *
  * @param string           $handle Name of the log file to write to.
  * @param string|\WP_Error $message Log message to write.
  * @param string           $log_level Log level to write.
+ *
  * @return void
+ * @since 2.0.0
  */
-function wu_log_add($handle, $message, $log_level = LogLevel::INFO) {
+function wu_log_add(string $handle, $message, string $log_level = LogLevel::INFO): void {
 
 	\WP_Ultimo\Logger::add($handle, $message, $log_level);
 }
@@ -218,7 +223,7 @@ function wu_log_add($handle, $message, $log_level = LogLevel::INFO) {
  * @param mixed $handle Name of the log file to clear.
  * @return void
  */
-function wu_log_clear($handle) {
+function wu_log_clear($handle): void {
 
 	\WP_Ultimo\Logger::clear($handle);
 }
@@ -231,7 +236,7 @@ function wu_log_clear($handle) {
  * @param \Throwable $e The exception object.
  * @return void
  */
-function wu_maybe_log_error($e) {
+function wu_maybe_log_error($e): void {
 
 	if (defined('WP_DEBUG') && WP_DEBUG) {
 		error_log($e); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -241,12 +246,12 @@ function wu_maybe_log_error($e) {
 /**
  * Get the function caller.
  *
- * @since 2.0.0
- *
  * @param integer $depth The depth of the backtrace.
+ *
  * @return string|null
+ * @since 2.0.0
  */
-function wu_get_function_caller($depth = 1) {
+function wu_get_function_caller(int $depth = 1): ?string {
 
 	$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $depth + 1); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace
 

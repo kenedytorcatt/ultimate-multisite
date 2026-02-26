@@ -1252,6 +1252,66 @@ class Checkout_Form extends Base_Model {
 	}
 
 	/**
+	 * Minimal form fields for paying a standalone invoice.
+	 *
+	 * Shows order summary, payment method selector, and submit button.
+	 *
+	 * @since 2.5.0
+	 * @return array
+	 */
+	public static function pay_invoice_form_fields(): array {
+
+		$payment = wu_get_payment_by_hash(wu_request('payment'));
+
+		if ( ! $payment && wu_request('payment_id')) {
+			$payment = wu_get_payment(wu_request('payment_id'));
+		}
+
+		if ( ! $payment && current_user_can('manage_options')) {
+			$payment = wu_mock_payment();
+		}
+
+		if ( ! $payment) {
+			return [];
+		}
+
+		$fields = [
+			[
+				'step'                   => 'checkout',
+				'name'                   => __('Invoice Summary', 'ultimate-multisite'),
+				'type'                   => 'order_summary',
+				'id'                     => 'order_summary',
+				'order_summary_template' => 'clean',
+				'table_columns'          => 'simple',
+			],
+			[
+				'step' => 'checkout',
+				'name' => __('Payment Method', 'ultimate-multisite'),
+				'type' => 'payment',
+				'id'   => 'payment',
+			],
+			[
+				'step'  => 'checkout',
+				'name'  => __('Pay Invoice', 'ultimate-multisite'),
+				'type'  => 'submit_button',
+				'id'    => 'checkout',
+				'order' => 0,
+			],
+		];
+
+		$steps = [
+			[
+				'id'     => 'checkout',
+				'name'   => __('Pay Invoice', 'ultimate-multisite'),
+				'desc'   => '',
+				'fields' => $fields,
+			],
+		];
+
+		return apply_filters('wu_checkout_form_pay_invoice_form_fields', $steps);
+	}
+
+	/**
 	 * Custom fields for back-end upgrade/downgrades and such.
 	 *
 	 * @since 2.0.0

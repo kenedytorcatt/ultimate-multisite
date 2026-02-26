@@ -76,6 +76,10 @@ class RunCloud_Integration extends Integration {
 				'title'       => __('RunCloud API Token', 'ultimate-multisite'),
 				'desc'        => __('The API Token generated in RunCloud.', 'ultimate-multisite'),
 				'placeholder' => __('e.g. your-api-token-here', 'ultimate-multisite'),
+				'type'        => 'password',
+				'html_attr'   => [
+					'autocomplete' => 'new-password',
+				],
 			],
 			'WU_RUNCLOUD_SERVER_ID' => [
 				'title'       => __('RunCloud Server ID', 'ultimate-multisite'),

@@ -32,6 +32,17 @@ defined('ABSPATH') || exit;
 
 		</a>
 
+		<?php
+		/**
+		 * Fires after the "Add Domain" button in the domain mapping widget header.
+		 *
+		 * Allows addons to add additional action buttons (e.g. "Register Domain").
+		 *
+		 * @since 2.4.0
+		 */
+		do_action('wu_domain_mapping_header_actions');
+		?>
+
 		</div>
 
 	</div>
@@ -86,6 +97,52 @@ defined('ABSPATH') || exit;
 							'url'             => $domain['delete_link'],
 						];
 
+						/**
+						 * Filters the action links for a domain row in the domain mapping widget.
+						 *
+						 * Allows addons to add extra actions (e.g. Manage DNS, Renew) for domain rows.
+						 *
+						 * @since 2.4.0
+						 *
+						 * @param array  $second_row_actions The action items for the row.
+						 * @param object $item               The domain object.
+						 */
+						$second_row_actions = apply_filters('wu_domain_mapping_row_actions', $second_row_actions, $item);
+
+						$first_row = [
+							'primary' => [
+								'wrapper_classes' => $item->is_primary_domain() ? 'wu-text-blue-600' : '',
+								'icon'            => $item->is_primary_domain() ? 'dashicons-wu-filter_1 wu-align-text-bottom wu-mr-1' : 'dashicons-wu-plus-square wu-align-text-bottom wu-mr-1',
+								'label'           => '',
+								'value'           => function () use ($item) {
+									if ($item->is_primary_domain()) {
+										esc_html_e('Primary', 'ultimate-multisite');
+										wu_tooltip(__('All other mapped domains will redirect to the primary domain.', 'ultimate-multisite'), 'dashicons-editor-help wu-align-middle wu-ml-1');
+									} else {
+										esc_html_e('Alias', 'ultimate-multisite');
+									}
+								},
+							],
+							'secure'  => [
+								'wrapper_classes' => $item->is_secure() ? 'wu-text-green-500' : '',
+								'icon'            => $item->is_secure() ? 'dashicons-wu-lock1 wu-align-text-bottom wu-mr-1' : 'dashicons-wu-lock1 wu-align-text-bottom wu-mr-1',
+								'label'           => '',
+								'value'           => $item->is_secure() ? __('Secure (HTTPS)', 'ultimate-multisite') : __('Not Secure (HTTP)', 'ultimate-multisite'),
+							],
+						];
+
+						/**
+						 * Filters the info columns for a domain row in the domain mapping widget.
+						 *
+						 * Allows addons to add extra info (e.g. expiry date) for domain rows.
+						 *
+						 * @since 2.4.0
+						 *
+						 * @param array  $first_row The info columns for the row.
+						 * @param object $item      The domain object.
+						 */
+						$first_row = apply_filters('wu_domain_mapping_row_info', $first_row, $item);
+
 						wu_responsive_table_row(
 							[
 								'id'     => false,
@@ -93,27 +150,7 @@ defined('ABSPATH') || exit;
 								'url'    => false,
 								'status' => $status,
 							],
-							[
-								'primary' => [
-									'wrapper_classes' => $item->is_primary_domain() ? 'wu-text-blue-600' : '',
-									'icon'            => $item->is_primary_domain() ? 'dashicons-wu-filter_1 wu-align-text-bottom wu-mr-1' : 'dashicons-wu-plus-square wu-align-text-bottom wu-mr-1',
-									'label'           => '',
-									'value'           => function () use ($item) {
-										if ($item->is_primary_domain()) {
-											esc_html_e('Primary', 'ultimate-multisite');
-											wu_tooltip(__('All other mapped domains will redirect to the primary domain.', 'ultimate-multisite'), 'dashicons-editor-help wu-align-middle wu-ml-1');
-										} else {
-											esc_html_e('Alias', 'ultimate-multisite');
-										}
-									},
-								],
-								'secure'  => [
-									'wrapper_classes' => $item->is_secure() ? 'wu-text-green-500' : '',
-									'icon'            => $item->is_secure() ? 'dashicons-wu-lock1 wu-align-text-bottom wu-mr-1' : 'dashicons-wu-lock1 wu-align-text-bottom wu-mr-1',
-									'label'           => '',
-									'value'           => $item->is_secure() ? __('Secure (HTTPS)', 'ultimate-multisite') : __('Not Secure (HTTP)', 'ultimate-multisite'),
-								],
-							],
+							$first_row,
 							$second_row_actions
 						);
 

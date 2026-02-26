@@ -19,6 +19,8 @@ defined('ABSPATH') || exit;
  */
 interface Domain_Selling_Capability {
 
+	public const ID = 'domain-selling';
+
 	/**
 	 * Search for available domains.
 	 *
