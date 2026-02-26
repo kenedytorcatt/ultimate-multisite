@@ -6,7 +6,7 @@
  */
 defined('ABSPATH') || exit;
 ?>
-<div id="wu-thank-you-element" class="wu-styling <?php echo esc_attr($class_name); ?>">
+<div id="wu-thank-you-element" class="wu-styling <?php echo esc_attr($className); ?>">
 
 	<div class="<?php echo esc_attr(wu_env_picker('', 'wu-widget-inset')); ?>">
 
