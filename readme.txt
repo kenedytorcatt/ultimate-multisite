@@ -226,8 +226,29 @@ No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
 Version [2.4.12] - Released on 2026-XX-XX
-- Fix: %2F being stripped breaking some WC Urls.
-- Improved: Support for changing payment methods of the membership.
+- New: Send Invoice and Resend Invoice workflows for payments.
+- New: Standalone "Pay Invoice" checkout form for invoice payments without a membership.
+- New: Payment Methods element displaying current card info and change payment method flow via Stripe Billing Portal.
+- New: System events for invoice sent, recurring payment failure, and membership expired with email notifications.
+- New: Checkout form debug autofill button when WP_ULTIMO_DEBUG is enabled.
+- New: Domain meta table for storing metadata on domain records.
+- New: Extensibility hooks on domain mapping widget and domain list table.
+- New: Node Management capability interface for hosting integrations.
+- Fix: Password strength validation no longer blocks checkout when the meter element is absent.
+- Fix: %2F being stripped from SSO redirect URLs breaking some WooCommerce URLs.
+- Fix: Stripe Checkout gateway updated to current API — uses price_data format, proper subscription/payment mode, and skips zero-amount items.
+- Fix: Removed deprecated Stripe API version pin and product type parameter.
+- Fix: Membership cancellation now properly cancels the gateway subscription before the local membership.
+- Fix: Payments no longer require a membership, enabling standalone invoices.
+- Fix: Cart no longer overrides duration for products with independent billing cycles.
+- Fix: Network installer correctly sets core multisite table names.
+- Fix: Admin page save handlers now return proper bool values.
+- Improved: "Change Payment Method" replaces the destructive "Cancel Payment Method" flow.
+- Improved: Integration wizard API key fields use password input type to prevent browser autofill.
+- Improved: Integration wizard shows error state on test failure and improved navigation.
+- Improved: Addon settings grouped under dedicated admin bar submenu.
+- Improved: Select2 multi-select preserves saved option ordering.
+- Improved: PayPal fires payment_failed event on IPN failures.
 
 Version [2.4.11] - Released on 2026-02-16
 - New: Settings API for remote settings management.
