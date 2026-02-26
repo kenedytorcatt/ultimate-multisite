@@ -2092,10 +2092,12 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 			$title = preg_replace($description_pattern, '$1', (string) $s_line_item->description);
 
+			$has_taxes = ! empty($s_line_item->taxes);
+
 			$line_item_data = [
 				'title'         => $title,
 				'description'   => $s_line_item->description,
-				'tax_inclusive' => 'inclusive' === $s_line_item->taxes[0]->tax_behavior,
+				'tax_inclusive' => $has_taxes && 'inclusive' === $s_line_item->taxes[0]->tax_behavior,
 				'unit_price'    => (float) $s_line_item->pricing->unit_amount_decimal / $currency_multiplier,
 				'quantity'      => $quantity,
 			];
@@ -2107,7 +2109,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			$line_item = new Line_Item($line_item_data);
 
 			$subtotal  = $s_line_item->amount / $currency_multiplier;
-			$tax_total = ($s_line_item->taxes[0]->amount) / $currency_multiplier;
+			$tax_total = $has_taxes ? $s_line_item->taxes[0]->amount / $currency_multiplier : 0;
 			$total     = $s_line_item->amount / $currency_multiplier;
 
 			// Set this values after generate the line item to bypass the recalculate_totals
