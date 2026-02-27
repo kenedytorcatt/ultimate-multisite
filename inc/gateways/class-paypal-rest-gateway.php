@@ -1245,6 +1245,9 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 		$oauth        = PayPal_OAuth_Handler::get_instance();
 		$is_connected = $oauth->is_merchant_connected($is_sandbox);
 
+		// Enqueue the inline JS via admin_footer to avoid script tag escaping
+		$this->enqueue_connect_scripts();
+
 		if ($is_connected) {
 			return sprintf(
 				'<button type="button" class="button button-secondary wu-paypal-disconnect" data-nonce="%s">
@@ -1262,13 +1265,40 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				<span class="dashicons dashicons-paypal wu-mr-1"></span>
 				%s
 			</button>
-			<p class="description">%s</p>
+			<p class="description">%s</p>',
+			esc_attr($nonce),
+			$is_sandbox ? 1 : 0,
+			esc_html__('Connect with PayPal', 'ultimate-multisite'),
+			esc_html__('Click to securely connect your PayPal account.', 'ultimate-multisite')
+		);
+	}
+
+	/**
+	 * Enqueue the connect/disconnect button scripts.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	protected function enqueue_connect_scripts(): void {
+
+		static $enqueued = false;
+
+		if ($enqueued) {
+			return;
+		}
+
+		$enqueued = true;
+
+		add_action(
+			'admin_footer',
+			function () {
+				?>
 			<script>
 			jQuery(function($) {
 				$(".wu-paypal-connect").on("click", function(e) {
 					e.preventDefault();
 					var $btn = $(this);
-					$btn.prop("disabled", true).text("%s");
+					$btn.prop("disabled", true).text(<?php echo wp_json_encode(__('Connecting...', 'ultimate-multisite')); ?>);
 
 					$.post(ajaxurl, {
 						action: "wu_paypal_connect",
@@ -1278,18 +1308,18 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 						if (response.success) {
 							window.location.href = response.data.redirect_url;
 						} else {
-							alert(response.data.message || "%s");
-							$btn.prop("disabled", false).html(\'<span class="dashicons dashicons-paypal wu-mr-1"></span> %s\');
+							alert(response.data.message || <?php echo wp_json_encode(__('Connection failed. Please try again.', 'ultimate-multisite')); ?>);
+							$btn.prop("disabled", false).html('<span class="dashicons dashicons-paypal wu-mr-1"></span> ' + <?php echo wp_json_encode(__('Connect with PayPal', 'ultimate-multisite')); ?>);
 						}
 					}).fail(function() {
-						alert("%s");
-						$btn.prop("disabled", false).html(\'<span class="dashicons dashicons-paypal wu-mr-1"></span> %s\');
+						alert(<?php echo wp_json_encode(__('Connection failed. Please try again.', 'ultimate-multisite')); ?>);
+						$btn.prop("disabled", false).html('<span class="dashicons dashicons-paypal wu-mr-1"></span> ' + <?php echo wp_json_encode(__('Connect with PayPal', 'ultimate-multisite')); ?>);
 					});
 				});
 
 				$(".wu-paypal-disconnect").on("click", function(e) {
 					e.preventDefault();
-					if (!confirm("%s")) return;
+					if (!confirm(<?php echo wp_json_encode(__('Are you sure you want to disconnect PayPal?', 'ultimate-multisite')); ?>)) return;
 
 					var $btn = $(this);
 					$btn.prop("disabled", true);
@@ -1302,17 +1332,9 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 					});
 				});
 			});
-			</script>',
-			esc_attr($nonce),
-			$is_sandbox ? 1 : 0,
-			esc_html__('Connect with PayPal', 'ultimate-multisite'),
-			esc_html__('Click to securely connect your PayPal account.', 'ultimate-multisite'),
-			esc_js(__('Connecting...', 'ultimate-multisite')),
-			esc_js(__('Connection failed. Please try again.', 'ultimate-multisite')),
-			esc_js(__('Connect with PayPal', 'ultimate-multisite')),
-			esc_js(__('Connection failed. Please try again.', 'ultimate-multisite')),
-			esc_js(__('Connect with PayPal', 'ultimate-multisite')),
-			esc_js(__('Are you sure you want to disconnect PayPal?', 'ultimate-multisite'))
+			</script>
+				<?php
+			}
 		);
 	}
 
@@ -1346,6 +1368,8 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 
 		// Check if we have credentials but no webhook
 		if ($this->is_configured()) {
+			$this->enqueue_webhook_scripts();
+
 			return sprintf(
 				'<div class="wu-p-4 wu-bg-yellow-100 wu-rounded wu-text-yellow-800">
 					<span class="dashicons dashicons-warning wu-mr-2"></span>
@@ -1353,39 +1377,10 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 					<button type="button" class="button button-secondary wu-mt-2 wu-paypal-install-webhook" data-nonce="%s">
 						%s
 					</button>
-				</div>
-				<script>
-				jQuery(function($) {
-					$(".wu-paypal-install-webhook").on("click", function(e) {
-						e.preventDefault();
-						var $btn = $(this);
-						$btn.prop("disabled", true).text("%s");
-
-						$.post(ajaxurl, {
-							action: "wu_paypal_install_webhook",
-							nonce: $btn.data("nonce")
-						}, function(response) {
-							if (response.success) {
-								window.location.reload();
-							} else {
-								alert(response.data.message || "%s");
-								$btn.prop("disabled", false).text("%s");
-							}
-						}).fail(function() {
-							alert("%s");
-							$btn.prop("disabled", false).text("%s");
-						});
-					});
-				});
-				</script>',
+				</div>',
 				esc_html__('Webhook not configured. Click below to configure automatically.', 'ultimate-multisite'),
 				esc_attr(wp_create_nonce('wu_paypal_webhook')),
-				esc_html__('Configure Webhook', 'ultimate-multisite'),
-				esc_js(__('Configuring...', 'ultimate-multisite')),
-				esc_js(__('Failed to configure webhook. Please try again.', 'ultimate-multisite')),
-				esc_js(__('Configure Webhook', 'ultimate-multisite')),
-				esc_js(__('Failed to configure webhook. Please try again.', 'ultimate-multisite')),
-				esc_js(__('Configure Webhook', 'ultimate-multisite'))
+				esc_html__('Configure Webhook', 'ultimate-multisite')
 			);
 		}
 
@@ -1395,6 +1390,55 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				%s
 			</div>',
 			esc_html__('Connect with PayPal to automatically configure webhooks.', 'ultimate-multisite')
+		);
+	}
+
+	/**
+	 * Enqueue the webhook install button scripts.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	protected function enqueue_webhook_scripts(): void {
+
+		static $enqueued = false;
+
+		if ($enqueued) {
+			return;
+		}
+
+		$enqueued = true;
+
+		add_action(
+			'admin_footer',
+			function () {
+				?>
+			<script>
+			jQuery(function($) {
+				$(".wu-paypal-install-webhook").on("click", function(e) {
+					e.preventDefault();
+					var $btn = $(this);
+					$btn.prop("disabled", true).text(<?php echo wp_json_encode(__('Configuring...', 'ultimate-multisite')); ?>);
+
+					$.post(ajaxurl, {
+						action: "wu_paypal_install_webhook",
+						nonce: $btn.data("nonce")
+					}, function(response) {
+						if (response.success) {
+							window.location.reload();
+						} else {
+							alert(response.data.message || <?php echo wp_json_encode(__('Failed to configure webhook.', 'ultimate-multisite')); ?>);
+							$btn.prop("disabled", false).text(<?php echo wp_json_encode(__('Configure Webhook', 'ultimate-multisite')); ?>);
+						}
+					}).fail(function() {
+						alert(<?php echo wp_json_encode(__('Failed to configure webhook. Please try again.', 'ultimate-multisite')); ?>);
+						$btn.prop("disabled", false).text(<?php echo wp_json_encode(__('Configure Webhook', 'ultimate-multisite')); ?>);
+					});
+				});
+			});
+			</script>
+				<?php
+			}
 		);
 	}
 
