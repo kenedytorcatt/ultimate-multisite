@@ -153,6 +153,9 @@ class Ajax implements \WP_Ultimo\Interfaces\Singleton {
 
 		$results = [];
 
+		// Merge the caller's query params (search term, etc.) with locally-built params.
+		$query = array_merge($args['query'], $query ?? []);
+
 		if ('user' === $args['model']) {
 			$results = $this->search_wordpress_users($query);
 		} elseif ('page' === $args['model']) {
