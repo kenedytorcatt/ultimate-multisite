@@ -96,7 +96,7 @@ class General_Compat {
 		 *
 		 * @see https://wordpress.org/plugins/wp-maintenance-mode/
 		 */
-		add_filter('wu_sso_loaded_on_init', [$this, 'add_sso_to_maintenance_mode']);
+		add_action('wu_sso_loaded_on_init', [$this, 'add_sso_to_maintenance_mode']);
 
 		/**
 		 * Avada Theme.
@@ -106,8 +106,8 @@ class General_Compat {
 		 *
 		 * @see https://themeforest.net/item/avada-responsive-multipurpose-theme/
 		 */
-		add_filter('wu_template_previewer_before', [$this, 'run_wp_on_template_previewer']);
-		add_filter('wu_domain_post_save', [$this, 'clear_avada_cache']);
+		add_action('wu_template_previewer_before', [$this, 'run_wp_on_template_previewer']);
+		add_action('wu_domain_post_save', [$this, 'clear_avada_cache']);
 
 		/**
 		 * FluentCRM Pro
@@ -117,6 +117,17 @@ class General_Compat {
 		 * @see https://fluentcrm.com/
 		 */
 		add_action('wp_insert_site', [$this, 'fix_fluent_pro_site_duplication']);
+
+		/**
+		 * WordPress Core - HTTPS scheme fix for subdomain installs.
+		 *
+		 * WordPress core only sets HTTPS for siteurl/home on subdirectory installs,
+		 * leaving subdomain installs hardcoded to http://. This causes infinite
+		 * redirects when the network is served over HTTPS.
+		 *
+		 * @see https://core.trac.wordpress.org/ticket/49210
+		 */
+		add_filter('wp_initialize_site_args', [$this, 'fix_new_site_url_scheme'], 10, 3);
 
 		/**
 		 * Rank Math (Free and Pro)
@@ -161,7 +172,7 @@ class General_Compat {
 		 * @since 2.1.1
 		 * @see https://perfmatters.io/
 		 */
-		add_filter('wp_print_scripts', [$this, 'remove_perfmatters_checkout_dep'], 99);
+		add_action('wp_print_scripts', [$this, 'remove_perfmatters_checkout_dep'], 99);
 
 		/**
 		 * Adds the setup preview for elements on DIVI.
@@ -193,7 +204,7 @@ class General_Compat {
 
 		global $wpdb;
 
-		remove_action('switch_blog', [WC(), 'wpdb_table_fix'], 0);
+		remove_action('switch_blog', [WC(), 'wpdb_table_fix'], 0); // @phpstan-ignore function.notFound
 
 		// List of tables without prefixes.
 		$tables = [
@@ -362,7 +373,7 @@ class General_Compat {
 		 * Supporting third-party page builders is such a pain.
 		 */
 		if ( ! $has_shortcode) {
-			$base64 = base64_encode("[$shortcode_tag]");
+			$base64 = base64_encode("[$shortcode_tag]"); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Used for Oxygen Builder shortcode detection, not obfuscation.
 
 			$has_shortcode = strpos((string) $shortcode_content, $base64);
 		}
@@ -436,7 +447,7 @@ class General_Compat {
 			if ('avada' === $theme && file_exists($file_path)) {
 				require_once get_parent_theme_file_path('includes/lib/inc/functions.php');
 
-				fusion_reset_all_caches();
+				fusion_reset_all_caches(); // @phpstan-ignore function.notFound
 			}
 		}
 
@@ -459,6 +470,35 @@ class General_Compat {
 			// Here we use this function due FluentCrm($class_name) returns an instance not working with remove_action
 			$this->hard_remove_action('set_user_role', [$class_name, 'maybeAutoAlterTags'], 11);
 		}
+	}
+
+	/**
+	 * Fixes the URL scheme for new sites on subdomain installs.
+	 *
+	 * WordPress core hardcodes http:// for new site URLs on subdomain installs,
+	 * skipping HTTPS detection that only runs for subdirectory installs.
+	 * This causes infinite redirects when the network is served over HTTPS.
+	 *
+	 * @since 2.4.0
+	 *
+	 * @param array       $args    Arguments for site initialization.
+	 * @param \WP_Site    $site    Site being initialized.
+	 * @param \WP_Network $network Network the site belongs to.
+	 * @return array
+	 */
+	public function fix_new_site_url_scheme(array $args, \WP_Site $site, \WP_Network $network): array {
+
+		$network_home = get_home_url($network->site_id);
+		$scheme       = wp_parse_url($network_home, PHP_URL_SCHEME);
+
+		if ('https' === $scheme) {
+			$url = 'https://' . $site->domain . $site->path;
+
+			$args['options']['home']    = untrailingslashit($url);
+			$args['options']['siteurl'] = untrailingslashit($url);
+		}
+
+		return $args;
 	}
 
 	/**
@@ -538,8 +578,6 @@ class General_Compat {
 		if (! empty($handler_id)) {
 			remove_filter($tag, $handler_id, $priority);
 		}
-
-		return;
 	}
 
 	/**

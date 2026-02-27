@@ -115,6 +115,10 @@ final class WP_Ultimo {
 	 * @return void
 	 */
 	public function init(): void {
+
+		add_filter('extra_plugin_headers', [$this, 'register_addon_headers']);
+		add_action('admin_init', [$this, 'check_addon_compatibility']);
+
 		/*
 		 * Core Helper Functions
 		 */
@@ -1123,6 +1127,91 @@ final class WP_Ultimo {
 		];
 
 		return $transient;
+	}
+
+	/**
+	 * Register custom plugin headers for addon version requirements.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param array $headers Existing extra headers.
+	 * @return array Headers with UM-specific ones added.
+	 */
+	public function register_addon_headers(array $headers): array {
+
+		$headers[] = 'UM requires at least';
+		$headers[] = 'UM tested up to';
+
+		return $headers;
+	}
+
+	/**
+	 * Check active network plugins for addon compatibility.
+	 *
+	 * Reads the `UM requires at least` header from every active network plugin
+	 * and displays a network admin notice when the installed core version is
+	 * too old for an addon to work correctly.
+	 *
+	 * @since 2.5.0
+	 * @return void
+	 */
+	public function check_addon_compatibility(): void {
+
+		if (! is_network_admin()) {
+			return;
+		}
+
+		if (! function_exists('get_plugins')) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		$all_plugins    = get_plugins();
+		$active_plugins = array_keys(get_site_option('active_sitewide_plugins', []));
+		$incompatible   = [];
+
+		foreach ($active_plugins as $plugin_file) {
+			if (! isset($all_plugins[ $plugin_file ])) {
+				continue;
+			}
+
+			$plugin = $all_plugins[ $plugin_file ];
+
+			if (empty($plugin['UM requires at least'])) {
+				continue;
+			}
+
+			$required = $plugin['UM requires at least'];
+
+			if (! version_compare(self::VERSION, $required, '>=')) {
+				$incompatible[] = [
+					'name'     => $plugin['Name'],
+					'required' => $required,
+				];
+			}
+		}
+
+		if (empty($incompatible)) {
+			return;
+		}
+
+		add_action(
+			'network_admin_notices',
+			function () use ($incompatible) {
+
+				foreach ($incompatible as $addon) {
+					printf(
+						'<div class="notice notice-error"><p>%s</p></div>',
+						sprintf(
+							/* translators: 1: addon name, 2: required version, 3: installed version */
+							esc_html__('%1$s requires Ultimate Multisite %2$s or higher. You are running %3$s. Please update Ultimate Multisite to avoid errors.', 'ultimate-multisite'),
+							'<strong>' . esc_html($addon['name']) . '</strong>',
+							'<strong>' . esc_html($addon['required']) . '</strong>',
+							'<strong>' . esc_html(self::VERSION) . '</strong>'
+						)
+					);
+				}
+			}
+		);
 	}
 
 	/**

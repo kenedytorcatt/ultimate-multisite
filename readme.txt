@@ -249,6 +249,16 @@ Version [2.4.12] - Released on 2026-XX-XX
 - Improved: Addon settings grouped under dedicated admin bar submenu.
 - Improved: Select2 multi-select preserves saved option ordering.
 - Improved: PayPal fires payment_failed event on IPN failures.
+- New: Addon compatibility headers (`UM requires at least`) with network admin version mismatch notices.
+- New: `wu_get_checkout_form_by_slug` filter for addon-registered virtual checkout forms.
+- New: Cart filters `wu_cart_show_no_changes_error` and `wu_cart_addon_include_existing_plan` for addon checkout flows.
+- New: `wu-register-domain` added to checkout element slug list for addon checkout pages.
+- Fix: AJAX search_models not passing query parameters to model functions.
+- Fix: Template validation failing when an addon product is selected at checkout.
+- Fix: New subdomain sites created with http:// instead of https:// causing infinite redirects.
+- Fix: mPDF PSR-log aware trait patch applied to wrong file on some Composer versions.
+- Improved: Default minimum password strength lowered from "strong" to "medium" for better usability.
+- Improved: Dashboard first-steps widget shows contextual action labels for completed steps.
 
 Version [2.4.11] - Released on 2026-02-16
 - New: Settings API for remote settings management.

@@ -851,7 +851,24 @@ class Cart implements \JsonSerializable {
 		 */
 		if (empty($this->plan_id)) {
 			if (count($this->products) === 0) {
-				$this->errors->add('no_changes', __('This cart proposes no changes to the current membership.', 'ultimate-multisite'));
+
+				/**
+				 * Filters whether to show the "no changes" error when the cart
+				 * has a membership but no products.
+				 *
+				 * Useful for addon checkout forms where the product is selected
+				 * dynamically (e.g. domain registration) and the cart is
+				 * initially empty before the customer makes a selection.
+				 *
+				 * @since 2.4.12
+				 * @param bool $show_error Whether to show the error. Default true.
+				 * @param self $cart       The cart object.
+				 */
+				$show_error = apply_filters('wu_cart_show_no_changes_error', true, $this);
+
+				if ($show_error) {
+					$this->errors->add('no_changes', __('This cart proposes no changes to the current membership.', 'ultimate-multisite'));
+				}
 
 				return true;
 			}
@@ -885,14 +902,31 @@ class Cart implements \JsonSerializable {
 			 * Adds the membership plan back in, for completeness.
 			 * This is also useful to make sure we present
 			 * the totals correctly for the customer.
+			 *
+			 * Allows filtering for addons like domain registration where
+			 * only the addon product should appear (not the existing plan).
+			 *
+			 * @since 2.4.12
+			 * @param bool $should_include Whether to include the existing plan.
+			 * @param self $cart The cart object.
+			 * @param \WP_Ultimo\Models\Membership $membership The existing membership.
 			 */
-			$this->add_product($membership->get_plan_id());
+			$should_include_existing_plan = apply_filters(
+				'wu_cart_addon_include_existing_plan',
+				true,
+				$this,
+				$membership
+			);
 
-			/*
-			 * Adds the credit line, after
-			 * calculating pro-rate.
-			 */
-			$this->calculate_prorate_credits();
+			if ($should_include_existing_plan) {
+				$this->add_product($membership->get_plan_id());
+
+				/*
+				 * Adds the credit line, after
+				 * calculating pro-rate.
+				 */
+				$this->calculate_prorate_credits();
+			}
 
 			return true;
 		}

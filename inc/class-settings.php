@@ -908,7 +908,7 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 				'title'   => __('Minimum Password Strength', 'ultimate-multisite'),
 				'desc'    => __('Set the minimum password strength required during registration and password reset. "Super Strong" requires at least 12 characters, including uppercase, lowercase, numbers, and special characters.', 'ultimate-multisite'),
 				'type'    => 'select',
-				'default' => 'strong',
+				'default' => 'medium',
 				'options' => [
 					'medium'       => __('Medium', 'ultimate-multisite'),
 					'strong'       => __('Strong', 'ultimate-multisite'),

@@ -70,7 +70,7 @@ defined('ABSPATH') || exit;
 			<div class="wu-block sm:wu-hidden wu-h-2">&nbsp;</div>
 
 			<a href="<?php echo esc_attr($step['action_link']); ?>" class="button wu-w-full sm:wu-w-auto wu-text-center">
-			<?php echo esc_html($step['action_label']); ?>
+			<?php echo esc_html($step['done'] && ! empty($step['done_action_label']) ? $step['done_action_label'] : $step['action_label']); ?>
 			</a>
 
 		</div>

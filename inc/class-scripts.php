@@ -491,7 +491,7 @@ class Scripts {
 		$defender_active = $this->is_defender_strong_password_active();
 
 		// Get admin setting for minimum password strength.
-		$strength_setting = wu_get_setting('minimum_password_strength', 'strong');
+		$strength_setting = wu_get_setting('minimum_password_strength', 'medium');
 
 		// Map setting to zxcvbn score.
 		$strength_map = [
