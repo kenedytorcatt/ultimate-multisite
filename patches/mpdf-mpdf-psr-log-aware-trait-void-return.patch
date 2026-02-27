@@ -1,0 +1,11 @@
+--- a/src/PsrLogAwareTrait.php
++++ b/src/PsrLogAwareTrait.php
+@@ -12,7 +12,7 @@
+ 	 */
+ 	protected $logger;
+
+-	public function setLogger(LoggerInterface $logger)
++	public function setLogger(LoggerInterface $logger): void
+ 	{
+ 		$this->logger = $logger;
+ 	}

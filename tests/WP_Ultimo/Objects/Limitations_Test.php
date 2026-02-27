@@ -783,4 +783,131 @@ class Limitations_Test extends WP_UnitTestCase {
 
 		$this->assertEquals('force_active', $array1['behavior']);
 	}
+
+	/**
+	 * Test that null limit from addon product does not overwrite plan template list during additive merge.
+	 *
+	 * Regression test: when a plan with configured site templates was merged with an addon product
+	 * that had site_templates.limit = null, the null would overwrite the plan's template list,
+	 * causing "The selected template is not available for this product" validation error.
+	 */
+	public function test_merge_null_limit_does_not_overwrite_template_list(): void {
+
+		$plan_limitations = new Limitations([
+			'site_templates' => [
+				'enabled' => true,
+				'mode'    => 'default',
+				'limit'   => [
+					'2' => ['behavior' => 'available'],
+					'3' => ['behavior' => 'pre_selected'],
+				],
+			],
+		]);
+
+		$addon_limitations = new Limitations([
+			'site_templates' => [
+				'enabled' => true,
+				'mode'    => 'default',
+				'limit'   => null,
+			],
+		]);
+
+		$merged = $plan_limitations->merge($addon_limitations);
+
+		$available = $merged->site_templates->get_available_site_templates();
+
+		$this->assertContains(2, $available, 'Template 2 should still be available after merging addon with null limit');
+		$this->assertContains(3, $available, 'Template 3 should still be available after merging addon with null limit');
+	}
+
+	/**
+	 * Test that null limit does overwrite in override mode.
+	 */
+	public function test_merge_null_limit_overwrites_in_override_mode(): void {
+
+		$base = new Limitations([
+			'users' => [
+				'enabled' => true,
+				'limit'   => 5,
+			],
+		]);
+
+		$override = new Limitations([
+			'users' => [
+				'enabled' => true,
+				'limit'   => null,
+			],
+		]);
+
+		$merged = $base->merge(true, $override);
+
+		$this->assertNull($merged->users->get_limit(), 'Null limit should overwrite in override mode');
+	}
+
+	/**
+	 * Test that get_empty returns proper default data in to_array.
+	 */
+	public function test_get_empty_to_array_returns_default_states(): void {
+
+		$empty = Limitations::get_empty();
+
+		$array = $empty->to_array();
+
+		$this->assertNotEmpty($array, 'get_empty()->to_array() should not be empty');
+		$this->assertArrayHasKey('site_templates', $array);
+		$this->assertArrayHasKey('plugins', $array);
+		$this->assertArrayHasKey('users', $array);
+	}
+
+	/**
+	 * Test full checkout scenario: plan templates preserved when merging with addon product.
+	 *
+	 * Simulates the validation rule in class-site-template.php where all product
+	 * limitations are merged together to determine available templates.
+	 */
+	public function test_checkout_plan_plus_addon_preserves_templates(): void {
+
+		// Plan with specific templates configured
+		$plan_data = new Limitations([
+			'site_templates' => [
+				'enabled' => true,
+				'mode'    => 'choose_available_templates',
+				'limit'   => [
+					'5' => ['behavior' => 'available'],
+					'7' => ['behavior' => 'available'],
+					'9' => ['behavior' => 'not_available'],
+				],
+			],
+			'disk_space'     => [
+				'enabled' => true,
+				'limit'   => 500,
+			],
+		]);
+
+		// Addon product with no template restrictions but some disk space
+		$addon_data = new Limitations([
+			'site_templates' => [
+				'enabled' => true,
+				'mode'    => 'default',
+				'limit'   => null,
+			],
+			'disk_space'     => [
+				'enabled' => true,
+				'limit'   => 100,
+			],
+		]);
+
+		// Simulate the validation rule merge
+		$limits = new Limitations([]);
+		$limits = $limits->merge($plan_data);
+		$limits = $limits->merge($addon_data);
+
+		$available = $limits->site_templates->get_available_site_templates();
+
+		$this->assertContains(5, $available, 'Template 5 should be available');
+		$this->assertContains(7, $available, 'Template 7 should be available');
+
+		// Disk space should be additive
+		$this->assertEquals(600, $limits->disk_space->get_limit(), 'Disk space should be summed');
+	}
 }
