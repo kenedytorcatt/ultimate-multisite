@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.4.11
+Stable tag: 2.4.12
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -225,7 +225,7 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
-Version [2.4.12] - Released on 2026-XX-XX
+Version [2.4.12] - Released on 2026-02-27
 - New: Send Invoice and Resend Invoice workflows for payments.
 - New: Standalone "Pay Invoice" checkout form for invoice payments without a membership.
 - New: Payment Methods element displaying current card info and change payment method flow via Stripe Billing Portal.
