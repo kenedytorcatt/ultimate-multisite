@@ -101,13 +101,54 @@ class PayPal_OAuth_Handler {
 	 */
 	protected function load_partner_credentials(): void {
 
-		// In production, these would be Ultimate Multisite's partner credentials
-		// For now, merchants can use their own REST app credentials for testing
 		$mode_prefix = $this->test_mode ? 'sandbox_' : 'live_';
 
-		$this->partner_client_id     = wu_get_setting("paypal_rest_{$mode_prefix}partner_client_id", '');
-		$this->partner_client_secret = wu_get_setting("paypal_rest_{$mode_prefix}partner_client_secret", '');
-		$this->partner_merchant_id   = wu_get_setting("paypal_rest_{$mode_prefix}partner_merchant_id", '');
+		// Check for constants first (recommended for production)
+		$const_prefix = $this->test_mode ? 'WU_PAYPAL_SANDBOX_PARTNER_' : 'WU_PAYPAL_PARTNER_';
+
+		$this->partner_client_id     = defined($const_prefix . 'CLIENT_ID') ? constant($const_prefix . 'CLIENT_ID') : '';
+		$this->partner_client_secret = defined($const_prefix . 'CLIENT_SECRET') ? constant($const_prefix . 'CLIENT_SECRET') : '';
+		$this->partner_merchant_id   = defined($const_prefix . 'MERCHANT_ID') ? constant($const_prefix . 'MERCHANT_ID') : '';
+
+		// Fall back to settings if constants not defined
+		if (empty($this->partner_client_id)) {
+			$this->partner_client_id = wu_get_setting("paypal_rest_{$mode_prefix}partner_client_id", '');
+		}
+
+		if (empty($this->partner_client_secret)) {
+			$this->partner_client_secret = wu_get_setting("paypal_rest_{$mode_prefix}partner_client_secret", '');
+		}
+
+		if (empty($this->partner_merchant_id)) {
+			$this->partner_merchant_id = wu_get_setting("paypal_rest_{$mode_prefix}partner_merchant_id", '');
+		}
+
+		/**
+		 * Filters partner credentials for PayPal OAuth.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param array $credentials {
+		 *     Partner credentials.
+		 *     @type string $client_id     Partner client ID.
+		 *     @type string $client_secret Partner client secret.
+		 *     @type string $merchant_id   Partner merchant ID.
+		 * }
+		 * @param bool $test_mode Whether sandbox mode is active.
+		 */
+		$credentials = apply_filters(
+			'wu_paypal_partner_credentials',
+			[
+				'client_id'     => $this->partner_client_id,
+				'client_secret' => $this->partner_client_secret,
+				'merchant_id'   => $this->partner_merchant_id,
+			],
+			$this->test_mode
+		);
+
+		$this->partner_client_id     = $credentials['client_id'] ?? '';
+		$this->partner_client_secret = $credentials['client_secret'] ?? '';
+		$this->partner_merchant_id   = $credentials['merchant_id'] ?? '';
 	}
 
 	/**
@@ -159,7 +200,7 @@ class PayPal_OAuth_Handler {
 			$this->get_api_base_url() . '/v1/oauth2/token',
 			[
 				'headers' => [
-					'Authorization' => 'Basic ' . base64_encode($this->partner_client_id . ':' . $this->partner_client_secret),
+					'Authorization' => 'Basic ' . base64_encode($this->partner_client_id . ':' . $this->partner_client_secret), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for PayPal API Basic auth
 					'Content-Type'  => 'application/x-www-form-urlencoded',
 				],
 				'body'    => 'grant_type=client_credentials',

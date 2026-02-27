@@ -168,11 +168,21 @@ class PayPal_Webhook_Handler {
 		// If headers are missing, we can't verify
 		if (empty($auth_algo) || empty($cert_url) || empty($transmission_id) || empty($transmission_sig) || empty($transmission_time)) {
 			$this->log('Missing webhook signature headers', LogLevel::WARNING);
-			// In development/testing, you might want to skip verification
-			if ($this->test_mode && defined('WP_DEBUG') && WP_DEBUG) {
-				$this->log('Skipping signature verification in debug mode');
+
+			/**
+			 * Filters whether to skip webhook signature verification.
+			 *
+			 * Only use this for local development or testing environments.
+			 *
+			 * @since 2.0.0
+			 *
+			 * @param bool $skip Whether to skip verification. Default false.
+			 */
+			if (apply_filters('wu_paypal_skip_webhook_verification', false)) {
+				$this->log('Skipping signature verification via filter');
 				return true;
 			}
+
 			return false;
 		}
 
@@ -181,9 +191,8 @@ class PayPal_Webhook_Handler {
 		$webhook_id  = wu_get_setting("paypal_rest_{$mode_prefix}_webhook_id", '');
 
 		if (empty($webhook_id)) {
-			$this->log('Webhook ID not configured, skipping verification', LogLevel::WARNING);
-			// Allow in test mode without webhook ID
-			return $this->test_mode;
+			$this->log('Webhook ID not configured, cannot verify signature', LogLevel::WARNING);
+			return false;
 		}
 
 		// Get access token for verification API call
@@ -210,7 +219,7 @@ class PayPal_Webhook_Handler {
 
 		if (empty($client_id) || empty($client_secret)) {
 			$this->log('Client credentials not configured for webhook verification', LogLevel::WARNING);
-			return $this->test_mode;
+			return false;
 		}
 
 		// Get access token
@@ -218,7 +227,7 @@ class PayPal_Webhook_Handler {
 			$this->get_api_base_url() . '/v1/oauth2/token',
 			[
 				'headers' => [
-					'Authorization' => 'Basic ' . base64_encode($client_id . ':' . $client_secret),
+					'Authorization' => 'Basic ' . base64_encode($client_id . ':' . $client_secret), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for PayPal API Basic auth
 					'Content-Type'  => 'application/x-www-form-urlencoded',
 				],
 				'body'    => 'grant_type=client_credentials',
@@ -274,12 +283,12 @@ class PayPal_Webhook_Handler {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $resource The subscription resource data.
+	 * @param array $event_data The subscription event data.
 	 * @return void
 	 */
-	protected function handle_subscription_created(array $resource): void {
+	protected function handle_subscription_created(array $event_data): void {
 
-		$subscription_id = $resource['id'] ?? '';
+		$subscription_id = $event_data['id'] ?? '';
 		$this->log(sprintf('Subscription created: %s', $subscription_id));
 
 		// Subscription created is usually handled during checkout flow
@@ -291,12 +300,12 @@ class PayPal_Webhook_Handler {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $resource The subscription resource data.
+	 * @param array $event_data The subscription event data.
 	 * @return void
 	 */
-	protected function handle_subscription_activated(array $resource): void {
+	protected function handle_subscription_activated(array $event_data): void {
 
-		$subscription_id = $resource['id'] ?? '';
+		$subscription_id = $event_data['id'] ?? '';
 
 		$membership = $this->get_membership_by_subscription($subscription_id);
 
@@ -319,12 +328,12 @@ class PayPal_Webhook_Handler {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $resource The subscription resource data.
+	 * @param array $event_data The subscription event data.
 	 * @return void
 	 */
-	protected function handle_subscription_updated(array $resource): void {
+	protected function handle_subscription_updated(array $event_data): void {
 
-		$subscription_id = $resource['id'] ?? '';
+		$subscription_id = $event_data['id'] ?? '';
 		$this->log(sprintf('Subscription updated: %s', $subscription_id));
 
 		// Handle any subscription updates as needed
@@ -335,12 +344,12 @@ class PayPal_Webhook_Handler {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $resource The subscription resource data.
+	 * @param array $event_data The subscription event data.
 	 * @return void
 	 */
-	protected function handle_subscription_cancelled(array $resource): void {
+	protected function handle_subscription_cancelled(array $event_data): void {
 
-		$subscription_id = $resource['id'] ?? '';
+		$subscription_id = $event_data['id'] ?? '';
 
 		$membership = $this->get_membership_by_subscription($subscription_id);
 
@@ -361,12 +370,12 @@ class PayPal_Webhook_Handler {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $resource The subscription resource data.
+	 * @param array $event_data The subscription event data.
 	 * @return void
 	 */
-	protected function handle_subscription_suspended(array $resource): void {
+	protected function handle_subscription_suspended(array $event_data): void {
 
-		$subscription_id = $resource['id'] ?? '';
+		$subscription_id = $event_data['id'] ?? '';
 
 		$membership = $this->get_membership_by_subscription($subscription_id);
 
@@ -386,12 +395,12 @@ class PayPal_Webhook_Handler {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $resource The subscription resource data.
+	 * @param array $event_data The subscription event data.
 	 * @return void
 	 */
-	protected function handle_subscription_payment_failed(array $resource): void {
+	protected function handle_subscription_payment_failed(array $event_data): void {
 
-		$subscription_id = $resource['id'] ?? '';
+		$subscription_id = $event_data['id'] ?? '';
 
 		$membership = $this->get_membership_by_subscription($subscription_id);
 
@@ -413,16 +422,16 @@ class PayPal_Webhook_Handler {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $resource The sale resource data.
+	 * @param array $event_data The sale event data.
 	 * @return void
 	 */
-	protected function handle_payment_completed(array $resource): void {
+	protected function handle_payment_completed(array $event_data): void {
 
-		$sale_id    = $resource['id'] ?? '';
-		$billing_id = $resource['billing_agreement_id'] ?? '';
-		$custom_id  = $resource['custom'] ?? ($resource['custom_id'] ?? '');
-		$amount     = $resource['amount']['total'] ?? ($resource['amount']['value'] ?? 0);
-		$currency   = $resource['amount']['currency'] ?? ($resource['amount']['currency_code'] ?? 'USD');
+		$sale_id    = $event_data['id'] ?? '';
+		$billing_id = $event_data['billing_agreement_id'] ?? '';
+		$custom_id  = $event_data['custom'] ?? ($event_data['custom_id'] ?? '');
+		$amount     = $event_data['amount']['total'] ?? ($event_data['amount']['value'] ?? 0);
+		$currency   = $event_data['amount']['currency'] ?? ($event_data['amount']['currency_code'] ?? 'USD');
 
 		$this->log(sprintf('Payment completed: %s, Amount: %s %s', $sale_id, $amount, $currency));
 
@@ -487,12 +496,12 @@ class PayPal_Webhook_Handler {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $resource The capture resource data.
+	 * @param array $event_data The capture event data.
 	 * @return void
 	 */
-	protected function handle_capture_completed(array $resource): void {
+	protected function handle_capture_completed(array $event_data): void {
 
-		$capture_id = $resource['id'] ?? '';
+		$capture_id = $event_data['id'] ?? '';
 		$this->log(sprintf('Capture completed: %s', $capture_id));
 
 		// Capture completed is usually handled during the confirmation flow
@@ -504,17 +513,17 @@ class PayPal_Webhook_Handler {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $resource The refund resource data.
+	 * @param array $event_data The refund event data.
 	 * @return void
 	 */
-	protected function handle_capture_refunded(array $resource): void {
+	protected function handle_capture_refunded(array $event_data): void {
 
-		$refund_id  = $resource['id'] ?? '';
+		$refund_id  = $event_data['id'] ?? '';
 		$capture_id = '';
-		$amount     = $resource['amount']['value'] ?? 0;
+		$amount     = $event_data['amount']['value'] ?? 0;
 
 		// Find the original capture ID from links
-		foreach ($resource['links'] ?? [] as $link) {
+		foreach ($event_data['links'] ?? [] as $link) {
 			if ('up' === $link['rel']) {
 				// Extract capture ID from the link
 				preg_match('/captures\/([A-Z0-9]+)/', $link['href'], $matches);

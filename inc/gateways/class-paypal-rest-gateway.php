@@ -241,7 +241,7 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 			$this->get_api_base_url() . '/v1/oauth2/token',
 			[
 				'headers' => [
-					'Authorization' => 'Basic ' . base64_encode($this->client_id . ':' . $this->client_secret),
+					'Authorization' => 'Basic ' . base64_encode($this->client_id . ':' . $this->client_secret), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for PayPal API Basic auth
 					'Content-Type'  => 'application/x-www-form-urlencoded',
 				],
 				'body'    => 'grant_type=client_credentials',
@@ -1062,19 +1062,23 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 			]
 		);
 
-		// Connect with PayPal button
-		wu_register_settings_field(
-			'payment-gateways',
-			'paypal_rest_connect_button',
-			[
-				'title'   => __('Connect with PayPal', 'ultimate-multisite'),
-				'type'    => 'note',
-				'desc'    => [$this, 'render_connect_button'],
-				'require' => [
-					'active_gateways' => 'paypal-rest',
-				],
-			]
-		);
+		// Connect with PayPal button (only when partner credentials are configured)
+		$oauth_handler = PayPal_OAuth_Handler::get_instance();
+
+		if ($oauth_handler->is_configured() || $oauth_handler->is_merchant_connected($this->test_mode)) {
+			wu_register_settings_field(
+				'payment-gateways',
+				'paypal_rest_connect_button',
+				[
+					'title'   => __('Connect with PayPal', 'ultimate-multisite'),
+					'type'    => 'note',
+					'desc'    => [$this, 'render_connect_button'],
+					'require' => [
+						'active_gateways' => 'paypal-rest',
+					],
+				]
+			);
+		}
 
 		// Advanced/Manual credentials header
 		wu_register_settings_field(

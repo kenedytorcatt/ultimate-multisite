@@ -65,6 +65,8 @@ class Gateway_Manager_Test extends WP_UnitTestCase {
 		$this->assertIsArray($registered_gateways);
 		$this->assertArrayHasKey('free', $registered_gateways);
 		$this->assertArrayHasKey('manual', $registered_gateways);
+		$this->assertArrayHasKey('paypal-rest', $registered_gateways);
+		$this->assertArrayHasKey('paypal', $registered_gateways);
 	}
 
 	/**
