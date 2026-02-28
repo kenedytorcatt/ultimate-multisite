@@ -225,6 +225,9 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.4.13] - Released on 2026-XX-XX
+- Fix: Selectize dropdowns with more than 1000 options (e.g. TLD lists) were silently truncated due to the library's default maxOptions limit.
+
 Version [2.4.12] - Released on 2026-02-27
 - New: Send Invoice and Resend Invoice workflows for payments.
 - New: Standalone "Pay Invoice" checkout form for invoice payments without a membership.
