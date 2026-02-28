@@ -399,39 +399,55 @@ class PayPal_REST_Gateway_Test extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test settings method registers required fields.
+	 * Test settings registers fields without OAuth feature flag.
+	 *
+	 * When OAuth is disabled (default), manual keys are shown directly
+	 * without the advanced toggle or OAuth connection field.
 	 */
-	public function test_settings_registers_fields(): void {
+	public function test_settings_registers_fields_without_oauth(): void {
 
 		$this->gateway->init();
 
-		// Capture fields registered via wu_register_settings_field
-		$registered_fields = [];
-
-		// Use the filter to capture registered fields
-		add_filter(
-			'wu_settings_section_payment-gateways_fields',
-			function ($fields) use (&$registered_fields) {
-				$registered_fields = $fields;
-
-				return $fields;
-			}
-		);
+		// Ensure OAuth feature flag is off (default state)
+		add_filter('wu_paypal_oauth_enabled', '__return_false');
 
 		$this->gateway->settings();
 
-		// Apply the filter to get the fields
-		$registered_fields = apply_filters('wu_settings_section_payment-gateways_fields', []); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+		$fields    = apply_filters('wu_settings_section_payment-gateways_fields', []); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+		$field_ids = array_keys($fields);
 
-		$field_ids = array_keys($registered_fields);
-
-		// Verify key fields are registered
+		// Core fields always present
 		$this->assertContains('paypal_rest_header', $field_ids);
 		$this->assertContains('paypal_rest_sandbox_mode', $field_ids);
+		$this->assertContains('paypal_rest_sandbox_client_id', $field_ids);
+		$this->assertContains('paypal_rest_webhook_url', $field_ids);
+
+		// OAuth fields should NOT be present
+		$this->assertNotContains('paypal_rest_oauth_connection', $field_ids);
+		$this->assertNotContains('paypal_rest_show_manual_keys', $field_ids);
+
+		remove_filter('wu_paypal_oauth_enabled', '__return_false');
+	}
+
+	/**
+	 * Test settings registers OAuth fields when feature flag is on.
+	 */
+	public function test_settings_registers_oauth_fields_when_enabled(): void {
+
+		$this->gateway->init();
+
+		add_filter('wu_paypal_oauth_enabled', '__return_true');
+
+		$this->gateway->settings();
+
+		$fields    = apply_filters('wu_settings_section_payment-gateways_fields', []); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+		$field_ids = array_keys($fields);
+
 		$this->assertContains('paypal_rest_oauth_connection', $field_ids);
 		$this->assertContains('paypal_rest_show_manual_keys', $field_ids);
 		$this->assertContains('paypal_rest_sandbox_client_id', $field_ids);
-		$this->assertContains('paypal_rest_webhook_url', $field_ids);
+
+		remove_filter('wu_paypal_oauth_enabled', '__return_true');
 	}
 
 	/**
@@ -454,26 +470,50 @@ class PayPal_REST_Gateway_Test extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test manual credential fields require show_manual_keys toggle.
+	 * Test manual keys shown directly when OAuth is disabled.
 	 */
-	public function test_manual_fields_require_advanced_toggle(): void {
+	public function test_manual_fields_shown_directly_without_oauth(): void {
 
 		$this->gateway->init();
+
+		add_filter('wu_paypal_oauth_enabled', '__return_false');
+
 		$this->gateway->settings();
 
 		$fields = apply_filters('wu_settings_section_payment-gateways_fields', []); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
-		$manual_fields = [
-			'paypal_rest_sandbox_client_id',
-			'paypal_rest_sandbox_client_secret',
-			'paypal_rest_live_client_id',
-			'paypal_rest_live_client_secret',
-		];
+		// Manual key fields should NOT require the show_manual_keys toggle
+		$this->assertArrayHasKey('paypal_rest_sandbox_client_id', $fields);
+		$this->assertArrayNotHasKey(
+			'paypal_rest_show_manual_keys',
+			$fields['paypal_rest_sandbox_client_id']['require'],
+			'Manual keys should be shown directly when OAuth is disabled'
+		);
 
-		foreach ($manual_fields as $field_id) {
-			$this->assertArrayHasKey($field_id, $fields, "Field $field_id should be registered");
-			$this->assertEquals(1, $fields[ $field_id ]['require']['paypal_rest_show_manual_keys'] ?? null, "Field $field_id should require paypal_rest_show_manual_keys = 1");
-		}
+		remove_filter('wu_paypal_oauth_enabled', '__return_false');
+	}
+
+	/**
+	 * Test manual fields require toggle when OAuth is enabled.
+	 */
+	public function test_manual_fields_require_toggle_with_oauth(): void {
+
+		$this->gateway->init();
+
+		add_filter('wu_paypal_oauth_enabled', '__return_true');
+
+		$this->gateway->settings();
+
+		$fields = apply_filters('wu_settings_section_payment-gateways_fields', []); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+
+		$this->assertArrayHasKey('paypal_rest_sandbox_client_id', $fields);
+		$this->assertEquals(
+			1,
+			$fields['paypal_rest_sandbox_client_id']['require']['paypal_rest_show_manual_keys'] ?? null,
+			'Manual keys should require toggle when OAuth is enabled'
+		);
+
+		remove_filter('wu_paypal_oauth_enabled', '__return_true');
 	}
 
 	/**
@@ -482,6 +522,9 @@ class PayPal_REST_Gateway_Test extends WP_UnitTestCase {
 	public function test_oauth_connection_field_type(): void {
 
 		$this->gateway->init();
+
+		add_filter('wu_paypal_oauth_enabled', '__return_true');
+
 		$this->gateway->settings();
 
 		$fields = apply_filters('wu_settings_section_payment-gateways_fields', []); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
@@ -489,6 +532,8 @@ class PayPal_REST_Gateway_Test extends WP_UnitTestCase {
 		$this->assertArrayHasKey('paypal_rest_oauth_connection', $fields);
 		$this->assertEquals('html', $fields['paypal_rest_oauth_connection']['type']);
 		$this->assertIsCallable($fields['paypal_rest_oauth_connection']['content']);
+
+		remove_filter('wu_paypal_oauth_enabled', '__return_true');
 	}
 
 	/**

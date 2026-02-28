@@ -159,4 +159,51 @@ class PayPal_OAuth_Handler_Test extends WP_UnitTestCase {
 		$this->assertNotFalse(has_action('wp_ajax_wu_paypal_disconnect', [$this->handler, 'ajax_disconnect']));
 		$this->assertNotFalse(has_action('admin_init', [$this->handler, 'handle_oauth_return']));
 	}
+
+	/**
+	 * Test is_oauth_feature_enabled defaults to false (proxy unreachable in tests).
+	 */
+	public function test_oauth_feature_disabled_by_default(): void {
+
+		// Clear any cached transient
+		delete_site_transient('wu_paypal_oauth_enabled');
+
+		// In test environment the proxy is unreachable, so it should be false
+		// We use a filter override to avoid the actual HTTP call
+		add_filter('wu_paypal_oauth_enabled', '__return_false');
+
+		$this->assertFalse($this->handler->is_oauth_feature_enabled());
+
+		remove_filter('wu_paypal_oauth_enabled', '__return_false');
+	}
+
+	/**
+	 * Test is_oauth_feature_enabled returns true with filter override.
+	 */
+	public function test_oauth_feature_enabled_via_filter(): void {
+
+		add_filter('wu_paypal_oauth_enabled', '__return_true');
+
+		$this->assertTrue($this->handler->is_oauth_feature_enabled());
+
+		remove_filter('wu_paypal_oauth_enabled', '__return_true');
+	}
+
+	/**
+	 * Test is_oauth_feature_enabled respects cached transient.
+	 */
+	public function test_oauth_feature_uses_transient_cache(): void {
+
+		// Set the transient directly
+		set_site_transient('wu_paypal_oauth_enabled', 'yes', HOUR_IN_SECONDS);
+
+		$this->assertTrue($this->handler->is_oauth_feature_enabled());
+
+		set_site_transient('wu_paypal_oauth_enabled', 'no', HOUR_IN_SECONDS);
+
+		$this->assertFalse($this->handler->is_oauth_feature_enabled());
+
+		// Cleanup
+		delete_site_transient('wu_paypal_oauth_enabled');
+	}
 }

@@ -474,6 +474,80 @@ class PayPal_OAuth_Handler {
 	}
 
 	/**
+	 * Check if the PayPal OAuth Connect feature is enabled.
+	 *
+	 * The feature flag is controlled by the PayPal proxy plugin on
+	 * ultimatemultisite.com. OAuth Connect is only available when the
+	 * proxy has partner credentials configured (i.e. the PayPal
+	 * partnership is active). The result is cached for 12 hours.
+	 *
+	 * Local override: define WU_PAYPAL_OAUTH_ENABLED as true in
+	 * wp-config.php to force-enable without the proxy check.
+	 *
+	 * @since 2.0.0
+	 * @return bool
+	 */
+	public function is_oauth_feature_enabled(): bool {
+
+		// Local constant override (useful for dev/testing)
+		if (defined('WU_PAYPAL_OAUTH_ENABLED')) {
+			return (bool) WU_PAYPAL_OAUTH_ENABLED;
+		}
+
+		/**
+		 * Filters whether the PayPal OAuth Connect feature is enabled.
+		 *
+		 * Return a non-null value to override the remote check.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param bool|null $enabled Null to use remote check, bool to override.
+		 */
+		$override = apply_filters('wu_paypal_oauth_enabled', null);
+
+		if (null !== $override) {
+			return (bool) $override;
+		}
+
+		// Check cached flag from proxy
+		$cached = get_site_transient('wu_paypal_oauth_enabled');
+
+		if (false !== $cached) {
+			return 'yes' === $cached;
+		}
+
+		// Fetch from proxy /status endpoint
+		$proxy_url = $this->get_proxy_url();
+
+		if (empty($proxy_url)) {
+			return false;
+		}
+
+		$response = wp_remote_get(
+			$proxy_url . '/status',
+			['timeout' => 5]
+		);
+
+		if (is_wp_error($response)) {
+			// Cache failure as disabled for 1 hour (retry sooner)
+			set_site_transient('wu_paypal_oauth_enabled', 'no', HOUR_IN_SECONDS);
+
+			return false;
+		}
+
+		$body    = json_decode(wp_remote_retrieve_body($response), true);
+		$enabled = ! empty($body['oauth_enabled']);
+
+		set_site_transient(
+			'wu_paypal_oauth_enabled',
+			$enabled ? 'yes' : 'no',
+			12 * HOUR_IN_SECONDS
+		);
+
+		return $enabled;
+	}
+
+	/**
 	 * Check if a merchant is connected via OAuth.
 	 *
 	 * @since 2.0.0

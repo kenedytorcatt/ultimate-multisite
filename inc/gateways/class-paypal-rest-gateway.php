@@ -1266,38 +1266,60 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 			]
 		);
 
-		// PayPal Connect (combined connection status + button, like Stripe)
-		wu_register_settings_field(
-			'payment-gateways',
-			'paypal_rest_oauth_connection',
-			[
-				'title'   => __('PayPal Connect (Recommended)', 'ultimate-multisite'),
-				'desc'    => __('Connect your PayPal account securely with one click. This provides easier setup and automatic webhook configuration.', 'ultimate-multisite'),
-				'type'    => 'html',
-				'content' => [$this, 'render_oauth_connection'],
-				'require' => [
-					'active_gateways' => 'paypal-rest',
-				],
-			]
-		);
+		$oauth_enabled = PayPal_OAuth_Handler::get_instance()->is_oauth_feature_enabled();
 
-		// Advanced: Show Direct API Keys Toggle
-		wu_register_settings_field(
-			'payment-gateways',
-			'paypal_rest_show_manual_keys',
-			[
-				'title'     => __('Use Direct API Keys (Advanced)', 'ultimate-multisite'),
-				'desc'      => __('Toggle to manually enter API keys instead of using PayPal Connect. Use this for backwards compatibility or advanced configurations.', 'ultimate-multisite'),
-				'type'      => 'toggle',
-				'default'   => 0,
-				'html_attr' => [
-					'v-model' => 'paypal_rest_show_manual_keys',
-				],
-				'require'   => [
-					'active_gateways' => 'paypal-rest',
-				],
-			]
-		);
+		// PayPal Connect section — only shown when OAuth feature is enabled via proxy
+		if ($oauth_enabled) {
+			wu_register_settings_field(
+				'payment-gateways',
+				'paypal_rest_oauth_connection',
+				[
+					'title'   => __('PayPal Connect (Recommended)', 'ultimate-multisite'),
+					'desc'    => __('Connect your PayPal account securely with one click. This provides easier setup and automatic webhook configuration.', 'ultimate-multisite'),
+					'type'    => 'html',
+					'content' => [$this, 'render_oauth_connection'],
+					'require' => [
+						'active_gateways' => 'paypal-rest',
+					],
+				]
+			);
+
+			// Advanced: Show Direct API Keys Toggle (only when OAuth is available)
+			wu_register_settings_field(
+				'payment-gateways',
+				'paypal_rest_show_manual_keys',
+				[
+					'title'     => __('Use Direct API Keys (Advanced)', 'ultimate-multisite'),
+					'desc'      => __('Toggle to manually enter API keys instead of using PayPal Connect. Use this for backwards compatibility or advanced configurations.', 'ultimate-multisite'),
+					'type'      => 'toggle',
+					'default'   => 0,
+					'html_attr' => [
+						'v-model' => 'paypal_rest_show_manual_keys',
+					],
+					'require'   => [
+						'active_gateways' => 'paypal-rest',
+					],
+				]
+			);
+		}
+
+		// Build the require array for manual key fields.
+		// When OAuth is enabled, keys are behind the advanced toggle.
+		// When OAuth is disabled, keys are shown directly.
+		$sandbox_key_require = [
+			'active_gateways'          => 'paypal-rest',
+			'paypal_rest_sandbox_mode' => 1,
+		];
+
+		$live_key_require = [
+			'active_gateways'          => 'paypal-rest',
+			'paypal_rest_sandbox_mode' => 0,
+		];
+
+		if ($oauth_enabled) {
+			$sandbox_key_require['paypal_rest_show_manual_keys'] = 1;
+			$live_key_require['paypal_rest_show_manual_keys']    = 1;
+		}
 
 		// Sandbox Client ID
 		wu_register_settings_field(
@@ -1309,11 +1331,7 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				'type'        => 'text',
 				'default'     => '',
 				'capability'  => 'manage_api_keys',
-				'require'     => [
-					'active_gateways'              => 'paypal-rest',
-					'paypal_rest_sandbox_mode'     => 1,
-					'paypal_rest_show_manual_keys' => 1,
-				],
+				'require'     => $sandbox_key_require,
 			]
 		);
 
@@ -1327,11 +1345,7 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				'type'        => 'text',
 				'default'     => '',
 				'capability'  => 'manage_api_keys',
-				'require'     => [
-					'active_gateways'              => 'paypal-rest',
-					'paypal_rest_sandbox_mode'     => 1,
-					'paypal_rest_show_manual_keys' => 1,
-				],
+				'require'     => $sandbox_key_require,
 			]
 		);
 
@@ -1345,11 +1359,7 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				'type'        => 'text',
 				'default'     => '',
 				'capability'  => 'manage_api_keys',
-				'require'     => [
-					'active_gateways'              => 'paypal-rest',
-					'paypal_rest_sandbox_mode'     => 0,
-					'paypal_rest_show_manual_keys' => 1,
-				],
+				'require'     => $live_key_require,
 			]
 		);
 
@@ -1363,11 +1373,7 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				'type'        => 'text',
 				'default'     => '',
 				'capability'  => 'manage_api_keys',
-				'require'     => [
-					'active_gateways'              => 'paypal-rest',
-					'paypal_rest_sandbox_mode'     => 0,
-					'paypal_rest_show_manual_keys' => 1,
-				],
+				'require'     => $live_key_require,
 			]
 		);
 
