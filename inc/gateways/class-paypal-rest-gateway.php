@@ -1240,34 +1240,30 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	 */
 	public function render_connect_button(): string {
 
-		$nonce        = wp_create_nonce('wu_paypal_oauth');
-		$is_sandbox   = $this->test_mode;
 		$oauth        = PayPal_OAuth_Handler::get_instance();
-		$is_connected = $oauth->is_merchant_connected($is_sandbox);
+		$is_connected = $oauth->is_merchant_connected($this->test_mode);
 
 		// Enqueue the inline JS via admin_footer to avoid script tag escaping
+		// Nonce/sandbox values are embedded in the JS since wp_kses strips data-* attributes
 		$this->enqueue_connect_scripts();
 
 		if ($is_connected) {
 			return sprintf(
-				'<button type="button" class="button button-secondary wu-paypal-disconnect" data-nonce="%s">
+				'<button type="button" class="button button-secondary wu-paypal-disconnect">
 					%s
 				</button>
 				<p class="description">%s</p>',
-				esc_attr($nonce),
 				esc_html__('Disconnect PayPal', 'ultimate-multisite'),
 				esc_html__('This will remove the PayPal connection. Existing subscriptions will continue to work.', 'ultimate-multisite')
 			);
 		}
 
 		return sprintf(
-			'<button type="button" class="button button-primary wu-paypal-connect" data-nonce="%s" data-sandbox="%d">
+			'<button type="button" class="button button-primary wu-paypal-connect">
 				<span class="dashicons dashicons-paypal wu-mr-1"></span>
 				%s
 			</button>
 			<p class="description">%s</p>',
-			esc_attr($nonce),
-			$is_sandbox ? 1 : 0,
 			esc_html__('Connect with PayPal', 'ultimate-multisite'),
 			esc_html__('Click to securely connect your PayPal account.', 'ultimate-multisite')
 		);
@@ -1289,12 +1285,20 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 
 		$enqueued = true;
 
+		// Capture values now; wp_kses strips data-* attributes from the button HTML,
+		// so we embed nonce and sandbox values directly in the footer script.
+		$nonce   = wp_create_nonce('wu_paypal_oauth');
+		$sandbox = $this->test_mode ? 1 : 0;
+
 		add_action(
 			'admin_footer',
-			function () {
+			function () use ($nonce, $sandbox) {
 				?>
 			<script>
 			jQuery(function($) {
+				var wuPayPalNonce = <?php echo wp_json_encode($nonce); ?>;
+				var wuPayPalSandbox = <?php echo (int) $sandbox; ?>;
+
 				$(".wu-paypal-connect").on("click", function(e) {
 					e.preventDefault();
 					var $btn = $(this);
@@ -1302,8 +1306,8 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 
 					$.post(ajaxurl, {
 						action: "wu_paypal_connect",
-						nonce: $btn.data("nonce"),
-						sandbox_mode: $btn.data("sandbox")
+						nonce: wuPayPalNonce,
+						sandbox_mode: wuPayPalSandbox
 					}, function(response) {
 						if (response.success) {
 							window.location.href = response.data.redirect_url;
@@ -1326,7 +1330,7 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 
 					$.post(ajaxurl, {
 						action: "wu_paypal_disconnect",
-						nonce: $btn.data("nonce")
+						nonce: wuPayPalNonce
 					}, function(response) {
 						window.location.reload();
 					});
@@ -1374,12 +1378,11 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				'<div class="wu-p-4 wu-bg-yellow-100 wu-rounded wu-text-yellow-800">
 					<span class="dashicons dashicons-warning wu-mr-2"></span>
 					%s<br>
-					<button type="button" class="button button-secondary wu-mt-2 wu-paypal-install-webhook" data-nonce="%s">
+					<button type="button" class="button button-secondary wu-mt-2 wu-paypal-install-webhook">
 						%s
 					</button>
 				</div>',
 				esc_html__('Webhook not configured. Click below to configure automatically.', 'ultimate-multisite'),
-				esc_attr(wp_create_nonce('wu_paypal_webhook')),
 				esc_html__('Configure Webhook', 'ultimate-multisite')
 			);
 		}
@@ -1409,12 +1412,17 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 
 		$enqueued = true;
 
+		// Embed nonce in the script; wp_kses strips data-nonce from button HTML.
+		$nonce = wp_create_nonce('wu_paypal_webhook');
+
 		add_action(
 			'admin_footer',
-			function () {
+			function () use ($nonce) {
 				?>
 			<script>
 			jQuery(function($) {
+				var wuWebhookNonce = <?php echo wp_json_encode($nonce); ?>;
+
 				$(".wu-paypal-install-webhook").on("click", function(e) {
 					e.preventDefault();
 					var $btn = $(this);
@@ -1422,7 +1430,7 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 
 					$.post(ajaxurl, {
 						action: "wu_paypal_install_webhook",
-						nonce: $btn.data("nonce")
+						nonce: wuWebhookNonce
 					}, function(response) {
 						if (response.success) {
 							window.location.reload();
