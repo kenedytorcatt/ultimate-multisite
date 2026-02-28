@@ -1239,24 +1239,10 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 			'paypal_rest_header',
 			[
 				'title'           => __('PayPal', 'ultimate-multisite'),
-				'desc'            => __('Modern PayPal integration with Connect with PayPal onboarding.', 'ultimate-multisite'),
+				'desc'            => __('Use the settings section below to configure PayPal as a payment method.', 'ultimate-multisite'),
 				'type'            => 'header',
 				'show_as_submenu' => true,
 				'require'         => [
-					'active_gateways' => 'paypal-rest',
-				],
-			]
-		);
-
-		// Connection status display
-		wu_register_settings_field(
-			'payment-gateways',
-			'paypal_rest_connection_status',
-			[
-				'title'   => __('Connection Status', 'ultimate-multisite'),
-				'type'    => 'note',
-				'desc'    => [$this, 'render_connection_status'],
-				'require' => [
 					'active_gateways' => 'paypal-rest',
 				],
 			]
@@ -1268,7 +1254,7 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 			'paypal_rest_sandbox_mode',
 			[
 				'title'     => __('PayPal Sandbox Mode', 'ultimate-multisite'),
-				'desc'      => __('Enable sandbox mode for testing.', 'ultimate-multisite'),
+				'desc'      => __('Toggle this to put PayPal on sandbox mode. This is useful for testing and making sure PayPal is correctly setup to handle your payments.', 'ultimate-multisite'),
 				'type'      => 'toggle',
 				'default'   => 1,
 				'html_attr' => [
@@ -1280,33 +1266,34 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 			]
 		);
 
-		// Connect with PayPal button (only when partner credentials are configured)
-		$oauth_handler = PayPal_OAuth_Handler::get_instance();
-
-		if ($oauth_handler->is_configured() || $oauth_handler->is_merchant_connected($this->test_mode)) {
-			wu_register_settings_field(
-				'payment-gateways',
-				'paypal_rest_connect_button',
-				[
-					'title'   => __('Connect with PayPal', 'ultimate-multisite'),
-					'type'    => 'note',
-					'desc'    => [$this, 'render_connect_button'],
-					'require' => [
-						'active_gateways' => 'paypal-rest',
-					],
-				]
-			);
-		}
-
-		// Advanced/Manual credentials header
+		// PayPal Connect (combined connection status + button, like Stripe)
 		wu_register_settings_field(
 			'payment-gateways',
-			'paypal_rest_manual_header',
+			'paypal_rest_oauth_connection',
 			[
-				'title'   => __('Manual Configuration', 'ultimate-multisite'),
-				'desc'    => __('Advanced: Enter API credentials manually if Connect with PayPal is not available.', 'ultimate-multisite'),
-				'type'    => 'header',
+				'title'   => __('PayPal Connect (Recommended)', 'ultimate-multisite'),
+				'desc'    => __('Connect your PayPal account securely with one click. This provides easier setup and automatic webhook configuration.', 'ultimate-multisite'),
+				'type'    => 'html',
+				'content' => [$this, 'render_oauth_connection'],
 				'require' => [
+					'active_gateways' => 'paypal-rest',
+				],
+			]
+		);
+
+		// Advanced: Show Direct API Keys Toggle
+		wu_register_settings_field(
+			'payment-gateways',
+			'paypal_rest_show_manual_keys',
+			[
+				'title'     => __('Use Direct API Keys (Advanced)', 'ultimate-multisite'),
+				'desc'      => __('Toggle to manually enter API keys instead of using PayPal Connect. Use this for backwards compatibility or advanced configurations.', 'ultimate-multisite'),
+				'type'      => 'toggle',
+				'default'   => 0,
+				'html_attr' => [
+					'v-model' => 'paypal_rest_show_manual_keys',
+				],
+				'require'   => [
 					'active_gateways' => 'paypal-rest',
 				],
 			]
@@ -1323,8 +1310,9 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				'default'     => '',
 				'capability'  => 'manage_api_keys',
 				'require'     => [
-					'active_gateways'          => 'paypal-rest',
-					'paypal_rest_sandbox_mode' => 1,
+					'active_gateways'              => 'paypal-rest',
+					'paypal_rest_sandbox_mode'     => 1,
+					'paypal_rest_show_manual_keys' => 1,
 				],
 			]
 		);
@@ -1340,8 +1328,9 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				'default'     => '',
 				'capability'  => 'manage_api_keys',
 				'require'     => [
-					'active_gateways'          => 'paypal-rest',
-					'paypal_rest_sandbox_mode' => 1,
+					'active_gateways'              => 'paypal-rest',
+					'paypal_rest_sandbox_mode'     => 1,
+					'paypal_rest_show_manual_keys' => 1,
 				],
 			]
 		);
@@ -1357,8 +1346,9 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				'default'     => '',
 				'capability'  => 'manage_api_keys',
 				'require'     => [
-					'active_gateways'          => 'paypal-rest',
-					'paypal_rest_sandbox_mode' => 0,
+					'active_gateways'              => 'paypal-rest',
+					'paypal_rest_sandbox_mode'     => 0,
+					'paypal_rest_show_manual_keys' => 1,
 				],
 			]
 		);
@@ -1374,38 +1364,30 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				'default'     => '',
 				'capability'  => 'manage_api_keys',
 				'require'     => [
-					'active_gateways'          => 'paypal-rest',
-					'paypal_rest_sandbox_mode' => 0,
+					'active_gateways'              => 'paypal-rest',
+					'paypal_rest_sandbox_mode'     => 0,
+					'paypal_rest_show_manual_keys' => 1,
 				],
 			]
 		);
 
-		// Webhook URL display
+		$webhook_message = sprintf(
+			'<span class="wu-p-2 wu-bg-blue-100 wu-text-blue-600 wu-rounded wu-mt-3 wu-mb-0 wu-block wu-text-xs">%s</span>',
+			__('Webhooks are automatically configured when you connect your PayPal account or save settings with valid API credentials.', 'ultimate-multisite')
+		);
+
 		wu_register_settings_field(
 			'payment-gateways',
 			'paypal_rest_webhook_url',
 			[
-				'title'      => __('Webhook URL', 'ultimate-multisite'),
-				'desc'       => __('Webhooks are automatically configured when you connect your PayPal account.', 'ultimate-multisite'),
-				'type'       => 'text-display',
-				'copy'       => true,
-				'value'      => $this->get_webhook_listener_url(),
-				'capability' => 'manage_api_keys',
-				'require'    => [
-					'active_gateways' => 'paypal-rest',
-				],
-			]
-		);
-
-		// Webhook status
-		wu_register_settings_field(
-			'payment-gateways',
-			'paypal_rest_webhook_status',
-			[
-				'title'   => __('Webhook Status', 'ultimate-multisite'),
-				'type'    => 'note',
-				'desc'    => [$this, 'render_webhook_status'],
-				'require' => [
+				'title'           => __('Webhook Listener URL', 'ultimate-multisite'),
+				'desc'            => $webhook_message,
+				'tooltip'         => __('This is the URL PayPal should send webhook calls to.', 'ultimate-multisite'),
+				'type'            => 'text-display',
+				'copy'            => true,
+				'default'         => $this->get_webhook_listener_url(),
+				'wrapper_classes' => '',
+				'require'         => [
 					'active_gateways' => 'paypal-rest',
 				],
 			]
@@ -1413,84 +1395,78 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	}
 
 	/**
-	 * Render connection status HTML.
+	 * Render the PayPal OAuth connection status and button.
+	 *
+	 * Mirrors the Stripe Connect pattern: shows connected status with disconnect,
+	 * or disconnected status with connect button, plus fee notice.
 	 *
 	 * @since 2.0.0
-	 * @return string
+	 * @return void
 	 */
-	public function render_connection_status(): string {
-
-		$status = $this->get_connection_status();
-
-		if ($status['connected']) {
-			$mode_label = 'sandbox' === $status['details']['mode']
-				? __('Sandbox', 'ultimate-multisite')
-				: __('Live', 'ultimate-multisite');
-
-			$email = $status['details']['email'] ?? ($status['details']['client_id'] ?? '');
-
-			return sprintf(
-				'<div class="wu-p-4 wu-bg-green-100 wu-rounded wu-text-green-800">
-					<span class="dashicons dashicons-yes-alt wu-mr-2"></span>
-					<strong>%s</strong> (%s)<br>
-					<span class="wu-text-sm">%s</span>
-				</div>',
-				esc_html($status['message']),
-				esc_html($mode_label),
-				esc_html($email)
-			);
-		}
-
-		return sprintf(
-			'<div class="wu-p-4 wu-bg-yellow-100 wu-rounded wu-text-yellow-800">
-				<span class="dashicons dashicons-warning wu-mr-2"></span>
-				%s
-			</div>',
-			esc_html__('Not connected. Use Connect with PayPal below or enter credentials manually.', 'ultimate-multisite')
-		);
-	}
-
-	/**
-	 * Render the Connect with PayPal button.
-	 *
-	 * @since 2.0.0
-	 * @return string
-	 */
-	public function render_connect_button(): string {
+	public function render_oauth_connection(): void {
 
 		$oauth        = PayPal_OAuth_Handler::get_instance();
 		$is_connected = $oauth->is_merchant_connected($this->test_mode);
 
-		// Enqueue the inline JS via admin_footer to avoid script tag escaping
-		// Nonce/sandbox values are embedded in the JS since wp_kses strips data-* attributes
-		$this->enqueue_connect_scripts();
-
-		$html = '';
-
 		if ($is_connected) {
-			$html .= sprintf(
-				'<button type="button" class="button button-secondary wu-paypal-disconnect">
-					%s
-				</button>
-				<p class="description">%s</p>',
-				esc_html__('Disconnect PayPal', 'ultimate-multisite'),
-				esc_html__('This will remove the PayPal connection. Existing subscriptions will continue to work.', 'ultimate-multisite')
+			$status     = $this->get_connection_status();
+			$mode_label = 'sandbox' === ($status['details']['mode'] ?? '')
+				? __('Sandbox', 'ultimate-multisite')
+				: __('Live', 'ultimate-multisite');
+			$identifier = $status['details']['merchant_id']
+				?? ($status['details']['email'] ?? ($status['details']['client_id'] ?? ''));
+
+			// Connected state
+			printf(
+				'<div class="wu-oauth-status wu-connected wu-p-4 wu-bg-green-50 wu-border wu-border-green-200 wu-rounded">
+					<div class="wu-flex wu-items-center wu-mb-2">
+						<span class="dashicons dashicons-yes-alt wu-text-green-600 wu-mr-2"></span>
+						<strong class="wu-text-green-800">%s</strong>
+					</div>
+					<p class="wu-text-sm wu-text-gray-600 wu-mb-2">%s <code class="wu-bg-white wu-px-2 wu-py-1 wu-rounded">%s</code> (%s)</p>
+					<button type="button" class="button wu-mt-2 wu-paypal-disconnect">%s</button>
+				</div>',
+				esc_html__('Connected via PayPal', 'ultimate-multisite'),
+				esc_html__('Merchant ID:', 'ultimate-multisite'),
+				esc_html($identifier),
+				esc_html($mode_label),
+				esc_html__('Disconnect', 'ultimate-multisite')
 			);
 		} else {
-			$html .= sprintf(
-				'<button type="button" class="button button-primary wu-paypal-connect">
-					<span class="dashicons dashicons-paypal wu-mr-1"></span>
-					%s
-				</button>
-				<p class="description">%s</p>',
-				esc_html__('Connect with PayPal', 'ultimate-multisite'),
-				esc_html__('Click to securely connect your PayPal account.', 'ultimate-multisite')
-			);
+
+			// Disconnected state - show connect button
+			$can_connect = $oauth->is_configured();
+
+			if ($can_connect) {
+				printf(
+					'<div class="wu-oauth-status wu-disconnected wu-p-4 wu-bg-blue-50 wu-border wu-border-blue-200 wu-rounded">
+						<p class="wu-text-sm wu-text-gray-700 wu-mb-3">%s</p>
+						<button type="button" class="button button-primary wu-paypal-connect">
+							<span class="dashicons dashicons-admin-links wu-mr-1 wu-mt-1"></span>
+							%s
+						</button>
+						<p class="wu-text-xs wu-text-gray-500 wu-mt-2">%s</p>
+					</div>',
+					esc_html__('Connect your PayPal account with one click. Webhooks will be configured automatically.', 'ultimate-multisite'),
+					esc_html__('Connect with PayPal', 'ultimate-multisite'),
+					esc_html__('You will be redirected to PayPal to securely authorize the connection.', 'ultimate-multisite')
+				);
+			} else {
+				printf(
+					'<div class="wu-oauth-status wu-disconnected wu-p-4 wu-bg-gray-50 wu-border wu-border-gray-200 wu-rounded">
+						<p class="wu-text-sm wu-text-gray-600">%s</p>
+					</div>',
+					esc_html__('Use the Direct API Keys option below to enter your PayPal credentials manually.', 'ultimate-multisite')
+				);
+			}
 		}
+
+		// Enqueue the connect/disconnect scripts
+		$this->enqueue_connect_scripts();
 
 		// Fee notice (mirrors Stripe Connect fee notice)
 		if (! \WP_Ultimo::get_instance()->get_addon_repository()->has_addon_purchase()) {
-			$html .= sprintf(
+			printf(
 				'<div class="wu-py-3">%s <br><a href="%s" target="_blank" rel="noopener">%s</a></div>',
 				esc_html(
 					sprintf(
@@ -1503,13 +1479,11 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				esc_html__('Remove this fee by purchasing any addon and connecting your store.', 'ultimate-multisite')
 			);
 		} else {
-			$html .= sprintf(
+			printf(
 				'<p class="wu-text-xs wu-text-green-700 wu-mt-2">%s</p>',
 				esc_html__('No application fee — thank you for your support!', 'ultimate-multisite')
 			);
 		}
-
-		return $html;
 	}
 
 	/**
@@ -1556,11 +1530,11 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 							window.location.href = response.data.redirect_url;
 						} else {
 							alert(response.data.message || <?php echo wp_json_encode(__('Connection failed. Please try again.', 'ultimate-multisite')); ?>);
-							$btn.prop("disabled", false).html('<span class="dashicons dashicons-paypal wu-mr-1"></span> ' + <?php echo wp_json_encode(__('Connect with PayPal', 'ultimate-multisite')); ?>);
+							$btn.prop("disabled", false).html('<span class="dashicons dashicons-admin-links wu-mr-1 wu-mt-1"></span> ' + <?php echo wp_json_encode(__('Connect with PayPal', 'ultimate-multisite')); ?>);
 						}
 					}).fail(function() {
 						alert(<?php echo wp_json_encode(__('Connection failed. Please try again.', 'ultimate-multisite')); ?>);
-						$btn.prop("disabled", false).html('<span class="dashicons dashicons-paypal wu-mr-1"></span> ' + <?php echo wp_json_encode(__('Connect with PayPal', 'ultimate-multisite')); ?>);
+						$btn.prop("disabled", false).html('<span class="dashicons dashicons-admin-links wu-mr-1 wu-mt-1"></span> ' + <?php echo wp_json_encode(__('Connect with PayPal', 'ultimate-multisite')); ?>);
 					});
 				});
 
@@ -1576,114 +1550,6 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 						nonce: wuPayPalNonce
 					}, function(response) {
 						window.location.reload();
-					});
-				});
-			});
-			</script>
-				<?php
-			}
-		);
-	}
-
-	/**
-	 * Render webhook status HTML.
-	 *
-	 * @since 2.0.0
-	 * @return string
-	 */
-	public function render_webhook_status(): string {
-
-		$mode_prefix = $this->test_mode ? 'sandbox' : 'live';
-		$mode_label  = $this->test_mode
-			? __('Sandbox', 'ultimate-multisite')
-			: __('Live', 'ultimate-multisite');
-
-		$webhook_id = wu_get_setting("paypal_rest_{$mode_prefix}_webhook_id", '');
-
-		if (! empty($webhook_id)) {
-			return sprintf(
-				'<div class="wu-p-4 wu-bg-green-100 wu-rounded wu-text-green-800">
-					<span class="dashicons dashicons-yes-alt wu-mr-2"></span>
-					<strong>%s</strong><br>
-					<span class="wu-text-sm">%s: %s</span>
-				</div>',
-				esc_html__('Webhook configured', 'ultimate-multisite'),
-				esc_html($mode_label),
-				esc_html($webhook_id)
-			);
-		}
-
-		// Check if we have credentials but no webhook
-		if ($this->is_configured()) {
-			$this->enqueue_webhook_scripts();
-
-			return sprintf(
-				'<div class="wu-p-4 wu-bg-yellow-100 wu-rounded wu-text-yellow-800">
-					<span class="dashicons dashicons-warning wu-mr-2"></span>
-					%s<br>
-					<button type="button" class="button button-secondary wu-mt-2 wu-paypal-install-webhook">
-						%s
-					</button>
-				</div>',
-				esc_html__('Webhook not configured. Click below to configure automatically.', 'ultimate-multisite'),
-				esc_html__('Configure Webhook', 'ultimate-multisite')
-			);
-		}
-
-		return sprintf(
-			'<div class="wu-p-4 wu-bg-gray-100 wu-rounded wu-text-gray-600">
-				<span class="dashicons dashicons-info wu-mr-2"></span>
-				%s
-			</div>',
-			esc_html__('Connect with PayPal to automatically configure webhooks.', 'ultimate-multisite')
-		);
-	}
-
-	/**
-	 * Enqueue the webhook install button scripts.
-	 *
-	 * @since 2.0.0
-	 * @return void
-	 */
-	protected function enqueue_webhook_scripts(): void {
-
-		static $enqueued = false;
-
-		if ($enqueued) {
-			return;
-		}
-
-		$enqueued = true;
-
-		// Embed nonce in the script; wp_kses strips data-nonce from button HTML.
-		$nonce = wp_create_nonce('wu_paypal_webhook');
-
-		add_action(
-			'admin_footer',
-			function () use ($nonce) {
-				?>
-			<script>
-			jQuery(function($) {
-				var wuWebhookNonce = <?php echo wp_json_encode($nonce); ?>;
-
-				$(".wu-paypal-install-webhook").on("click", function(e) {
-					e.preventDefault();
-					var $btn = $(this);
-					$btn.prop("disabled", true).text(<?php echo wp_json_encode(__('Configuring...', 'ultimate-multisite')); ?>);
-
-					$.post(ajaxurl, {
-						action: "wu_paypal_install_webhook",
-						nonce: wuWebhookNonce
-					}, function(response) {
-						if (response.success) {
-							window.location.reload();
-						} else {
-							alert(response.data.message || <?php echo wp_json_encode(__('Failed to configure webhook.', 'ultimate-multisite')); ?>);
-							$btn.prop("disabled", false).text(<?php echo wp_json_encode(__('Configure Webhook', 'ultimate-multisite')); ?>);
-						}
-					}).fail(function() {
-						alert(<?php echo wp_json_encode(__('Failed to configure webhook. Please try again.', 'ultimate-multisite')); ?>);
-						$btn.prop("disabled", false).text(<?php echo wp_json_encode(__('Configure Webhook', 'ultimate-multisite')); ?>);
 					});
 				});
 			});
