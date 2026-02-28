@@ -437,9 +437,15 @@ class Gateway_Manager extends Base_Manager {
 
 		/*
 		 * PayPal Payments (Legacy NVP API)
+		 * Only show if already active or has existing credentials configured.
 		 */
-		$paypal_desc = __('PayPal Express Checkout (Legacy). Uses username/password/signature authentication. For existing integrations only.', 'ultimate-multisite');
-		wu_register_gateway('paypal', __('PayPal (Legacy)', 'ultimate-multisite'), $paypal_desc, PayPal_Gateway::class);
+		$legacy_paypal_active    = in_array('paypal', (array) wu_get_setting('active_gateways', []), true);
+		$legacy_paypal_has_creds = wu_get_setting('paypal_test_username', '') || wu_get_setting('paypal_live_username', '');
+
+		if ($legacy_paypal_active || $legacy_paypal_has_creds) {
+			$paypal_desc = __('PayPal Express Checkout (Legacy). Uses username/password/signature authentication. For existing integrations only.', 'ultimate-multisite');
+			wu_register_gateway('paypal', __('PayPal (Legacy)', 'ultimate-multisite'), $paypal_desc, PayPal_Gateway::class);
+		}
 
 		/*
 		 * Initialize PayPal REST webhook handler
