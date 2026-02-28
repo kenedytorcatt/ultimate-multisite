@@ -216,8 +216,6 @@ class PayPal_OAuth_Handler {
 		$merchant_id         = isset($_GET['merchantIdInPayPal']) ? sanitize_text_field(wp_unslash($_GET['merchantIdInPayPal'])) : '';
 		$merchant_email      = isset($_GET['merchantId']) ? sanitize_email(wp_unslash($_GET['merchantId'])) : '';
 		$permissions_granted = isset($_GET['permissionsGranted']) && 'true' === $_GET['permissionsGranted'];
-		$consent_status      = isset($_GET['consentStatus']) && 'true' === $_GET['consentStatus'];
-		$risk_status         = isset($_GET['isEmailConfirmed']) ? sanitize_text_field(wp_unslash($_GET['isEmailConfirmed'])) : '';
 		$tracking_id         = isset($_GET['tracking_id']) ? sanitize_text_field(wp_unslash($_GET['tracking_id'])) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
@@ -526,8 +524,7 @@ class PayPal_OAuth_Handler {
 
 		try {
 			// Get the PayPal REST gateway instance
-			$gateway_manager = \WP_Ultimo\Managers\Gateway_Manager::get_instance();
-			$gateway         = $gateway_manager->get_gateway('paypal-rest');
+			$gateway = wu_get_gateway('paypal-rest');
 
 			if (! $gateway instanceof PayPal_REST_Gateway) {
 				wu_log_add('paypal', 'Could not get PayPal REST gateway instance for webhook installation', LogLevel::WARNING);
@@ -562,8 +559,7 @@ class PayPal_OAuth_Handler {
 	protected function delete_webhooks_on_disconnect(): void {
 
 		try {
-			$gateway_manager = \WP_Ultimo\Managers\Gateway_Manager::get_instance();
-			$gateway         = $gateway_manager->get_gateway('paypal-rest');
+			$gateway = wu_get_gateway('paypal-rest');
 
 			if (! $gateway instanceof PayPal_REST_Gateway) {
 				return;

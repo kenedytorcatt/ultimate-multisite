@@ -478,12 +478,13 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param string $endpoint API endpoint (relative to base URL).
-	 * @param array  $data     Request data.
-	 * @param string $method   HTTP method.
+	 * @param string $endpoint      API endpoint (relative to base URL).
+	 * @param array  $data          Request data.
+	 * @param string $method        HTTP method.
+	 * @param array  $extra_headers Additional HTTP headers to include.
 	 * @return array|\WP_Error Response data or error.
 	 */
-	protected function api_request(string $endpoint, array $data = [], string $method = 'POST') {
+	protected function api_request(string $endpoint, array $data = [], string $method = 'POST', array $extra_headers = []) {
 
 		$access_token = $this->get_access_token();
 
@@ -497,6 +498,7 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 		];
 
 		$headers = $this->add_partner_attribution_header($headers);
+		$headers = array_merge($headers, $extra_headers);
 
 		$args = [
 			'headers' => $headers,
@@ -664,10 +666,10 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 			);
 		}
 
-		// Find approval URL
+		// Find approval URL (PayPal returns 'approve' or 'payer-action' depending on context)
 		$approval_url = '';
 		foreach ($result['links'] ?? [] as $link) {
-			if ('approve' === $link['rel']) {
+			if (in_array($link['rel'], ['approve', 'payer-action'], true)) {
 				$approval_url = $link['href'];
 				break;
 			}
@@ -886,10 +888,10 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 			);
 		}
 
-		// Find approval URL
+		// Find approval URL (PayPal returns 'approve' or 'payer-action' depending on context)
 		$approval_url = '';
 		foreach ($result['links'] ?? [] as $link) {
-			if ('approve' === $link['rel']) {
+			if (in_array($link['rel'], ['approve', 'payer-action'], true)) {
 				$approval_url = $link['href'];
 				break;
 			}
@@ -1061,8 +1063,8 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	 */
 	protected function confirm_order(string $token): void {
 
-		// Capture the order
-		$capture = $this->api_request('/v2/checkout/orders/' . $token . '/capture', []);
+		// Capture the order (Prefer header ensures full response with capture details)
+		$capture = $this->api_request('/v2/checkout/orders/' . $token . '/capture', [], 'POST', ['Prefer' => 'return=representation']);
 
 		if (is_wp_error($capture)) {
 			wp_die(

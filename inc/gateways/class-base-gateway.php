@@ -566,7 +566,7 @@ abstract class Base_Gateway {
 	 * @return string
 	 */
 	public function get_payment_url_on_gateway($gateway_payment_id): string {
-
+		unset($gateway_payment_id);
 		return '';
 	}
 
@@ -581,7 +581,7 @@ abstract class Base_Gateway {
 	 * @return string
 	 */
 	public function get_subscription_url_on_gateway($gateway_subscription_id): string {
-
+		unset($gateway_subscription_id);
 		return '';
 	}
 
@@ -596,7 +596,7 @@ abstract class Base_Gateway {
 	 * @return string
 	 */
 	public function get_customer_url_on_gateway($gateway_customer_id): string {
-
+		unset($gateway_customer_id);
 		return '';
 	}
 
