@@ -172,7 +172,7 @@ class PayPal_REST_Gateway_Test extends WP_UnitTestCase {
 
 		// Verify sandbox mode credentials
 		$reflection = new \ReflectionClass($gateway);
-		$prop = $reflection->getProperty('client_id');
+		$prop       = $reflection->getProperty('client_id');
 
 		$this->assertEquals('sandbox_id', $prop->getValue($gateway));
 
@@ -277,7 +277,7 @@ class PayPal_REST_Gateway_Test extends WP_UnitTestCase {
 		$this->gateway->init();
 
 		$reflection = new \ReflectionClass($this->gateway);
-		$method = $reflection->getMethod('get_api_base_url');
+		$method     = $reflection->getMethod('get_api_base_url');
 
 		$url = $method->invoke($this->gateway);
 		$this->assertEquals('https://api-m.sandbox.paypal.com', $url);
@@ -291,7 +291,7 @@ class PayPal_REST_Gateway_Test extends WP_UnitTestCase {
 		$this->gateway->set_test_mode(false);
 
 		$reflection = new \ReflectionClass($this->gateway);
-		$method = $reflection->getMethod('get_api_base_url');
+		$method     = $reflection->getMethod('get_api_base_url');
 
 		$url = $method->invoke($this->gateway);
 		$this->assertEquals('https://api-m.paypal.com', $url);
@@ -305,7 +305,7 @@ class PayPal_REST_Gateway_Test extends WP_UnitTestCase {
 		$this->gateway->init();
 
 		$reflection = new \ReflectionClass($this->gateway);
-		$method = $reflection->getMethod('get_access_token');
+		$method     = $reflection->getMethod('get_access_token');
 
 		$result = $method->invoke($this->gateway);
 		$this->assertInstanceOf(\WP_Error::class, $result);
@@ -357,7 +357,7 @@ class PayPal_REST_Gateway_Test extends WP_UnitTestCase {
 		$this->gateway->init();
 
 		$reflection = new \ReflectionClass($this->gateway);
-		$method = $reflection->getMethod('build_auth_assertion');
+		$method     = $reflection->getMethod('build_auth_assertion');
 
 		$assertion = $method->invoke($this->gateway, 'PARTNER_CLIENT_ID', 'MERCHANT_PAYER_ID');
 
@@ -384,14 +384,194 @@ class PayPal_REST_Gateway_Test extends WP_UnitTestCase {
 		$this->gateway->init();
 
 		// Override proxy URL to a non-existent server
-		add_filter('wu_paypal_connect_proxy_url', function () {
-			return 'https://nonexistent-proxy.test/wp-json/paypal-connect/v1';
-		});
+		add_filter(
+			'wu_paypal_connect_proxy_url',
+			function () {
+				return 'https://nonexistent-proxy.test/wp-json/paypal-connect/v1';
+			}
+		);
 
 		$reflection = new \ReflectionClass($this->gateway);
-		$method = $reflection->getMethod('get_partner_data');
+		$method     = $reflection->getMethod('get_partner_data');
 
 		$result = $method->invoke($this->gateway);
 		$this->assertInstanceOf(\WP_Error::class, $result);
+	}
+
+	/**
+	 * Test settings method registers required fields.
+	 */
+	public function test_settings_registers_fields(): void {
+
+		$this->gateway->init();
+
+		// Capture fields registered via wu_register_settings_field
+		$registered_fields = [];
+
+		// Use the filter to capture registered fields
+		add_filter(
+			'wu_settings_section_payment-gateways_fields',
+			function ($fields) use (&$registered_fields) {
+				$registered_fields = $fields;
+
+				return $fields;
+			}
+		);
+
+		$this->gateway->settings();
+
+		// Apply the filter to get the fields
+		$registered_fields = apply_filters('wu_settings_section_payment-gateways_fields', []); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+
+		$field_ids = array_keys($registered_fields);
+
+		// Verify key fields are registered
+		$this->assertContains('paypal_rest_header', $field_ids);
+		$this->assertContains('paypal_rest_sandbox_mode', $field_ids);
+		$this->assertContains('paypal_rest_oauth_connection', $field_ids);
+		$this->assertContains('paypal_rest_show_manual_keys', $field_ids);
+		$this->assertContains('paypal_rest_sandbox_client_id', $field_ids);
+		$this->assertContains('paypal_rest_webhook_url', $field_ids);
+	}
+
+	/**
+	 * Test settings fields require active gateway.
+	 */
+	public function test_settings_fields_require_active_gateway(): void {
+
+		$this->gateway->init();
+		$this->gateway->settings();
+
+		$fields = apply_filters('wu_settings_section_payment-gateways_fields', []); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+
+		// All PayPal REST fields should require the gateway to be active
+		foreach ($fields as $field_id => $field) {
+			if (strpos($field_id, 'paypal_rest_') === 0) {
+				$this->assertArrayHasKey('require', $field, "Field $field_id should have require key");
+				$this->assertEquals('paypal-rest', $field['require']['active_gateways'] ?? '', "Field $field_id should require paypal-rest gateway");
+			}
+		}
+	}
+
+	/**
+	 * Test manual credential fields require show_manual_keys toggle.
+	 */
+	public function test_manual_fields_require_advanced_toggle(): void {
+
+		$this->gateway->init();
+		$this->gateway->settings();
+
+		$fields = apply_filters('wu_settings_section_payment-gateways_fields', []); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+
+		$manual_fields = [
+			'paypal_rest_sandbox_client_id',
+			'paypal_rest_sandbox_client_secret',
+			'paypal_rest_live_client_id',
+			'paypal_rest_live_client_secret',
+		];
+
+		foreach ($manual_fields as $field_id) {
+			$this->assertArrayHasKey($field_id, $fields, "Field $field_id should be registered");
+			$this->assertEquals(1, $fields[ $field_id ]['require']['paypal_rest_show_manual_keys'] ?? null, "Field $field_id should require paypal_rest_show_manual_keys = 1");
+		}
+	}
+
+	/**
+	 * Test OAuth connection field uses html type with content callback.
+	 */
+	public function test_oauth_connection_field_type(): void {
+
+		$this->gateway->init();
+		$this->gateway->settings();
+
+		$fields = apply_filters('wu_settings_section_payment-gateways_fields', []); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+
+		$this->assertArrayHasKey('paypal_rest_oauth_connection', $fields);
+		$this->assertEquals('html', $fields['paypal_rest_oauth_connection']['type']);
+		$this->assertIsCallable($fields['paypal_rest_oauth_connection']['content']);
+	}
+
+	/**
+	 * Test render_oauth_connection outputs disconnected state.
+	 */
+	public function test_render_oauth_connection_disconnected(): void {
+
+		$this->gateway->init();
+
+		ob_start();
+		$this->gateway->render_oauth_connection();
+		$output = ob_get_clean();
+
+		// Should show the disconnected/manual keys prompt since no proxy configured in test
+		$this->assertStringContainsString('wu-oauth-status', $output);
+		$this->assertStringContainsString('wu-disconnected', $output);
+	}
+
+	/**
+	 * Test render_oauth_connection outputs connected state with merchant ID.
+	 */
+	public function test_render_oauth_connection_connected(): void {
+
+		wu_save_setting('paypal_rest_sandbox_merchant_id', 'TESTMERCHANT456');
+		wu_save_setting('paypal_rest_sandbox_mode', 1);
+
+		$gateway = new PayPal_REST_Gateway();
+		$gateway->init();
+
+		ob_start();
+		$gateway->render_oauth_connection();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString('wu-connected', $output);
+		$this->assertStringContainsString('TESTMERCHANT456', $output);
+		$this->assertStringContainsString('wu-paypal-disconnect', $output);
+	}
+
+	/**
+	 * Test render_oauth_connection includes fee notice.
+	 */
+	public function test_render_oauth_connection_fee_notice(): void {
+
+		$this->gateway->init();
+
+		ob_start();
+		$this->gateway->render_oauth_connection();
+		$output = ob_get_clean();
+
+		// Fee notice should be present (unless addon is purchased)
+		$this->assertStringContainsString('fee', strtolower($output));
+	}
+
+	/**
+	 * Test webhook listener URL is well-formed.
+	 */
+	public function test_webhook_listener_url(): void {
+
+		$this->gateway->init();
+
+		$reflection = new \ReflectionClass($this->gateway);
+		$method     = $reflection->getMethod('get_webhook_listener_url');
+
+		$url = $method->invoke($this->gateway);
+		$this->assertNotEmpty($url);
+		$this->assertStringContainsString('paypal-rest', $url);
+	}
+
+	/**
+	 * Test maybe_install_webhook skips when gateway not active.
+	 */
+	public function test_maybe_install_webhook_skips_inactive_gateway(): void {
+
+		$this->gateway->init();
+
+		// Should not throw errors or install when gateway is not active
+		$this->gateway->maybe_install_webhook(
+			[],
+			['active_gateways' => ['stripe']],
+			[]
+		);
+
+		// No assertion needed — just verify it doesn't error
+		$this->assertTrue(true);
 	}
 }
