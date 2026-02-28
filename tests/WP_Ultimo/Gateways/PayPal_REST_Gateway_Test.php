@@ -311,4 +311,87 @@ class PayPal_REST_Gateway_Test extends WP_UnitTestCase {
 		$this->assertInstanceOf(\WP_Error::class, $result);
 		$this->assertEquals('wu_paypal_missing_credentials', $result->get_error_code());
 	}
+
+	/**
+	 * Test platform fee not applied without OAuth merchant ID.
+	 */
+	public function test_platform_fee_not_applied_without_oauth(): void {
+
+		wu_save_setting('paypal_rest_sandbox_client_id', 'test_client_id');
+		wu_save_setting('paypal_rest_sandbox_client_secret', 'test_secret');
+
+		$gateway = new PayPal_REST_Gateway();
+		$gateway->init();
+
+		$this->assertFalse($gateway->should_apply_platform_fee());
+	}
+
+	/**
+	 * Test platform fee applied with OAuth merchant ID and no addon purchase.
+	 */
+	public function test_platform_fee_applied_with_oauth(): void {
+
+		wu_save_setting('paypal_rest_sandbox_merchant_id', 'MERCHANT123');
+
+		$gateway = new PayPal_REST_Gateway();
+		$gateway->init();
+
+		// Fee should apply when OAuth connected and no addon purchased
+		// (has_addon_purchase returns false by default in test)
+		$this->assertTrue($gateway->should_apply_platform_fee());
+	}
+
+	/**
+	 * Test platform fee percentage.
+	 */
+	public function test_platform_fee_percent(): void {
+
+		$this->assertEquals(3.0, $this->gateway->get_platform_fee_percent());
+	}
+
+	/**
+	 * Test PayPal-Auth-Assertion JWT format.
+	 */
+	public function test_build_auth_assertion(): void {
+
+		$this->gateway->init();
+
+		$reflection = new \ReflectionClass($this->gateway);
+		$method = $reflection->getMethod('build_auth_assertion');
+
+		$assertion = $method->invoke($this->gateway, 'PARTNER_CLIENT_ID', 'MERCHANT_PAYER_ID');
+
+		// Should be base64(header).base64(payload).
+		$parts = explode('.', $assertion);
+		$this->assertCount(3, $parts);
+		$this->assertEquals('', $parts[2]); // Empty signature
+
+		// Decode header
+		$header = json_decode(base64_decode($parts[0]), true); // phpcs:ignore
+		$this->assertEquals('none', $header['alg']);
+
+		// Decode payload
+		$payload = json_decode(base64_decode($parts[1]), true); // phpcs:ignore
+		$this->assertEquals('PARTNER_CLIENT_ID', $payload['iss']);
+		$this->assertEquals('MERCHANT_PAYER_ID', $payload['payer_id']);
+	}
+
+	/**
+	 * Test get_partner_data returns error when proxy unavailable.
+	 */
+	public function test_get_partner_data_error_on_proxy_failure(): void {
+
+		$this->gateway->init();
+
+		// Override proxy URL to a non-existent server
+		add_filter('wu_paypal_connect_proxy_url', function () {
+			return 'https://nonexistent-proxy.test/wp-json/paypal-connect/v1';
+		});
+
+		$reflection = new \ReflectionClass($this->gateway);
+		$method = $reflection->getMethod('get_partner_data');
+
+		$result = $method->invoke($this->gateway);
+		$this->assertInstanceOf(\WP_Error::class, $result);
+	}
 }

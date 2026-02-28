@@ -210,6 +210,207 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	}
 
 	/**
+	 * Whether to apply platform fees to payments.
+	 *
+	 * Platform fees only apply when the merchant connected via OAuth
+	 * (Partner Referral flow) and has not purchased any addon.
+	 * Manual credential users are not charged platform fees.
+	 *
+	 * @since 2.0.0
+	 * @return bool
+	 */
+	public function should_apply_platform_fee(): bool {
+
+		if (empty($this->merchant_id)) {
+			return false;
+		}
+
+		$addon_repo = \WP_Ultimo::get_instance()->get_addon_repository();
+
+		return ! $addon_repo->has_addon_purchase();
+	}
+
+	/**
+	 * Gets the platform fee percentage.
+	 *
+	 * @since 2.0.0
+	 * @return float
+	 */
+	public function get_platform_fee_percent(): float {
+
+		return 3.0;
+	}
+
+	/**
+	 * Get partner data (access token and client ID) from the proxy.
+	 *
+	 * Cached in a transient to avoid calling the proxy on every payment.
+	 *
+	 * @since 2.0.0
+	 * @return array{access_token: string, partner_client_id: string}|\WP_Error
+	 */
+	protected function get_partner_data() {
+
+		$cache_key = 'wu_paypal_partner_data_' . ($this->test_mode ? 'sandbox' : 'live');
+		$cached    = get_site_transient($cache_key);
+
+		if ($cached && ! empty($cached['access_token'])) {
+			return $cached;
+		}
+
+		$proxy_url = apply_filters('wu_paypal_connect_proxy_url', 'https://ultimatemultisite.com/wp-json/paypal-connect/v1');
+
+		$response = wp_remote_post(
+			$proxy_url . '/partner-token',
+			[
+				'body'    => wp_json_encode(['testMode' => $this->test_mode]),
+				'headers' => ['Content-Type' => 'application/json'],
+				'timeout' => 15,
+			]
+		);
+
+		if (is_wp_error($response)) {
+			return $response;
+		}
+
+		$body = json_decode(wp_remote_retrieve_body($response), true);
+		$code = wp_remote_retrieve_response_code($response);
+
+		if (200 !== $code || empty($body['access_token'])) {
+			return new \WP_Error(
+				'wu_paypal_partner_token_error',
+				$body['error'] ?? __('Failed to get partner token from proxy.', 'ultimate-multisite')
+			);
+		}
+
+		$data = [
+			'access_token'      => $body['access_token'],
+			'partner_client_id' => $body['partner_client_id'] ?? '',
+		];
+
+		$expires_in = (int) ($body['expires_in'] ?? 3300);
+		set_site_transient($cache_key, $data, $expires_in);
+
+		return $data;
+	}
+
+	/**
+	 * Build PayPal-Auth-Assertion JWT header.
+	 *
+	 * Used to make API calls on behalf of a merchant using the partner's token.
+	 *
+	 * @see https://developer.paypal.com/docs/api/reference/api-requests/#paypal-auth-assertion
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $partner_client_id The partner's PayPal client ID.
+	 * @param string $merchant_payer_id The merchant's PayPal payer/merchant ID.
+	 * @return string The JWT assertion string.
+	 */
+	protected function build_auth_assertion(string $partner_client_id, string $merchant_payer_id): string {
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for PayPal Auth Assertion JWT
+		$header = base64_encode(wp_json_encode(['alg' => 'none']));
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required for PayPal Auth Assertion JWT
+		$payload = base64_encode(
+			wp_json_encode(
+				[
+					'iss'      => $partner_client_id,
+					'payer_id' => $merchant_payer_id,
+				]
+			)
+		);
+
+		return $header . '.' . $payload . '.';
+	}
+
+	/**
+	 * Create a PayPal order with platform fees via partner credentials.
+	 *
+	 * Uses the partner's access token and PayPal-Auth-Assertion header
+	 * to create an order on behalf of the merchant with a platform fee.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array  $order_data The order data (without platform fee).
+	 * @param string $currency The currency code.
+	 * @param float  $total The total amount.
+	 * @return array|\WP_Error The PayPal API response or error.
+	 */
+	protected function create_order_with_platform_fee(array $order_data, string $currency, float $total) {
+
+		$partner_data = $this->get_partner_data();
+
+		if (is_wp_error($partner_data)) {
+			$this->log('Platform fee skipped: ' . $partner_data->get_error_message());
+
+			return $partner_data;
+		}
+
+		if (empty($partner_data['partner_client_id'])) {
+			return new \WP_Error('wu_paypal_no_partner_id', 'Partner client ID not available.');
+		}
+
+		// Calculate the platform fee
+		$fee_amount = round($total * $this->get_platform_fee_percent() / 100, 2);
+
+		if ($fee_amount < 0.01) {
+			return new \WP_Error('wu_paypal_fee_too_small', 'Platform fee amount too small.');
+		}
+
+		// Add platform fee to the first purchase unit
+		$order_data['purchase_units'][0]['payment_instruction'] = [
+			'platform_fees' => [
+				[
+					'amount' => [
+						'currency_code' => $currency,
+						'value'         => number_format($fee_amount, 2, '.', ''),
+					],
+				],
+			],
+		];
+
+		// Build the auth assertion
+		$auth_assertion = $this->build_auth_assertion(
+			$partner_data['partner_client_id'],
+			$this->merchant_id
+		);
+
+		// Make the API call with partner credentials
+		$response = wp_remote_post(
+			$this->get_api_base_url() . '/v2/checkout/orders',
+			[
+				'headers' => [
+					'Authorization'                 => 'Bearer ' . $partner_data['access_token'],
+					'Content-Type'                  => 'application/json',
+					'PayPal-Auth-Assertion'         => $auth_assertion,
+					'PayPal-Partner-Attribution-Id' => $this->bn_code,
+				],
+				'body'    => wp_json_encode($order_data),
+				'timeout' => 30,
+			]
+		);
+
+		if (is_wp_error($response)) {
+			return $response;
+		}
+
+		$body = json_decode(wp_remote_retrieve_body($response), true);
+		$code = wp_remote_retrieve_response_code($response);
+
+		if ($code < 200 || $code >= 300) {
+			$error_msg = $body['message'] ?? __('PayPal API error', 'ultimate-multisite');
+
+			return new \WP_Error('wu_paypal_order_error', $error_msg);
+		}
+
+		$this->log(sprintf('Order created with %.2f%% platform fee ($%s)', $this->get_platform_fee_percent(), number_format($fee_amount, 2)));
+
+		return $body;
+	}
+
+	/**
 	 * Get an access token for API requests.
 	 *
 	 * @since 2.0.0
@@ -657,7 +858,22 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 		 */
 		$order_data = apply_filters('wu_paypal_rest_order_data', $order_data, $payment, $cart);
 
-		$result = $this->api_request('/v2/checkout/orders', $order_data);
+		$result = null;
+
+		// Try creating with platform fee if applicable
+		if ($this->should_apply_platform_fee()) {
+			$result = $this->create_order_with_platform_fee($order_data, $currency, (float) $payment->get_total());
+
+			if (is_wp_error($result)) {
+				$this->log('Platform fee order failed, falling back to standard: ' . $result->get_error_message());
+				$result = null;
+			}
+		}
+
+		// Standard order creation (no platform fee or fallback)
+		if (null === $result) {
+			$result = $this->api_request('/v2/checkout/orders', $order_data);
+		}
 
 		if (is_wp_error($result)) {
 			wp_die(
@@ -1247,8 +1463,10 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 		// Nonce/sandbox values are embedded in the JS since wp_kses strips data-* attributes
 		$this->enqueue_connect_scripts();
 
+		$html = '';
+
 		if ($is_connected) {
-			return sprintf(
+			$html .= sprintf(
 				'<button type="button" class="button button-secondary wu-paypal-disconnect">
 					%s
 				</button>
@@ -1256,17 +1474,40 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				esc_html__('Disconnect PayPal', 'ultimate-multisite'),
 				esc_html__('This will remove the PayPal connection. Existing subscriptions will continue to work.', 'ultimate-multisite')
 			);
+		} else {
+			$html .= sprintf(
+				'<button type="button" class="button button-primary wu-paypal-connect">
+					<span class="dashicons dashicons-paypal wu-mr-1"></span>
+					%s
+				</button>
+				<p class="description">%s</p>',
+				esc_html__('Connect with PayPal', 'ultimate-multisite'),
+				esc_html__('Click to securely connect your PayPal account.', 'ultimate-multisite')
+			);
 		}
 
-		return sprintf(
-			'<button type="button" class="button button-primary wu-paypal-connect">
-				<span class="dashicons dashicons-paypal wu-mr-1"></span>
-				%s
-			</button>
-			<p class="description">%s</p>',
-			esc_html__('Connect with PayPal', 'ultimate-multisite'),
-			esc_html__('Click to securely connect your PayPal account.', 'ultimate-multisite')
-		);
+		// Fee notice (mirrors Stripe Connect fee notice)
+		if (! \WP_Ultimo::get_instance()->get_addon_repository()->has_addon_purchase()) {
+			$html .= sprintf(
+				'<div class="wu-py-3">%s <br><a href="%s" target="_blank" rel="noopener">%s</a></div>',
+				esc_html(
+					sprintf(
+						/* translators: %s: the fee percentage */
+						__('There is a %s%% fee per-transaction to use the PayPal integration included in the free Ultimate Multisite plugin.', 'ultimate-multisite'),
+						number_format_i18n($this->get_platform_fee_percent(), 0)
+					)
+				),
+				esc_url(network_admin_url('admin.php?page=wp-ultimo-addons')),
+				esc_html__('Remove this fee by purchasing any addon and connecting your store.', 'ultimate-multisite')
+			);
+		} else {
+			$html .= sprintf(
+				'<p class="wu-text-xs wu-text-green-700 wu-mt-2">%s</p>',
+				esc_html__('No application fee — thank you for your support!', 'ultimate-multisite')
+			);
+		}
+
+		return $html;
 	}
 
 	/**
