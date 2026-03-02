@@ -66,12 +66,6 @@ trait MCP_Abilities {
 	 */
 	public function enable_mcp_abilities(): void {
 
-		$is_enabled = \WP_Ultimo\MCP_Adapter::get_instance()->is_mcp_enabled();
-
-		if (! $is_enabled) {
-			return;
-		}
-
 		if (! function_exists('wp_register_ability')) {
 			return;
 		}
@@ -753,6 +747,17 @@ trait MCP_Abilities {
 	 * @return array
 	 */
 	public function mcp_get_items(array $args): array {
+
+		// LLMs fill in every schema field with default-ish values like ""
+		// or false. BerlinDB interprets these literally (WHERE type = '' or
+		// WHERE recurring = 0), returning zero rows. Strip them out so only
+		// intentional filters reach the query.
+		$args = array_filter(
+			$args,
+			function ($value) {
+				return '' !== $value && false !== $value;
+			}
+		);
 
 		$query_args = array_merge(
 			[
