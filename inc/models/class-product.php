@@ -842,13 +842,25 @@ class Product extends Base_Model implements Limitable {
 		if ($this->is_recurring()) {
 			$duration = $this->get_duration();
 
-			$message = sprintf(
-				// translators: %1$s is the formatted price, %2$s the duration, and %3$s the duration unit (day, week, month, etc)
-				_n('%1$s every %3$s', '%1$s every %2$s %3$s', $duration, 'ultimate-multisite'), // phpcs:ignore
-				wu_format_currency($this->get_amount(), $this->get_currency()),
-				$duration,
-				wu_get_translatable_string($duration <= 1 ? $this->get_duration_unit() : $this->get_duration_unit() . 's')
-			);
+			$formatted_price = wu_format_currency($this->get_amount(), $this->get_currency());
+			$duration_unit   = wu_get_translatable_string($duration <= 1 ? $this->get_duration_unit() : $this->get_duration_unit() . 's');
+
+			if ($duration <= 1) {
+				$message = sprintf(
+					// translators: %1$s: the formatted price, %2$s: the duration unit (day, week, month, etc).
+					__('%1$s / %2$s', 'ultimate-multisite'),
+					$formatted_price,
+					$duration_unit
+				);
+			} else {
+				$message = sprintf(
+					// translators: %1$s: the formatted price, %2$s: the duration number, %3$s: the duration unit (days, weeks, months, etc).
+					__('%1$s every %2$s %3$s', 'ultimate-multisite'),
+					$formatted_price,
+					$duration,
+					$duration_unit
+				);
+			}
 
 			$pricing['subscription'] = $message;
 
@@ -896,14 +908,19 @@ class Product extends Base_Model implements Limitable {
 			return __('one-time payment', 'ultimate-multisite');
 		}
 
-		$description = sprintf(
-			// translators: %1$s the duration, and %2$s the duration unit (day, week, month, etc)
-			_n('every %2$s', 'every %1$s %2$s', $this->get_duration(), 'ultimate-multisite'), // phpcs:ignore
-			$this->get_duration(),
-			wu_get_translatable_string($this->get_duration() <= 1 ? $this->get_duration_unit() : $this->get_duration_unit() . 's')
-		);
+		$duration      = $this->get_duration();
+		$duration_unit = wu_get_translatable_string($duration <= 1 ? $this->get_duration_unit() : $this->get_duration_unit() . 's');
 
-		return $description;
+		if ($duration <= 1) {
+			return $duration_unit;
+		}
+
+		return sprintf(
+			// translators: %1$s: the duration number, %2$s: the duration unit (days, weeks, months, etc).
+			__('every %1$s %2$s', 'ultimate-multisite'),
+			$duration,
+			$duration_unit
+		);
 	}
 
 	/**

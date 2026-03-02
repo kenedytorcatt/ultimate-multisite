@@ -13,12 +13,17 @@ namespace WP_Ultimo\Gateways;
 
 use Psr\Log\LogLevel;
 use Stripe;
+use Stripe\Customer;
+use Stripe\PaymentMethod;
 use Stripe\StripeClient;
+use Stripe\Subscription;
 use Stripe\WebhookEndpoint;
+use WP_Ultimo\Checkout\Cart;
+use WP_Ultimo\Exception\Runtime_Exception;
 use WP_Ultimo\Models\Membership;
 use WP_Ultimo\Database\Payments\Payment_Status;
 use WP_Ultimo\Checkout\Line_Item;
-use WP_Ultimo\Models\Site;
+use WP_Ultimo\Models\Payment;
 
 // Exit if accessed directly
 defined('ABSPATH') || exit;
@@ -82,6 +87,46 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	protected $test_mode;
 
 	/**
+	 * If Stripe Connect is enabled (OAuth mode).
+	 *
+	 * @since 2.x.x
+	 * @var bool
+	 */
+	protected $is_connect_enabled = false;
+
+	/**
+	 * OAuth access token from Stripe Connect.
+	 *
+	 * @since 2.x.x
+	 * @var string
+	 */
+	protected $oauth_access_token = '';
+
+	/**
+	 * Stripe Connect account ID.
+	 *
+	 * @since 2.x.x
+	 * @var string
+	 */
+	protected $oauth_account_id = '';
+
+	/**
+	 * OAuth error message to display inline on settings page.
+	 *
+	 * @since 2.x.x
+	 * @var string
+	 */
+	protected string $oauth_error = '';
+
+	/**
+	 * Authentication mode: 'direct' or 'oauth'.
+	 *
+	 * @since 2.x.x
+	 * @var string
+	 */
+	protected $authentication_mode = 'direct';
+
+	/**
 	 * Holds the Stripe client instance.
 	 *
 	 * @since 2.0.0
@@ -92,15 +137,30 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	/**
 	 * Gets or creates the Stripe client instance.
 	 *
+	 * For OAuth/Connect mode, sets the Stripe-Account header to direct API calls
+	 * to the connected account.
+	 *
 	 * @return StripeClient
+	 * @throws Runtime_Exception Other Error.
 	 */
 	protected function get_stripe_client(): StripeClient {
 		if (! isset($this->stripe_client)) {
-			$this->stripe_client = new StripeClient(
-				[
-					'api_key' => $this->secret_key,
-				]
-			);
+			if (empty($this->secret_key)) {
+				throw new Runtime_Exception(
+					esc_html__('Stripe API key is not configured. Please add your Stripe API keys in the Ultimate Multisite settings.', 'ultimate-multisite')
+				);
+			}
+
+			$client_config = [
+				'api_key' => $this->secret_key,
+			];
+
+			// Set Stripe-Account header for Connect mode
+			if ($this->is_using_oauth() && ! empty($this->oauth_account_id)) {
+				$client_config['stripe_account'] = $this->oauth_account_id;
+			}
+
+			$this->stripe_client = new StripeClient($client_config);
 		}
 
 		return $this->stripe_client;
@@ -157,6 +217,8 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	/**
 	 * Setup api keys for stripe.
 	 *
+	 * Supports dual authentication: OAuth (preferred) and direct API keys (fallback).
+	 *
 	 * @since 2.0.7
 	 *
 	 * @param string $id The gateway stripe id.
@@ -166,19 +228,449 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 		$id = $id ?: wu_replace_dashes($this->get_id());
 
+		// Check OAuth tokens first (preferred method)
 		if ($this->test_mode) {
-			$this->publishable_key = wu_get_setting("{$id}_test_pk_key", '');
-			$this->secret_key      = wu_get_setting("{$id}_test_sk_key", '');
+			$oauth_token = wu_get_setting("{$id}_test_access_token", '');
+
+			if (! empty($oauth_token)) {
+				// Use OAuth mode
+				$this->authentication_mode = 'oauth';
+				$this->oauth_access_token  = $oauth_token;
+				$this->publishable_key     = wu_get_setting("{$id}_test_publishable_key", '');
+				$this->secret_key          = $oauth_token;
+				$this->oauth_account_id    = wu_get_setting("{$id}_test_account_id", '');
+				$this->is_connect_enabled  = true;
+			} else {
+				// Fallback to direct API keys
+				$this->authentication_mode = 'direct';
+				$this->publishable_key     = wu_get_setting("{$id}_test_pk_key", '');
+				$this->secret_key          = wu_get_setting("{$id}_test_sk_key", '');
+			}
 		} else {
-			$this->publishable_key = wu_get_setting("{$id}_live_pk_key", '');
-			$this->secret_key      = wu_get_setting("{$id}_live_sk_key", '');
+			$oauth_token = wu_get_setting("{$id}_live_access_token", '');
+
+			if (! empty($oauth_token)) {
+				// Use OAuth mode
+				$this->authentication_mode = 'oauth';
+				$this->oauth_access_token  = $oauth_token;
+				$this->publishable_key     = wu_get_setting("{$id}_live_publishable_key", '');
+				$this->secret_key          = $oauth_token;
+				$this->oauth_account_id    = wu_get_setting("{$id}_live_account_id", '');
+				$this->is_connect_enabled  = true;
+			} else {
+				// Fallback to direct API keys
+				$this->authentication_mode = 'direct';
+				$this->publishable_key     = wu_get_setting("{$id}_live_pk_key", '');
+				$this->secret_key          = wu_get_setting("{$id}_live_sk_key", '');
+			}
 		}
 
 		if ($this->secret_key && Stripe\Stripe::getApiKey() !== $this->secret_key) {
 			Stripe\Stripe::setApiKey($this->secret_key);
-
-			Stripe\Stripe::setApiVersion('2019-05-16');
 		}
+	}
+
+	/**
+	 * Returns the current authentication mode.
+	 *
+	 * @since 2.x.x
+	 * @return string 'oauth' or 'direct'
+	 */
+	public function get_authentication_mode(): string {
+		return $this->authentication_mode;
+	}
+
+	/**
+	 * Adds application fee to Stripe payment intent arguments.
+	 *
+	 * @since 2.4.11
+	 *
+	 * @param array               $intent_args The payment intent arguments.
+	 * @param Base_Stripe_Gateway $gateway The gateway instance.
+	 * @return array
+	 */
+	public function add_application_fee_to_intent(array $intent_args, $gateway): array {
+
+		if (! $gateway->should_apply_application_fee()) {
+			return $intent_args;
+		}
+
+		if (empty($intent_args['amount']) || $intent_args['amount'] <= 0) {
+			return $intent_args;
+		}
+
+		$intent_args['application_fee_amount'] = (int) round(
+			$intent_args['amount'] * $gateway->get_application_fee_percent() / 100
+		);
+
+		return $intent_args;
+	}
+
+	/**
+	 * Adds application fee to Stripe subscription arguments.
+	 *
+	 * @since 2.4.11
+	 *
+	 * @param array               $sub_args The subscription arguments.
+	 * @param Base_Stripe_Gateway $gateway The gateway instance.
+	 * @return array
+	 */
+	public function add_application_fee_to_subscription(array $sub_args, $gateway): array {
+
+		if (! $gateway->should_apply_application_fee()) {
+			return $sub_args;
+		}
+
+		$sub_args['application_fee_percent'] = $gateway->get_application_fee_percent();
+
+		return $sub_args;
+	}
+
+	/**
+	 * Adds application fee to Stripe Checkout session data.
+	 *
+	 * Handles both subscription and one-time payment modes.
+	 *
+	 * @since 2.4.11
+	 *
+	 * @param array               $data The checkout session arguments.
+	 * @param Base_Stripe_Gateway $gateway The gateway instance.
+	 * @return array
+	 */
+	public function add_application_fee_to_checkout(array $data, $gateway): array {
+
+		if (! $gateway->should_apply_application_fee()) {
+			return $data;
+		}
+
+		if (isset($data['subscription_data'])) {
+			// Subscription mode — use percentage.
+			$data['subscription_data']['application_fee_percent'] = $gateway->get_application_fee_percent();
+		} elseif (! empty($data['line_items'])) {
+			// One-time payment mode — calculate from line items total.
+			$total = 0;
+
+			foreach ($data['line_items'] as $item) {
+				$quantity   = $item['quantity'] ?? 1;
+				$unit_price = $item['price_data']['unit_amount'] ?? 0;
+
+				$total += $unit_price * $quantity;
+			}
+
+			if ($total > 0) {
+				$data['payment_intent_data']['application_fee_amount'] = (int) round(
+					$total * $gateway->get_application_fee_percent() / 100
+				);
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Get Stripe Connect proxy server URL.
+	 *
+	 * The proxy server handles OAuth flow and keeps platform credentials secure.
+	 * Platform credentials are never exposed in the distributed plugin code.
+	 *
+	 * @since 2.x.x
+	 * @return string
+	 */
+	protected function get_proxy_url(): string {
+		/**
+		 * Filter the Stripe Connect proxy URL.
+		 *
+		 * @param string $url Proxy server URL.
+		 */
+		return apply_filters(
+			'wu_stripe_connect_proxy_url',
+			'https://ultimatemultisite.com/wp-json/stripe-connect/v1'
+		);
+	}
+
+	/**
+	 * Get business data for prefilling Stripe Connect form.
+	 *
+	 * @since 2.x.x
+	 * @return array
+	 */
+	protected function get_business_data(): array {
+		return [
+			'url'           => get_site_url(),
+			'business_name' => get_bloginfo('name'),
+			'country'       => 'US', // Could be made dynamic based on site settings
+		];
+	}
+
+	/**
+	 * Generate Stripe Connect OAuth authorization URL via proxy server.
+	 *
+	 * @since 2.x.x
+	 * @param string $state CSRF protection state parameter (unused, kept for compatibility).
+	 * @return string
+	 */
+	public function get_connect_authorization_url(string $state = ''): string {
+		$proxy_url  = $this->get_proxy_url();
+		$return_url = network_admin_url('admin.php?page=wp-ultimo-settings&tab=payment-gateways');
+
+		// Call proxy to initialize OAuth
+		$response = wp_remote_post(
+			$proxy_url . '/oauth/init',
+			[
+				'body'    => wp_json_encode(
+					[
+						'returnUrl'    => $return_url,
+						'businessData' => $this->get_business_data(),
+						'testMode'     => $this->test_mode,
+					]
+				),
+				'headers' => [
+					'Content-Type' => 'application/json',
+				],
+				'timeout' => 30,
+			]
+		);
+
+		if (is_wp_error($response)) {
+			$this->oauth_error = __('Could not reach the Stripe Connect service. Please check that your server can make outbound HTTPS requests and try again.', 'ultimate-multisite');
+
+			return '';
+		}
+
+		$data = json_decode(wp_remote_retrieve_body($response), true);
+
+		if (empty($data['oauthUrl'])) {
+			$this->oauth_error = __('Unable to start the Stripe Connect authorization. Please try again or use direct API keys instead.', 'ultimate-multisite');
+
+			return '';
+		}
+
+		// Store state for verification
+		update_option('wu_stripe_oauth_state', $data['state'], false);
+
+		return $data['oauthUrl'];
+	}
+
+	/**
+	 * Get OAuth init URL (triggers OAuth flow when clicked).
+	 *
+	 * This returns a local URL that will initiate the OAuth flow only when clicked,
+	 * avoiding unnecessary HTTP requests to the proxy on every page load.
+	 *
+	 * @since 2.x.x
+	 * @return string
+	 */
+	protected function get_oauth_init_url(): string {
+		return add_query_arg(
+			[
+				'page'              => 'wp-ultimo-settings',
+				'tab'               => 'payment-gateways',
+				'stripe_oauth_init' => '1',
+				'_wpnonce'          => wp_create_nonce('stripe_oauth_init'),
+			],
+			network_admin_url('admin.php')
+		);
+	}
+
+	/**
+	 * Get disconnect URL.
+	 *
+	 * @since 2.x.x
+	 * @return string
+	 */
+	protected function get_disconnect_url(): string {
+		return add_query_arg(
+			[
+				'page'              => 'wp-ultimo-settings',
+				'tab'               => 'payment-gateways',
+				'stripe_disconnect' => '1',
+				'_wpnonce'          => wp_create_nonce('stripe_disconnect'),
+			],
+			network_admin_url('admin.php')
+		);
+	}
+
+	/**
+	 * Handle OAuth callbacks and disconnects.
+	 *
+	 * @since 2.x.x
+	 * @return void
+	 */
+	public function handle_oauth_callbacks(): void {
+		// Handle OAuth init (user clicked Connect button)
+		if (isset($_GET['stripe_oauth_init'], $_GET['_wpnonce']) && isset($_GET['page']) && 'wp-ultimo-settings' === $_GET['page']) {
+			if (wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'stripe_oauth_init')) {
+				// Now make the proxy call and redirect to OAuth URL
+				$oauth_url = $this->get_connect_authorization_url();
+
+				if (! empty($oauth_url)) {
+					wp_safe_redirect($oauth_url);
+					exit;
+				}
+
+				// oauth_error was set by get_connect_authorization_url();
+				// fall through so the settings page renders the error inline.
+			}
+		}
+
+		// Handle OAuth callback from proxy (encrypted code)
+		if (isset($_GET['wcs_stripe_code'], $_GET['wcs_stripe_state']) && isset($_GET['page']) && 'wp-ultimo-settings' === $_GET['page']) {
+			if (! current_user_can('manage_network')) {
+				return;
+			}
+
+			$encrypted_code = sanitize_text_field(wp_unslash($_GET['wcs_stripe_code']));
+			$state          = sanitize_text_field(wp_unslash($_GET['wcs_stripe_state']));
+
+			// Verify CSRF state
+			$expected_state = get_option('wu_stripe_oauth_state');
+
+			if (! $expected_state || ! hash_equals($expected_state, $state)) {
+				return;
+			}
+
+			// Delete state immediately to prevent replay attacks
+			delete_option('wu_stripe_oauth_state');
+
+			$this->exchange_code_for_keys($encrypted_code);
+		}
+
+		// Handle disconnect
+		if (isset($_GET['stripe_disconnect'], $_GET['_wpnonce']) && isset($_GET['page']) && 'wp-ultimo-settings' === $_GET['page']) {
+			if (wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'stripe_disconnect')) {
+				$this->handle_disconnect();
+			}
+		}
+	}
+
+	/**
+	 * Exchange encrypted code for API keys via proxy.
+	 *
+	 * @since 2.x.x
+	 * @param string $encrypted_code Encrypted authorization code from proxy.
+	 * @return void
+	 */
+	protected function exchange_code_for_keys(string $encrypted_code): void {
+		$proxy_url = $this->get_proxy_url();
+
+		// Call proxy to exchange code for keys
+		$response = wp_remote_post(
+			$proxy_url . '/oauth/keys',
+			[
+				'body'    => wp_json_encode(
+					[
+						'code'     => $encrypted_code,
+						'testMode' => $this->test_mode,
+					]
+				),
+				'headers' => [
+					'Content-Type' => 'application/json',
+				],
+				'timeout' => 30,
+			]
+		);
+
+		if (is_wp_error($response)) {
+			$this->oauth_error = __('Could not reach the Stripe Connect service to complete authorization. Please check your server\'s outbound connectivity and try again.', 'ultimate-multisite');
+
+			return;
+		}
+
+		$status_code = wp_remote_retrieve_response_code($response);
+		$body        = wp_remote_retrieve_body($response);
+
+		if (200 !== $status_code) {
+			$this->oauth_error = __('Stripe Connect authorization was not accepted. The link may have expired — please try connecting again.', 'ultimate-multisite');
+
+			return;
+		}
+
+		$data = json_decode($body, true);
+
+		if (empty($data['accountId'])) {
+			$this->oauth_error = __('Received an unexpected response while completing Stripe Connect. Please try again or use direct API keys instead.', 'ultimate-multisite');
+
+			return;
+		}
+
+		$id = wu_replace_dashes($this->get_id());
+
+		// Save tokens
+		if ($this->test_mode) {
+			wu_save_setting("{$id}_test_access_token", $data['secretKey']);
+			wu_save_setting("{$id}_test_refresh_token", $data['refreshToken'] ?? '');
+			wu_save_setting("{$id}_test_account_id", $data['accountId']);
+			wu_save_setting("{$id}_test_publishable_key", $data['publishableKey']);
+		} else {
+			wu_save_setting("{$id}_live_access_token", $data['secretKey']);
+			wu_save_setting("{$id}_live_refresh_token", $data['refreshToken'] ?? '');
+			wu_save_setting("{$id}_live_account_id", $data['accountId']);
+			wu_save_setting("{$id}_live_publishable_key", $data['publishableKey']);
+		}
+
+		// Redirect back to settings
+		$redirect_url = add_query_arg(
+			[
+				'page'             => 'wp-ultimo-settings',
+				'tab'              => 'payment-gateways',
+				'stripe_connected' => '1',
+			],
+			network_admin_url('admin.php')
+		);
+
+		wp_safe_redirect($redirect_url);
+		exit;
+	}
+
+	/**
+	 * Handle disconnect request.
+	 *
+	 * @since 2.x.x
+	 * @return void
+	 */
+	protected function handle_disconnect(): void {
+		$id = wu_replace_dashes($this->get_id());
+
+		// Optionally notify proxy of disconnect
+		$proxy_url = $this->get_proxy_url();
+		wp_remote_post(
+			$proxy_url . '/deauthorize',
+			[
+				'body'     => wp_json_encode(
+					[
+						'siteUrl'  => get_site_url(),
+						'testMode' => $this->test_mode,
+					]
+				),
+				'headers'  => ['Content-Type' => 'application/json'],
+				'timeout'  => 10,
+				'blocking' => false, // Don't wait for response
+			]
+		);
+
+		// Clear OAuth tokens for both test and live
+		wu_save_setting("{$id}_test_access_token", '');
+		wu_save_setting("{$id}_test_refresh_token", '');
+		wu_save_setting("{$id}_test_account_id", '');
+		wu_save_setting("{$id}_test_publishable_key", '');
+
+		wu_save_setting("{$id}_live_access_token", '');
+		wu_save_setting("{$id}_live_refresh_token", '');
+		wu_save_setting("{$id}_live_account_id", '');
+		wu_save_setting("{$id}_live_publishable_key", '');
+
+		// Redirect back to settings
+		$redirect_url = add_query_arg(
+			[
+				'page'                => 'wp-ultimo-settings',
+				'tab'                 => 'payment-gateways',
+				'stripe_disconnected' => '1',
+			],
+			network_admin_url('admin.php')
+		);
+
+		wp_safe_redirect($redirect_url);
+		exit;
 	}
 
 	/**
@@ -195,54 +687,104 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 		add_filter('wu_pre_save_settings', [$this, 'fix_saving_settings'], 10, 3);
 
-		add_filter('wu_element_get_site_actions', [$this, 'add_site_actions'], 10, 4);
-
 		/**
 		 * We need to check if we should redirect after instantiate the Currents
 		 */
 		add_action('init', [$this, 'maybe_redirect_to_portal'], 11);
 		add_action('wp', [$this, 'maybe_redirect_to_portal'], 11);
+
+		add_filter('allowed_redirect_hosts', [$this, 'allow_stripe_redirect_host']);
+
+		// Application fee filters for Stripe Connect.
+		add_filter('wu_stripe_create_payment_intent_args', [$this, 'add_application_fee_to_intent'], 10, 2);
+		add_filter('wu_stripe_create_subscription_args', [$this, 'add_application_fee_to_subscription'], 10, 2);
+		add_filter('wu_stripe_checkout_subscription_data', [$this, 'add_application_fee_to_checkout'], 10, 2);
 	}
 
 	/**
-	 * Adds Stripe Billing Portal link to the site actions.
+	 * Allow redirects to Stripe's Connect OAuth domain.
 	 *
-	 * @since 2.1.2
+	 * @since 2.x.x
 	 *
-	 * @param array      $actions    The site actions.
-	 * @param array      $atts       The widget attributes.
-	 * @param Site       $site       The current site object.
-	 * @param Membership $membership The current membership object.
-	 * @return array
+	 * @param string[] $hosts An array of allowed host names.
+	 * @return string[]
 	 */
-	public function add_site_actions($actions, $atts, $site, $membership) {
+	public function allow_stripe_redirect_host(array $hosts): array {
+
+		$hosts[] = 'connect.stripe.com';
+		$hosts[] = 'dashboard.stripe.com';
+		$hosts[] = 'checkout.stripe.com';
+		$hosts[] = 'billing.stripe.com';
+
+		return $hosts;
+	}
+
+	/**
+	 * Returns the Stripe Billing Portal URL for changing payment method.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param \WP_Ultimo\Models\Membership $membership The membership to change payment for.
+	 * @return string|null The portal URL, or null if not supported.
+	 */
+	public function get_change_payment_method_url($membership) {
 
 		$gateway_id = wu_replace_dashes($this->id);
 
 		if ( ! wu_get_setting("{$gateway_id}_enable_portal")) {
-			return $actions;
+			return null;
 		}
 
-		$payment_gateway = $membership ? $membership->get_gateway() : false;
+		$s_subscription_id = $membership->get_gateway_subscription_id();
 
-		if (wu_get_isset($atts, 'show_change_payment_method') && in_array($payment_gateway, $this->other_ids, true)) {
-			$s_subscription_id = $membership->get_gateway_subscription_id();
+		if (empty($s_subscription_id)) {
+			return null;
+		}
 
-			if ( ! empty($s_subscription_id)) {
-				$actions['change_payment_method'] = [
-					'label'        => __('Change Payment Method', 'ultimate-multisite'),
-					'icon_classes' => 'dashicons-wu-edit wu-align-middle',
-					'href'         => add_query_arg(
-						[
-							'wu-stripe-portal' => true,
-							'membership'       => $membership->get_hash(),
-						]
-					),
-				];
+		return add_query_arg(
+			[
+				'wu-stripe-portal' => true,
+				'membership'       => $membership->get_hash(),
+			],
+			home_url()
+		);
+	}
+
+	/**
+	 * Returns payment method display info from the Stripe subscription.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param \WP_Ultimo\Models\Membership $membership The membership.
+	 * @return array{brand: string, last4: string}|null Payment method info, or null.
+	 */
+	public function get_payment_method_display($membership): ?array {
+
+		try {
+			$sub_id = $membership->get_gateway_subscription_id();
+
+			if (empty($sub_id)) {
+				return null;
 			}
-		}
 
-		return $actions;
+			$subscription = $this->get_stripe_client()->subscriptions->retrieve(
+				$sub_id,
+				['expand' => ['default_payment_method']]
+			);
+
+			$pm = $subscription->default_payment_method;
+
+			if ( ! $pm || ! $pm->card) {
+				return null;
+			}
+
+			return [
+				'brand' => ucfirst($pm->card->brand ?? ''),
+				'last4' => $pm->card->last4 ?? '',
+			];
+		} catch (\Throwable $e) {
+			return null;
+		}
 	}
 
 	/**
@@ -283,86 +825,102 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 		$customer_id   = $membership->get_customer_id();
 		$s_customer_id = $membership->get_gateway_customer_id();
-		$return_url    = remove_query_arg('wu-stripe-portal', wu_get_current_url());
 
-		// If customer is not set, get from checkout session
-		if (empty($s_customer_id)) {
-			/**
-			 * Filter Stripe Subscription data. Can override success_url or cancel_url.
-			 *
-			 * @since 2.4.2
-			 *
-			 * @param array $subscription_data An array of parameters to pass to Stripe.
-			 * @param Base_Gateway $gateway The current Stripe Gateway object.
-			 */
-			$subscription_data = apply_filters(
-				'wu_stripe_checkout_subscription_data',
-				[
-					'payment_method_types'       => $allowed_payment_method_types,
-					'mode'                       => 'setup',
-					'success_url'                => $return_url,
-					'cancel_url'                 => wu_get_current_url(),
-					'billing_address_collection' => 'required',
-					'client_reference_id'        => $customer_id,
-					'customer'                   => $s_customer_id,
-				],
-				$gateway
-			);
+		$stored_redirect = get_user_meta(get_current_user_id(), '_wu_change_payment_redirect', true);
 
-			$session       = $this->get_stripe_client()->checkout->sessions->create($subscription_data);
-			$s_customer_id = $session->customer;
+		if ($stored_redirect) {
+			delete_user_meta(get_current_user_id(), '_wu_change_payment_redirect');
+			$return_url = add_query_arg('updated', 'payment_method', $stored_redirect);
+		} else {
+			$return_url = remove_query_arg('wu-stripe-portal', wu_get_current_url());
 		}
 
-		$portal_config_id = get_site_option('wu_stripe_portal_config_id');
+		try {
+			// If customer is not set, get from checkout session
+			if (empty($s_customer_id)) {
+				/**
+				 * Filter Stripe Subscription data. Can override success_url or cancel_url.
+				 *
+				 * @since 2.4.2
+				 *
+				 * @param array $subscription_data An array of parameters to pass to Stripe.
+				 * @param Base_Gateway $gateway The current Stripe Gateway object.
+				 */
+				$subscription_data = apply_filters(
+					'wu_stripe_checkout_subscription_data',
+					[
+						'payment_method_types'       => $allowed_payment_method_types,
+						'mode'                       => 'setup',
+						'success_url'                => $return_url,
+						'cancel_url'                 => wu_get_current_url(),
+						'billing_address_collection' => 'required',
+						'client_reference_id'        => $customer_id,
+						'customer'                   => $s_customer_id,
+					],
+					$gateway
+				);
 
-		if ( ! $portal_config_id) {
-			$portal_config = $this->get_stripe_client()->billingPortal->configurations->create(
-				[
-					'features'         => [
-						'invoice_history'       => [
-							'enabled' => true,
-						],
-						'payment_method_update' => [
-							'enabled' => true,
-						],
-						'subscription_cancel'   => [
-							'enabled'             => true,
-							'mode'                => 'at_period_end',
-							'cancellation_reason' => [
+				$session       = $this->get_stripe_client()->checkout->sessions->create($subscription_data);
+				$s_customer_id = $session->customer;
+			}
+
+			$portal_config_id = get_site_option('wu_stripe_portal_config_id');
+
+			if ( ! $portal_config_id) {
+				$portal_config = $this->get_stripe_client()->billingPortal->configurations->create(
+					[
+						'features'         => [
+							'invoice_history'       => [
 								'enabled' => true,
-								'options' => [
-									'too_expensive',
-									'missing_features',
-									'switched_service',
-									'unused',
-									'customer_service',
-									'too_complex',
-									'other',
+							],
+							'payment_method_update' => [
+								'enabled' => true,
+							],
+							'subscription_cancel'   => [
+								'enabled'             => true,
+								'mode'                => 'at_period_end',
+								'cancellation_reason' => [
+									'enabled' => true,
+									'options' => [
+										'too_expensive',
+										'missing_features',
+										'switched_service',
+										'unused',
+										'customer_service',
+										'too_complex',
+										'other',
+									],
 								],
 							],
 						],
-					],
-					'business_profile' => [
-						'headline' => __('Manage your membership payment methods.', 'ultimate-multisite'),
-					],
-				]
+						'business_profile' => [
+							'headline' => __('Manage your membership payment methods.', 'ultimate-multisite'),
+						],
+					]
+				);
+
+				$portal_config_id = $portal_config->id;
+
+				update_site_option('wu_stripe_portal_config_id', $portal_config_id);
+			}
+
+			$subscription_data = [
+				'return_url'    => $return_url,
+				'customer'      => $s_customer_id,
+				'configuration' => $portal_config_id,
+			];
+
+			$session = $this->get_stripe_client()->billingPortal->sessions->create($subscription_data);
+
+			wp_safe_redirect($session->url);
+			exit;
+		} catch (\Throwable $e) {
+			wp_die(
+				esc_html($e->getMessage()),
+				esc_html__('Stripe Error', 'ultimate-multisite'),
+				['back_link' => true]
 			);
-
-			$portal_config_id = $portal_config->id;
-
-			update_site_option('wu_stripe_portal_config_id', $portal_config_id);
 		}
-
-		$subscription_data = [
-			'return_url'    => $return_url,
-			'customer'      => $s_customer_id,
-			'configuration' => $portal_config_id,
-		];
-
-		$session = $this->get_stripe_client()->billingPortal->sessions->create($subscription_data);
-
-		wp_redirect($session->url);
-		exit;
 	}
 
 	/**
@@ -667,6 +1225,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 				}
 			}
 
+			// translators: %1$s: HTTP error code, %2$s: error message.
 			wu_log_add('stripe', sprintf(__('Failed to add stripe webhook: %1$s, %2$s', 'ultimate-multisite'), $error_code, $e->getMessage()));
 		}
 	}
@@ -887,7 +1446,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 				if ( $stripe_customer && (! isset($stripe_customer->deleted) || ! $stripe_customer->deleted)) {
 					$customer_exists = true;
 				}
-			} catch (\Exception $e) {
+			} catch (\Exception $e) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 
 				/**
 				 * Silence is golden.
@@ -1001,14 +1560,14 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	/**
 	 * Create a recurring subscription in Stripe.
 	 *
+	 * @param Membership    $membership The membership.
+	 * @param Cart          $cart The cart object.
+	 * @param PaymentMethod $payment_method The save payment method on Stripe.
+	 * @param Customer      $s_customer The Stripe customer.
+	 *
+	 * @return Subscription|bool The Stripe subscription object or false if the creation is running in another process.
+	 * @throws \Exception Other Error.
 	 * @since 2.0.0
-	 *
-	 * @param \WP_Ultimo\Models\Membership $membership The membership.
-	 * @param \WP_Ultimo\Checkout\Cart     $cart The cart object.
-	 * @param Stripe\PaymentMethod         $payment_method The save payment method on Stripe.
-	 * @param Stripe\Customer              $s_customer The Stripe customer.
-	 *
-	 * @return Stripe\Subscription|bool The Stripe subscription object or false if the creation is running in another process.
 	 */
 	protected function create_recurring_payment($membership, $cart, $payment_method, $s_customer) {
 		/**
@@ -1229,16 +1788,18 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 		return $subscription;
 	}
+
 	/**
 	 * Checks if we need to create a pro-rate/credit coupon based on the cart data.
 	 *
 	 * Will return an array with coupon arguments for stripe if
 	 * there is credit to be added and false if not.
 	 *
-	 * @since 2.0.0
-	 *
 	 * @param \WP_Ultimo\Checkout\Cart $cart The current cart.
+	 *
 	 * @return string|false
+	 * @throws \Exception Exception.
+	 * @since 2.0.0
 	 */
 	protected function get_credit_coupon($cart) {
 
@@ -1274,10 +1835,11 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	 * Checks to see if the coupon exists, and if so, returns the ID of
 	 * that coupon. If not, a new coupon is created.
 	 *
-	 * @since 2.0.18
-	 *
 	 * @param array $coupon_data The cart/order object.
+	 *
 	 * @return string
+	 * @throws \Exception Other Error.
+	 * @since 2.0.18
 	 */
 	protected function get_stripe_coupon($coupon_data) {
 
@@ -1293,7 +1855,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			);
 
 			return $coupon->id;
-		} catch (\Exception $e) {
+		} catch (\Exception $e) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 
 			// silence is golden
 		}
@@ -1348,18 +1910,34 @@ class Base_Stripe_Gateway extends Base_Gateway {
 				continue;
 			}
 
-			$cart_items[ $line_item->get_id() ] = [
-				'name'     => $line_item->get_title(),
-				'quantity' => $line_item->get_quantity(),
-				'amount'   => $line_item->get_unit_price() * wu_stripe_get_currency_multiplier(),
-				'currency' => strtolower($cart->get_currency()),
+			$unit_amount = round($line_item->get_unit_price() * wu_stripe_get_currency_multiplier());
+
+			/*
+			 * Skip zero-amount items.
+			 * These would cause errors in Stripe Checkout Sessions.
+			 */
+			if ($unit_amount <= 0) {
+				continue;
+			}
+
+			$product_data = [
+				'name' => $line_item->get_title(),
 			];
 
 			$description = $line_item->get_description();
 
 			if ( ! empty($description)) {
-				$cart_items[ $line_item->get_id() ]['description'] = $description;
+				$product_data['description'] = $description;
 			}
+
+			$cart_items[ $line_item->get_id() ] = [
+				'price_data' => [
+					'currency'     => strtolower($cart->get_currency()),
+					'unit_amount'  => (int) $unit_amount,
+					'product_data' => $product_data,
+				],
+				'quantity'   => $line_item->get_quantity(),
+			];
 
 			/*
 			 * Now, we handle the taxable status
@@ -1514,10 +2092,12 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 			$title = preg_replace($description_pattern, '$1', (string) $s_line_item->description);
 
+			$has_taxes = ! empty($s_line_item->taxes);
+
 			$line_item_data = [
 				'title'         => $title,
 				'description'   => $s_line_item->description,
-				'tax_inclusive' => 'inclusive' === $s_line_item->taxes[0]->tax_behavior, // $s_line_item->amount !== $s_line_item->taxes->amount_excluding_tax,
+				'tax_inclusive' => $has_taxes && 'inclusive' === $s_line_item->taxes[0]->tax_behavior,
 				'unit_price'    => (float) $s_line_item->pricing->unit_amount_decimal / $currency_multiplier,
 				'quantity'      => $quantity,
 			];
@@ -1529,7 +2109,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			$line_item = new Line_Item($line_item_data);
 
 			$subtotal  = $s_line_item->amount / $currency_multiplier;
-			$tax_total = ($s_line_item->taxes[0]->amount) / $currency_multiplier;
+			$tax_total = $has_taxes ? $s_line_item->taxes[0]->amount / $currency_multiplier : 0;
 			$total     = $s_line_item->amount / $currency_multiplier;
 
 			// Set this values after generate the line item to bypass the recalculate_totals
@@ -1711,19 +2291,52 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		}
 	}
 
+
+	/**
+	 * Checks if using OAuth authentication.
+	 *
+	 * @since 2.x.x
+	 * @return bool
+	 */
+	public function is_using_oauth(): bool {
+		return 'oauth' === $this->authentication_mode && $this->is_connect_enabled;
+	}
+
+	/**
+	 * It's nice to be paid for hard work.
+	 *
+	 * The fee only applies when using Stripe Connect (OAuth mode) and
+	 * the site owner has not purchased any addon from ultimatemultisite.com.
+	 *
+	 * @since 2.4.11
+	 * @return bool
+	 */
+	public function should_apply_application_fee(): bool {
+
+		if (! $this->is_using_oauth()) {
+			return false;
+		}
+
+		$addon_repo = \WP_Ultimo::get_instance()->get_addon_repository();
+
+		return ! $addon_repo->has_addon_purchase();
+	}
+
+
 	/**
 	 * Process a refund.
 	 *
 	 * It takes the data concerning
 	 * a refund and process it.
 	 *
-	 * @since 2.0.0
+	 * @param float                      $amount The amount to refund.
+	 * @param Payment                    $payment The payment associated with the checkout.
+	 * @param Membership                 $membership The membership.
+	 * @param \WP_Ultimo\Models\Customer $customer The customer checking out.
 	 *
-	 * @param float                        $amount The amount to refund.
-	 * @param \WP_Ultimo\Models\Payment    $payment The payment associated with the checkout.
-	 * @param \WP_Ultimo\Models\Membership $membership The membership.
-	 * @param \WP_Ultimo\Models\Customer   $customer The customer checking out.
-	 * @return void|bool
+	 * @return bool
+	 * @throws \Exception Other Error.
+	 * @since 2.0.0
 	 */
 	public function process_refund($amount, $payment, $membership, $customer): bool {
 
@@ -1775,6 +2388,17 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		 * that the refund was successful.
 		 */
 		return true;
+	}
+
+	/**
+	 * Gets the application fee percentage for Stripe Connect payments.
+	 *
+	 * @since 2.4.11
+	 * @return float
+	 */
+	public function get_application_fee_percent(): float {
+
+		return 3.0;
 	}
 
 	/**
@@ -1853,8 +2477,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 			try {
 				$stripe_max_anchor = new \DateTime(date('Y-m-t H:i:s', $proposed_next_bill_date->getTimestamp())); // phpcs:ignore
-			} catch (\Exception $exception) {
-
+			} catch (\Exception $exception) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 				// Silence is golden
 			}
 		}
@@ -1931,10 +2554,10 @@ class Base_Stripe_Gateway extends Base_Gateway {
 	/**
 	 * Process webhooks
 	 *
-	 * @since 2.0.0
-	 * @throws Ignorable_Exception When the webhook should be ignored (duplicate payments, wrong gateway, etc.).
-	 * @throws Stripe\Exception\ApiErrorException When Stripe API calls fail.
 	 * @return void
+	 * @throws \Exception Other Error.
+	 * @throws Ignorable_Exception Something that can be ignored.
+	 * @since 2.0.0
 	 */
 	public function process_webhooks() {
 
@@ -2382,6 +3005,20 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			// Make sure this invoice is tied to a subscription and is the user's current subscription.
 			if ( ! empty($event->data->object->subscription) && $membership->get_gateway_subscription_id() === $event->data->object->subscription) {
 				do_action('wu_recurring_payment_failed', $membership, $this);
+
+				$customer = $membership->get_customer();
+
+				if ($customer) {
+					$payload = array_merge(
+						wu_generate_event_payload('membership', $membership),
+						wu_generate_event_payload('customer', $customer),
+						[
+							'payment_gateway' => $this->get_id(),
+						]
+					);
+
+					wu_do_event('payment_failed', $payload);
+				}
 			}
 
 			do_action('wu_stripe_charge_failed', $payment_event, $event, $membership);
@@ -2514,6 +3151,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 				'request_billing_address' => $this->request_billing_address,
 				'add_new_card'            => empty($saved_cards),
 				'payment_method'          => empty($saved_cards) ? 'add-new' : current(array_keys($saved_cards)),
+				'currency'                => strtolower((string) wu_get_setting('currency_symbol', 'USD')),
 			]
 		);
 
@@ -2655,7 +3293,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			$plan = $this->get_stripe_client()->plans->retrieve($existing_plan_id);
 
 			return $plan->id;
-		} catch (\Exception $e) {
+		} catch (\Exception $e) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 
 			// silence is golden
 		}
@@ -2665,7 +3303,6 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			$product = $this->get_stripe_client()->products->create(
 				[
 					'name' => $args['name'] . ' - ' . $args['currency'],
-					'type' => 'service',
 				]
 			);
 
@@ -2743,7 +3380,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			$product = $this->get_stripe_client()->products->retrieve($existing_product_id);
 
 			return $product->id;
-		} catch (\Exception $e) {
+		} catch (\Exception $e) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 
 			// silence is golden
 		}
@@ -2981,5 +3618,145 @@ class Base_Stripe_Gateway extends Base_Gateway {
 		$route = $this->test_mode ? '/test' : '/';
 
 		return sprintf('https://dashboard.stripe.com%s/customers/%s', $route, $gateway_customer_id);
+	}
+
+	/**
+	 * Verify and complete a pending payment by checking Stripe directly.
+	 *
+	 * This is a fallback mechanism when webhooks are not working correctly.
+	 * It checks the payment intent status on Stripe and completes the payment locally if successful.
+	 *
+	 * @since 2.x.x
+	 *
+	 * @param int $payment_id The local payment ID to verify.
+	 * @return array{success: bool, message: string, status?: string}
+	 */
+	public function verify_and_complete_payment(int $payment_id): array {
+
+		$payment = wu_get_payment($payment_id);
+
+		if (! $payment) {
+			return [
+				'success' => false,
+				'message' => __('Payment not found.', 'ultimate-multisite'),
+			];
+		}
+
+		// Already completed - nothing to do
+		if ($payment->get_status() === Payment_Status::COMPLETED) {
+			return [
+				'success' => true,
+				'message' => __('Payment already completed.', 'ultimate-multisite'),
+				'status'  => 'completed',
+			];
+		}
+
+		// Only process pending payments
+		if ($payment->get_status() !== Payment_Status::PENDING) {
+			return [
+				'success' => false,
+				'message' => __('Payment is not in pending status.', 'ultimate-multisite'),
+				'status'  => $payment->get_status(),
+			];
+		}
+
+		// Get the payment intent ID from payment meta
+		$payment_intent_id = $payment->get_meta('stripe_payment_intent_id');
+
+		if (empty($payment_intent_id)) {
+			return [
+				'success' => false,
+				'message' => __('No Stripe payment intent found for this payment.', 'ultimate-multisite'),
+			];
+		}
+
+		try {
+			$this->setup_api_keys();
+
+			// Determine intent type and retrieve it
+			if (str_starts_with((string) $payment_intent_id, 'seti_')) {
+				$intent          = $this->get_stripe_client()->setupIntents->retrieve($payment_intent_id);
+				$is_setup_intent = true;
+				$is_succeeded    = 'succeeded' === $intent->status;
+			} else {
+				$intent          = $this->get_stripe_client()->paymentIntents->retrieve($payment_intent_id);
+				$is_setup_intent = false;
+				$is_succeeded    = 'succeeded' === $intent->status;
+			}
+
+			if (! $is_succeeded) {
+				return [
+					'success' => false,
+					'message' => sprintf(
+						// translators: %s is the intent status from Stripe.
+						__('Payment intent status is: %s', 'ultimate-multisite'),
+						$intent->status
+					),
+					'status'  => 'pending',
+				];
+			}
+
+			// Payment succeeded on Stripe - complete it locally
+			$gateway_payment_id = $is_setup_intent
+				? $intent->id
+				: ($intent->latest_charge ?? $intent->id);
+
+			$payment->set_status(Payment_Status::COMPLETED);
+			$payment->set_gateway($this->get_id());
+			$payment->set_gateway_payment_id($gateway_payment_id);
+			$payment->save();
+
+			// Trigger payment processed
+			$membership = $payment->get_membership();
+
+			if ($membership) {
+				$this->trigger_payment_processed($payment, $membership);
+			}
+
+			wu_log_add('stripe', sprintf('Payment %d completed via fallback verification (intent: %s)', $payment_id, $payment_intent_id));
+
+			return [
+				'success' => true,
+				'message' => __('Payment verified and completed successfully.', 'ultimate-multisite'),
+				'status'  => 'completed',
+			];
+		} catch (\Throwable $e) {
+			wu_log_add('stripe', sprintf('Payment verification failed for payment %d: %s', $payment_id, $e->getMessage()), LogLevel::ERROR);
+
+			return [
+				'success' => false,
+				'message' => $e->getMessage(),
+			];
+		}
+	}
+
+	/**
+	 * Schedule a fallback payment verification job.
+	 *
+	 * This schedules an Action Scheduler job to verify the payment status
+	 * if webhooks don't complete the payment in time.
+	 *
+	 * @since 2.x.x
+	 *
+	 * @param int $payment_id The payment ID to verify.
+	 * @param int $delay_seconds How many seconds to wait before checking (default: 30).
+	 * @return int|false The scheduled action ID or false on failure.
+	 */
+	public function schedule_payment_verification(int $payment_id, int $delay_seconds = 30) {
+
+		$hook = 'wu_verify_stripe_payment';
+		$args = [
+			'payment_id' => $payment_id,
+			'gateway_id' => $this->get_id(),
+		];
+
+		// Check if already scheduled
+		if (wu_next_scheduled_action($hook, $args)) {
+			return false;
+		}
+
+		$timestamp = time() + $delay_seconds;
+
+		return wu_schedule_single_action($timestamp, $hook, $args, 'wu-stripe-verification');
 	}
 }

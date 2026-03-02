@@ -87,6 +87,9 @@ class Hestia_Integration extends Integration {
 			],
 			'WU_HESTIA_API_PASSWORD' => [
 				'type'        => 'password',
+				'html_attr'   => [
+					'autocomplete' => 'new-password',
+				],
 				'title'       => __('Hestia API Password', 'ultimate-multisite'),
 				'desc'        => __('Optional if using API hash authentication.', 'ultimate-multisite'),
 				'placeholder' => __('••••••••', 'ultimate-multisite'),

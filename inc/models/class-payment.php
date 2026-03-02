@@ -236,7 +236,7 @@ class Payment extends Base_Model implements Notable {
 
 		return [
 			'customer_id'                 => 'required|integer|exists:\WP_Ultimo\Models\Customer,id',
-			'membership_id'               => 'required|integer|exists:\WP_Ultimo\Models\Membership,id',
+			'membership_id'               => 'integer|exists:\WP_Ultimo\Models\Membership,id|default:0',
 			'parent_id'                   => 'integer|default:',
 			'currency'                    => "default:{$currency}",
 			'subtotal'                    => 'required|numeric',
@@ -782,14 +782,20 @@ class Payment extends Base_Model implements Notable {
 			return false;
 		}
 
-		$slug = $this->get_hash();
+		$args = [
+			'payment' => $this->get_hash(),
+		];
 
-		return add_query_arg(
-			[
-				'payment' => $slug,
-			],
-			wu_get_registration_url()
-		);
+		/*
+		 * For standalone payments (no membership),
+		 * use the dedicated pay-invoice checkout form
+		 * which shows a minimal order summary + payment UI.
+		 */
+		if ( ! $this->get_membership_id()) {
+			$args['checkout_form'] = 'wu-pay-invoice';
+		}
+
+		return add_query_arg($args, wu_get_registration_url());
 	}
 
 	/**
@@ -826,7 +832,6 @@ class Payment extends Base_Model implements Notable {
 		$url_atts = [
 			'action'    => 'invoice',
 			'reference' => $this->get_hash(),
-			'key'       => wp_create_nonce('see_invoice'),
 		];
 
 		return add_query_arg($url_atts, get_site_url(wu_get_main_site_id()));

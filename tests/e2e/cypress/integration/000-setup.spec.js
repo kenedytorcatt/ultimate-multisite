@@ -62,4 +62,12 @@ describe("Ultimate Multisite Setup", () => {
 			expect(result.stdout).to.contain("never");
 		});
 	});
+
+	it("Should reset password strength to default", () => {
+		cy.wpCli(
+			"eval \"wu_save_setting('password_strength', 'strong'); echo wu_get_setting('password_strength', 'none');\""
+		).then((result) => {
+			expect(result.stdout).to.contain("strong");
+		});
+	});
 });

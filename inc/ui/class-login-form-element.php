@@ -302,6 +302,9 @@ class Login_Form_Element extends Base_Element {
 
 		wp_enqueue_style('wu-admin');
 
+		// Enqueue checkout form normalization styles.
+		wp_enqueue_style('wu-checkout');
+
 		// Enqueue password styles (includes dashicons as dependency).
 		wp_enqueue_style('wu-password');
 

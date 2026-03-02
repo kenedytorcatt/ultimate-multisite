@@ -270,11 +270,71 @@ class Addon_Repository {
 	}
 
 	/**
+	 * Checks if the current site has purchased any addon from ultimatemultisite.com.
+	 *
+	 * Used to determine if the Stripe Connect application fee should be waived.
+	 * Results are cached for 24 hours.
+	 *
+	 * @since 2.4.11
+	 * @return bool True if at least one addon has been purchased, false otherwise.
+	 */
+	public function has_addon_purchase(): bool {
+
+		$cached = get_site_transient('wu_has_addon_purchase');
+
+		if (false !== $cached) {
+			return (bool) $cached;
+		}
+
+		$access_token = $this->get_access_token();
+
+		if (empty($access_token)) {
+			// Not connected to ultimatemultisite.com — cannot verify purchases.
+			return false;
+		}
+
+		$api_client = new Helpers\WooCommerce_API_Client(MULTISITE_ULTIMATE_UPDATE_URL);
+		$addons     = $api_client->get_addons();
+
+		if (is_wp_error($addons) || ! is_array($addons)) {
+			// API error — don't cache, let it retry next time.
+			return false;
+		}
+
+		$has_purchase = false;
+
+		foreach ($addons as $addon) {
+			if (! empty($addon['extensions']['wp-update-server-plugin']['download_url'])) {
+				$has_purchase = true;
+
+				break;
+			}
+		}
+
+		set_site_transient('wu_has_addon_purchase', $has_purchase ? '1' : '0', DAY_IN_SECONDS);
+
+		return $has_purchase;
+	}
+
+	/**
+	 * Clears the addon purchase status cache.
+	 *
+	 * Should be called when a user connects or disconnects from the store.
+	 *
+	 * @since 2.4.11
+	 * @return void
+	 */
+	public static function clear_addon_purchase_cache(): void {
+		delete_site_transient('wu_has_addon_purchase');
+	}
+
+	/**
 	 * @return void
 	 */
 	public function delete_tokens(): void {
 		wu_delete_option('wu-refresh-token');
 		delete_transient('wu-access-token');
 		delete_site_transient('wu-addons-list');
+		self::clear_addon_purchase_cache();
 	}
 }

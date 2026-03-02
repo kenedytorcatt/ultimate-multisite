@@ -50,8 +50,17 @@ class Customers_Membership_List_Table extends Membership_List_Table {
 
 		$product_count = 1 + count($item->get_addon_ids());
 
-		// translators: %s is the product name, %2$s is the count of other products.
-		$products_list = $p ? sprintf(_n('Contains %1$s', 'Contains %1$s and %2$s other product(s)', $product_count, 'ultimate-multisite'), $p->get_name(), count($item->get_addon_ids())) : ''; // phpcs:ignore
+		$addon_count = count($item->get_addon_ids());
+
+		if ( ! $p) {
+			$products_list = '';
+		} elseif ($addon_count === 0) {
+			// translators: %s: the product name.
+			$products_list = sprintf(__('Contains %s', 'ultimate-multisite'), $p->get_name());
+		} else {
+			// translators: %1$s: the product name, %2$s: the count of other products.
+			$products_list = sprintf(__('Contains %1$s and %2$s other product(s)', 'ultimate-multisite'), $p->get_name(), $addon_count);
+		}
 
 		wu_responsive_table_row(
 			[

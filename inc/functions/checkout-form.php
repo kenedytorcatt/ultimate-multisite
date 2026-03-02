@@ -84,6 +84,29 @@ function wu_get_checkout_form_by_slug($checkout_form_slug) {
 		$checkout_form->set_settings($checkout_fields);
 
 		return $checkout_form;
+	} elseif ('wu-pay-invoice' === $checkout_form_slug) {
+		$checkout_form = new \WP_Ultimo\Models\Checkout_Form();
+
+		$checkout_fields = Checkout_Form::pay_invoice_form_fields();
+
+		$checkout_form->set_settings($checkout_fields);
+
+		return $checkout_form;
+	}
+
+	/**
+	 * Allows addons to register virtual checkout form slugs
+	 * that are built dynamically rather than stored in the database.
+	 *
+	 * @since 2.4.12
+	 * @param \WP_Ultimo\Models\Checkout_Form|null $form The checkout form, or null.
+	 * @param string $checkout_form_slug The slug being looked up.
+	 * @return \WP_Ultimo\Models\Checkout_Form|null
+	 */
+	$addon_form = apply_filters('wu_get_checkout_form_by_slug', null, $checkout_form_slug);
+
+	if ($addon_form instanceof \WP_Ultimo\Models\Checkout_Form) {
+		return $addon_form;
 	}
 
 	return \WP_Ultimo\Models\Checkout_Form::get_by('slug', $checkout_form_slug);

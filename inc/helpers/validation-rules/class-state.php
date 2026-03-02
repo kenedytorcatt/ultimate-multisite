@@ -42,12 +42,16 @@ class State extends Rule {
 		$country = $this->parameter('country') ?? wu_request('billing_country');
 
 		if ($country && $state) {
-			$state = strtoupper((string) $state);
+			$state_upper = strtoupper((string) $state);
 
-			$allowed_states = array_keys(wu_get_country_states(strtoupper((string) $country), false));
+			$states = wu_get_country_states(strtoupper((string) $country), false);
 
-			if (! empty($allowed_states)) {
-				$check = in_array($state, $allowed_states, true);
+			if (! empty($states)) {
+				$allowed_codes = array_keys($states);
+
+				// Accept state codes (e.g. "BW") or full state names (e.g. "Baden-Württemberg")
+				$check = in_array($state_upper, $allowed_codes, true)
+					|| in_array((string) $state, $states, true);
 			}
 		}
 

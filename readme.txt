@@ -1,15 +1,15 @@
 === Ultimate Multisite – WordPress Multisite SaaS & WaaS Platform ===
 Contributors: aanduque, superdav42, vvwb, surferking
 Donate link: https://github.com/sponsors/superdav42/
-Tags: ultimate multisite, wordpress multisite, multisite plugin, multisite saas, waas, domain mapping, wp ultimo
+Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.4.10
+Stable tag: 2.4.12
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Ultimate Multisite is a WordPress Multisite plugin that turns your network into a complete Website-as-a-Service (WaaS) platform with subscriptions, site provisioning, domain mapping, and customer management.
+Ultimate Multisite turns your WordPress network into a WaaS platform with subscriptions, site provisioning, and domain mapping.
 
 == Description ==
 
@@ -195,6 +195,7 @@ This plugin connects to external services to provide optional functionality. All
 
 **Stripe**
 - Processes card payments and subscriptions
+- When using the Stripe integration, a 3% fee per-transaction is applied to support ongoing development. This fee is waived for sites that have purchased any addon from ultimatemultisite.com. The fee is collected by Stripe as part of the payment and does not affect the amount charged to your customers.
 - https://stripe.com/privacy
 
 **PayPal**
@@ -224,13 +225,68 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.4.13] - Released on 2026-XX-XX
+- Fix: Selectize dropdowns with more than 1000 options (e.g. TLD lists) were silently truncated due to the library's default maxOptions limit.
 
-Version [2.4.11] - Released on 2026-XX-XX
+Version [2.4.12] - Released on 2026-02-27
+- New: Send Invoice and Resend Invoice workflows for payments.
+- New: Standalone "Pay Invoice" checkout form for invoice payments without a membership.
+- New: Payment Methods element displaying current card info and change payment method flow via Stripe Billing Portal.
+- New: System events for invoice sent, recurring payment failure, and membership expired with email notifications.
+- New: Checkout form debug autofill button when WP_ULTIMO_DEBUG is enabled.
+- New: Domain meta table for storing metadata on domain records.
+- New: Extensibility hooks on domain mapping widget and domain list table.
+- New: Node Management capability interface for hosting integrations.
+- Fix: Password strength validation no longer blocks checkout when the meter element is absent.
+- Fix: %2F being stripped from SSO redirect URLs breaking some WooCommerce URLs.
+- Fix: Stripe Checkout gateway updated to current API — uses price_data format, proper subscription/payment mode, and skips zero-amount items.
+- Fix: Removed deprecated Stripe API version pin and product type parameter.
+- Fix: Membership cancellation now properly cancels the gateway subscription before the local membership.
+- Fix: Payments no longer require a membership, enabling standalone invoices.
+- Fix: Cart no longer overrides duration for products with independent billing cycles.
+- Fix: Network installer correctly sets core multisite table names.
+- Fix: Admin page save handlers now return proper bool values.
+- Improved: "Change Payment Method" replaces the destructive "Cancel Payment Method" flow.
+- Improved: Integration wizard API key fields use password input type to prevent browser autofill.
+- Improved: Integration wizard shows error state on test failure and improved navigation.
+- Improved: Addon settings grouped under dedicated admin bar submenu.
+- Improved: Select2 multi-select preserves saved option ordering.
+- Improved: PayPal fires payment_failed event on IPN failures.
+- New: Addon compatibility headers (`UM requires at least`) with network admin version mismatch notices.
+- New: `wu_get_checkout_form_by_slug` filter for addon-registered virtual checkout forms.
+- New: Cart filters `wu_cart_show_no_changes_error` and `wu_cart_addon_include_existing_plan` for addon checkout flows.
+- New: `wu-register-domain` added to checkout element slug list for addon checkout pages.
+- Fix: AJAX search_models not passing query parameters to model functions.
+- Fix: Template validation failing when an addon product is selected at checkout.
+- Fix: New subdomain sites created with http:// instead of https:// causing infinite redirects.
+- Fix: mPDF PSR-log aware trait patch applied to wrong file on some Composer versions.
+- Improved: Default minimum password strength lowered from "strong" to "medium" for better usability.
+- Improved: Dashboard first-steps widget shows contextual action labels for completed steps.
+
+Version [2.4.11] - Released on 2026-02-16
 - New: Settings API for remote settings management.
 - New: Pay-What-You-Want (PWYW) pricing with per-product custom amounts and recurring options.
 - New: Billing-period controls for discount codes and membership creation.
 - New: Better error page for customers and admins.
-- Fix: Problems with choosing country and state in checkout.
+- New: Stripe Connect via secure proxy server — platform credentials no longer distributed in plugin code.
+- New: Stripe Checkout Element with automatic billing address handling and removal of application fees.
+- New: Multisite Setup Wizard — guides single-site installs through enabling and configuring WordPress Multisite.
+- New: Modular hosting integration system with encrypted credential storage.
+- New: Form field normalization CSS for consistent checkout and login styling across all themes and page builders.
+- Fix: Password strength setting not being applied during checkout.
+- Fix: Encoded characters stripped from URLs during SSO and domain mapping redirects.
+- Fix: Inline login prompt stability and missing validation for existing emails at checkout.
+- Fix: Site title field error caused by third-party plugin conflicts.
+- Fix: URL replacement failing for Elementor content on subdirectory multisite installs.
+- Fix: Country and state selection issues in checkout.
+- Fix: Duplicate Country/ZIP fields appearing on Stripe checkout.
+- Fix: Invoice PDF download failing with expired nonce.
+- Fix: Settings page crash on PHP 8.4.
+- Fix: Single-site compatibility issues and dashboard widget setup status detection.
+- Fix: Rewrite rules now flushed when signup pages are created or modified.
+- Improved: Admin pages no longer loaded on frontend and cron requests for better performance.
+- Improved: Security hardening for input validation, credential storage, and cart processing.
+- Improved: Expanded automated test coverage across checkout, payments, and admin functionality.
 
 Version [2.4.10] - Released on 2026-01-23
 - New: Configurable minimum password strength setting with Medium, Strong, and Super Strong options.

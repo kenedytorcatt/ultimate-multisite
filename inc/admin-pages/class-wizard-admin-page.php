@@ -205,11 +205,20 @@ abstract class Wizard_Admin_Page extends Base_Admin_Page {
 				'labels'               => $this->get_labels(),
 				'sections'             => $this->get_sections(),
 				'current_section'      => $this->get_current_section(),
-				'classes'              => 'wu-w-full wu-mx-auto sm:wu-w-11/12 xl:wu-w-8/12 wu-mt-8 sm:wu-max-w-screen-lg',
+				'classes'              => $this->get_classes(),
 				'clickable_navigation' => $this->clickable_navigation,
 				'form_id'              => $this->form_id,
 			]
 		);
+	}
+
+	/**
+	 * Return the classes used in the main wrapper.
+	 *
+	 * @return string
+	 */
+	protected function get_classes() {
+		return 'wu-w-full wu-mx-auto sm:wu-w-11/12 xl:wu-w-8/12 wu-mt-8 sm:wu-max-w-screen-lg';
 	}
 
 	/**
@@ -288,7 +297,15 @@ abstract class Wizard_Admin_Page extends Base_Admin_Page {
 
 		$keys = array_keys($sections);
 
-		return add_query_arg($this->section_slug, $keys[ array_search($current_section, array_keys($sections), true) - 1 ]);
+		$current_section_idx = array_search($current_section, array_keys($sections), true);
+
+		if (false === $current_section_idx) {
+			return '';
+		}
+		if (empty($keys[ $current_section_idx - 1 ])) {
+			return '';
+		}
+		return add_query_arg($this->section_slug, $keys[ $current_section_idx - 1 ]);
 	}
 
 	/**
@@ -380,6 +397,40 @@ abstract class Wizard_Admin_Page extends Base_Admin_Page {
 				'screen' => get_current_screen(),
 				'page'   => $this,
 				'labels' => $this->get_labels(),
+			]
+		);
+	}
+
+	/**
+	 * Render the installation steps table.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array   $steps The list of steps.
+	 * @param boolean $checks If we should add the checkbox for selection or not.
+	 * @return string
+	 */
+	public function render_installation_steps($steps, $checks = true) {
+
+		wp_localize_script('wu-setup-wizard', 'wu_setup', $steps);
+
+		wp_localize_script(
+			'wu-setup-wizard',
+			'wu_setup_settings',
+			[
+				'dry_run'               => wu_request('dry-run', true),
+				'generic_error_message' => __('A server error happened while processing this item.', 'ultimate-multisite'),
+			]
+		);
+
+		wp_enqueue_script('wu-setup-wizard');
+
+		return wu_get_template_contents(
+			'wizards/setup/installation_steps',
+			[
+				'page'   => $this,
+				'steps'  => $steps,
+				'checks' => $checks,
 			]
 		);
 	}

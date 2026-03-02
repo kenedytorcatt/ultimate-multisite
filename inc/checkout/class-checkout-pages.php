@@ -35,6 +35,11 @@ class Checkout_Pages {
 
 		add_shortcode('wu_confirmation', [$this, 'render_confirmation_page']);
 
+		/*
+		 * Enqueue payment status polling script on thank you page.
+		 */
+		add_action('wp_enqueue_scripts', [$this, 'maybe_enqueue_payment_status_poll']);
+
 		add_filter('lostpassword_redirect', [$this, 'filter_lost_password_redirect']);
 
 		$use_custom_login = wu_get_setting('enable_custom_login_page', false);
@@ -54,6 +59,9 @@ class Checkout_Pages {
 
 		if (is_main_site()) {
 			add_action('before_signup_header', [$this, 'redirect_to_registration_page']);
+
+			add_action('save_post_page', [$this, 'maybe_flush_rewrite_rules_on_page_save'], 20);
+			add_action('wp_trash_post', [$this, 'maybe_flush_rewrite_rules_on_page_trash']);
 
 			if ( ! $use_custom_login) {
 				return;
@@ -151,6 +159,51 @@ class Checkout_Pages {
 			update_post_meta($post_id, '_wu_force_elements_loading', sanitize_text_field(wp_unslash($_POST['_wu_force_elements_loading'])));
 		} else {
 			delete_post_meta($post_id, '_wu_force_elements_loading');
+		}
+	}
+
+	/**
+	 * Flush rewrite rules when a signup page is saved and its slug may have changed.
+	 *
+	 * The checkout rewrite rules depend on the registration page slug,
+	 * so they must be refreshed whenever a signup page is modified.
+	 *
+	 * @since 2.3.0
+	 *
+	 * @param int $post_id The post ID.
+	 * @return void
+	 */
+	public function maybe_flush_rewrite_rules_on_page_save(int $post_id): void {
+
+		if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+			return;
+		}
+
+		$signup_page_ids = array_filter(array_map('absint', array_values($this->get_signup_pages())));
+
+		if (in_array(absint($post_id), $signup_page_ids, true)) {
+			flush_rewrite_rules();
+		}
+	}
+
+	/**
+	 * Flush rewrite rules when a signup page is trashed.
+	 *
+	 * @since 2.3.0
+	 *
+	 * @param int $post_id The post ID.
+	 * @return void
+	 */
+	public function maybe_flush_rewrite_rules_on_page_trash(int $post_id): void {
+
+		if (get_post_type($post_id) !== 'page') {
+			return;
+		}
+
+		$signup_page_ids = array_filter(array_map('absint', array_values($this->get_signup_pages())));
+
+		if (in_array(absint($post_id), $signup_page_ids, true)) {
+			flush_rewrite_rules();
 		}
 	}
 
@@ -526,7 +579,7 @@ class Checkout_Pages {
 	 * @param bool   $force_reauth If we need to force reauth.
 	 * @return string
 	 */
-	public function filter_login_url($login_url, $redirect, $force_reauth = false) {
+	public function filter_login_url($login_url, $redirect, $force_reauth = false) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 
 		/**
 		 * Fix incompatibility with UIPress, making sure we only filter after wp_loaded ran.
@@ -541,28 +594,26 @@ class Checkout_Pages {
 			return $login_url;
 		}
 
-		$params = [];
-
-		$old_url_params = wp_parse_url($login_url, PHP_URL_QUERY);
-
-		wp_parse_str($old_url_params, $params);
-
 		$new_login_url = $this->get_page_url('login');
 
 		if ( ! $new_login_url) {
 			return $login_url;
 		}
 
-		if ($params) {
-			$new_login_url = add_query_arg($params, $new_login_url);
-		}
+		/*
+		 * Preserve the raw query string from the original login URL
+		 * to avoid URL decoding issues. wp_parse_str() + add_query_arg()
+		 * decodes percent-encoded values like %2F without re-encoding them,
+		 * which causes parameters inside redirect_to to leak as top-level
+		 * query params (e.g., path=%2Fanalytics%2Foverview leaking out of
+		 * the redirect_to value). By preserving the raw query string, we
+		 * maintain the original encoding. WordPress's wp_login_url() already
+		 * adds redirect_to and reauth before this filter runs.
+		 */
+		$raw_query = wp_parse_url($login_url, PHP_URL_QUERY);
 
-		if ($redirect) {
-			$new_login_url = add_query_arg('redirect_to', rawurlencode($redirect), $new_login_url);
-		}
-
-		if ($force_reauth) {
-			$new_login_url = add_query_arg('reauth', 1, $new_login_url);
+		if ($raw_query) {
+			$new_login_url .= (str_contains($new_login_url, '?') ? '&' : '?') . $raw_query;
 		}
 
 		return $new_login_url;
@@ -675,5 +726,82 @@ class Checkout_Pages {
 				'membership' => wu_get_membership_by_hash(wu_request('membership')),
 			]
 		);
+	}
+
+	/**
+	 * Maybe enqueue payment status polling script on thank you page.
+	 *
+	 * This script polls the server to check if a pending payment has been completed,
+	 * providing a fallback mechanism when webhooks are delayed or not working.
+	 *
+	 * @since 2.x.x
+	 * @return void
+	 */
+	public function maybe_enqueue_payment_status_poll(): void {
+
+		// Only on thank you page (payment hash and status=done in URL)
+		$payment_hash = wu_request('payment');
+		$status       = wu_request('status');
+
+		if (empty($payment_hash) || 'done' !== $status || 'none' === $payment_hash) {
+			return;
+		}
+
+		$payment = wu_get_payment_by_hash($payment_hash);
+
+		if (! $payment) {
+			return;
+		}
+
+		// Only poll for pending Stripe payments
+		$gateway_id = $payment->get_gateway();
+
+		if (empty($gateway_id)) {
+			$membership = $payment->get_membership();
+			$gateway_id = $membership ? $membership->get_gateway() : '';
+		}
+
+		// Only poll for Stripe payments that are still pending
+		$is_stripe_payment = in_array($gateway_id, ['stripe', 'stripe-checkout'], true);
+		$is_pending        = $payment->get_status() === \WP_Ultimo\Database\Payments\Payment_Status::PENDING;
+
+		if (! $is_stripe_payment) {
+			return;
+		}
+
+		wp_register_script(
+			'wu-payment-status-poll',
+			wu_get_asset('payment-status-poll.js', 'js'),
+			['jquery'],
+			wu_get_version(),
+			true
+		);
+
+		wp_localize_script(
+			'wu-payment-status-poll',
+			'wu_payment_poll',
+			[
+				'payment_hash'     => $payment_hash,
+				'ajax_url'         => admin_url('admin-ajax.php'),
+				'nonce'            => wp_create_nonce('wu_payment_status_poll'),
+				'poll_interval'    => 3000, // 3 seconds
+				'max_attempts'     => 20, // 60 seconds total
+				'should_poll'      => $is_pending,
+				'status_selector'  => '.wu-payment-status',
+				'success_redirect' => '',
+				'messages'         => [
+					'completed' => __('Payment confirmed! Refreshing page...', 'ultimate-multisite'),
+					'pending'   => __('Verifying your payment with Stripe...', 'ultimate-multisite'),
+					'timeout'   => __('Payment verification is taking longer than expected. Your payment may still be processing. Please refresh the page or contact support if you believe payment was made.', 'ultimate-multisite'),
+					'error'     => __('Error checking payment status. Retrying...', 'ultimate-multisite'),
+					'checking'  => __('Checking payment status...', 'ultimate-multisite'),
+				],
+			]
+		);
+
+		wp_enqueue_script('wu-payment-status-poll');
+
+		// Enqueue checkout styles for payment status messages.
+		wp_enqueue_style('wu-checkout');
 	}
 }

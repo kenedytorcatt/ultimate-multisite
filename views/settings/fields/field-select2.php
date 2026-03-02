@@ -22,8 +22,18 @@ $placeholder = $field['placeholder'] ?? '';
 
 	<select data-width="350px" multiple="multiple" placeholder="<?php echo esc_attr($placeholder); ?>"  class="wu-select" name="<?php echo esc_attr($field_slug); ?>[]" id="<?php echo esc_attr($field_slug); ?>">
 
+		<?php // Render selected options first in saved order to preserve ordering. ?>
+		<?php foreach ($setting as $selected_value) : ?>
+			<?php if (isset($field['options'][ $selected_value ])) : ?>
+		<option selected value="<?php echo esc_attr($selected_value); ?>"><?php echo esc_html($field['options'][ $selected_value ]); ?></option>
+			<?php endif; ?>
+		<?php endforeach; ?>
+
+		<?php // Then render unselected options. ?>
 		<?php foreach ($field['options'] as $value => $option) : ?>
-		<option <?php selected(in_array($value, $setting)); ?> value="<?php echo esc_attr($value); ?>"><?php echo esc_html($option); ?></option>
+			<?php if (! in_array($value, $setting, true)) : ?>
+		<option value="<?php echo esc_attr($value); ?>"><?php echo esc_html($option); ?></option>
+			<?php endif; ?>
 		<?php endforeach; ?>
 
 	</select>

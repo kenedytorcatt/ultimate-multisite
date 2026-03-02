@@ -182,30 +182,33 @@ class Dashboard_Widgets implements \WP_Ultimo\Interfaces\Singleton {
 
 		$steps = [
 			'inital-setup'        => [
-				'title'        => __('Initial Setup', 'ultimate-multisite'),
-				'desc'         => __('Go through the initial Setup Wizard to configure the basic settings of your network.', 'ultimate-multisite'),
-				'action_label' => __('Finish the Setup Wizard', 'ultimate-multisite'),
-				'action_link'  => wu_network_admin_url('wp-ultimo-setup'),
-				'done'         => wu_string_to_bool($initial_setup_done),
+				'title'             => __('Initial Setup', 'ultimate-multisite'),
+				'desc'              => __('Go through the initial Setup Wizard to configure the basic settings of your network.', 'ultimate-multisite'),
+				'action_label'      => __('Finish the Setup Wizard', 'ultimate-multisite'),
+				'done_action_label' => __('Run Setup Wizard Again', 'ultimate-multisite'),
+				'action_link'       => wu_network_admin_url('wp-ultimo-setup'),
+				'done'              => ! empty($initial_setup_done),
 			],
 			'payment-method'      => [
-				'title'        => __('Payment Method', 'ultimate-multisite'),
-				'desc'         => __('You will need to configure at least one payment gateway to be able to receive money from your customers.', 'ultimate-multisite'),
-				'action_label' => __('Add a Payment Method', 'ultimate-multisite'),
-				'action_link'  => wu_network_admin_url(
+				'title'             => __('Payment Method', 'ultimate-multisite'),
+				'desc'              => __('You will need to configure at least one payment gateway to be able to receive money from your customers.', 'ultimate-multisite'),
+				'action_label'      => __('Add a Payment Method', 'ultimate-multisite'),
+				'done_action_label' => __('Edit Payment Methods', 'ultimate-multisite'),
+				'action_link'       => wu_network_admin_url(
 					'wp-ultimo-settings',
 					[
 						'tab' => 'payment-gateways',
 					]
 				),
-				'done'         => ! empty(wu_get_active_gateways()),
+				'done'              => ! empty(wu_get_active_gateways()),
 			],
 			'your-first-customer' => [
-				'done'         => ! empty(wu_get_customers()),
-				'title'        => __('Your First Customer', 'ultimate-multisite'),
-				'desc'         => __('Open the link below in an incognito tab and go through your newly created signup form.', 'ultimate-multisite'),
-				'action_link'  => wp_registration_url(),
-				'action_label' => __('Create a test Account', 'ultimate-multisite'),
+				'done'              => ! empty(wu_get_customers()),
+				'title'             => __('Your First Customer', 'ultimate-multisite'),
+				'desc'              => __('Open the link below in an incognito tab and go through your newly created signup form.', 'ultimate-multisite'),
+				'action_link'       => wp_registration_url(),
+				'action_label'      => __('Create a test Account', 'ultimate-multisite'),
+				'done_action_label' => __('Create another Account', 'ultimate-multisite'),
 			],
 		];
 

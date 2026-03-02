@@ -39,7 +39,7 @@ defined('ABSPATH') || exit;
 		</div>
 		<!-- Body Content - End -->
 
-		<ul class="wu-thank-you-info wu-grid wu-grid-cols-3 wu-gap-4 wu-m-0 wu-px-4 wu-py-6 wu-list-none">
+		<ul class="wu-thank-you-info wu-grid wu-grid-cols-1 sm:wu-grid-cols-3 wu-gap-4 wu-m-0 wu-px-4 wu-py-6 wu-list-none">
 
 			<!-- Info Item -->
 			<li>
@@ -74,7 +74,7 @@ defined('ABSPATH') || exit;
 
 			</span>
 
-			<span class="wu-text-md wu-font-bold wu-block">
+			<span class="wu-text-md wu-font-bold wu-block wu-break-all">
 
 				<?php echo esc_html($customer->get_email_address()); ?>
 
@@ -135,7 +135,7 @@ defined('ABSPATH') || exit;
 		</div>
 		<!-- Body Content - End -->
 
-		<ul class="wu-thank-you-info wu-grid wu-grid-cols-2 wu-gap-4 wu-m-0 wu-px-4 wu-py-6 wu-list-none">
+		<ul class="wu-thank-you-info wu-grid wu-grid-cols-1 sm:wu-grid-cols-2 wu-gap-4 wu-m-0 wu-px-4 wu-py-6 wu-list-none">
 
 			<!-- Info Item -->
 			<li>
@@ -182,7 +182,7 @@ defined('ABSPATH') || exit;
 
 			</span>
 
-			<span class="wu-text-md wu-font-bold wu-block">
+			<span class="wu-text-md wu-font-bold wu-block wu-break-all">
 
 				<?php echo esc_html($customer->get_email_address()); ?>
 
@@ -250,10 +250,10 @@ defined('ABSPATH') || exit;
 
 				<div class="wu-bg-gray-100 wu-p-4 wu-rounded wu-mb-2 sm:wu-flex wu-items-center">
 
-				<div class="wu-flex-shrink sm:wu-mr-4">
+					<div class="wu-flex-shrink sm:wu-mr-4">
 
 					<img
-					class="sm:wu-w-12 sm:wu-h-12 wu-mb-4 sm:wu-mb-0 wu-rounded"
+					class="wu-mb-4 sm:wu-mb-0 wu-rounded"
 					src="<?php echo esc_attr($site->get_featured_image('thumbnail')); ?>"
 					alt="Thumbnail of Site" />
 
@@ -368,9 +368,9 @@ defined('ABSPATH') || exit;
 		<!-- Title Element - End -->
 
 		<!-- Body Content -->
-		<div class="wu-thank-you-message wu-px-4 wu-mb-4">
+		<div class="wu-thank-you-message wu-px-4 wu-mb-4 wu-overflow-x-auto">
 
-		<table>
+		<table class="wu-w-full">
 
 			<thead class="wu-bg-gray-100">
 

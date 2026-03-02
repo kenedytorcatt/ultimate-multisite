@@ -904,7 +904,7 @@ class Product_Test extends \WP_UnitTestCase {
 		$desc = $this->product->get_price_description();
 		$this->assertIsString($desc);
 		$this->assertNotEmpty($desc);
-		$this->assertStringContainsString('every', $desc);
+		$this->assertStringContainsString('/ month', $desc);
 	}
 
 	/**
@@ -1086,7 +1086,7 @@ class Product_Test extends \WP_UnitTestCase {
 		$this->product->set_duration_unit('month');
 
 		$desc = $this->product->get_recurring_description();
-		$this->assertStringContainsString('every', $desc);
+		$this->assertStringContainsString('month', $desc);
 	}
 
 	// ========================================================================

@@ -339,6 +339,12 @@ if ( ! class_exists('MUCD_Data') ) {
 		 */
 		public static function replace($val, $from_string, $to_string) {
 			if (is_string($val)) {
+				// Guard: if the target string is already present and the source
+				// is not, skip replacement to prevent double-substitution.
+				if ($from_string !== $to_string && strpos($val, $to_string) !== false && strpos($val, $from_string) === false) {
+					return $val;
+				}
+
 				return str_replace($from_string, $to_string, $val);
 			}
 

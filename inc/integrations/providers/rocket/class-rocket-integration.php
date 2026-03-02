@@ -92,6 +92,9 @@ class Rocket_Integration extends Integration {
 				'desc'        => __('Your Rocket.net account password.', 'ultimate-multisite'),
 				'placeholder' => __('Enter your password', 'ultimate-multisite'),
 				'type'        => 'password',
+				'html_attr'   => [
+					'autocomplete' => 'new-password',
+				],
 			],
 			'WU_ROCKET_SITE_ID'  => [
 				'title'       => __('Rocket.net Site ID', 'ultimate-multisite'),

@@ -460,7 +460,7 @@ class Migrator extends Base_Installer {
 	 * @param string        $installer The installer name.
 	 * @param object        $wizard Wizard class.
 	 *
-	 * @return void
+	 * @return bool|\WP_Error
 	 */
 	public function handle($status, $installer, $wizard) {
 
@@ -479,7 +479,7 @@ class Migrator extends Base_Installer {
 		* No installer on this class.
 		*/
 		if ( ! is_callable($callable)) {
-			return;
+			return $status;
 		}
 
 		/*
@@ -558,6 +558,8 @@ class Migrator extends Base_Installer {
 
 			$session->set('back_traces', []);
 		}
+
+		return $status;
 	}
 
 	/**
@@ -1752,9 +1754,7 @@ class Migrator extends Base_Installer {
 				throw new Exception(esc_html($membership->get_error_message()));
 			}
 
-			/*
-			 * Update statuses and check for other info.
-			 */
+			// phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf -- Placeholder for future status checks.
 			if ($membership) {
 			}
 		}
@@ -2358,6 +2358,11 @@ class Migrator extends Base_Installer {
 		 * Set page as the default registration page.
 		 */
 		wu_save_setting('default_registration_page', $page_id);
+
+		/*
+		 * Flush rewrite rules so checkout URL patterns work immediately.
+		 */
+		flush_rewrite_rules(true);
 
 		/*
 		 * Get post name based on setting for login page

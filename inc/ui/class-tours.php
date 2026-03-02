@@ -76,7 +76,7 @@ class Tours {
 		WP_Ultimo()->scripts->register_script_module('shepherd.js', wu_get_asset('lib/shepherd.js', 'js'));
 		WP_Ultimo()->scripts->register_style('shepherd', wu_get_asset('lib/shepherd.css', 'css'));
 
-		WP_Ultimo()->scripts->register_script_module('wu-tours', wu_get_asset('tours.js', 'js'), ['shepherd.js', 'underscore']);
+		WP_Ultimo()->scripts->register_script_module('wu-tours', wu_get_asset('tours.js', 'js'), ['shepherd.js']);
 	}
 
 	/**
@@ -104,6 +104,7 @@ class Tours {
 				]
 			);
 
+			wp_enqueue_script('underscore');
 			wp_enqueue_script_module('wu-tours');
 			wp_enqueue_style('shepherd');
 		}

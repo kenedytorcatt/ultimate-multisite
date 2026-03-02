@@ -31,7 +31,7 @@ final class WP_Ultimo {
 	 * @since 2.1.0
 	 * @var string
 	 */
-	const VERSION = '2.4.11-beta.4';
+	const VERSION = '2.4.13-beta.1';
 
 	/**
 	 * Core log handle for Ultimate Multisite.
@@ -115,6 +115,10 @@ final class WP_Ultimo {
 	 * @return void
 	 */
 	public function init(): void {
+
+		add_filter('extra_plugin_headers', [$this, 'register_addon_headers']);
+		add_action('admin_init', [$this, 'check_addon_compatibility']);
+
 		/*
 		 * Core Helper Functions
 		 */
@@ -146,11 +150,6 @@ final class WP_Ultimo {
 		$this->load_public_apis();
 
 		/*
-		 * Setup Wizard
-		 */
-		new WP_Ultimo\Admin_Pages\Setup_Wizard_Admin_Page();
-
-		/*
 		 * Loads the Ultimate Multisite settings helper class.
 		 */
 		$this->settings = WP_Ultimo\Settings::get_instance();
@@ -165,7 +164,16 @@ final class WP_Ultimo {
 		 * Everything we need to run our setup install needs top be loaded before this
 		 * and have no dependencies outside of the classes loaded so far.
 		 */
-		if (WP_Ultimo\Requirements::met() === false || WP_Ultimo\Requirements::run_setup() === false) {
+		if (WP_Ultimo\Requirements::met() === false || WP_Ultimo\Requirements::run_setup() === false || ($_GET['page'] ?? '') === 'wp-ultimo-multisite-setup') { // phpcs:ignore WordPress.Security
+			// Use wizard to setup multisite.
+			add_action(
+				'init',
+				function () {
+					new WP_Ultimo\Admin_Pages\Setup_Wizard_Admin_Page();
+					new WP_Ultimo\Admin_Pages\Multisite_Setup_Admin_Page();
+				}
+			);
+
 			return;
 		}
 
@@ -455,7 +463,9 @@ final class WP_Ultimo {
 		/*
 		 * Loads the debugger tools
 		 */
-		WP_Ultimo\Debug\Debug::get_instance();
+		if (defined('WP_ULTIMO_DEBUG') && WP_ULTIMO_DEBUG) {
+			WP_Ultimo\Debug\Debug::get_instance();
+		}
 
 		/*
 		 * Loads the Jumper UI
@@ -505,6 +515,7 @@ final class WP_Ultimo {
 		\WP_Ultimo\UI\Current_Membership_Element::get_instance();
 		\WP_Ultimo\UI\Billing_Info_Element::get_instance();
 		\WP_Ultimo\UI\Invoices_Element::get_instance();
+		\WP_Ultimo\UI\Payment_Methods_Element::get_instance();
 		\WP_Ultimo\UI\Site_Actions_Element::get_instance();
 
 		\WP_Ultimo\UI\Account_Summary_Element::get_instance();
@@ -796,6 +807,8 @@ final class WP_Ultimo {
 		new WP_Ultimo\Tax\Dashboard_Taxes_Tab();
 
 		new WP_Ultimo\Admin_Pages\Addons_Admin_Page();
+
+		new WP_Ultimo\Admin_Pages\Setup_Wizard_Admin_Page();
 	}
 
 	/**
@@ -1014,9 +1027,15 @@ final class WP_Ultimo {
 		// PUC builds the URL from metadataUrl + query args, then passes it to wp_remote_get.
 		// We can't modify the URL through http_request_args, so we use a one-time
 		// pre_http_request filter to intercept and re-issue the request with beta=1.
+		static $is_redirecting = false;
+
+		if ($is_redirecting) {
+			return $args;
+		}
+
 		add_filter(
 			'pre_http_request',
-			$redirect = function ($pre, $r, $request_url) use ($url, $args, &$redirect) {
+			$redirect = function ($pre, $r, $request_url) use ($url, $args, &$redirect, &$is_redirecting) {
 
 				remove_filter('pre_http_request', $redirect, 9);
 
@@ -1024,9 +1043,12 @@ final class WP_Ultimo {
 					return $pre;
 				}
 
-				$beta_url = add_query_arg('beta', '1', $request_url);
+				$is_redirecting = true;
+				$beta_url       = add_query_arg('beta', '1', $request_url);
+				$result         = wp_remote_get($beta_url, $args);
+				$is_redirecting = false;
 
-				return wp_remote_get($beta_url, $args);
+				return $result;
 			},
 			9,
 			3
@@ -1084,6 +1106,16 @@ final class WP_Ultimo {
 			return $transient;
 		}
 
+		// Only trust downloads from GitHub domains
+		$allowed_hosts = ['github.com', 'objects.githubusercontent.com'];
+		$package_host  = wp_parse_url($package_url, PHP_URL_HOST);
+
+		if (! $package_host || ! in_array($package_host, $allowed_hosts, true)) {
+			wu_log_add('beta-updates', sprintf('Rejected beta update package URL with untrusted host: %s', $package_url), \Psr\Log\LogLevel::WARNING);
+
+			return $transient;
+		}
+
 		$transient->response[ $plugin_file ] = (object) [
 			'slug'        => 'ultimate-multisite',
 			'plugin'      => $plugin_file,
@@ -1095,6 +1127,91 @@ final class WP_Ultimo {
 		];
 
 		return $transient;
+	}
+
+	/**
+	 * Register custom plugin headers for addon version requirements.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param array $headers Existing extra headers.
+	 * @return array Headers with UM-specific ones added.
+	 */
+	public function register_addon_headers(array $headers): array {
+
+		$headers[] = 'UM requires at least';
+		$headers[] = 'UM tested up to';
+
+		return $headers;
+	}
+
+	/**
+	 * Check active network plugins for addon compatibility.
+	 *
+	 * Reads the `UM requires at least` header from every active network plugin
+	 * and displays a network admin notice when the installed core version is
+	 * too old for an addon to work correctly.
+	 *
+	 * @since 2.5.0
+	 * @return void
+	 */
+	public function check_addon_compatibility(): void {
+
+		if (! is_network_admin()) {
+			return;
+		}
+
+		if (! function_exists('get_plugins')) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		$all_plugins    = get_plugins();
+		$active_plugins = array_keys(get_site_option('active_sitewide_plugins', []));
+		$incompatible   = [];
+
+		foreach ($active_plugins as $plugin_file) {
+			if (! isset($all_plugins[ $plugin_file ])) {
+				continue;
+			}
+
+			$plugin = $all_plugins[ $plugin_file ];
+
+			if (empty($plugin['UM requires at least'])) {
+				continue;
+			}
+
+			$required = $plugin['UM requires at least'];
+
+			if (! version_compare(self::VERSION, $required, '>=')) {
+				$incompatible[] = [
+					'name'     => $plugin['Name'],
+					'required' => $required,
+				];
+			}
+		}
+
+		if (empty($incompatible)) {
+			return;
+		}
+
+		add_action(
+			'network_admin_notices',
+			function () use ($incompatible) {
+
+				foreach ($incompatible as $addon) {
+					printf(
+						'<div class="notice notice-error"><p>%s</p></div>',
+						sprintf(
+							/* translators: 1: addon name, 2: required version, 3: installed version */
+							esc_html__('%1$s requires Ultimate Multisite %2$s or higher. You are running %3$s. Please update Ultimate Multisite to avoid errors.', 'ultimate-multisite'),
+							'<strong>' . esc_html($addon['name']) . '</strong>',
+							'<strong>' . esc_html($addon['required']) . '</strong>',
+							'<strong>' . esc_html(self::VERSION) . '</strong>'
+						)
+					);
+				}
+			}
+		);
 	}
 
 	/**

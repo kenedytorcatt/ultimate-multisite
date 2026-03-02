@@ -34,6 +34,14 @@ class Table_Loader {
 	public $domain_table;
 
 	/**
+	 * The Domain Meta Table
+	 *
+	 * @since 2.4.0
+	 * @var \WP_Ultimo\Database\Domains\Domains_Meta_Table
+	 */
+	public $domainmeta_table;
+
+	/**
 	 * The Products Table
 	 *
 	 * @since 2.2.0
@@ -185,9 +193,10 @@ class Table_Loader {
 	 */
 	public function init(): void {
 		/**
-		 * Loads the Domain Mappings Table
+		 * Loads the Domain Mappings (and Meta) Tables
 		 */
-		$this->domain_table = new \WP_Ultimo\Database\Domains\Domains_Table();
+		$this->domain_table     = new \WP_Ultimo\Database\Domains\Domains_Table();
+		$this->domainmeta_table = new \WP_Ultimo\Database\Domains\Domains_Meta_Table();
 
 		/**
 		 * Loads the Products (and Meta) Tables

@@ -473,6 +473,61 @@ class Event_Manager extends Base_Manager {
 			]
 		);
 
+		/**
+		 * Invoice Sent
+		 */
+		wu_register_event_type(
+			'invoice_sent',
+			[
+				'name'            => __('Invoice Sent', 'ultimate-multisite'),
+				'desc'            => __('This event is fired every time an invoice is sent to a customer by a network admin.', 'ultimate-multisite'),
+				'payload'         => fn() => array_merge(
+					[
+						'payment_url'     => 'https://linktopayment.com',
+						'invoice_message' => 'Example message to the customer.',
+					],
+					wu_generate_event_payload('payment'),
+					wu_generate_event_payload('customer')
+				),
+				'deprecated_args' => [],
+			]
+		);
+
+		/**
+		 * Payment Failed.
+		 */
+		wu_register_event_type(
+			'payment_failed',
+			[
+				'name'            => __('Recurring Payment Failed', 'ultimate-multisite'),
+				'desc'            => __('Fired when an auto-renewing payment fails (Stripe/PayPal).', 'ultimate-multisite'),
+				'payload'         => fn() => array_merge(
+					wu_generate_event_payload('membership'),
+					wu_generate_event_payload('customer'),
+					[
+						'payment_gateway' => 'stripe',
+					]
+				),
+				'deprecated_args' => [],
+			]
+		);
+
+		/**
+		 * Membership Expired.
+		 */
+		wu_register_event_type(
+			'membership_expired',
+			[
+				'name'            => __('Membership Expired', 'ultimate-multisite'),
+				'desc'            => __('Fired when a membership transitions to expired status.', 'ultimate-multisite'),
+				'payload'         => fn() => array_merge(
+					wu_generate_event_payload('membership'),
+					wu_generate_event_payload('customer')
+				),
+				'deprecated_args' => [],
+			]
+		);
+
 		$models = $this->models_events;
 
 		foreach ($models as $model => $params) {

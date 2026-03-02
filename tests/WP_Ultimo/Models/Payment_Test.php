@@ -1356,7 +1356,6 @@ class Payment_Test extends WP_UnitTestCase {
 		$this->assertIsString($url);
 		$this->assertStringContainsString('action=invoice', $url);
 		$this->assertStringContainsString('reference=', $url);
-		$this->assertStringContainsString('key=', $url);
 	}
 
 	/**

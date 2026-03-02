@@ -1159,10 +1159,10 @@ class Customer_Edit_Admin_Page extends Edit_Admin_Page {
 	/**
 	 * Should implement the processes necessary to save the changes made to the object.
 	 *
-	 * @return void
+	 * @return bool
 	 * @since 2.0.0
 	 */
-	public function handle_save(): void {
+	public function handle_save(): bool {
 
 		// Nonce handled in calling method.
         // phpcs:disable WordPress.Security.NonceVerification
@@ -1199,7 +1199,7 @@ class Customer_Edit_Admin_Page extends Edit_Admin_Page {
 
 			WP_Ultimo()->notices->add($errors, 'error', 'network-admin');
 
-			return;
+			return false;
 		}
 
 		$object->set_billing_address($billing_address);
@@ -1245,7 +1245,7 @@ class Customer_Edit_Admin_Page extends Edit_Admin_Page {
 		unset($_POST['new_meta_fields']);
 		// phpcs:enable
 
-		parent::handle_save();
+		return parent::handle_save();
 	}
 
 	/**

@@ -1252,6 +1252,66 @@ class Checkout_Form extends Base_Model {
 	}
 
 	/**
+	 * Minimal form fields for paying a standalone invoice.
+	 *
+	 * Shows order summary, payment method selector, and submit button.
+	 *
+	 * @since 2.5.0
+	 * @return array
+	 */
+	public static function pay_invoice_form_fields(): array {
+
+		$payment = wu_get_payment_by_hash(wu_request('payment'));
+
+		if ( ! $payment && wu_request('payment_id')) {
+			$payment = wu_get_payment(wu_request('payment_id'));
+		}
+
+		if ( ! $payment && current_user_can('manage_options')) {
+			$payment = wu_mock_payment();
+		}
+
+		if ( ! $payment) {
+			return [];
+		}
+
+		$fields = [
+			[
+				'step'                   => 'checkout',
+				'name'                   => __('Invoice Summary', 'ultimate-multisite'),
+				'type'                   => 'order_summary',
+				'id'                     => 'order_summary',
+				'order_summary_template' => 'clean',
+				'table_columns'          => 'simple',
+			],
+			[
+				'step' => 'checkout',
+				'name' => __('Payment Method', 'ultimate-multisite'),
+				'type' => 'payment',
+				'id'   => 'payment',
+			],
+			[
+				'step'  => 'checkout',
+				'name'  => __('Pay Invoice', 'ultimate-multisite'),
+				'type'  => 'submit_button',
+				'id'    => 'checkout',
+				'order' => 0,
+			],
+		];
+
+		$steps = [
+			[
+				'id'     => 'checkout',
+				'name'   => __('Pay Invoice', 'ultimate-multisite'),
+				'desc'   => '',
+				'fields' => $fields,
+			],
+		];
+
+		return apply_filters('wu_checkout_form_pay_invoice_form_fields', $steps);
+	}
+
+	/**
 	 * Custom fields for back-end upgrade/downgrades and such.
 	 *
 	 * @since 2.0.0
@@ -1316,12 +1376,12 @@ class Checkout_Form extends Base_Model {
 			foreach ($products as $product) {
 				$days_in_cycle = (int) wu_get_days_in_cycle($product->get_duration_unit(), $product->get_duration());
 
-				$label = sprintf(
-					// translators: %1$s the duration, and %2$s the duration unit (day, week, month, etc)
-					_n('%2$s', '%1$s %2$s', $product->get_duration(), 'ultimate-multisite'), // phpcs:ignore
-					$product->get_duration(),
-					wu_get_translatable_string($product->get_duration() <= 1 ? $product->get_duration_unit() : $product->get_duration_unit() . 's')
-				);
+				$product_duration = $product->get_duration();
+				$product_unit     = wu_get_translatable_string($product_duration <= 1 ? $product->get_duration_unit() : $product->get_duration_unit() . 's');
+
+				$label = $product_duration <= 1
+					? $product_unit
+					: $product_duration . ' ' . $product_unit;
 
 				$period_selection[ $days_in_cycle ] = [
 					'duration'      => $product->get_duration(),
@@ -1347,12 +1407,12 @@ class Checkout_Form extends Base_Model {
 					 */
 					$days_in_cycle = (int) wu_get_days_in_cycle($variation['duration_unit'], $variation['duration']);
 
-					$label = sprintf(
-						// translators: %1$s the duration, and %2$s the duration unit (day, week, month, etc)
-						_n('%2$s', '%1$s %2$s', $variation['duration'], 'ultimate-multisite'), // phpcs:ignore
-						$variation['duration'],
-						wu_get_translatable_string($variation['duration'] <= 1 ? $variation['duration_unit'] : $variation['duration_unit'] . 's')
-					);
+					$var_duration = $variation['duration'];
+					$var_unit     = wu_get_translatable_string($var_duration <= 1 ? $variation['duration_unit'] : $variation['duration_unit'] . 's');
+
+					$label = $var_duration <= 1
+						? $var_unit
+						: $var_duration . ' ' . $var_unit;
 
 					$period_selection[ $days_in_cycle ] = [
 						'duration'      => $variation['duration'],

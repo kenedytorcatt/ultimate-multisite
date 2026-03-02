@@ -15,6 +15,7 @@ defined('ABSPATH') || exit;
 use WP_Ultimo\Installers\Migrator;
 use WP_Ultimo\Installers\Core_Installer;
 use WP_Ultimo\Installers\Default_Content_Installer;
+use WP_Ultimo\Installers\Multisite_Network_Installer;
 use WP_Ultimo\Installers\Recommended_Plugins_Installer;
 use WP_Ultimo\Logger;
 use WP_Ultimo\Requirements;
@@ -124,8 +125,7 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 
 			add_action('admin_enqueue_scripts', [$this, 'register_scripts']);
 		}
-
-		add_action('init', [$this, 'start_init']);
+		parent::__construct();
 
 		add_action('admin_action_download_migration_logs', [$this, 'download_migration_logs']);
 
@@ -137,15 +137,10 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 		/*
 		 * Load installers
 		 */
-		add_action('wu_handle_ajax_installers', [Core_Installer::get_instance(), 'handle'], 10, 3);
-		add_action('wu_handle_ajax_installers', [Default_Content_Installer::get_instance(), 'handle'], 10, 3);
-		add_action('wu_handle_ajax_installers', [Recommended_Plugins_Installer::get_instance(), 'handle'], 10, 3);
-		add_action('wu_handle_ajax_installers', [Migrator::get_instance(), 'handle'], 10, 3);
-
-		/*
-		 * Redirect on activation
-		 */
-		add_action('wu_activation', [$this, 'redirect_to_wizard']);
+		add_filter('wu_handle_ajax_installers', [Core_Installer::get_instance(), 'handle'], 10, 3);
+		add_filter('wu_handle_ajax_installers', [Default_Content_Installer::get_instance(), 'handle'], 10, 3);
+		add_filter('wu_handle_ajax_installers', [Recommended_Plugins_Installer::get_instance(), 'handle'], 10, 3);
+		add_filter('wu_handle_ajax_installers', [Migrator::get_instance(), 'handle'], 10, 3);
 
 		add_action('admin_init', [$this, 'alert_incomplete_installation']);
 	}
@@ -214,21 +209,6 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 	public function set_settings(): void {
 
 		WP_Ultimo()->settings->default_sections();
-	}
-
-	/**
-	 * Redirects to the wizard, if we need to.
-	 *
-	 * @since 2.0.0
-	 * @return void
-	 */
-	public function redirect_to_wizard(): void {
-
-		if ( ! Requirements::run_setup() && wu_request('page') !== 'wp-ultimo-setup') {
-			wp_safe_redirect(wu_network_admin_url('wp-ultimo-setup'));
-
-			exit;
-		}
 	}
 
 	/**
@@ -482,7 +462,7 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 
 			$sections['defaults'] = [
 				'title'        => __('Default Content', 'ultimate-multisite'),
-				'description'  => __('Starting from scratch can be scarry, specially when first starting out. In this step, you can create default content to have a starting point for your network. Everything can be customized later.', 'ultimate-multisite'),
+				'description'  => __('Starting from scratch can be scary, especially when first starting out. In this step, you can create default content to have a starting point for your network. Everything can be customized later.', 'ultimate-multisite'),
 				'next_label'   => Default_Content_Installer::get_instance()->all_done() ? __('Go to the Next Step &rarr;', 'ultimate-multisite') : __('Install', 'ultimate-multisite'),
 				'disable_next' => true,
 				'fields'       => [
@@ -585,40 +565,6 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 		$fields = array_merge($payment_fields);
 
 		return apply_filters('wu_setup_get_payment_settings', $fields);
-	}
-
-	/**
-	 * Render the installation steps table.
-	 *
-	 * @since 2.0.0
-	 *
-	 * @param array   $steps The list of steps.
-	 * @param boolean $checks If we should add the checkbox for selection or not.
-	 * @return string
-	 */
-	public function render_installation_steps($steps, $checks = true) {
-
-		wp_localize_script('wu-setup-wizard', 'wu_setup', $steps);
-
-		wp_localize_script(
-			'wu-setup-wizard',
-			'wu_setup_settings',
-			[
-				'dry_run'               => wu_request('dry-run', true),
-				'generic_error_message' => __('A server error happened while processing this item.', 'ultimate-multisite'),
-			]
-		);
-
-		wp_enqueue_script('wu-setup-wizard');
-
-		return wu_get_template_contents(
-			'wizards/setup/installation_steps',
-			[
-				'page'   => $this,
-				'steps'  => $steps,
-				'checks' => $checks,
-			]
-		);
 	}
 
 	/**

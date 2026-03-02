@@ -10,7 +10,7 @@
  * @see inc/models/class-products.php.
  *
  * This template can also be overridden using template overrides.
- * See more here: https://github.com/superdav42/wp-multisite-waas/wiki/Template-Overrides.
+ * See more here: https://ultimatemultisite.com/docs/user-guide/miscellaneous/frequently-asked-questions
  *
  * @since 2.0.0
  * @package WP_Ultimo/Views

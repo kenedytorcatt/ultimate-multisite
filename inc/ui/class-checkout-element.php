@@ -411,6 +411,7 @@ class Checkout_Element extends Base_Element {
 					[
 						'wu-checkout',
 						'wu-add-new-site',
+						'wu-register-domain',
 					]
 				);
 

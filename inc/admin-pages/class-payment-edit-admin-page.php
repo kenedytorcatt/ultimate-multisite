@@ -138,6 +138,18 @@ class Payment_Edit_Admin_Page extends Edit_Admin_Page {
 		);
 
 		/*
+		 * Resend Invoice
+		 */
+		wu_register_form(
+			'resend_invoice',
+			[
+				'render'     => [$this, 'render_resend_invoice_modal'],
+				'handler'    => [$this, 'handle_resend_invoice_modal'],
+				'capability' => 'wu_edit_payments',
+			]
+		);
+
+		/*
 		 * Delete - Confirmation modal
 		 */
 		add_filter(
@@ -936,6 +948,108 @@ class Payment_Edit_Admin_Page extends Edit_Admin_Page {
 	}
 
 	/**
+	 * Renders the resend invoice confirmation modal.
+	 *
+	 * @since 2.5.0
+	 * @return void
+	 */
+	public function render_resend_invoice_modal(): void {
+
+		$payment = wu_get_payment(wu_request('id'));
+
+		if ( ! $payment) {
+			return;
+		}
+
+		$fields = [
+			'invoice_message' => [
+				'type'        => 'textarea',
+				'title'       => __('Message (optional)', 'ultimate-multisite'),
+				'placeholder' => __('Add a personal note to include in the email...', 'ultimate-multisite'),
+				'value'       => '',
+				'html_attr'   => [
+					'rows' => 3,
+				],
+			],
+			'submit_button'   => [
+				'type'            => 'submit',
+				'title'           => __('Send Invoice Email', 'ultimate-multisite'),
+				'value'           => 'save',
+				'classes'         => 'wu-w-full button button-primary',
+				'wrapper_classes' => 'wu-items-end',
+			],
+			'id'              => [
+				'type'  => 'hidden',
+				'value' => $payment->get_id(),
+			],
+		];
+
+		$form = new \WP_Ultimo\UI\Form(
+			'resend_invoice',
+			$fields,
+			[
+				'views'                 => 'admin-pages/fields',
+				'classes'               => 'wu-modal-form wu-widget-list wu-striped wu-m-0 wu-mt-0',
+				'field_wrapper_classes' => 'wu-w-full wu-box-border wu-items-center wu-flex wu-justify-between wu-p-4 wu-m-0 wu-border-t wu-border-l-0 wu-border-r-0 wu-border-b-0 wu-border-gray-300 wu-border-solid',
+				'html_attr'             => [
+					'data-wu-app' => 'resend_invoice',
+					'data-state'  => wu_convert_to_state([]),
+				],
+			]
+		);
+
+		$form->render();
+	}
+
+	/**
+	 * Handles the resend invoice form submission.
+	 *
+	 * @since 2.5.0
+	 * @return void
+	 */
+	public function handle_resend_invoice_modal(): void {
+
+		$payment = wu_get_payment(wu_request('id'));
+
+		if ( ! $payment) {
+			wp_send_json_error(new \WP_Error('not-found', __('Payment not found.', 'ultimate-multisite')));
+
+			return;
+		}
+
+		$customer = $payment->get_customer();
+
+		if ( ! $customer) {
+			wp_send_json_error(new \WP_Error('no-customer', __('No customer found for this payment.', 'ultimate-multisite')));
+
+			return;
+		}
+
+		$payload = array_merge(
+			wu_generate_event_payload('payment', $payment),
+			wu_generate_event_payload('customer', $customer),
+			[
+				'payment_url'     => $payment->get_payment_url() ?: '',
+				'invoice_message' => sanitize_textarea_field(wu_request('invoice_message', '')),
+			]
+		);
+
+		wu_do_event('invoice_sent', $payload);
+
+		wp_send_json_success(
+			[
+				'redirect_url' => wu_network_admin_url(
+					'wp-ultimo-edit-payment',
+					[
+						'id'      => $payment->get_id(),
+						'updated' => 1,
+					]
+				),
+			]
+		);
+	}
+
+	/**
 	 * Allow child classes to register widgets, if they need them.
 	 *
 	 * @since 1.8.2
@@ -1199,6 +1313,18 @@ class Payment_Edit_Admin_Page extends Edit_Admin_Page {
 					'label' => __('Payment URL', 'ultimate-multisite'),
 					'icon'  => 'wu-credit-card',
 				];
+
+				$actions[] = [
+					'url'     => wu_get_form_url(
+						'resend_invoice',
+						[
+							'id' => $payment->get_id(),
+						]
+					),
+					'label'   => __('Send Invoice Email', 'ultimate-multisite'),
+					'icon'    => 'wu-mail',
+					'classes' => 'wubox',
+				];
 			}
 		}
 
@@ -1310,9 +1436,9 @@ class Payment_Edit_Admin_Page extends Edit_Admin_Page {
 	 *
 	 * @todo: This can not be handled here.
 	 * @since 2.0.0
-	 * @return void
+	 * @return bool
 	 */
-	public function handle_save(): void {
+	public function handle_save(): bool {
 
 		$this->get_object()->recalculate_totals()->save();
 
@@ -1328,6 +1454,6 @@ class Payment_Edit_Admin_Page extends Edit_Admin_Page {
 			}
 		}
 
-		parent::handle_save();
+		return parent::handle_save();
 	}
 }

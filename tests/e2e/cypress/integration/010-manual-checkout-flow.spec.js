@@ -3,7 +3,7 @@ describe("Manual Gateway Checkout Flow", () => {
 	const customerData = {
 		username: `manualcust${timestamp}`,
 		email: `manualcust${timestamp}@test.com`,
-		password: "TestPassword123!",
+		password: "xK9#mL2$vN5@qR",
 	};
 	const siteData = {
 		title: "Manual Test Site",
@@ -54,20 +54,16 @@ describe("Manual Gateway Checkout Flow", () => {
 			}
 		});
 
-		// Fill billing address if present
-		cy.get("body").then(($body) => {
-			if ($body.find("#field-billing_country").length > 0) {
-				cy.get("#field-billing_country").select("US");
-			} else if ($body.find('[name="billing_address[billing_country]"]').length > 0) {
-				cy.get('[name="billing_address[billing_country]"]').select("US");
-			}
+		// Fill billing address — fields are controlled by v-show on order.should_collect_payment
+		// After plan selection, create_order AJAX fires and fields become visible
+		cy.get("#field-billing_country", { timeout: 15000 })
+			.should("be.visible")
+			.select("US");
 
-			if ($body.find("#field-billing_zip_code").length > 0) {
-				cy.get("#field-billing_zip_code").clear().type("94105");
-			} else if ($body.find('[name="billing_address[billing_zip_code]"]').length > 0) {
-				cy.get('[name="billing_address[billing_zip_code]"]').clear().type("94105");
-			}
-		});
+		cy.get("#field-billing_zip_code", { timeout: 15000 })
+			.should("be.visible")
+			.clear()
+			.type("94105");
 
 		// Submit the UM checkout form
 		cy.get(

@@ -412,14 +412,15 @@ class PayPal_Gateway extends Base_Gateway {
 	 * It takes the data concerning
 	 * a new checkout and process it.
 	 *
-	 * @since 2.0.0
-	 *
 	 * @param \WP_Ultimo\Models\Payment    $payment The payment associated with the checkout.
 	 * @param \WP_Ultimo\Models\Membership $membership The membership.
 	 * @param \WP_Ultimo\Models\Customer   $customer The customer checking out.
 	 * @param \WP_Ultimo\Checkout\Cart     $cart The cart object.
 	 * @param string                       $type The checkout type. Can be 'new', 'retry', 'upgrade', 'downgrade', 'addon'.
+	 *
 	 * @return void
+	 * @throws \Exception If something goes really wrong.
+	 * @since 2.0.0
 	 */
 	public function process_checkout($payment, $membership, $customer, $cart, $type): void {
 		/*
@@ -649,7 +650,7 @@ class PayPal_Gateway extends Base_Gateway {
 				 *
 				 * Redirect to the PayPal checkout URL.
 				 */
-				wp_redirect($this->checkout_url . $body['TOKEN']);
+				wp_redirect($this->checkout_url . $body['TOKEN']); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
 
 				exit;
 			}
@@ -1078,6 +1079,22 @@ class PayPal_Gateway extends Base_Gateway {
 					// translators: %s: Transaction ID
 					$membership->add_note(['text' => sprintf(__('Transaction ID %s failed in PayPal.', 'ultimate-multisite'), $posted['txn_id'])]);
 
+					do_action('wu_recurring_payment_failed', $membership, $this);
+
+					$customer = $membership->get_customer();
+
+					if ($customer) {
+						$payload = array_merge(
+							wu_generate_event_payload('membership', $membership),
+							wu_generate_event_payload('customer', $customer),
+							[
+								'payment_gateway' => $this->get_id(),
+							]
+						);
+
+						wu_do_event('payment_failed', $payload);
+					}
+
 					die('Subscription payment failed');
 				} elseif ('pending' === strtolower((string) $posted['payment_status'])) {
 
@@ -1151,6 +1168,20 @@ class PayPal_Gateway extends Base_Gateway {
 			case 'recurring_payment_failed':
 			case 'recurring_payment_suspended_due_to_max_failed_payment': // Same case as before
 				wu_log_add('paypal', 'Processing PayPal Express recurring_payment_failed or recurring_payment_suspended_due_to_max_failed_payment IPN.');
+
+				$customer = $membership->get_customer();
+
+				if ($customer) {
+					$payload = array_merge(
+						wu_generate_event_payload('membership', $membership),
+						wu_generate_event_payload('customer', $customer),
+						[
+							'payment_gateway' => $this->get_id(),
+						]
+					);
+
+					wu_do_event('payment_failed', $payload);
+				}
 
 				if ( ! in_array($membership->get_status(), ['cancelled', 'expired'], true)) {
 					$membership->set_status('expired');
@@ -1553,7 +1584,7 @@ class PayPal_Gateway extends Base_Gateway {
 	 * Display the confirmation form.
 	 *
 	 * @since 2.1
-	 * @return string
+	 * @return void
 	 */
 	public function confirmation_form() {
 
@@ -1565,7 +1596,7 @@ class PayPal_Gateway extends Base_Gateway {
 			$error = is_wp_error($checkout_details) ? $checkout_details->get_error_message() : __('Invalid response code from PayPal', 'ultimate-multisite');
 
 			// translators: %s is the paypal error message.
-			return '<p>' . sprintf(__('An unexpected PayPal error occurred. Error message: %s.', 'ultimate-multisite'), $error) . '</p>';
+			echo '<p>' . sprintf(esc_html__('An unexpected PayPal error occurred. Error message: %s.', 'ultimate-multisite'), esc_html($error)) . '</p>';
 		}
 
 		/*

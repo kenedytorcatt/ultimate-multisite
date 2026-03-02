@@ -317,6 +317,13 @@ class Limitations {
 					 *  We use values 0 or '' as unlimited in our limits
 					 */
 					continue;
+				} elseif ($should_sum && is_null($value) && ! is_null($original_value)) {
+					/*
+					 * Null values should not overwrite existing values in additive mode.
+					 * A null limit means "no restriction configured" and should not
+					 * remove restrictions from previously merged limitations.
+					 */
+					continue;
 				} elseif (isset($array1[ $key ]) && is_numeric($array1[ $key ]) && is_numeric($value) && $should_sum && ! $is_unlimited) {
 					$array1[ $key ] = ((int) $array1[ $key ]) + $value;
 				} elseif ('visibility' === $key && isset($array1[ $key ]) && $should_sum) {
@@ -353,8 +360,6 @@ class Limitations {
 				} else {
 
 					// Avoid change true values
-					$array1[ $key ] = true !== $original_value || ! $should_sum ? $value : true;
-
 					$array1[ $key ] = true !== $original_value || ! $should_sum ? $value : true;
 				}
 			}
@@ -463,13 +468,13 @@ class Limitations {
 	 */
 	public static function get_empty() {
 
-		$limitations = new self();
+		$modules_data = [];
 
-		foreach (array_keys(self::repository()) as $module_name) {
-			$limitations->{$module_name};
+		foreach (self::repository() as $module_name => $class_name) {
+			$modules_data[ $module_name ] = $class_name::default_state();
 		}
 
-		return $limitations;
+		return new self($modules_data);
 	}
 
 	/**

@@ -52,8 +52,9 @@ class Default_Content_Installer extends Base_Installer {
 	 */
 	protected function done_creating_template_site() {
 
-		$current_site = get_current_site();
-
+		if (! is_multisite()) {
+			return false;
+		}
 		$d = wu_get_site_domain_and_path('template');
 
 		return domain_exists($d->domain, $d->path, get_current_network_id());
@@ -383,6 +384,12 @@ class Default_Content_Installer extends Base_Installer {
 		 * Set page as the default registration page.
 		 */
 		wu_save_setting('default_registration_page', $page_id);
+
+		/*
+		 * Flush rewrite rules so checkout URL patterns
+		 * (e.g. /register/plan-slug) work immediately.
+		 */
+		flush_rewrite_rules(true);
 	}
 
 	/**
