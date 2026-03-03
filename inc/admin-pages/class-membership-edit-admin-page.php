@@ -661,6 +661,7 @@ class Membership_Edit_Admin_Page extends Edit_Admin_Page {
 					'recurring_amount_group'        => [
 						'type'              => 'group',
 						'title'             => __('Recurring Amount', 'ultimate-multisite'),
+						'classes'           => 'wu-flex-wrap',
 						// translators: placeholder %1$s is the amount, %2$s is the duration (such as 1, 2, 3), and %3$s is the unit (such as month, year, week)
 						'desc'              => sprintf(__('The customer will be charged %1$s every %2$s %3$s(s).', 'ultimate-multisite'), '{{ wu_format_money(amount) }}', '{{ duration }}', '{{ duration_unit }}'),
 						'wrapper_html_attr' => [
@@ -672,7 +673,7 @@ class Membership_Edit_Admin_Page extends Edit_Admin_Page {
 								'type'            => 'text',
 								'value'           => $this->get_object()->get_amount(),
 								'placeholder'     => wu_format_currency('99'),
-								'wrapper_classes' => '',
+								'wrapper_classes' => 'wu-w-full',
 								'money'           => true,
 								'html_attr'       => [
 									'v-model' => 'amount',
@@ -682,7 +683,7 @@ class Membership_Edit_Admin_Page extends Edit_Admin_Page {
 								'type'            => 'number',
 								'value'           => $this->get_object()->get_duration(),
 								'placeholder'     => '',
-								'wrapper_classes' => 'wu-mx-2 wu-w-1/3',
+								'wrapper_classes' => 'wu-w-1/3 wu-mr-1',
 								'min'             => 0,
 								'html_attr'       => [
 									'v-model' => 'duration',
@@ -693,7 +694,7 @@ class Membership_Edit_Admin_Page extends Edit_Admin_Page {
 								'type'            => 'select',
 								'value'           => $this->get_object()->get_duration_unit(),
 								'placeholder'     => '',
-								'wrapper_classes' => 'wu-w-2/3',
+								'wrapper_classes' => 'wu-flex-1',
 								'html_attr'       => [
 									'v-model' => 'duration_unit',
 								],
