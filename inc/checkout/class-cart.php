@@ -907,22 +907,60 @@ class Cart implements \JsonSerializable {
 				return true;
 			}
 
-			/*
-			 * Set the type to addon.
-			 */
-			$this->cart_type = 'addon';
+		/*
+		 * Set the type to addon.
+		 */
+		$this->cart_type = 'addon';
 
-			/*
-			 * Sets the durations to avoid problems
-			 * with addon purchases.
-			 */
-			$plan_product = $membership->get_plan();
+		/*
+		 * Sets the durations to avoid problems
+		 * with addon purchases.
+		 */
+		$plan_product = $membership->get_plan();
 
-			if ($plan_product && ! $membership->is_free()) {
-				$this->duration      = $plan_product->get_duration();
-				$this->duration_unit = $plan_product->get_duration_unit();
-			}
+		if ($plan_product && ! $membership->is_free()) {
+			$this->duration      = $plan_product->get_duration();
+			$this->duration_unit = $plan_product->get_duration_unit();
+		}
 
+		/*
+		 * Apply existing discount code from membership to the cart.
+		 * This ensures that discount codes with 'apply_to_renewals' setting
+		 * are properly applied to addon purchases.
+		 *
+		 * @since 2.0.12
+		 */
+		$membership_discount_code = $membership->get_discount_code();
+
+		if ($membership_discount_code && $membership_discount_code->should_apply_to_renewals()) {
+			$this->add_discount_code($membership_discount_code);
+		}
+
+		/*
+		 * For addon-only purchases, we should NOT add the existing plan back
+		 * at full price and then calculate pro-rata credits. This was causing
+		 * the customer to be charged for the next billing period in advance.
+		 *
+		 * Instead, we only charge for the new addon products being added.
+		 *
+		 * The existing plan will continue to be billed on its regular schedule
+		 * via the subscription at the gateway level.
+		 *
+		 * Allows filtering for special cases where the old behavior is needed.
+		 *
+		 * @since 2.0.12
+		 * @param bool $should_include Whether to include the existing plan.
+		 * @param self $cart The cart object.
+		 * @param \WP_Ultimo\Models\Membership $membership The existing membership.
+		 */
+		$should_include_existing_plan = apply_filters(
+			'wu_cart_addon_include_existing_plan',
+			false, // Changed from true to false - only charge for addons
+			$this,
+			$membership
+		);
+
+		if ($should_include_existing_plan) {
 			/*
 			 * Checks the membership to see if we need to add back the
 			 * setup fee.
@@ -932,41 +970,20 @@ class Cart implements \JsonSerializable {
 			 */
 			add_filter('wu_apply_signup_fee', fn() => $membership->get_times_billed() <= 0);
 
+			$this->add_product($membership->get_plan_id());
+
 			/*
-			 * Adds the membership plan back in, for completeness.
-			 * This is also useful to make sure we present
-			 * the totals correctly for the customer.
-			 *
-			 * Allows filtering for addons like domain registration where
-			 * only the addon product should appear (not the existing plan).
-			 *
-			 * @since 2.4.12
-			 * @param bool $should_include Whether to include the existing plan.
-			 * @param self $cart The cart object.
-			 * @param \WP_Ultimo\Models\Membership $membership The existing membership.
+			 * Adds the credit line, after
+			 * calculating pro-rate.
 			 */
-			$should_include_existing_plan = apply_filters(
-				'wu_cart_addon_include_existing_plan',
-				true,
-				$this,
-				$membership
-			);
-
-			if ($should_include_existing_plan) {
-				$this->add_product($membership->get_plan_id());
-
-				/*
-				 * Adds the credit line, after
-				 * calculating pro-rate.
-				 */
-				$this->calculate_prorate_credits();
-			}
-
-			return true;
+			$this->calculate_prorate_credits();
 		}
 
-		/*
-		 * With products added, let's check if the plan is changing.
+		return true;
+	}
+
+	/*
+	 * With products added, let's check if the plan is changing.
 		 *
 		 * A plan change implies a upgrade or a downgrade, which we will determine
 		 * below.
@@ -993,45 +1010,89 @@ class Cart implements \JsonSerializable {
 			$is_plan_change = true;
 		}
 
+	/*
+	 * If there is no plan change, but the product count is > 1
+	 * We know that there is another product in this cart other than the
+	 * plan, so this is again an addon cart.
+	 */
+	if (count($this->products) > 1 && false === $is_plan_change) {
 		/*
-		 * If there is no plan change, but the product count is > 1
-		 * We know that there is another product in this cart other than the
-		 * plan, so this is again an addon cart.
+		 * Set the type to addon.
 		 */
-		if (count($this->products) > 1 && false === $is_plan_change) {
-			/*
-			 * Set the type to addon.
-			 */
-			$this->cart_type = 'addon';
+		$this->cart_type = 'addon';
 
-			/*
-			 * Sets the durations to avoid problems
-			 * with addon purchases.
-			 */
-			$plan_product = $membership->get_plan();
+		/*
+		 * Sets the durations to avoid problems
+		 * with addon purchases.
+		 */
+		$plan_product = $membership->get_plan();
 
-			if ($plan_product && ! $membership->is_free()) {
-				$this->duration      = $plan_product->get_duration();
-				$this->duration_unit = $plan_product->get_duration_unit();
-			}
-
-			/*
-			 * Checks the membership to see if we need to add back the
-			 * setup fee.
-			 *
-			 * If the membership was already successfully charged once,
-			 * it probably means that the setup fee was already paid, so we can skip it.
-			 */
-			add_filter('wu_apply_signup_fee', fn() => $membership->get_times_billed() <= 0);
-
-			/*
-			 * Adds the credit line, after
-			 * calculating pro-rate.
-			 */
-			$this->calculate_prorate_credits();
-
-			return true;
+		if ($plan_product && ! $membership->is_free()) {
+			$this->duration      = $plan_product->get_duration();
+			$this->duration_unit = $plan_product->get_duration_unit();
 		}
+
+		/*
+		 * Apply existing discount code from membership to the cart.
+		 * This ensures that discount codes with 'apply_to_renewals' setting
+		 * are properly applied to addon purchases.
+		 *
+		 * @since 2.0.12
+		 */
+		$membership_discount_code = $membership->get_discount_code();
+
+		if ($membership_discount_code && $membership_discount_code->should_apply_to_renewals()) {
+			$this->add_discount_code($membership_discount_code);
+		}
+
+		/*
+		 * Remove the existing plan from the cart to prevent charging
+		 * for the next billing period in advance.
+		 *
+		 * For addon purchases, we only want to charge for the new addon
+		 * products, not the existing plan subscription.
+		 *
+		 * @since 2.0.12
+		 */
+		foreach ($this->products as $key => $product) {
+			if (wu_is_plan_type($product->get_type()) && $product->get_id() === $membership->get_plan_id()) {
+				unset($this->products[$key]);
+
+				// Also remove the plan's line item
+				foreach ($this->line_items as $line_key => $line_item) {
+					if ($line_item->get_product_id() === $product->get_id() && $line_item->get_type() === 'product') {
+						unset($this->line_items[$line_key]);
+					}
+				}
+
+				// Reset the plan_id since we're not changing plans
+				$this->plan_id = 0;
+				break;
+			}
+		}
+
+		/*
+		 * Checks the membership to see if we need to add back the
+		 * setup fee for addon products.
+		 *
+		 * If the membership was already successfully charged once,
+		 * it probably means that the setup fee was already paid, so we can skip it.
+		 */
+		add_filter('wu_apply_signup_fee', fn() => $membership->get_times_billed() <= 0);
+
+		/*
+		 * Do NOT calculate pro-rata credits for addon-only purchases.
+		 * Pro-rata only makes sense when changing plans.
+		 *
+		 * Previously, this was incorrectly charging customers for the next
+		 * billing period in advance when adding addons.
+		 *
+		 * @since 2.0.12
+		 */
+		// Removed: $this->calculate_prorate_credits();
+
+		return true;
+	}
 
 		/*
 		 * We'll probably never enter in this if, but we
