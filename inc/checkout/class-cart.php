@@ -928,11 +928,20 @@ class Cart implements \JsonSerializable {
 		 * This ensures that discount codes with 'apply_to_renewals' setting
 		 * are properly applied to addon purchases.
 		 *
+		 * Note: get_discount_code() can return a Discount_Code object, string, or false.
+		 * We need to ensure it's an object with the should_apply_to_renewals() method
+		 * before attempting to call it.
+		 *
 		 * @since 2.0.12
 		 */
 		$membership_discount_code = $membership->get_discount_code();
 
-		if ($membership_discount_code && $membership_discount_code->should_apply_to_renewals()) {
+		if (
+			$membership_discount_code
+			&& is_object($membership_discount_code)
+			&& method_exists($membership_discount_code, 'should_apply_to_renewals')
+			&& $membership_discount_code->should_apply_to_renewals()
+		) {
 			$this->add_discount_code($membership_discount_code);
 			$this->reapply_discounts_to_existing_line_items();
 		}
@@ -1038,11 +1047,20 @@ class Cart implements \JsonSerializable {
 		 * This ensures that discount codes with 'apply_to_renewals' setting
 		 * are properly applied to addon purchases.
 		 *
+		 * Note: get_discount_code() can return a Discount_Code object, string, or false.
+		 * We need to ensure it's an object with the should_apply_to_renewals() method
+		 * before attempting to call it.
+		 *
 		 * @since 2.0.12
 		 */
 		$membership_discount_code = $membership->get_discount_code();
 
-		if ($membership_discount_code && $membership_discount_code->should_apply_to_renewals()) {
+		if (
+			$membership_discount_code
+			&& is_object($membership_discount_code)
+			&& method_exists($membership_discount_code, 'should_apply_to_renewals')
+			&& $membership_discount_code->should_apply_to_renewals()
+		) {
 			$this->add_discount_code($membership_discount_code);
 			$this->reapply_discounts_to_existing_line_items();
 		}

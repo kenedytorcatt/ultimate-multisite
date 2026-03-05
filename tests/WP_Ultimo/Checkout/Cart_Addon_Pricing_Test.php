@@ -72,63 +72,99 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 	public static function set_up_before_class() {
 		parent::set_up_before_class();
 
-		// Create a test customer
-		self::$customer = wu_create_customer([
-			'username' => 'testuser_addon_pricing',
-			'email'    => 'addon_pricing@example.com',
-			'password' => 'password123',
-		]);
+		// Create a test customer.
+		self::$customer = wu_create_customer(
+			array(
+				'username' => 'testuser_addon_pricing',
+				'email'    => 'addon_pricing@example.com',
+				'password' => 'password123',
+			)
+		);
 
-		// Create a plan product (€90/month)
-		self::$plan = wu_create_product([
-			'name'          => 'Test Plan',
-			'slug'          => 'test-plan-addon-pricing',
-			'amount'        => 90.00,
-			'duration'      => 1,
-			'duration_unit' => 'month',
-			'type'          => 'plan',
-			'recurring'     => true,
-			'setup_fee'     => 0,
-		]);
+		if ( is_wp_error( self::$customer ) ) {
+			self::fail( 'Failed to create test customer' );
+		}
 
-		// Create an addon product (€5)
-		self::$addon = wu_create_product([
-			'name'          => 'Test Addon',
-			'slug'          => 'test-addon-service',
-			'amount'        => 5.00,
-			'duration'      => 1,
-			'duration_unit' => 'month',
-			'type'          => 'service',
-			'recurring'     => true,
-			'setup_fee'     => 0,
-		]);
+		// Create a plan product (€90/month).
+		self::$plan = wu_create_product(
+			array(
+				'name'          => 'Test Plan',
+				'slug'          => 'test-plan-addon-pricing',
+				'amount'        => 90.00,
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'pricing_type'  => 'paid',
+				'currency'      => 'EUR',
+				'recurring'     => true,
+				'setup_fee'     => 0,
+				'active'        => true,
+			)
+		);
 
-		// Create a discount code (10% off, applies to renewals)
-		self::$discount_code = wu_create_discount_code([
-			'name'                => 'Test Discount',
-			'code'                => 'TEST10',
-			'value'               => 10,
-			'type'                => 'percentage',
-			'uses'                => 0,
-			'max_uses'            => 100,
-			'apply_to_renewals'   => true,
-		]);
+		if ( is_wp_error( self::$plan ) ) {
+			self::fail( 'Failed to create test plan' );
+		}
 
-		// Create an active membership for the customer
-		self::$membership = wu_create_membership([
-			'customer_id'     => self::$customer->get_id(),
-			'plan_id'         => self::$plan->get_id(),
-			'amount'          => 90.00,
-			'currency'        => 'EUR',
-			'duration'        => 1,
-			'duration_unit'   => 'month',
-			'status'          => Membership_Status::ACTIVE,
-			'times_billed'    => 1,
-			'discount_code'   => self::$discount_code->get_code(),
-			'date_created'    => wu_date()->modify('-15 days')->format('Y-m-d H:i:s'), // 15 days ago
-			'date_renewed'    => wu_date()->modify('-15 days')->format('Y-m-d H:i:s'),
-			'date_expiration' => wu_date()->modify('+15 days')->format('Y-m-d H:i:s'), // 15 days from now
-		]);
+		// Create an addon product (€5).
+		self::$addon = wu_create_product(
+			array(
+				'name'          => 'Test Addon',
+				'slug'          => 'test-addon-service',
+				'amount'        => 5.00,
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'service',
+				'pricing_type'  => 'paid',
+				'currency'      => 'EUR',
+				'recurring'     => true,
+				'setup_fee'     => 0,
+				'active'        => true,
+			)
+		);
+
+		if ( is_wp_error( self::$addon ) ) {
+			self::fail( 'Failed to create test addon' );
+		}
+
+		// Create a discount code (10% off, applies to renewals).
+		self::$discount_code = wu_create_discount_code(
+			array(
+				'name'                => 'Test Discount',
+				'code'                => 'TEST10',
+				'value'               => 10,
+				'type'                => 'percentage',
+				'uses'                => 0,
+				'max_uses'            => 100,
+				'apply_to_renewals'   => true,
+			)
+		);
+
+		if ( is_wp_error( self::$discount_code ) ) {
+			self::fail( 'Failed to create test discount code' );
+		}
+
+		// Create an active membership for the customer.
+		self::$membership = wu_create_membership(
+			array(
+				'customer_id'     => self::$customer->get_id(),
+				'plan_id'         => self::$plan->get_id(),
+				'amount'          => 90.00,
+				'currency'        => 'EUR',
+				'duration'        => 1,
+				'duration_unit'   => 'month',
+				'status'          => Membership_Status::ACTIVE,
+				'times_billed'    => 1,
+				'discount_code'   => self::$discount_code->get_code(),
+				'date_created'    => wu_date()->modify( '-15 days' )->format( 'Y-m-d H:i:s' ),
+				'date_renewed'    => wu_date()->modify( '-15 days' )->format( 'Y-m-d H:i:s' ),
+				'date_expiration' => wu_date()->modify( '+15 days' )->format( 'Y-m-d H:i:s' ),
+			)
+		);
+
+		if ( is_wp_error( self::$membership ) ) {
+			self::fail( 'Failed to create test membership' );
+		}
 	}
 
 	/**
@@ -140,39 +176,47 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 	 * Expected: Should only charge €5 for the addon.
 	 */
 	public function test_addon_only_charges_for_addon_product() {
-		$cart = new Cart([
-			'customer_id'   => self::$customer->get_id(),
-			'membership_id' => self::$membership->get_id(),
-			'products'      => [self::$addon->get_id()],
-		]);
+		$cart = new Cart(
+			array(
+				'customer_id'   => self::$customer->get_id(),
+				'membership_id' => self::$membership->get_id(),
+				'products'      => array( self::$addon->get_id() ),
+			)
+		);
 
-		// The cart should be type 'addon'
-		$this->assertEquals('addon', $cart->get_cart_type(), 'Cart type should be "addon"');
+		// The cart should be type 'addon'.
+		$this->assertEquals( 'addon', $cart->get_cart_type(), 'Cart type should be "addon"' );
 
-		// The cart should NOT include the existing plan
-		$line_items = $cart->get_line_items();
-		$product_line_items = array_filter($line_items, function($item) {
-			return $item->get_type() === 'product';
-		});
+		// The cart should NOT include the existing plan.
+		$line_items         = $cart->get_line_items();
+		$product_line_items = array_filter(
+			$line_items,
+			function ( $item ) {
+				return $item->get_type() === 'product';
+			}
+		);
 
-		// Should only have 1 product line item (the addon)
-		$this->assertCount(1, $product_line_items, 'Should only have 1 product line item (the addon)');
+		// Should only have 1 product line item (the addon).
+		$this->assertCount( 1, $product_line_items, 'Should only have 1 product line item (the addon)' );
 
-		// Verify it's the addon, not the plan
-		$addon_line_item = reset($product_line_items);
-		$this->assertEquals(self::$addon->get_id(), $addon_line_item->get_product_id(), 'Product should be the addon');
+		// Verify it's the addon, not the plan.
+		$addon_line_item = reset( $product_line_items );
+		$this->assertEquals( self::$addon->get_id(), $addon_line_item->get_product_id(), 'Product should be the addon' );
 
-		// The subtotal should be €5.00 (addon price only)
-		$this->assertEquals(5.00, $cart->get_subtotal(), 'Subtotal should be €5.00 (addon price only)');
+		// The subtotal should be €5.00 (addon price only).
+		$this->assertEquals( 5.00, $cart->get_subtotal(), 'Subtotal should be €5.00 (addon price only)' );
 
-		// There should be NO pro-rata credit line items
-		$credit_line_items = array_filter($line_items, function($item) {
-			return $item->get_type() === 'credit';
-		});
-		$this->assertCount(0, $credit_line_items, 'Should have NO pro-rata credit for addon-only purchases');
+		// There should be NO pro-rata credit line items.
+		$credit_line_items = array_filter(
+			$line_items,
+			function ( $item ) {
+				return $item->get_type() === 'credit';
+			}
+		);
+		$this->assertCount( 0, $credit_line_items, 'Should have NO pro-rata credit for addon-only purchases' );
 
-		// Total should be €5.00 (no taxes in this test)
-		$this->assertEquals(5.00, $cart->get_total(), 'Total should be €5.00');
+		// Total should be €5.00 (no taxes in this test).
+		$this->assertEquals( 5.00, $cart->get_total(), 'Total should be €5.00' );
 	}
 
 	/**
@@ -184,30 +228,32 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 	 * Expected: The membership's discount code (10% off) should be applied to the addon.
 	 */
 	public function test_addon_applies_existing_discount_code() {
-		$cart = new Cart([
-			'customer_id'   => self::$customer->get_id(),
-			'membership_id' => self::$membership->get_id(),
-			'products'      => [self::$addon->get_id()],
-		]);
+		$cart = new Cart(
+			array(
+				'customer_id'   => self::$customer->get_id(),
+				'membership_id' => self::$membership->get_id(),
+				'products'      => array( self::$addon->get_id() ),
+			)
+		);
 
-		// The cart should have the discount code from the membership
+		// The cart should have the discount code from the membership.
 		$discount_code = $cart->get_discount_code();
-		$this->assertNotNull($discount_code, 'Discount code should be applied');
-		$this->assertEquals('TEST10', $discount_code->get_code(), 'Should be the membership discount code');
+		$this->assertNotNull( $discount_code, 'Discount code should be applied' );
+		$this->assertEquals( 'TEST10', $discount_code->get_code(), 'Should be the membership discount code' );
 
-		// The addon should have a discount applied (10% off €5 = €0.50)
-		$line_items = $cart->get_line_items();
+		// The addon should have a discount applied (10% off €5 = €0.50).
+		$line_items      = $cart->get_line_items();
 		$addon_line_item = null;
-		foreach ($line_items as $item) {
-			if ($item->get_type() === 'product' && $item->get_product_id() === self::$addon->get_id()) {
+		foreach ( $line_items as $item ) {
+			if ( $item->get_type() === 'product' && $item->get_product_id() === self::$addon->get_id() ) {
 				$addon_line_item = $item;
 				break;
 			}
 		}
 
-		$this->assertNotNull($addon_line_item, 'Addon line item should exist');
-		$this->assertEquals(0.50, $addon_line_item->get_discount_total(), 'Discount should be €0.50 (10% of €5)');
-		$this->assertEquals(4.50, $addon_line_item->get_total(), 'Addon total should be €4.50 after discount');
+		$this->assertNotNull( $addon_line_item, 'Addon line item should exist' );
+		$this->assertEquals( 0.50, $addon_line_item->get_discount_total(), 'Discount should be €0.50 (10% of €5)' );
+		$this->assertEquals( 4.50, $addon_line_item->get_total(), 'Addon total should be €4.50 after discount' );
 	}
 
 	/**
@@ -217,8 +263,8 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 	 * if they need the old behavior for specific use cases.
 	 */
 	public function test_addon_filter_can_include_existing_plan() {
-		// Add filter to force inclusion of existing plan
-		add_filter('wu_cart_addon_include_existing_plan', '__return_true');
+		// Add filter to force inclusion of existing plan.
+		add_filter( 'wu_cart_addon_include_existing_plan', '__return_true' );
 
 		try {
 			$cart = new Cart(
@@ -229,8 +275,8 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 				)
 			);
 
-			// Should have 2 product line items (plan + addon)
-			$line_items = $cart->get_line_items();
+			// Should have 2 product line items (plan + addon).
+			$line_items         = $cart->get_line_items();
 			$product_line_items = array_filter(
 				$line_items,
 				function ( $item ) {
@@ -238,19 +284,19 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 				}
 			);
 
-			$this->assertCount(2, $product_line_items, 'Should have 2 product line items when filter returns true');
+			$this->assertCount( 2, $product_line_items, 'Should have 2 product line items when filter returns true' );
 
-			// Should have a pro-rata credit line item
+			// Should have a pro-rata credit line item.
 			$credit_line_items = array_filter(
 				$line_items,
 				function ( $item ) {
 					return $item->get_type() === 'credit';
 				}
 			);
-			$this->assertGreaterThan(0, count($credit_line_items), 'Should have pro-rata credit when plan is included');
+			$this->assertGreaterThan( 0, count( $credit_line_items ), 'Should have pro-rata credit when plan is included' );
 		} finally {
-			// Remove filter - always cleanup even if assertions fail
-			remove_filter('wu_cart_addon_include_existing_plan', '__return_true');
+			// Remove filter - always cleanup even if assertions fail.
+			remove_filter( 'wu_cart_addon_include_existing_plan', '__return_true' );
 		}
 	}
 
@@ -261,36 +307,46 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 	 * The fix should only affect addon-only purchases.
 	 */
 	public function test_plan_upgrade_still_uses_prorate() {
-		// Create a higher-tier plan
-		$upgraded_plan = wu_create_product([
-			'name'          => 'Premium Plan',
-			'slug'          => 'premium-plan-addon-test',
-			'amount'        => 150.00,
-			'duration'      => 1,
-			'duration_unit' => 'month',
-			'type'          => 'plan',
-			'recurring'     => true,
-			'setup_fee'     => 0,
-		]);
+		// Create a higher-tier plan.
+		$upgraded_plan = wu_create_product(
+			array(
+				'name'          => 'Premium Plan',
+				'slug'          => 'premium-plan-addon-test',
+				'amount'        => 150.00,
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'pricing_type'  => 'paid',
+				'currency'      => 'EUR',
+				'recurring'     => true,
+				'setup_fee'     => 0,
+				'active'        => true,
+			)
+		);
 
-		$cart = new Cart([
-			'customer_id'   => self::$customer->get_id(),
-			'membership_id' => self::$membership->get_id(),
-			'products'      => [$upgraded_plan->get_id()],
-		]);
+		$cart = new Cart(
+			array(
+				'customer_id'   => self::$customer->get_id(),
+				'membership_id' => self::$membership->get_id(),
+				'products'      => array( $upgraded_plan->get_id() ),
+			)
+		);
 
-		// Cart type should be 'upgrade' (or 'downgrade')
-		$this->assertContains($cart->get_cart_type(), ['upgrade', 'downgrade'], 'Cart type should be upgrade or downgrade');
+		// Cart type should be 'upgrade' (or 'downgrade').
+		$this->assertContains( $cart->get_cart_type(), array( 'upgrade', 'downgrade' ), 'Cart type should be upgrade or downgrade' );
 
-		// Should have a pro-rata credit for plan changes
-		$line_items = $cart->get_line_items();
-		$credit_line_items = array_filter($line_items, function($item) {
-			return $item->get_type() === 'credit';
-		});
+		// Should have a pro-rata credit for plan changes.
+		$line_items        = $cart->get_line_items();
+		$credit_line_items = array_filter(
+			$line_items,
+			function ( $item ) {
+				return $item->get_type() === 'credit';
+			}
+		);
 
-		$this->assertGreaterThan(0, count($credit_line_items), 'Plan upgrades should have pro-rata credit');
+		$this->assertGreaterThan( 0, count( $credit_line_items ), 'Plan upgrades should have pro-rata credit' );
 
-		// Clean up
+		// Clean up.
 		$upgraded_plan->delete();
 	}
 
@@ -298,41 +354,57 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 	 * Test that setup fees are not re-applied for addon purchases on existing memberships.
 	 */
 	public function test_addon_does_not_reapply_setup_fees() {
-		// Create an addon with a setup fee
-		$addon_with_fee = wu_create_product([
-			'name'          => 'Addon with Fee',
-			'slug'          => 'addon-with-setup-fee',
-			'amount'        => 10.00,
-			'duration'      => 1,
-			'duration_unit' => 'month',
-			'type'          => 'service',
-			'recurring'     => true,
-			'setup_fee'     => 20.00, // €20 setup fee
-		]);
+		// Create an addon with a setup fee.
+		$addon_with_fee = wu_create_product(
+			array(
+				'name'          => 'Addon with Fee',
+				'slug'          => 'addon-with-setup-fee',
+				'amount'        => 10.00,
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'service',
+				'pricing_type'  => 'paid',
+				'currency'      => 'EUR',
+				'recurring'     => true,
+				'setup_fee'     => 20.00,
+				'active'        => true,
+			)
+		);
 
-		$cart = new Cart([
-			'customer_id'   => self::$customer->get_id(),
-			'membership_id' => self::$membership->get_id(),
-			'products'      => [$addon_with_fee->get_id()],
-		]);
+		$cart = new Cart(
+			array(
+				'customer_id'   => self::$customer->get_id(),
+				'membership_id' => self::$membership->get_id(),
+				'products'      => array( $addon_with_fee->get_id() ),
+			)
+		);
 
-		// Get all line items
+		// Get all line items.
 		$line_items = $cart->get_line_items();
 
-		// Should have setup fee line item for the NEW addon (first time adding it)
-		$fee_line_items = array_filter($line_items, function($item) use ($addon_with_fee) {
-			return $item->get_type() === 'fee' && $item->get_product_id() === $addon_with_fee->get_id();
-		});
+		// Should have setup fee line item for the NEW addon (first time adding it).
+		$fee_line_items = array_filter(
+			$line_items,
+			function ( $item ) use ( $addon_with_fee ) {
+				return $item->get_type() === 'fee' && $item->get_product_id() === $addon_with_fee->get_id();
+			}
+		);
 
-		$this->assertCount(1, $fee_line_items, 'Should have 1 setup fee for the new addon');
+		$this->assertCount( 1, $fee_line_items, 'Should have 1 setup fee for the new addon' );
 
-		$fee_line_item = reset($fee_line_items);
-		$this->assertEquals(20.00, $fee_line_item->get_unit_price(), 'Setup fee should be €20');
+		$fee_line_item = reset( $fee_line_items );
+		$this->assertEquals( 20.00, $fee_line_item->get_unit_price(), 'Setup fee should be €20' );
 
-		// Clean up
+		// Clean up.
 		$addon_with_fee->delete();
 	}
 
+	/**
+	 * Tear down test fixtures after all tests are complete.
+	 *
+	 * @since 2.0.12
+	 * @return void
+	 */
 	public static function tear_down_after_class() {
 		self::$membership->delete();
 		self::$addon->delete();
