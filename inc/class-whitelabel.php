@@ -88,9 +88,9 @@ class Whitelabel {
 			add_action('network_admin_menu', [$this, 'remove_sites_admin_menu']);
 		}
 
-		if (wu_get_setting('rename_site_plural') ||
-			wu_get_setting('rename_site_singular') ||
-			wu_get_setting('rename_wordpress')
+		if (wu_get_setting('rename_site_plural', '') ||
+			wu_get_setting('rename_site_singular', '') ||
+			wu_get_setting('rename_wordpress', '')
 		) {
 			$this->allowed_domains = apply_filters(
 				'wu_replace_text_allowed_domains',
@@ -102,21 +102,21 @@ class Whitelabel {
 			);
 
 			$search_and_replace = [];
-			$site_plural        = wu_get_setting('rename_site_plural');
+			$site_plural        = wu_get_setting('rename_site_plural', '');
 
 			if ($site_plural) {
 				$search_and_replace['sites'] = strtolower((string) $site_plural);
 				$search_and_replace['Sites'] = ucfirst((string) $site_plural);
 			}
 
-			$site_singular = wu_get_setting('rename_site_singular');
+			$site_singular = wu_get_setting('rename_site_singular', '');
 
 			if ($site_singular) {
 				$search_and_replace['site'] = strtolower((string) $site_singular);
 				$search_and_replace['Site'] = ucfirst((string) $site_singular);
 			}
 
-			$wordpress = wu_get_setting('rename_wordpress');
+			$wordpress = wu_get_setting('rename_wordpress', '');
 
 			if ($wordpress) {
 				$search_and_replace['wordpress'] = strtolower((string) $wordpress);

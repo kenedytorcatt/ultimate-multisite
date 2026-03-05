@@ -581,7 +581,7 @@ class Domain_Manager extends Base_Manager {
 
 		global $current_site;
 
-		$instructions = wu_get_setting('domain_mapping_instructions');
+		$instructions = wu_get_setting('domain_mapping_instructions', '');
 
 		if ( ! $instructions) {
 			$instructions = $this->default_domain_mapping_instructions();

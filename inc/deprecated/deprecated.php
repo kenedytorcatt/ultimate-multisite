@@ -271,8 +271,8 @@ class WU_Mail {
 		_deprecated_function(__METHOD__, '2.0.0', 'wu_send_mail()');
 
 		$from = [
-			'name'  => wu_get_setting('from_name'),
-			'email' => wu_get_setting('from_email'),
+			'name'  => wu_get_setting('from_name', ''),
+			'email' => wu_get_setting('from_email', ''),
 		];
 
 		/*

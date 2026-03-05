@@ -173,7 +173,7 @@ function wu_get_network_logo($size = 'full') {
  */
 function wu_get_network_logo_attachement_id() {
 
-	$settings_logo = wu_get_setting('company_logo');
+	$settings_logo = wu_get_setting('company_logo', '');
 
 	if ($settings_logo) {
 		return $settings_logo;

@@ -46,7 +46,7 @@ class Dashboard_Taxes_Tab {
 	 */
 	protected function is_enabled() {
 
-		return wu_get_setting('enable_taxes');
+		return wu_get_setting('enable_taxes', false);
 	}
 
 	/**

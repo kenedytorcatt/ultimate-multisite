@@ -33,8 +33,8 @@ class Sender {
 
 		$default_args = [
 			'from'        => [
-				'name'  => wu_get_setting('from_name'),
-				'email' => wu_get_setting('from_email'),
+				'name'  => wu_get_setting('from_name', ''),
+				'email' => wu_get_setting('from_email', ''),
 			],
 			'content'     => '',
 			'subject'     => '',
@@ -63,8 +63,8 @@ class Sender {
 
 		if ( ! $from) {
 			$from = [
-				'email' => wu_get_setting('from_email'),
-				'name'  => wu_get_setting('from_name'),
+				'email' => wu_get_setting('from_email', ''),
+				'name'  => wu_get_setting('from_name', ''),
 			];
 		}
 

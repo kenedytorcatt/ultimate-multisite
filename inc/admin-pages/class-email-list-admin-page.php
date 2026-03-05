@@ -242,13 +242,13 @@ class Email_List_Admin_Page extends List_Admin_Page {
 		}
 
 		$from = [
-			'name'  => wu_get_setting('from_name'),
-			'email' => wu_get_setting('from_email'),
+			'name'  => wu_get_setting('from_name', ''),
+			'email' => wu_get_setting('from_email', ''),
 		];
 
 		$to = [
 			[
-				'name'  => wu_get_setting('from_name'),
+				'name'  => wu_get_setting('from_name', ''),
 				'email' => $send_to,
 			],
 		];

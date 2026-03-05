@@ -328,7 +328,7 @@ class Signup_Field_Template_Selection extends Base_Signup_Field {
 
 		$customer_sites = [];
 
-		if (wu_get_setting('allow_own_site_as_template')) {
+		if (wu_get_setting('allow_own_site_as_template', false)) {
 			$customer = wu_get_current_customer();
 
 			if ($customer) {
