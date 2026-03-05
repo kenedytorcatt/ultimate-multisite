@@ -1,4 +1,11 @@
 <?php
+/**
+ * Tests for Cart addon pricing functionality.
+ *
+ * @package WP_Ultimo
+ * @subpackage Tests
+ * @since 2.0.12
+ */
 
 namespace WP_Ultimo\Checkout;
 
@@ -21,12 +28,47 @@ use WP_UnitTestCase;
  */
 class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 
+	/**
+	 * Test customer.
+	 *
+	 * @var Customer
+	 */
 	private static Customer $customer;
+
+	/**
+	 * Test plan product.
+	 *
+	 * @var Product
+	 */
 	private static Product $plan;
+
+	/**
+	 * Test addon product.
+	 *
+	 * @var Product
+	 */
 	private static Product $addon;
+
+	/**
+	 * Test membership.
+	 *
+	 * @var Membership
+	 */
 	private static Membership $membership;
+
+	/**
+	 * Test discount code.
+	 *
+	 * @var Discount_Code
+	 */
 	private static Discount_Code $discount_code;
 
+	/**
+	 * Set up test fixtures before running tests.
+	 *
+	 * @since 2.0.12
+	 * @return void
+	 */
 	public static function set_up_before_class() {
 		parent::set_up_before_class();
 
@@ -178,28 +220,38 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 		// Add filter to force inclusion of existing plan
 		add_filter('wu_cart_addon_include_existing_plan', '__return_true');
 
-		$cart = new Cart([
-			'customer_id'   => self::$customer->get_id(),
-			'membership_id' => self::$membership->get_id(),
-			'products'      => [self::$addon->get_id()],
-		]);
+		try {
+			$cart = new Cart(
+				array(
+					'customer_id'   => self::$customer->get_id(),
+					'membership_id' => self::$membership->get_id(),
+					'products'      => array( self::$addon->get_id() ),
+				)
+			);
 
-		// Should have 2 product line items (plan + addon)
-		$line_items = $cart->get_line_items();
-		$product_line_items = array_filter($line_items, function($item) {
-			return $item->get_type() === 'product';
-		});
+			// Should have 2 product line items (plan + addon)
+			$line_items = $cart->get_line_items();
+			$product_line_items = array_filter(
+				$line_items,
+				function ( $item ) {
+					return $item->get_type() === 'product';
+				}
+			);
 
-		$this->assertCount(2, $product_line_items, 'Should have 2 product line items when filter returns true');
+			$this->assertCount(2, $product_line_items, 'Should have 2 product line items when filter returns true');
 
-		// Should have a pro-rata credit line item
-		$credit_line_items = array_filter($line_items, function($item) {
-			return $item->get_type() === 'credit';
-		});
-		$this->assertGreaterThan(0, count($credit_line_items), 'Should have pro-rata credit when plan is included');
-
-		// Remove filter
-		remove_filter('wu_cart_addon_include_existing_plan', '__return_true');
+			// Should have a pro-rata credit line item
+			$credit_line_items = array_filter(
+				$line_items,
+				function ( $item ) {
+					return $item->get_type() === 'credit';
+				}
+			);
+			$this->assertGreaterThan(0, count($credit_line_items), 'Should have pro-rata credit when plan is included');
+		} finally {
+			// Remove filter - always cleanup even if assertions fail
+			remove_filter('wu_cart_addon_include_existing_plan', '__return_true');
+		}
 	}
 
 	/**

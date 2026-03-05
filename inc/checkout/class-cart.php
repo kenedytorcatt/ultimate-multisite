@@ -934,6 +934,7 @@ class Cart implements \JsonSerializable {
 
 		if ($membership_discount_code && $membership_discount_code->should_apply_to_renewals()) {
 			$this->add_discount_code($membership_discount_code);
+			$this->reapply_discounts_to_existing_line_items();
 		}
 
 		/*
@@ -1043,6 +1044,7 @@ class Cart implements \JsonSerializable {
 
 		if ($membership_discount_code && $membership_discount_code->should_apply_to_renewals()) {
 			$this->add_discount_code($membership_discount_code);
+			$this->reapply_discounts_to_existing_line_items();
 		}
 
 		/*
@@ -1058,9 +1060,12 @@ class Cart implements \JsonSerializable {
 			if (wu_is_plan_type($product->get_type()) && $product->get_id() === $membership->get_plan_id()) {
 				unset($this->products[$key]);
 
-				// Also remove the plan's line item
+				// Also remove line items tied to the old plan (product + fee)
 				foreach ($this->line_items as $line_key => $line_item) {
-					if ($line_item->get_product_id() === $product->get_id() && $line_item->get_type() === 'product') {
+					if (
+						$line_item->get_product_id() === $product->get_id()
+						&& in_array($line_item->get_type(), ['product', 'fee'], true)
+					) {
 						unset($this->line_items[$line_key]);
 					}
 				}
@@ -1072,11 +1077,15 @@ class Cart implements \JsonSerializable {
 		}
 
 		/*
-		 * Checks the membership to see if we need to add back the
-		 * setup fee for addon products.
+		 * For addon purchases, only apply setup fees to NEW addon products.
+		 * Skip setup fees if the membership has already been billed at least once,
+		 * as the plan's setup fee was already paid.
 		 *
-		 * If the membership was already successfully charged once,
-		 * it probably means that the setup fee was already paid, so we can skip it.
+		 * Note: Products were already added to the cart above (line 840), so setup
+		 * fees for addons have already been processed. This filter mainly affects
+		 * any future product additions in this request.
+		 *
+		 * @since 2.0.12
 		 */
 		add_filter('wu_apply_signup_fee', fn() => $membership->get_times_billed() <= 0);
 
@@ -2709,6 +2718,33 @@ class Cart implements \JsonSerializable {
 		$line_item->recalculate_totals();
 
 		return $line_item;
+	}
+
+	/**
+	 * Reapply discounts to all existing line items in the cart.
+	 *
+	 * This helper method is used when a discount code is set after products
+	 * have already been added to the cart (e.g., when applying membership
+	 * discount codes to addon purchases). It iterates through all line items,
+	 * reapplies discounts, and recalculates taxes if applicable.
+	 *
+	 * @since 2.0.12
+	 * @return void
+	 */
+	private function reapply_discounts_to_existing_line_items() {
+		foreach ($this->line_items as $id => $line_item) {
+			if (! $line_item->is_discountable()) {
+				continue;
+			}
+
+			$line_item = $this->apply_discounts_to_item($line_item);
+
+			if ($line_item->is_taxable()) {
+				$line_item = $this->apply_taxes_to_item($line_item);
+			}
+
+			$this->line_items[$id] = $line_item;
+		}
 	}
 
 	/**
