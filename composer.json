@@ -48,14 +48,12 @@
         "mexitek/phpcolors": "^1.0.4",
         "phpdocumentor/reflection-docblock": "^5.3.0",
         "stripe/stripe-php": "^17.4.0",
-        "hashids/hashids": "^4.1.0",
         "rakit/validation": "dev-master#ff003a35cdf5030a5f2482299f4c93f344a35b29",
         "ifsnop/mysqldump-php": "^2.12",
         "mpdf/mpdf": "^8.2.0",
         "remotelyliving/php-dns": "^4.3.0",
         "jasny/sso": "^0.4.2",
         "nyholm/psr7": "^1.8.0",
-        "symfony/cache": "^5.4.29",
         "scssphp/scssphp": "^1.11.1",
         "cweagans/composer-patches": "^1.7",
         "woocommerce/action-scheduler": "^3.9.1",
@@ -165,6 +163,9 @@
             "mpdf/psr-log-aware-trait": [
                 "patches/mpdf-psr-log-aware-trait-void-return.patch",
                 "patches/mpdf-mpdf-psr-log-aware-trait-void-return.patch"
+            ],
+            "mpdf/psr-http-message-shim": [
+                "patches/mpdf-psr-http-message-shim-php8-compat.patch"
             ]
         },
         "installer-paths": {
