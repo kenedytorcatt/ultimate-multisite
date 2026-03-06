@@ -43,9 +43,14 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @param mixed  $default Default value to return if the key does not exist.
 	 * @return mixed The value of the item from the cache, or $default in case of cache miss.
 	 */
-	public function get($key, $default = null) {
-		$value = get_site_transient($this->prefix . $key);
-		return false !== $value ? $value : $default;
+	public function get($key, $default = null) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
+		$raw = get_site_transient($this->prefix . $key);
+
+		if (false === $raw || ! is_array($raw) || ! array_key_exists('v', $raw)) {
+			return $default;
+		}
+
+		return $raw['v'];
 	}
 
 	/**
@@ -58,7 +63,7 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 */
 	public function set($key, $value, $ttl = null) {
 		$expiration = $this->convert_ttl_to_seconds($ttl);
-		return set_site_transient($this->prefix . $key, $value, $expiration);
+		return set_site_transient($this->prefix . $key, ['v' => $value], $expiration);
 	}
 
 	/**
@@ -79,14 +84,20 @@ class WordPress_Simple_Cache implements CacheInterface {
 	public function clear() {
 		global $wpdb;
 
-		// Delete all transients with our prefix.
-		$wpdb->query(
+		// Get all transient keys with our prefix to delete them properly (handles object cache).
+		$like_pattern = $wpdb->esc_like('_site_transient_' . $this->prefix) . '%';
+		$meta_keys    = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare(
-				"DELETE FROM {$wpdb->sitemeta} WHERE meta_key LIKE %s OR meta_key LIKE %s",
-				$wpdb->esc_like('_site_transient_' . $this->prefix) . '%',
-				$wpdb->esc_like('_site_transient_timeout_' . $this->prefix) . '%'
+				"SELECT meta_key FROM {$wpdb->sitemeta} WHERE meta_key LIKE %s",
+				$like_pattern
 			)
 		);
+
+		foreach ($meta_keys as $meta_key) {
+			// Strip the '_site_transient_' prefix to get the original transient name.
+			$transient_name = substr($meta_key, strlen('_site_transient_'));
+			delete_site_transient($transient_name);
+		}
 
 		return true;
 	}
@@ -98,7 +109,7 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @param mixed    $default Default value to return for keys that do not exist.
 	 * @return iterable A list of key => value pairs.
 	 */
-	public function getMultiple($keys, $default = null) {
+	public function getMultiple($keys, $default = null) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 		$values = array();
 
 		foreach ($keys as $key) {
@@ -152,7 +163,8 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @return bool
 	 */
 	public function has($key) {
-		return false !== get_site_transient($this->prefix . $key);
+		$raw = get_site_transient($this->prefix . $key);
+		return false !== $raw && is_array($raw) && array_key_exists('v', $raw);
 	}
 
 	/**

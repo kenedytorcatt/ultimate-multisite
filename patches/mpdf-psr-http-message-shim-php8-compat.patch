@@ -1,0 +1,20 @@
+--- a/src/Stream.php
++++ b/src/Stream.php
+@@ -104,6 +104,7 @@ class Stream implements \Psr\Http\Message\StreamInterface
+ 		$this->close();
+ 	}
+
++	#[\ReturnTypeWillChange]
+ 	public function __toString()
+ 	{
+ 		try {
+--- a/src/Uri.php
++++ b/src/Uri.php
+@@ -57,6 +57,7 @@ final class Uri implements \Psr\Http\Message\UriInterface
+ 		}
+ 	}
+
++	#[\ReturnTypeWillChange]
+ 	public function __toString()
+ 	{
+ 		return self::createUriString($this->scheme, $this->getAuthority(), $this->path, $this->query, $this->fragment);
