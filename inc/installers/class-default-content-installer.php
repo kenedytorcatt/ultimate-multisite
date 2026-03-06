@@ -125,7 +125,7 @@ class Default_Content_Installer extends Base_Installer {
 	 */
 	protected function done_creating_login_page() {
 
-		$page_id = wu_get_setting('default_login_page');
+		$page_id = wu_get_setting('default_login_page', 0);
 
 		if ( ! $page_id) {
 			return false;

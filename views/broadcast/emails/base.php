@@ -93,7 +93,7 @@ if ( ! defined('ABSPATH')) {
 							<tr style="">
 								<td style=" text-align: center;">
 									<p style="font-family: <?php echo esc_attr($template_settings['footer_font']); ?>; font-size: 12px; line-height: 1.6em; color: <?php echo esc_attr($template_settings['footer_color']); ?>; font-weight: normal; margin: 0 0 10px; padding: 0; text-align: <?php echo esc_attr($template_settings['footer_align']); ?>">
-										<strong><?php echo esc_html(wu_get_setting('company_name')); ?></strong><br>
+										<strong><?php echo esc_html(wu_get_setting('company_name', '')); ?></strong><br>
 										<?php
 										$company_address = wu_get_setting('company_address', '');
 										echo is_string($company_address) ? nl2br(esc_html($company_address)) : '';

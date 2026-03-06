@@ -6,7 +6,7 @@
  */
 defined('ABSPATH') || exit;
 
-$add_new_url = wu_get_setting('enable_multiple_sites') ? $element->get_new_site_url() : wu_get_registration_url();
+$add_new_url = wu_get_setting('enable_multiple_sites', false) ? $element->get_new_site_url() : wu_get_registration_url();
 
 // Redirect back to this page after create the site
 $add_new_url = add_query_arg(
@@ -16,7 +16,7 @@ $add_new_url = add_query_arg(
 	$add_new_url
 );
 
-$show_add_new = wu_get_setting('enable_multiple_sites') || wu_get_setting('enable_multiple_memberships');
+$show_add_new = wu_get_setting('enable_multiple_sites', false) || wu_get_setting('enable_multiple_memberships', false);
 
 $show_add_new = apply_filters('wp_ultimo_my_sites_show_add_new', $show_add_new);
 

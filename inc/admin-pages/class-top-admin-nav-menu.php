@@ -191,10 +191,11 @@ class Top_Admin_Nav_Menu {
 		}
 
 		/*
-		 * Add the settings sub-menus.
+		 * Add the settings sub-menus using the lightweight section names
+		 * to avoid triggering the full default_sections() field registration.
 		 */
 		if (current_user_can('wu_read_settings')) {
-			$settings_tabs = Settings::get_instance()->get_sections();
+			$settings_tabs = Settings::get_instance()->get_section_names();
 
 			$addon_tabs = [];
 

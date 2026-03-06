@@ -321,7 +321,7 @@ class Legacy_Checkout {
 
 		$this->session->set('geolocation', $location);
 
-		$allowed_countries = wu_get_setting('allowed_countries');
+		$allowed_countries = wu_get_setting('allowed_countries', []);
 
 		if (isset($location['country']) && $location['country'] && $allowed_countries) {
 			if ( ! in_array($location['country'], $allowed_countries, true)) {
@@ -754,7 +754,7 @@ class Legacy_Checkout {
 	public function form_fields($current_plan = false, $step = 'plan', $freq = false): void {
 
 		/** Select the default frequency */
-		$freq = $freq ?: wu_get_setting('default_pricing_option');
+		$freq = $freq ?: wu_get_setting('default_pricing_option', 1);
 
 		?>
 

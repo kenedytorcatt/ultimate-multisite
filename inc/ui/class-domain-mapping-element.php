@@ -221,7 +221,7 @@ class Domain_Mapping_Element extends Base_Element {
 			$maybe_limit_domain_mapping = $this->site->get_limitations()->domain_mapping->is_enabled();
 		}
 
-		if ( ! $this->site || ! wu_get_setting('enable_domain_mapping') || ! wu_get_setting('custom_domains') || ! $maybe_limit_domain_mapping) {
+		if ( ! $this->site || ! wu_get_setting('enable_domain_mapping', false) || ! wu_get_setting('custom_domains', false) || ! $maybe_limit_domain_mapping) {
 			$this->set_display(false);
 		}
 

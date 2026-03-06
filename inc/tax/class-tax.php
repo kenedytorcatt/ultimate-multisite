@@ -370,7 +370,7 @@ class Tax {
 					}
 				});
 			});',
-			wp_json_encode(wu_get_setting('enable_taxes'))
+			wp_json_encode(wu_get_setting('enable_taxes', false))
 		);
 
 		wp_add_inline_script('wu-vue', $inline_script);

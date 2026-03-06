@@ -32,7 +32,7 @@ class Maintenance_Mode {
 
 		add_action('init', [$this, 'add_settings']);
 
-		if (wu_get_setting('maintenance_mode')) {
+		if (wu_get_setting('maintenance_mode', false)) {
 			$this->hooks();
 		}
 	}

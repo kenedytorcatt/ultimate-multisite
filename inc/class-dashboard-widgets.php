@@ -157,14 +157,14 @@ class Dashboard_Widgets implements \WP_Ultimo\Interfaces\Singleton {
 		/*
 		 * Maintenance Mode Widget
 		 */
-		if (wu_get_setting('maintenance_mode')) {
+		if (wu_get_setting('maintenance_mode', false)) {
 			\WP_Ultimo\UI\Site_Maintenance_Element::get_instance()->as_metabox($screen->id, 'side');
 		}
 
 		/*
 		 * Domain Mapping Widget
 		 */
-		if (wu_get_setting('enable_domain_mapping') && wu_get_setting('custom_domains')) {
+		if (wu_get_setting('enable_domain_mapping', false) && wu_get_setting('custom_domains', false)) {
 			\WP_Ultimo\UI\Domain_Mapping_Element::get_instance()->as_metabox($screen->id, 'side');
 		}
 	}
