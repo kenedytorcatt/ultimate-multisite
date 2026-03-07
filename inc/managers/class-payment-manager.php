@@ -154,6 +154,16 @@ class Payment_Manager extends Base_Manager {
 		}
 
 		foreach ($customer->get_memberships() as $membership) {
+			/*
+			 * Skip memberships that never completed checkout. A pending
+			 * membership represents an abandoned checkout — showing a popup
+			 * for it is misleading and may point to a WC order that no
+			 * longer exists.
+			 */
+			if (in_array($membership->get_status(), ['pending', 'cancelled'], true)) {
+				continue;
+			}
+
 			$pending_payment = $membership->get_last_pending_payment();
 
 			if ($pending_payment) {
@@ -236,6 +246,10 @@ class Payment_Manager extends Base_Manager {
 		$pending_payments = [];
 
 		foreach ($customer->get_memberships() as $membership) {
+			if (in_array($membership->get_status(), ['pending', 'cancelled'], true)) {
+				continue;
+			}
+
 			$pending_payment = $membership->get_last_pending_payment();
 
 			if ($pending_payment) {
