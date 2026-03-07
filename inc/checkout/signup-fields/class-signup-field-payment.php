@@ -184,7 +184,7 @@ class Signup_Field_Payment extends Base_Signup_Field {
 		 * Checks if we need to add the
 		 * auto renew field.
 		 */
-		if ( ! wu_get_setting('force_auto_renew', 1)) {
+		if ( ! wu_get_setting('force_auto_renew', true)) {
 			$auto_renewable_gateways = Gateway_Manager::get_instance()->get_auto_renewable_gateways();
 
 			$fields['auto_renew'] = [

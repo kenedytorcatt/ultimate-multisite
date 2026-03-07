@@ -32,7 +32,7 @@ class Maintenance_Mode {
 
 		add_action('init', [$this, 'add_settings']);
 
-		if (wu_get_setting('maintenance_mode')) {
+		if (wu_get_setting('maintenance_mode', false)) {
 			$this->hooks();
 		}
 	}
@@ -136,9 +136,9 @@ class Maintenance_Mode {
 	 * Callback button admin toggle maintenance mode.
 	 *
 	 * @since 2.0.0
-	 * @return mixed
+	 * @return void
 	 */
-	public function toggle_maintenance_mode() {
+	public function toggle_maintenance_mode(): void {
 
 		if ( ! check_ajax_referer('wu_toggle_maintenance_mode', '_wpnonce', false)) {
 			wp_send_json_error(

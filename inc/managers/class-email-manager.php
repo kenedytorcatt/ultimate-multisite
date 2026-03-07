@@ -104,8 +104,8 @@ class Email_Manager extends Base_Manager {
 		);
 
 		$original_from = [
-			'name'  => wu_get_setting('from_name'),
-			'email' => wu_get_setting('from_email'),
+			'name'  => wu_get_setting('from_name', ''),
+			'email' => wu_get_setting('from_email', ''),
 		];
 
 		if (empty($all_emails)) {

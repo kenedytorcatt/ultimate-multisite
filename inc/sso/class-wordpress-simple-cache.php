@@ -10,6 +10,7 @@
 namespace WP_Ultimo\SSO;
 
 use Psr\SimpleCache\CacheInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 defined('ABSPATH') || exit;
 
@@ -19,6 +20,11 @@ defined('ABSPATH') || exit;
  * @since 2.4.13
  */
 class WordPress_Simple_Cache implements CacheInterface {
+
+	/**
+	 * Reserved characters that must not appear in cache keys (PSR-16).
+	 */
+	const RESERVED_KEY_CHARS = '{}()/\\@:';
 
 	/**
 	 * Cache key prefix.
@@ -44,6 +50,7 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @return mixed The value of the item from the cache, or $default in case of cache miss.
 	 */
 	public function get($key, $default = null) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
+		$this->validate_key($key);
 		$raw = get_site_transient($this->prefix . $key);
 
 		if (false === $raw || ! is_array($raw) || ! array_key_exists('v', $raw)) {
@@ -62,7 +69,14 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function set($key, $value, $ttl = null) {
+		$this->validate_key($key);
 		$expiration = $this->convert_ttl_to_seconds($ttl);
+
+		// Non-null TTL <= 0 means item should expire immediately (PSR-16).
+		if (null !== $ttl && $expiration <= 0) {
+			$expiration = 1;
+		}
+
 		return set_site_transient($this->prefix . $key, ['v' => $value], $expiration);
 	}
 
@@ -73,6 +87,7 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @return bool True if the item was successfully removed. False if there was an error.
 	 */
 	public function delete($key) {
+		$this->validate_key($key);
 		return delete_site_transient($this->prefix . $key);
 	}
 
@@ -84,7 +99,8 @@ class WordPress_Simple_Cache implements CacheInterface {
 	public function clear() {
 		global $wpdb;
 
-		// Get all transient keys with our prefix to delete them properly (handles object cache).
+		// Get all transient keys with our prefix and delete each via the WordPress API,
+		// which handles both DB and object cache correctly.
 		$like_pattern = $wpdb->esc_like('_site_transient_' . $this->prefix) . '%';
 		$meta_keys    = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare(
@@ -94,7 +110,6 @@ class WordPress_Simple_Cache implements CacheInterface {
 		);
 
 		foreach ($meta_keys as $meta_key) {
-			// Strip the '_site_transient_' prefix to get the original transient name.
 			$transient_name = substr($meta_key, strlen('_site_transient_'));
 			delete_site_transient($transient_name);
 		}
@@ -110,6 +125,7 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @return iterable A list of key => value pairs.
 	 */
 	public function getMultiple($keys, $default = null) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
+		$this->validate_iterable($keys);
 		$values = array();
 
 		foreach ($keys as $key) {
@@ -127,6 +143,7 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @return bool True on success and false on failure.
 	 */
 	public function setMultiple($values, $ttl = null) {
+		$this->validate_iterable($values);
 		$success = true;
 
 		foreach ($values as $key => $value) {
@@ -145,6 +162,7 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @return bool True if the items were successfully removed. False if there was an error.
 	 */
 	public function deleteMultiple($keys) {
+		$this->validate_iterable($keys);
 		$success = true;
 
 		foreach ($keys as $key) {
@@ -163,9 +181,41 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @return bool
 	 */
 	public function has($key) {
+		$this->validate_key($key);
 		$raw = get_site_transient($this->prefix . $key);
 		return false !== $raw && is_array($raw) && array_key_exists('v', $raw);
 	}
+
+	// phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing, WordPress.Security.EscapeOutput.ExceptionNotEscaped
+	/**
+	 * Validate a cache key per PSR-16 requirements.
+	 *
+	 * @param mixed $key Key to validate.
+	 * @throws \Psr\SimpleCache\InvalidArgumentException If key is invalid.
+	 */
+	protected function validate_key($key): void {
+		if (! is_string($key) || '' === $key) {
+			throw new class('Cache key must be a non-empty string') extends \RuntimeException implements InvalidArgumentException {};       }
+
+		if (strlen($key) > 64) {
+			throw new class('Cache key must not exceed 64 characters') extends \RuntimeException implements InvalidArgumentException {};        }
+
+		if (strpbrk($key, self::RESERVED_KEY_CHARS) !== false) {
+			throw new class('Cache key contains reserved characters') extends \RuntimeException implements InvalidArgumentException {};         }
+	}
+
+	/**
+	 * Validate that an argument is iterable (array or Traversable) per PSR-16.
+	 *
+	 * @param mixed $items Value to validate.
+	 * @throws \Psr\SimpleCache\InvalidArgumentException If argument is not iterable.
+	 */
+	protected function validate_iterable($items): void {
+		if (! is_array($items) && ! ($items instanceof \Traversable)) {
+			throw new class('Argument must be an array or Traversable') extends \RuntimeException implements InvalidArgumentException {};       }
+	}
+
+	// phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing, WordPress.Security.EscapeOutput.ExceptionNotEscaped
 
 	/**
 	 * Convert TTL to seconds.

@@ -204,7 +204,14 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 			_doing_it_wrong(esc_html($setting), esc_html__('Dashes are no longer supported when registering a setting. You should change it to underscores in later versions.', 'ultimate-multisite'), '2.0.0');
 		}
 
-		$setting_value = $settings[ $setting ] ?? $default_value;
+		if (isset($settings[ $setting ])) {
+			$setting_value = $settings[ $setting ];
+		} elseif (false !== $default_value) {
+			$setting_value = $default_value;
+		} else {
+			$defaults      = static::get_setting_defaults();
+			$setting_value = $defaults[ $setting ] ?? false;
+		}
 
 		return apply_filters('wu_get_setting', $setting_value, $setting, $default_value, $settings);
 	}
@@ -518,15 +525,6 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 			},
 			$priority
 		);
-
-		$settings = $this->get_all();
-
-		/*
-		 * Makes sure we install the default value if it is not set yet.
-		 */
-		if (isset($atts['default']) && null !== $atts['default'] && ! isset($settings[ $field_slug ])) {
-			$this->save_setting($field_slug, $atts['default']);
-		}
 	}
 
 	/**
@@ -1830,6 +1828,200 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 		);
 
 		do_action('wu_settings_other');
+	}
+
+	/**
+	 * Returns a flat map of setting keys to their default values.
+	 *
+	 * This is used as a lightweight fallback in get_setting() so that
+	 * default_sections() (which is expensive) does not need to run on
+	 * every page load.
+	 *
+	 * @since 2.5.0
+	 * @return array<string, mixed>
+	 */
+	public static function get_setting_defaults(): array {
+
+		return [
+			// General
+			'company_name'                       => '',
+			'company_logo'                       => '',
+			'company_email'                      => '',
+			'company_address'                    => '',
+			'company_country'                    => 'US',
+			'currency_symbol'                    => 'USD',
+			'currency_position'                  => '%s %v',
+			'decimal_separator'                  => '.',
+			'thousand_separator'                 => ',',
+			'precision'                          => '2',
+			'enable_error_reporting'             => 0,
+			'enable_beta_updates'                => 0,
+
+			// Login & Registration
+			'enable_registration'                => 1,
+			'enable_email_verification'          => 'free_only',
+			'enable_custom_login_page'           => 0,
+			'default_login_page'                 => 0,
+			'obfuscate_original_login_url'       => 0,
+			'subsite_custom_login_logo'          => 0,
+			'force_publish_sites_sync'           => 0,
+			'minimum_password_strength'          => 'medium',
+			'default_role'                       => 'administrator',
+			'add_users_to_main_site'             => 0,
+			'main_site_default_role'             => 'subscriber',
+
+			// Memberships
+			'block_frontend'                     => 0,
+			'block_frontend_grace_period'        => 0,
+			'enable_multiple_memberships'        => 0,
+			'enable_multiple_sites'              => 0,
+			'block_sites_on_downgrade'           => 'none',
+			'move_posts_on_downgrade'            => 'none',
+			'emulated_post_types'                => [],
+
+			// Sites
+			'enable_visits_limiting'             => 1,
+			'enable_screenshot_generator'        => 1,
+			'menu_items_plugin'                  => 1,
+			'add_new_users'                      => 1,
+			'allow_template_switching'           => 1,
+			'allow_own_site_as_template'         => 0,
+			'copy_media'                         => 1,
+			'stop_template_indexing'             => 0,
+
+			// Payment Gateways
+			'force_auto_renew'                   => 1,
+			'allow_trial_without_payment_method' => 0,
+			'attach_invoice_pdf'                 => 1,
+			'invoice_numbering_scheme'           => 'reference_code',
+			'next_invoice_number'                => '1',
+			'invoice_prefix'                     => '',
+
+			// Emails (registered via hooks but commonly queried)
+			'from_name'                          => '',
+			'from_email'                         => '',
+
+			// Domain Mapping (registered via hooks but commonly queried)
+			'enable_domain_mapping'              => false,
+			'custom_domains'                     => false,
+			'domain_mapping_instructions'        => '',
+
+			// SSO (registered via hooks)
+			'enable_sso'                         => 1,
+
+			// Other
+			'hide_tours'                         => 0,
+			'disable_image_zoom'                 => 0,
+			'error_logging_level'                => 'default',
+			'security_mode'                      => 0,
+			'uninstall_wipe_tables'              => 0,
+
+			// Whitelabel (registered via hooks)
+			'rename_site_plural'                 => '',
+			'rename_site_singular'               => '',
+			'rename_wordpress'                   => '',
+
+			// Maintenance mode (registered via hooks)
+			'maintenance_mode'                   => false,
+
+			// Notifications
+			'hide_notifications_subsites'        => false,
+
+			// Taxes
+			'enable_taxes'                       => false,
+
+			// Checkout-related
+			'default_pricing_option'             => 1,
+			'allowed_countries'                  => [],
+			'trial'                              => 0,
+
+			// Manual gateway
+			'manual_payment_instructions'        => '',
+
+			// Event manager
+			'saving_type'                        => [],
+
+			// Jumper
+			'jumper_custom_links'                => '',
+
+			// Limits
+			'limits_and_quotas'                  => [],
+
+			// Legacy pricing toggles
+			'enable_price_3'                     => true,
+			'enable_price_12'                    => true,
+		];
+	}
+
+	/**
+	 * Returns a lightweight list of section slugs and titles for use
+	 * in the admin bar and other places that don't need full field definitions.
+	 *
+	 * This avoids triggering default_sections() and all the expensive
+	 * field registration that comes with it.
+	 *
+	 * @since 2.5.0
+	 * @return array<string, array{title: string, icon: string}>
+	 */
+	public function get_section_names(): array {
+
+		$core_sections = [
+			'general'                => [
+				'title' => __('General', 'ultimate-multisite'),
+				'icon'  => 'dashicons-wu-cog',
+			],
+			'login-and-registration' => [
+				'title' => __('Login & Registration', 'ultimate-multisite'),
+				'icon'  => 'dashicons-wu-key',
+			],
+			'memberships'            => [
+				'title' => __('Memberships', 'ultimate-multisite'),
+				'icon'  => 'dashicons-wu-infinity',
+			],
+			'sites'                  => [
+				'title' => __('Sites', 'ultimate-multisite'),
+				'icon'  => 'dashicons-wu-browser',
+			],
+			'payment-gateways'       => [
+				'title' => __('Payments', 'ultimate-multisite'),
+				'icon'  => 'dashicons-wu-credit-card',
+			],
+			'emails'                 => [
+				'title' => __('Emails', 'ultimate-multisite'),
+				'icon'  => 'dashicons-wu-email',
+			],
+			'domain-mapping'         => [
+				'title' => __('Domain Mapping', 'ultimate-multisite'),
+				'icon'  => 'dashicons-wu-link',
+			],
+			'sso'                    => [
+				'title' => __('Single Sign-On', 'ultimate-multisite'),
+				'icon'  => 'dashicons-wu-add-user',
+			],
+			'integrations'           => [
+				'title' => __('Integrations', 'ultimate-multisite'),
+				'icon'  => 'dashicons-wu-power-plug',
+			],
+			'import-export'          => [
+				'title' => __('Import/Export', 'ultimate-multisite'),
+				'icon'  => 'dashicons-wu-download',
+				'order' => 995,
+			],
+			'other'                  => [
+				'title' => __('Other Options', 'ultimate-multisite'),
+				'icon'  => 'dashicons-wu-switch',
+				'order' => 1000,
+			],
+		];
+
+		/**
+		 * Allows addons to register their section names without triggering
+		 * the full field registration in default_sections().
+		 *
+		 * @since 2.5.0
+		 * @param array $sections Section slug => array with 'title', 'icon', and optionally 'addon' => true.
+		 */
+		return apply_filters('wu_settings_section_names', $core_sections);
 	}
 
 	/**

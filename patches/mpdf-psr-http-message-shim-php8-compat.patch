@@ -1,20 +1,137 @@
---- a/src/Stream.php
-+++ b/src/Stream.php
-@@ -104,6 +104,7 @@ class Stream implements \Psr\Http\Message\StreamInterface
- 		$this->close();
- 	}
-
-+	#[\ReturnTypeWillChange]
- 	public function __toString()
- 	{
- 		try {
---- a/src/Uri.php
-+++ b/src/Uri.php
-@@ -57,6 +57,7 @@ final class Uri implements \Psr\Http\Message\UriInterface
+--- a/vendor/mpdf/psr-http-message-shim/src/Request.php
++++ b/vendor/mpdf/psr-http-message-shim/src/Request.php
+@@ -66,7 +66,7 @@ class Request implements \Psr\Http\Message\RequestInterface
  		}
  	}
-
-+	#[\ReturnTypeWillChange]
- 	public function __toString()
+ 
+-	public function getRequestTarget()
++	public function getRequestTarget(): string
  	{
- 		return self::createUriString($this->scheme, $this->getAuthority(), $this->path, $this->query, $this->fragment);
+ 		if ($this->requestTarget !== null) {
+ 			return $this->requestTarget;
+@@ -83,7 +83,7 @@ class Request implements \Psr\Http\Message\RequestInterface
+ 		return $target;
+ 	}
+ 
+-	public function withRequestTarget($requestTarget)
++	public function withRequestTarget(string $requestTarget): \Psr\Http\Message\RequestInterface
+ 	{
+ 		if (preg_match('#\s#', $requestTarget)) {
+ 			throw new \InvalidArgumentException('Invalid request target provided; cannot contain whitespace');
+@@ -95,11 +95,11 @@ class Request implements \Psr\Http\Message\RequestInterface
+ 		return $new;
+ 	}
+ 
+-	public function getMethod()
++	public function getMethod(): string
+ 	{
+ 		return $this->method;
+ 	}
+ 
+-	public function withMethod($method)
++	public function withMethod(string $method): \Psr\Http\Message\RequestInterface
+ 	{
+ 		$new = clone $this;
+ 		$new->method = $method;
+@@ -107,11 +107,11 @@ class Request implements \Psr\Http\Message\RequestInterface
+ 		return $new;
+ 	}
+ 
+-	public function getUri()
++	public function getUri(): \Psr\Http\Message\UriInterface
+ 	{
+ 		return $this->uri;
+ 	}
+ 
+-	public function withUri(UriInterface $uri, $preserveHost = false)
++	public function withUri(\Psr\Http\Message\UriInterface $uri, bool $preserveHost = false): \Psr\Http\Message\RequestInterface
+ 	{
+ 		if ($uri === $this->uri) {
+ 			return $this;
+@@ -152,11 +152,11 @@ class Request implements \Psr\Http\Message\RequestInterface
+ 		$this->headers = [$header => [$host]] + $this->headers;
+ 	}
+ 
+-	public function getProtocolVersion()
++	public function getProtocolVersion(): string
+ 	{
+ 		return $this->protocol;
+ 	}
+ 
+-	public function withProtocolVersion($version)
++	public function withProtocolVersion(string $version): \Psr\Http\Message\MessageInterface
+ 	{
+ 		if ($this->protocol === $version) {
+ 			return $this;
+@@ -168,15 +168,15 @@ class Request implements \Psr\Http\Message\RequestInterface
+ 		return $new;
+ 	}
+ 
+-	public function getHeaders()
++	public function getHeaders(): array
+ 	{
+ 		return $this->headers;
+ 	}
+ 
+-	public function hasHeader($header)
++	public function hasHeader(string $header): bool
+ 	{
+ 		return isset($this->headerNames[strtolower($header)]);
+ 	}
+ 
+-	public function getHeader($header)
++	public function getHeader(string $header): array
+ 	{
+ 		$header = strtolower($header);
+ 
+@@ -192,11 +192,11 @@ class Request implements \Psr\Http\Message\RequestInterface
+ 		return $this->headers[$header];
+ 	}
+ 
+-	public function getHeaderLine($header)
++	public function getHeaderLine(string $header): string
+ 	{
+ 		return implode(', ', $this->getHeader($header));
+ 	}
+ 
+-	public function withHeader($header, $value)
++	public function withHeader(string $header, $value): \Psr\Http\Message\MessageInterface
+ 	{
+ 		if (!is_array($value)) {
+ 			$value = [$value];
+@@ -216,7 +216,7 @@ class Request implements \Psr\Http\Message\RequestInterface
+ 		return $new;
+ 	}
+ 
+-	public function withAddedHeader($header, $value)
++	public function withAddedHeader(string $header, $value): \Psr\Http\Message\MessageInterface
+ 	{
+ 		if (!is_array($value)) {
+ 			$value = [$value];
+@@ -237,7 +237,7 @@ class Request implements \Psr\Http\Message\RequestInterface
+ 		return $new;
+ 	}
+ 
+-	public function withoutHeader($header)
++	public function withoutHeader(string $header): \Psr\Http\Message\MessageInterface
+ 	{
+ 		$normalized = strtolower($header);
+ 
+@@ -253,7 +253,7 @@ class Request implements \Psr\Http\Message\RequestInterface
+ 		return $new;
+ 	}
+ 
+-	public function getBody()
++	public function getBody(): \Psr\Http\Message\StreamInterface
+ 	{
+ 		if (!$this->stream) {
+ 			$this->stream = Stream::create('');
+@@ -263,7 +263,7 @@ class Request implements \Psr\Http\Message\RequestInterface
+ 		return $this->stream;
+ 	}
+ 
+-	public function withBody(StreamInterface $body)
++	public function withBody(\Psr\Http\Message\StreamInterface $body): \Psr\Http\Message\MessageInterface
+ 	{
+ 		if ($body === $this->stream) {
+ 			return $this;

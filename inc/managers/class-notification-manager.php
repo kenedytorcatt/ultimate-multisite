@@ -54,7 +54,7 @@ class Notification_Manager {
 	 */
 	public function hide_notifications_subsites(): void {
 
-		if ( ! wu_get_setting('hide_notifications_subsites')) {
+		if ( ! wu_get_setting('hide_notifications_subsites', false)) {
 			return;
 		}
 
