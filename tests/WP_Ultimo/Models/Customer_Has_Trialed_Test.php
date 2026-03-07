@@ -1,4 +1,9 @@
 <?php
+/**
+ * Regression tests for Customer::has_trialed().
+ *
+ * @package WP_Ultimo
+ */
 
 namespace WP_Ultimo\Models;
 
@@ -18,6 +23,9 @@ class Customer_Has_Trialed_Test extends WP_UnitTestCase {
 	private static Customer $customer;
 	private static Product $product;
 
+	/**
+	 * Create shared fixtures used by all tests in this class.
+	 */
 	public static function set_up_before_class(): void {
 
 		parent::set_up_before_class();
@@ -232,6 +240,9 @@ class Customer_Has_Trialed_Test extends WP_UnitTestCase {
 		$membership->delete();
 	}
 
+	/**
+	 * Delete shared fixtures after all tests in this class have run.
+	 */
 	public static function tear_down_after_class(): void {
 
 		self::$customer->delete();

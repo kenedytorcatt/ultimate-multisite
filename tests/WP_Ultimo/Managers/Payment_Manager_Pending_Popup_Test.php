@@ -1,4 +1,9 @@
 <?php
+/**
+ * Regression tests for Payment_Manager pending-payment popup behaviour.
+ *
+ * @package WP_Ultimo
+ */
 
 namespace WP_Ultimo\Managers;
 
@@ -21,6 +26,9 @@ class Payment_Manager_Pending_Popup_Test extends WP_UnitTestCase {
 	private Customer $customer;
 	private \WP_User $wp_user;
 
+	/**
+	 * Set up a fresh customer and payment manager instance before each test.
+	 */
 	public function setUp(): void {
 
 		parent::setUp();
@@ -53,11 +61,15 @@ class Payment_Manager_Pending_Popup_Test extends WP_UnitTestCase {
 
 		$product = wu_create_product(
 			[
-				'name'   => 'Plan',
-				'slug'   => 'plan-popup-pending-' . uniqid(),
-				'amount' => 50.00,
-				'type'   => 'plan',
-				'active' => true,
+				'name'          => 'Plan',
+				'slug'          => 'plan-popup-pending-' . uniqid(),
+				'amount'        => 50.00,
+				'type'          => 'plan',
+				'active'        => true,
+				'pricing_type'  => 'paid',
+				'recurring'     => true,
+				'duration'      => 1,
+				'duration_unit' => 'month',
 			]
 		);
 
@@ -98,11 +110,15 @@ class Payment_Manager_Pending_Popup_Test extends WP_UnitTestCase {
 
 		$product = wu_create_product(
 			[
-				'name'   => 'Plan',
-				'slug'   => 'plan-popup-cancelled-' . uniqid(),
-				'amount' => 50.00,
-				'type'   => 'plan',
-				'active' => true,
+				'name'          => 'Plan',
+				'slug'          => 'plan-popup-cancelled-' . uniqid(),
+				'amount'        => 50.00,
+				'type'          => 'plan',
+				'active'        => true,
+				'pricing_type'  => 'paid',
+				'recurring'     => true,
+				'duration'      => 1,
+				'duration_unit' => 'month',
 			]
 		);
 
@@ -145,11 +161,15 @@ class Payment_Manager_Pending_Popup_Test extends WP_UnitTestCase {
 
 		$product = wu_create_product(
 			[
-				'name'   => 'Plan',
-				'slug'   => 'plan-popup-active-' . uniqid(),
-				'amount' => 50.00,
-				'type'   => 'plan',
-				'active' => true,
+				'name'          => 'Plan',
+				'slug'          => 'plan-popup-active-' . uniqid(),
+				'amount'        => 50.00,
+				'type'          => 'plan',
+				'active'        => true,
+				'pricing_type'  => 'paid',
+				'recurring'     => true,
+				'duration'      => 1,
+				'duration_unit' => 'month',
 			]
 		);
 
@@ -183,6 +203,9 @@ class Payment_Manager_Pending_Popup_Test extends WP_UnitTestCase {
 		$product->delete();
 	}
 
+	/**
+	 * Delete test data and reset state after each test.
+	 */
 	public function tearDown(): void {
 
 		global $wpdb;
