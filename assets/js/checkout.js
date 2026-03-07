@@ -902,11 +902,36 @@
 						? this.email_address || ''
 						: this.username || '';
 
-					this.request('wu_inline_login', {
+					// Include captcha tokens if present on the page.
+					const login_data = {
 						username_or_email,
 						password: this.inline_login_password,
 						_wpnonce: jQuery('[name="_wpnonce"]').val()
-					}, function(results) {
+					};
+
+					const recaptcha_token = jQuery('input[name="g-recaptcha-response"]').filter(function() {
+						return this.value;
+					}).first().val();
+					const hcaptcha_token = jQuery('input[name="h-captcha-response"]').filter(function() {
+						return this.value;
+					}).first().val();
+					const cap_token = jQuery('input[name="cap-token"]').filter(function() {
+						return this.value;
+					}).first().val();
+
+					if (recaptcha_token) {
+						login_data[ 'g-recaptcha-response' ] = recaptcha_token;
+					}
+
+					if (hcaptcha_token) {
+						login_data[ 'h-captcha-response' ] = hcaptcha_token;
+					}
+
+					if (cap_token) {
+						login_data[ 'cap-token' ] = cap_token;
+					}
+
+					this.request('wu_inline_login', login_data, function(results) {
 
 						that.logging_in = false;
 
@@ -1043,14 +1068,39 @@
 
 							const username_or_email = fieldType === 'email' ? that.email_address : that.username;
 
+							// Include captcha tokens if present on the page.
+							const inline_login_data = {
+								username_or_email,
+								password,
+								_wpnonce: jQuery('[name="_wpnonce"]').val()
+							};
+
+							const recaptcha_val = jQuery('input[name="g-recaptcha-response"]').filter(function() {
+								return this.value;
+							}).first().val();
+							const hcaptcha_val = jQuery('input[name="h-captcha-response"]').filter(function() {
+								return this.value;
+							}).first().val();
+							const cap_val = jQuery('input[name="cap-token"]').filter(function() {
+								return this.value;
+							}).first().val();
+
+							if (recaptcha_val) {
+								inline_login_data[ 'g-recaptcha-response' ] = recaptcha_val;
+							}
+
+							if (hcaptcha_val) {
+								inline_login_data[ 'h-captcha-response' ] = hcaptcha_val;
+							}
+
+							if (cap_val) {
+								inline_login_data[ 'cap-token' ] = cap_val;
+							}
+
 							jQuery.ajax({
 								method: 'POST',
 								url: wu_checkout.late_ajaxurl + '&action=wu_inline_login',
-								data: {
-									username_or_email,
-									password,
-									_wpnonce: jQuery('[name="_wpnonce"]').val()
-								},
+								data: inline_login_data,
 								success(results) {
 
 									if (results.success) {

@@ -1774,6 +1774,29 @@ class Checkout {
 			$username = $username_or_email;
 		}
 
+		/**
+		 * Filters inline login before authentication.
+		 *
+		 * Allows plugins (e.g. captcha) to validate additional fields
+		 * before wp_authenticate() is called. Return a WP_Error to block login.
+		 *
+		 * @since 2.5.0
+		 *
+		 * @param null|\WP_Error $result  Null to proceed, WP_Error to block.
+		 * @param string         $username The username being authenticated.
+		 */
+		$pre_auth = apply_filters('wu_before_inline_login', null, $username);
+
+		if (is_wp_error($pre_auth)) {
+			set_transient($transient_key, ($attempt_count ? $attempt_count + 1 : 1), 5 * MINUTE_IN_SECONDS);
+
+			wp_send_json_error(
+				[
+					'message' => $pre_auth->get_error_message(),
+				]
+			);
+		}
+
 		// Attempt authentication using WordPress core
 		$user = wp_authenticate($username, $password);
 
@@ -1782,9 +1805,19 @@ class Checkout {
 			// Increment failed attempt counter
 			set_transient($transient_key, ($attempt_count ? $attempt_count + 1 : 1), 5 * MINUTE_IN_SECONDS);
 
+			$error_message = $user->get_error_message();
+
+			// Strip HTML tags but keep the text content for JSON response.
+			$error_message = wp_strip_all_tags($error_message);
+
+			// Fallback if the error message is empty.
+			if (empty($error_message)) {
+				$error_message = __('Invalid username or password.', 'ultimate-multisite');
+			}
+
 			wp_send_json_error(
 				[
-					'message' => __('Invalid username or password.', 'ultimate-multisite'),
+					'message' => $error_message,
 				]
 			);
 		}

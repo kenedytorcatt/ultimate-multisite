@@ -103,6 +103,34 @@ This method requires command-line access to your server and familiarity with Git
 <p><strong>Solution:</strong> Use the pre-packaged release from the <a href="https://github.com/Multisite-Ultimate/ultimate-multisite/releases">Releases page</a> which includes all required files.</p>
 </details>
 
+<details>
+<summary><strong>Site screenshots show a Cloudflare challenge page instead of the actual site</strong></summary>
+<p>Ultimate Multisite uses <a href="https://www.thum.io/">thum.io</a> to generate site screenshots. If your network is behind Cloudflare with Bot Fight Mode or similar protections enabled, thum.io's screenshot bot may be blocked and return a Cloudflare challenge page instead of your site screenshot.</p>
+
+<p><strong>Solution:</strong> Create a Cloudflare WAF exception rule to allow thum.io's bot:</p>
+
+<ol>
+<li>Log in to your <a href="https://dash.cloudflare.com/">Cloudflare dashboard</a></li>
+<li>Select your domain</li>
+<li>Go to <strong>Security → WAF → Custom rules</strong></li>
+<li>Click <strong>Create rule</strong></li>
+<li>Configure the rule:
+<ul>
+<li><strong>Rule name:</strong> <code>Allow thum.io screenshot bot</code></li>
+<li><strong>Field:</strong> <code>User Agent</code></li>
+<li><strong>Operator:</strong> <code>contains</code></li>
+<li><strong>Value:</strong> <code>Thum.io</code></li>
+<li><strong>Action:</strong> <code>Skip</code> → Select all skip options (WAF, Rate Limiting, etc.)</li>
+</ul>
+</li>
+<li>Click <strong>Deploy</strong></li>
+</ol>
+
+<p>Alternatively, if you use Cloudflare's Super Bot Fight Mode, you can add an exception in <strong>Security → Bots → Configure Super Bot Fight Mode</strong> to allow verified bots or specific user agents.</p>
+
+<p><strong>Note:</strong> Screenshots require sites to be publicly accessible. Local development environments cannot generate screenshots regardless of Cloudflare settings.</p>
+</details>
+
 ## 🚀 Contributing
 
 We welcome contributions to Ultimate Multisite! Here's how you can contribute effectively:
