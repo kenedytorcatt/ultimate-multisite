@@ -1441,8 +1441,17 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			$update_data = [
 				'items'              => array_merge($recurring_items, $existing_items),
 				'proration_behavior' => 'none',
-				'coupon'             => $s_coupon,
 			];
+
+			/*
+			 * Use 'discounts' array instead of deprecated 'coupon' parameter.
+			 * The 'coupon' parameter was removed in newer Stripe API versions.
+			 *
+			 * @since 2.0.12
+			 */
+			if ( ! empty($s_coupon)) {
+				$update_data['discounts'] = [['coupon' => $s_coupon]];
+			}
 
 			$subscription = $this->get_stripe_client()->subscriptions->update($gateway_subscription_id, $update_data);
 

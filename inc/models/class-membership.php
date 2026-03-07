@@ -713,8 +713,18 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			return new \WP_Error('invalid-date', __('Swap Cart is invalid.', 'ultimate-multisite'));
 		}
 
-		// clear the current addons.
-		$this->addon_products = [];
+		/*
+		 * For addon-only carts, we merge new addons with existing ones.
+		 * For plan changes (upgrade/downgrade), we replace all products.
+		 *
+		 * @since 2.0.12
+		 */
+		$is_addon_cart = 'addon' === $order->get_cart_type();
+
+		if ( ! $is_addon_cart) {
+			// Clear the current addons for plan changes.
+			$this->addon_products = [];
+		}
 
 		/*
 		 * We'll do that based on the line items,
@@ -752,14 +762,19 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		}
 
 		/*
-		 * Finally, we have a couple of other parameters to set.
+		 * For addon carts, don't update the recurring amount/duration
+		 * since we're not changing the plan, just adding products.
+		 *
+		 * @since 2.0.12
 		 */
-		$this->set_amount($order->get_recurring_total());
-		$this->set_initial_amount($order->get_total());
-		$this->set_recurring($order->has_recurring());
+		if ( ! $is_addon_cart) {
+			$this->set_amount($order->get_recurring_total());
+			$this->set_initial_amount($order->get_total());
+			$this->set_recurring($order->has_recurring());
 
-		$this->set_duration($order->get_duration());
-		$this->set_duration_unit($order->get_duration_unit());
+			$this->set_duration($order->get_duration());
+			$this->set_duration_unit($order->get_duration_unit());
+		}
 
 		/*
 		 * Returns self for chaining.
