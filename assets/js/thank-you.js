@@ -96,7 +96,8 @@ document.addEventListener("DOMContentLoaded", () => {
         creating: wu_thank_you.creating,
         next_queue: parseInt(wu_thank_you.next_queue, 10) + 5,
         random: 0,
-        progress_in_seconds: 0
+        progress_in_seconds: 0,
+        stopped_count: 0
       };
     },
     computed: {
@@ -131,9 +132,21 @@ document.addEventListener("DOMContentLoaded", () => {
         const response = await fetch(url).then((request) => request.json());
         if (response.publish_status === "completed") {
           window.location.reload();
-        } else {
-          this.creating = response.publish_status === "running";
+        } else if (response.publish_status === "running") {
+          this.creating = true;
+          this.stopped_count = 0;
           setTimeout(this.check_site_created, 3e3);
+        } else {
+          // status === "stopped": async job not started yet or site already created.
+          // Reload after 3 consecutive stopped responses (9 seconds total) to
+          // avoid showing "Creating..." forever when the site is already ready.
+          this.creating = false;
+          this.stopped_count++;
+          if (this.stopped_count >= 3) {
+            window.location.reload();
+          } else {
+            setTimeout(this.check_site_created, 3e3);
+          }
         }
       }
     }
