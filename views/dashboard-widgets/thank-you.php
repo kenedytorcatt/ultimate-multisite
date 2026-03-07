@@ -246,9 +246,9 @@ defined('ABSPATH') || exit;
 
 			<?php if ($membership->get_sites()) : ?>
 
-				<?php foreach ($membership->get_sites() as $site) : ?>
+			<?php foreach ($membership->get_sites() as $site) : ?>
 
-				<div class="wu-bg-gray-100 wu-p-4 wu-rounded wu-mb-2 sm:wu-flex wu-items-center">
+			<div class="wu-bg-gray-100 wu-p-4 wu-rounded wu-mb-2 sm:wu-flex wu-items-center wu-w-full">
 
 					<div class="wu-flex-shrink sm:wu-mr-4">
 
@@ -259,11 +259,11 @@ defined('ABSPATH') || exit;
 
 				</div>
 
-				<div class="wu-flex-grow">
+			<div class="wu-flex-grow wu-min-w-0">
 
-					<h5 class="wu-mb-1">
+				<h5 class="wu-mb-1">
 
-					<?php echo esc_html(ucfirst($site->get_title())); ?>
+				<?php echo esc_html(ucfirst($site->get_title())); ?>
 
 					<?php if ($site->get_type() === 'pending') : ?>
 

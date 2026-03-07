@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Ultimate Multisite – WordPress Multisite SaaS & WaaS Platform 2.4.11-beta.4\n"
+"Project-Id-Version: Ultimate Multisite – WordPress Multisite SaaS & WaaS Platform 2.4.13-beta.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ultimate-multisite\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-02-17T01:47:30+00:00\n"
+"POT-Creation-Date: 2026-03-04T23:04:08+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ultimate-multisite\n"
@@ -206,7 +206,7 @@ msgstr ""
 #: inc/admin-pages/class-event-list-admin-page.php:187
 #: inc/admin-pages/class-event-list-admin-page.php:198
 #: inc/admin-pages/class-membership-edit-admin-page.php:462
-#: inc/admin-pages/class-payment-edit-admin-page.php:1016
+#: inc/admin-pages/class-payment-edit-admin-page.php:1130
 #: inc/admin-pages/class-product-edit-admin-page.php:264
 #: inc/admin-pages/class-site-edit-admin-page.php:406
 #: inc/admin-pages/class-webhook-edit-admin-page.php:177
@@ -223,7 +223,7 @@ msgstr ""
 #: inc/admin-pages/class-broadcast-edit-admin-page.php:117
 #: inc/admin-pages/class-checkout-form-edit-admin-page.php:1153
 #: inc/admin-pages/class-customer-edit-admin-page.php:618
-#: inc/admin-pages/class-payment-edit-admin-page.php:653
+#: inc/admin-pages/class-payment-edit-admin-page.php:665
 #: inc/list-tables/class-broadcast-list-table.php:417
 #: inc/list-tables/class-event-list-table.php:213
 #: inc/list-tables/class-product-list-table.php:258
@@ -266,10 +266,10 @@ msgstr ""
 #: inc/admin-pages/class-membership-edit-admin-page.php:472
 #: inc/admin-pages/class-membership-list-admin-page.php:135
 #: inc/admin-pages/class-membership-list-admin-page.php:136
-#: inc/admin-pages/class-payment-edit-admin-page.php:1042
-#: inc/admin-pages/class-payment-edit-admin-page.php:1043
-#: inc/admin-pages/class-payment-list-admin-page.php:105
-#: inc/admin-pages/class-payment-list-admin-page.php:106
+#: inc/admin-pages/class-payment-edit-admin-page.php:1156
+#: inc/admin-pages/class-payment-edit-admin-page.php:1157
+#: inc/admin-pages/class-payment-list-admin-page.php:117
+#: inc/admin-pages/class-payment-list-admin-page.php:118
 #: inc/list-tables/class-membership-list-table-widget.php:267
 #: inc/list-tables/class-membership-list-table.php:181
 #: inc/list-tables/class-membership-list-table.php:227
@@ -396,7 +396,7 @@ msgstr ""
 #: inc/admin-pages/class-email-template-customize-admin-page.php:498
 #: inc/admin-pages/class-event-view-admin-page.php:253
 #: inc/admin-pages/class-membership-edit-admin-page.php:997
-#: inc/admin-pages/class-payment-edit-admin-page.php:1225
+#: inc/admin-pages/class-payment-edit-admin-page.php:1351
 #: inc/admin-pages/class-product-edit-admin-page.php:1093
 #: inc/admin-pages/class-site-edit-admin-page.php:678
 #: inc/admin-pages/class-view-logs-admin-page.php:281
@@ -858,9 +858,9 @@ msgstr ""
 #: inc/admin-pages/class-webhook-edit-admin-page.php:208
 #: inc/admin-pages/class-webhook-edit-admin-page.php:212
 #: inc/database/memberships/class-membership-status.php:69
-#: inc/list-tables/class-domain-list-table.php:164
-#: inc/list-tables/class-domain-list-table.php:187
-#: inc/list-tables/class-domain-list-table.php:190
+#: inc/list-tables/class-domain-list-table.php:174
+#: inc/list-tables/class-domain-list-table.php:197
+#: inc/list-tables/class-domain-list-table.php:200
 #: inc/list-tables/class-membership-list-table.php:279
 #: inc/list-tables/class-webhook-list-table.php:178
 #: views/emails/admin/domain-created.php:36
@@ -1069,7 +1069,7 @@ msgstr ""
 #: inc/admin-pages/class-domain-edit-admin-page.php:192
 #: inc/admin-pages/class-edit-admin-page.php:276
 #: inc/admin-pages/class-edit-admin-page.php:721
-#: inc/admin-pages/class-payment-edit-admin-page.php:178
+#: inc/admin-pages/class-payment-edit-admin-page.php:190
 #: inc/list-tables/class-base-list-table.php:622
 #: inc/list-tables/class-broadcast-list-table.php:125
 #: inc/list-tables/class-checkout-form-list-table.php:81
@@ -1078,7 +1078,7 @@ msgstr ""
 #: inc/list-tables/class-customer-list-table.php:167
 #: inc/list-tables/class-discount-code-list-table.php:70
 #: inc/list-tables/class-discount-code-list-table.php:75
-#: inc/list-tables/class-domain-list-table.php:89
+#: inc/list-tables/class-domain-list-table.php:99
 #: inc/list-tables/class-email-list-table.php:126
 #: inc/list-tables/class-event-list-table.php:188
 #: inc/list-tables/class-event-list-table.php:193
@@ -1106,7 +1106,7 @@ msgstr ""
 #: views/base/checkout-forms/js-templates.php:115
 #: views/base/checkout-forms/steps.php:144
 #: views/base/checkout-forms/steps.php:154
-#: views/dashboard-widgets/domain-mapping.php:85
+#: views/dashboard-widgets/domain-mapping.php:96
 #: views/taxes/list.php:88
 msgid "Delete"
 msgstr ""
@@ -1159,6 +1159,7 @@ msgstr ""
 #: inc/ui/class-invoices-element.php:132
 #: inc/ui/class-limits-element.php:131
 #: inc/ui/class-login-form-element.php:155
+#: inc/ui/class-payment-methods-element.php:112
 #: inc/ui/class-thank-you-element.php:207
 #: views/emails/admin/domain-created.php:67
 #: views/emails/admin/site-published.php:18
@@ -1196,7 +1197,7 @@ msgstr ""
 
 #: inc/admin-pages/class-customer-edit-admin-page.php:687
 #: inc/admin-pages/class-membership-edit-admin-page.php:358
-#: inc/admin-pages/class-payment-edit-admin-page.php:957
+#: inc/admin-pages/class-payment-edit-admin-page.php:1071
 #: inc/admin-pages/class-site-edit-admin-page.php:311
 msgid "At a Glance"
 msgstr ""
@@ -1232,7 +1233,7 @@ msgstr ""
 #: inc/admin-pages/class-membership-list-admin-page.php:333
 #: inc/class-settings.php:978
 #: inc/class-settings.php:979
-#: inc/debug/class-debug.php:195
+#: inc/debug/class-debug.php:197
 #: inc/list-tables/class-customer-list-table.php:244
 #: inc/list-tables/class-membership-list-table-widget.php:42
 #: inc/list-tables/class-membership-list-table.php:40
@@ -1277,8 +1278,8 @@ msgstr ""
 #: inc/ui/class-magic-link-url-element.php:139
 #: inc/ui/class-my-sites-element.php:135
 #: inc/ui/class-my-sites-element.php:136
-#: inc/ui/class-payment-methods-element.php:109
-#: inc/ui/class-payment-methods-element.php:110
+#: inc/ui/class-payment-methods-element.php:105
+#: inc/ui/class-payment-methods-element.php:106
 #: inc/ui/class-simple-text-element.php:125
 #: inc/ui/class-simple-text-element.php:126
 #: inc/ui/class-site-actions-element.php:148
@@ -1300,8 +1301,6 @@ msgid "VIP"
 msgstr ""
 
 #: inc/admin-pages/class-customer-edit-admin-page.php:747
-#: inc/ui/class-payment-methods-element.php:117
-#: inc/ui/class-payment-methods-element.php:125
 msgid "Set this customer as a VIP."
 msgstr ""
 
@@ -1324,13 +1323,13 @@ msgstr ""
 
 #: inc/admin-pages/class-customer-edit-admin-page.php:793
 #: inc/admin-pages/class-membership-edit-admin-page.php:398
-#: inc/admin-pages/class-payment-list-admin-page.php:244
-#: inc/admin-pages/class-payment-list-admin-page.php:255
-#: inc/admin-pages/class-payment-list-admin-page.php:266
+#: inc/admin-pages/class-payment-list-admin-page.php:529
+#: inc/admin-pages/class-payment-list-admin-page.php:540
+#: inc/admin-pages/class-payment-list-admin-page.php:551
 #: inc/admin-pages/class-top-admin-nav-menu.php:115
 #: inc/class-settings.php:1385
 #: inc/class-settings.php:1386
-#: inc/debug/class-debug.php:263
+#: inc/debug/class-debug.php:265
 #: inc/list-tables/class-payment-list-table-widget.php:42
 #: inc/list-tables/class-payment-list-table.php:42
 #: views/ui/jumper.php:68
@@ -1344,7 +1343,7 @@ msgstr ""
 #: inc/admin-pages/class-site-list-admin-page.php:539
 #: inc/class-settings.php:1225
 #: inc/class-settings.php:1226
-#: inc/debug/class-debug.php:212
+#: inc/debug/class-debug.php:214
 #: inc/list-tables/class-site-list-table.php:45
 #: inc/managers/class-limitation-manager.php:276
 #: views/ui/jumper.php:64
@@ -1488,7 +1487,7 @@ msgid "Verification email sent!"
 msgstr ""
 
 #: inc/admin-pages/class-customer-list-admin-page.php:69
-#: inc/managers/class-payment-manager.php:312
+#: inc/managers/class-payment-manager.php:325
 msgid "You do not have permissions to access this file."
 msgstr ""
 
@@ -1515,6 +1514,8 @@ msgstr ""
 
 #: inc/admin-pages/class-customer-list-admin-page.php:217
 #: inc/list-tables/class-site-customer-list-table.php:91
+#: views/emails/admin/membership-expired.php:59
+#: views/emails/admin/payment-failed.php:63
 #: views/emails/admin/payment-received.php:137
 #: views/emails/admin/site-published.php:103
 msgid "Email Address"
@@ -1563,7 +1564,7 @@ msgstr ""
 #: inc/admin-pages/class-customer-list-admin-page.php:356
 #: inc/admin-pages/class-customer-list-admin-page.php:367
 #: inc/admin-pages/class-top-admin-nav-menu.php:91
-#: inc/debug/class-debug.php:161
+#: inc/debug/class-debug.php:163
 #: inc/list-tables/class-customer-list-table.php:47
 #: views/ui/jumper.php:58
 msgid "Customers"
@@ -1854,7 +1855,7 @@ msgstr ""
 
 #: inc/admin-pages/class-discount-code-edit-admin-page.php:317
 #: inc/admin-pages/class-discount-code-edit-admin-page.php:373
-#: inc/admin-pages/class-payment-edit-admin-page.php:824
+#: inc/admin-pages/class-payment-edit-admin-page.php:836
 msgid "Percentage (%)"
 msgstr ""
 
@@ -2019,7 +2020,7 @@ msgstr ""
 #: inc/admin-pages/class-discount-code-list-admin-page.php:98
 #: inc/admin-pages/class-discount-code-list-admin-page.php:109
 #: inc/admin-pages/class-top-admin-nav-menu.php:127
-#: inc/debug/class-debug.php:246
+#: inc/debug/class-debug.php:248
 #: inc/list-tables/class-discount-code-list-table.php:40
 #: views/ui/jumper.php:70
 msgid "Discount Codes"
@@ -2034,7 +2035,7 @@ msgid "Set another domain as primary"
 msgstr ""
 
 #: inc/admin-pages/class-domain-edit-admin-page.php:183
-#: inc/admin-pages/class-payment-edit-admin-page.php:170
+#: inc/admin-pages/class-payment-edit-admin-page.php:182
 #: inc/managers/class-form-manager.php:365
 #: inc/ui/class-domain-mapping-element.php:458
 msgid "Confirm Deletion"
@@ -2042,8 +2043,8 @@ msgstr ""
 
 #: inc/admin-pages/class-domain-edit-admin-page.php:184
 #: inc/admin-pages/class-email-list-admin-page.php:574
-#: inc/admin-pages/class-payment-edit-admin-page.php:171
-#: inc/admin-pages/class-payment-edit-admin-page.php:309
+#: inc/admin-pages/class-payment-edit-admin-page.php:183
+#: inc/admin-pages/class-payment-edit-admin-page.php:321
 #: inc/admin-pages/class-site-list-admin-page.php:134
 #: inc/managers/class-form-manager.php:366
 #: inc/managers/class-limitation-manager.php:138
@@ -2051,8 +2052,7 @@ msgstr ""
 #: inc/managers/class-notes-manager.php:407
 #: inc/ui/class-current-membership-element.php:454
 #: inc/ui/class-domain-mapping-element.php:459
-#: inc/ui/class-site-actions-element.php:568
-#: inc/ui/class-site-actions-element.php:1058
+#: inc/ui/class-site-actions-element.php:573
 msgid "This action can not be undone."
 msgstr ""
 
@@ -2065,7 +2065,7 @@ msgstr ""
 #: inc/admin-pages/class-site-list-admin-page.php:327
 #: inc/checkout/signup-fields/class-signup-field-site-url.php:357
 #: inc/list-tables/class-domain-list-table.php:41
-#: inc/list-tables/class-domain-list-table.php:161
+#: inc/list-tables/class-domain-list-table.php:171
 #: inc/ui/class-domain-mapping-element.php:332
 #: views/emails/admin/domain-created.php:13
 #: views/emails/admin/domain-created.php:18
@@ -2120,7 +2120,7 @@ msgstr ""
 
 #: inc/admin-pages/class-domain-edit-admin-page.php:335
 #: inc/admin-pages/class-domain-list-admin-page.php:136
-#: inc/list-tables/class-domain-list-table.php:162
+#: inc/list-tables/class-domain-list-table.php:172
 msgid "Stage"
 msgstr ""
 
@@ -2134,7 +2134,7 @@ msgid "The stage in the checking lifecycle of this domain."
 msgstr ""
 
 #: inc/admin-pages/class-domain-edit-admin-page.php:350
-#: inc/list-tables/class-domain-list-table.php:163
+#: inc/list-tables/class-domain-list-table.php:173
 #: inc/list-tables/class-site-list-table.php:44
 #: inc/traits/trait-wp-ultimo-plan-deprecated.php:204
 #: inc/ui/class-current-site-element.php:111
@@ -2232,7 +2232,7 @@ msgid "The stage in the domain check lifecycle. Leave \"Checking DNS\" to have t
 msgstr ""
 
 #: inc/admin-pages/class-domain-list-admin-page.php:144
-#: inc/list-tables/class-domain-list-table.php:201
+#: inc/list-tables/class-domain-list-table.php:211
 #: inc/ui/class-domain-mapping-element.php:341
 msgid "Primary Domain"
 msgstr ""
@@ -2257,7 +2257,7 @@ msgstr ""
 #: inc/admin-pages/class-domain-list-admin-page.php:292
 #: inc/admin-pages/class-domain-list-admin-page.php:303
 #: inc/admin-pages/class-domain-list-admin-page.php:314
-#: inc/debug/class-debug.php:229
+#: inc/debug/class-debug.php:231
 #: inc/list-tables/class-domain-list-table.php:42
 #: inc/list-tables/class-site-list-table.php:275
 #: inc/ui/class-domain-mapping-element.php:96
@@ -2307,8 +2307,8 @@ msgstr ""
 
 #: inc/admin-pages/class-edit-admin-page.php:274
 #: inc/admin-pages/class-edit-admin-page.php:679
-#: inc/admin-pages/class-payment-edit-admin-page.php:832
-#: inc/admin-pages/class-payment-edit-admin-page.php:833
+#: inc/admin-pages/class-payment-edit-admin-page.php:844
+#: inc/admin-pages/class-payment-edit-admin-page.php:845
 #: inc/admin-pages/class-wizard-admin-page.php:132
 msgid "Save"
 msgstr ""
@@ -2400,6 +2400,7 @@ msgstr ""
 #: inc/admin-pages/class-email-edit-admin-page.php:186
 #: inc/admin-pages/class-membership-edit-admin-page.php:510
 #: inc/admin-pages/class-membership-list-admin-page.php:91
+#: inc/admin-pages/class-payment-list-admin-page.php:237
 #: inc/list-tables/class-customer-list-table.php:46
 #: inc/list-tables/class-membership-list-table-widget.php:268
 #: inc/list-tables/class-membership-list-table.php:182
@@ -2407,6 +2408,10 @@ msgstr ""
 #: inc/list-tables/class-payment-list-table.php:197
 #: inc/list-tables/class-site-list-table.php:273
 #: inc/managers/class-customer-manager.php:68
+#: views/emails/admin/membership-expired.php:48
+#: views/emails/admin/membership-expired.php:53
+#: views/emails/admin/payment-failed.php:52
+#: views/emails/admin/payment-failed.php:57
 #: views/emails/admin/payment-received.php:125
 #: views/emails/admin/payment-received.php:130
 #: views/emails/admin/site-published.php:91
@@ -2579,7 +2584,7 @@ msgstr ""
 #: inc/admin-pages/class-email-list-admin-page.php:239
 #: inc/admin-pages/class-email-list-admin-page.php:623
 #: inc/admin-pages/class-email-list-admin-page.php:642
-#: inc/admin-pages/class-payment-edit-admin-page.php:614
+#: inc/admin-pages/class-payment-edit-admin-page.php:626
 #: inc/admin-pages/class-site-list-admin-page.php:268
 #: inc/managers/class-broadcast-manager.php:255
 msgid "Something wrong happened."
@@ -2888,7 +2893,7 @@ msgid "Instructions"
 msgstr ""
 
 #: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:155
-#: inc/integrations/class-integration-registry.php:355
+#: inc/integrations/class-integration-registry.php:357
 msgid "Configuration"
 msgstr ""
 
@@ -2908,9 +2913,13 @@ msgstr ""
 msgid "Defined as <code>%s</code> in wp-config.php. Edit your wp-config.php to change this value."
 msgstr ""
 
-#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:423
+#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:405
 #: views/wizards/host-integrations/test.php:39
 msgid "Waiting for results..."
+msgstr ""
+
+#: inc/admin-pages/class-hosting-integration-wizard-admin-page.php:406
+msgid "Connection test failed. Please try again."
 msgstr ""
 
 #: inc/admin-pages/class-invoice-template-customize-admin-page.php:170
@@ -3053,13 +3062,14 @@ msgid "Membership Status"
 msgstr ""
 
 #: inc/admin-pages/class-membership-edit-admin-page.php:372
-#: inc/admin-pages/class-payment-edit-admin-page.php:971
+#: inc/admin-pages/class-payment-edit-admin-page.php:1085
 msgid "Reference ID"
 msgstr ""
 
 #: inc/admin-pages/class-membership-edit-admin-page.php:389
 #: inc/admin-pages/class-membership-list-admin-page.php:104
-#: inc/admin-pages/class-payment-list-admin-page.php:90
+#: inc/admin-pages/class-payment-list-admin-page.php:102
+#: inc/admin-pages/class-payment-list-admin-page.php:252
 #: inc/admin-pages/class-product-list-admin-page.php:87
 #: inc/admin-pages/class-product-list-admin-page.php:98
 #: inc/admin-pages/class-product-list-admin-page.php:109
@@ -3068,7 +3078,7 @@ msgstr ""
 #: inc/checkout/signup-fields/class-signup-field-pricing-table.php:170
 #: inc/checkout/signup-fields/class-signup-field-products.php:149
 #: inc/checkout/signup-fields/class-signup-field-products.php:150
-#: inc/debug/class-debug.php:178
+#: inc/debug/class-debug.php:180
 #: inc/list-tables/class-customers-membership-list-table.php:85
 #: inc/list-tables/class-product-list-table.php:40
 #: views/checkout/register.php:17
@@ -3155,8 +3165,8 @@ msgstr ""
 
 #. translators: %s is a price placeholder value.
 #: inc/admin-pages/class-membership-edit-admin-page.php:626
-#: inc/admin-pages/class-payment-edit-admin-page.php:746
-#: inc/admin-pages/class-payment-edit-admin-page.php:764
+#: inc/admin-pages/class-payment-edit-admin-page.php:758
+#: inc/admin-pages/class-payment-edit-admin-page.php:776
 #: inc/admin-pages/class-product-edit-admin-page.php:576
 #, php-format
 msgid "E.g. %s"
@@ -3217,7 +3227,7 @@ msgid "Activating this will tell the gateway to try to automatically charge for 
 msgstr ""
 
 #: inc/admin-pages/class-membership-edit-admin-page.php:774
-#: inc/admin-pages/class-payment-edit-admin-page.php:1086
+#: inc/admin-pages/class-payment-edit-admin-page.php:1200
 #: inc/list-tables/class-customers-membership-list-table.php:90
 #: inc/list-tables/class-customers-payment-list-table.php:67
 #: inc/list-tables/class-payment-list-table.php:235
@@ -3226,19 +3236,19 @@ msgstr ""
 
 #: inc/admin-pages/class-membership-edit-admin-page.php:775
 #: inc/admin-pages/class-membership-edit-admin-page.php:776
-#: inc/admin-pages/class-payment-edit-admin-page.php:1087
-#: inc/admin-pages/class-payment-edit-admin-page.php:1088
+#: inc/admin-pages/class-payment-edit-admin-page.php:1201
+#: inc/admin-pages/class-payment-edit-admin-page.php:1202
 msgid "e.g. stripe"
 msgstr ""
 
 #: inc/admin-pages/class-membership-edit-admin-page.php:777
-#: inc/admin-pages/class-payment-edit-admin-page.php:1089
+#: inc/admin-pages/class-payment-edit-admin-page.php:1203
 msgid "Payment gateway used to process the payment."
 msgstr ""
 
 #: inc/admin-pages/class-membership-edit-admin-page.php:801
 #: inc/admin-pages/class-membership-edit-admin-page.php:839
-#: inc/admin-pages/class-payment-edit-admin-page.php:1113
+#: inc/admin-pages/class-payment-edit-admin-page.php:1227
 msgid "View on Gateway &rarr;"
 msgstr ""
 
@@ -3300,7 +3310,7 @@ msgid "Enter Membership Name"
 msgstr ""
 
 #: inc/admin-pages/class-membership-edit-admin-page.php:993
-#: inc/admin-pages/class-payment-edit-admin-page.php:1221
+#: inc/admin-pages/class-payment-edit-admin-page.php:1347
 #: inc/admin-pages/class-product-edit-admin-page.php:1089
 msgid "This name will be used on pricing tables, invoices, and more."
 msgstr ""
@@ -3324,8 +3334,8 @@ msgid "This is a <strong>preview</strong>. This page displays the final stage of
 msgstr ""
 
 #: inc/admin-pages/class-membership-edit-admin-page.php:1264
-#: inc/admin-pages/class-payment-edit-admin-page.php:666
-#: inc/admin-pages/class-payment-edit-admin-page.php:680
+#: inc/admin-pages/class-payment-edit-admin-page.php:678
+#: inc/admin-pages/class-payment-edit-admin-page.php:692
 #: inc/checkout/signup-fields/class-signup-field-order-bump.php:169
 #: inc/checkout/signup-fields/class-signup-field-products.php:56
 #: inc/list-tables/class-membership-list-table.php:183
@@ -3342,7 +3352,7 @@ msgstr ""
 
 #: inc/admin-pages/class-membership-edit-admin-page.php:1279
 #: inc/admin-pages/class-membership-edit-admin-page.php:1420
-#: inc/admin-pages/class-payment-edit-admin-page.php:722
+#: inc/admin-pages/class-payment-edit-admin-page.php:734
 #: inc/list-tables/class-membership-line-item-list-table.php:88
 #: inc/list-tables/class-membership-line-item-list-table.php:101
 #: inc/list-tables/class-payment-line-item-list-table.php:52
@@ -3417,7 +3427,8 @@ msgid "The customer to attach this membership to."
 msgstr ""
 
 #: inc/admin-pages/class-membership-list-admin-page.php:105
-#: inc/admin-pages/class-payment-list-admin-page.php:91
+#: inc/admin-pages/class-payment-list-admin-page.php:103
+#: inc/admin-pages/class-payment-list-admin-page.php:253
 msgid "Search Products..."
 msgstr ""
 
@@ -3536,210 +3547,233 @@ msgstr ""
 msgid "Permission denied."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:230
-#: inc/admin-pages/class-payment-edit-admin-page.php:389
-#: inc/gateways/class-base-stripe-gateway.php:3553
+#: inc/admin-pages/class-payment-edit-admin-page.php:242
+#: inc/admin-pages/class-payment-edit-admin-page.php:401
+#: inc/admin-pages/class-payment-edit-admin-page.php:1015
+#: inc/gateways/class-base-stripe-gateway.php:3641
 #: inc/managers/class-gateway-manager.php:609
 msgid "Payment not found."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:270
-#: inc/admin-pages/class-payment-edit-admin-page.php:271
+#: inc/admin-pages/class-payment-edit-admin-page.php:282
+#: inc/admin-pages/class-payment-edit-admin-page.php:283
 msgid "Refund Amount"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:291
+#: inc/admin-pages/class-payment-edit-admin-page.php:303
 msgid "Cancel Related Membership?"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:292
+#: inc/admin-pages/class-payment-edit-admin-page.php:304
 msgid "Checking this option will cancel the membership as well."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:299
+#: inc/admin-pages/class-payment-edit-admin-page.php:311
 msgid "Confirming the refund might not immediately change the status of the payment, as each gateway handles refunds differently and Ultimate Multisite relies on the gateway reporting a successful refund before changing the status."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:308
+#: inc/admin-pages/class-payment-edit-admin-page.php:320
 msgid "Confirm Refund"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:319
-#: inc/admin-pages/class-payment-edit-admin-page.php:320
+#: inc/admin-pages/class-payment-edit-admin-page.php:331
+#: inc/admin-pages/class-payment-edit-admin-page.php:332
 #: inc/models/class-checkout-form.php:669
 #: inc/models/class-checkout-form.php:703
 #: inc/models/class-checkout-form.php:747
 msgid "Next Step"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:334
-#: inc/admin-pages/class-payment-edit-admin-page.php:335
+#: inc/admin-pages/class-payment-edit-admin-page.php:346
+#: inc/admin-pages/class-payment-edit-admin-page.php:347
 msgid "Issue Refund"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:396
+#: inc/admin-pages/class-payment-edit-admin-page.php:408
 msgid "The refund amount is out of bounds."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:406
+#: inc/admin-pages/class-payment-edit-admin-page.php:418
 msgid "This payment is not in a refundable state."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:457
+#: inc/admin-pages/class-payment-edit-admin-page.php:469
 msgid "Payment gateway not found."
 msgstr ""
 
 #. translators: %s is the exception error message.
-#: inc/admin-pages/class-payment-edit-admin-page.php:486
-#: inc/admin-pages/class-payment-edit-admin-page.php:493
+#: inc/admin-pages/class-payment-edit-admin-page.php:498
+#: inc/admin-pages/class-payment-edit-admin-page.php:505
 #, php-format
 msgid "An error occurred: %s"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:545
+#: inc/admin-pages/class-payment-edit-admin-page.php:557
 msgid "The product was not found."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:582
+#: inc/admin-pages/class-payment-edit-admin-page.php:594
 msgid "The line item type is invalid."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:654
+#: inc/admin-pages/class-payment-edit-admin-page.php:666
 msgid "Additional Info"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:655
+#: inc/admin-pages/class-payment-edit-admin-page.php:667
 msgid "Tax Info"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:663
+#: inc/admin-pages/class-payment-edit-admin-page.php:675
 msgid "Line Item Type"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:664
+#: inc/admin-pages/class-payment-edit-admin-page.php:676
 msgid "Select the line item type."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:667
+#: inc/admin-pages/class-payment-edit-admin-page.php:679
 #: inc/list-tables/class-payment-list-table.php:225
 msgid "Refund"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:668
+#: inc/admin-pages/class-payment-edit-admin-page.php:680
 msgid "Fee"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:669
-#: inc/checkout/class-cart.php:1332
+#: inc/admin-pages/class-payment-edit-admin-page.php:681
+#: inc/checkout/class-cart.php:1366
 msgid "Credit"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:681
+#: inc/admin-pages/class-payment-edit-admin-page.php:693
 msgid "Product associated with this line item."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:682
+#: inc/admin-pages/class-payment-edit-admin-page.php:694
 msgid "Search Products"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:699
+#: inc/admin-pages/class-payment-edit-admin-page.php:711
 msgid "Line Item Title"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:700
+#: inc/admin-pages/class-payment-edit-admin-page.php:712
 msgid "E.g. Extra Charge"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:701
-#: inc/admin-pages/class-payment-edit-admin-page.php:711
+#: inc/admin-pages/class-payment-edit-admin-page.php:713
+#: inc/admin-pages/class-payment-edit-admin-page.php:723
 msgid "This is used when generating invoices."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:709
+#: inc/admin-pages/class-payment-edit-admin-page.php:721
 msgid "Line Item Description"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:710
+#: inc/admin-pages/class-payment-edit-admin-page.php:722
 msgid "E.g. This service was done to improve performance."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:723
+#: inc/admin-pages/class-payment-edit-admin-page.php:735
 msgid "Item quantity."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:725
+#: inc/admin-pages/class-payment-edit-admin-page.php:737
 #: inc/admin-pages/class-product-edit-admin-page.php:500
 msgid "E.g. 1"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:743
+#: inc/admin-pages/class-payment-edit-admin-page.php:755
 #: inc/list-tables/class-line-item-list-table.php:213
 #: inc/list-tables/class-payment-line-item-list-table.php:58
 msgid "Unit Price"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:744
+#: inc/admin-pages/class-payment-edit-admin-page.php:756
 msgid "Item unit price. This is multiplied by the quantity to calculate the sub-total."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:761
+#: inc/admin-pages/class-payment-edit-admin-page.php:773
 #: views/emails/admin/domain-created.php:104
+#: views/emails/admin/membership-expired.php:18
+#: views/emails/admin/payment-failed.php:18
 #: views/emails/admin/payment-received.php:89
 #: views/emails/admin/site-published.php:55
+#: views/emails/customer/membership-expired.php:21
+#: views/emails/customer/payment-failed.php:23
 msgid "Amount"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:762
+#: inc/admin-pages/class-payment-edit-admin-page.php:774
 msgid "Refund, credit or fee amount."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:779
+#: inc/admin-pages/class-payment-edit-admin-page.php:791
 #: inc/admin-pages/class-product-edit-admin-page.php:927
 msgid "Is Taxable?"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:780
+#: inc/admin-pages/class-payment-edit-admin-page.php:792
 msgid "Checking this box will toggle the tax controls."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:792
+#: inc/admin-pages/class-payment-edit-admin-page.php:804
 msgid "Tax Label"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:793
+#: inc/admin-pages/class-payment-edit-admin-page.php:805
 msgid "E.g. ES VAT"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:794
+#: inc/admin-pages/class-payment-edit-admin-page.php:806
 msgid "Tax description. This is shown on invoices to end customers."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:802
+#: inc/admin-pages/class-payment-edit-admin-page.php:814
 #: inc/tax/class-tax.php:203
 msgid "Tax Rate"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:803
+#: inc/admin-pages/class-payment-edit-admin-page.php:815
 msgid "Tax rate and type to apply to this item."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:825
+#: inc/admin-pages/class-payment-edit-admin-page.php:837
 msgid "Flat Rate ($)"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:886
+#: inc/admin-pages/class-payment-edit-admin-page.php:898
 msgid "Refund Payment"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:899
+#: inc/admin-pages/class-payment-edit-admin-page.php:911
 msgid "Add Line Item"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:964
-msgid "Payment Status"
+#: inc/admin-pages/class-payment-edit-admin-page.php:967
+#: inc/admin-pages/class-payment-list-admin-page.php:308
+msgid "Message (optional)"
+msgstr ""
+
+#: inc/admin-pages/class-payment-edit-admin-page.php:968
+msgid "Add a personal note to include in the email..."
 msgstr ""
 
 #: inc/admin-pages/class-payment-edit-admin-page.php:976
+#: inc/admin-pages/class-payment-edit-admin-page.php:1324
+msgid "Send Invoice Email"
+msgstr ""
+
+#: inc/admin-pages/class-payment-edit-admin-page.php:1023
+msgid "No customer found for this payment."
+msgstr ""
+
+#: inc/admin-pages/class-payment-edit-admin-page.php:1078
+msgid "Payment Status"
+msgstr ""
+
+#: inc/admin-pages/class-payment-edit-admin-page.php:1090
 #: inc/list-tables/class-line-item-list-table.php:217
 #: inc/list-tables/class-payment-list-table-widget.php:221
 #: inc/list-tables/class-payment-list-table.php:199
@@ -3758,33 +3792,33 @@ msgstr ""
 msgid "Total"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:987
+#: inc/admin-pages/class-payment-edit-admin-page.php:1101
 #: inc/list-tables/class-line-item-list-table.php:40
 msgid "Line Items"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:998
+#: inc/admin-pages/class-payment-edit-admin-page.php:1112
 msgid "Tax Rate Breakthrough"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1007
+#: inc/admin-pages/class-payment-edit-admin-page.php:1121
 msgid "Payment Options"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1044
+#: inc/admin-pages/class-payment-edit-admin-page.php:1158
 msgid "The payment current status."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1057
+#: inc/admin-pages/class-payment-edit-admin-page.php:1171
 msgid "Activate Membership?"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1058
+#: inc/admin-pages/class-payment-edit-admin-page.php:1172
 msgid "This payment belongs to a pending membership. If you toggle this option, this change in status will also apply to the membership. If any sites are pending, they are also going to be published automatically."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1067
-#: inc/admin-pages/class-payment-list-admin-page.php:114
+#: inc/admin-pages/class-payment-edit-admin-page.php:1181
+#: inc/admin-pages/class-payment-list-admin-page.php:126
 #: inc/list-tables/class-membership-list-table-widget.php:41
 #: inc/list-tables/class-membership-list-table.php:39
 #: inc/list-tables/class-payment-list-table.php:198
@@ -3792,117 +3826,186 @@ msgstr ""
 #: inc/managers/class-membership-manager.php:66
 #: inc/ui/class-current-membership-element.php:130
 #: views/emails/admin/domain-created.php:99
+#: views/emails/admin/membership-expired.php:13
+#: views/emails/admin/payment-failed.php:13
 #: views/emails/admin/payment-received.php:84
 #: views/emails/admin/site-published.php:50
+#: views/emails/customer/membership-expired.php:16
+#: views/emails/customer/payment-failed.php:18
 msgid "Membership"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1068
-#: inc/admin-pages/class-payment-list-admin-page.php:116
+#: inc/admin-pages/class-payment-edit-admin-page.php:1182
+#: inc/admin-pages/class-payment-list-admin-page.php:128
 msgid "The membership associated with this payment."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1125
+#: inc/admin-pages/class-payment-edit-admin-page.php:1239
 msgid "Gateway Payment ID"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1126
-#: inc/admin-pages/class-payment-edit-admin-page.php:1127
+#: inc/admin-pages/class-payment-edit-admin-page.php:1240
+#: inc/admin-pages/class-payment-edit-admin-page.php:1241
 msgid "e.g. EX897540987913"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1128
+#: inc/admin-pages/class-payment-edit-admin-page.php:1242
 msgid "This will usually be set automatically by the payment gateway."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1139
+#: inc/admin-pages/class-payment-edit-admin-page.php:1253
 msgid "Invoice Number"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1140
+#: inc/admin-pages/class-payment-edit-admin-page.php:1254
 msgid "e.g. 20"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1141
+#: inc/admin-pages/class-payment-edit-admin-page.php:1255
 msgid "This number gets saved automatically when a payment transitions to a complete state. You can change it to generate invoices with a particular number. The number chosen here has no effect on other invoices in the platform."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1142
+#: inc/admin-pages/class-payment-edit-admin-page.php:1256
 msgid "The invoice number for this particular payment."
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1163
-#: inc/admin-pages/class-payment-edit-admin-page.php:1174
-#: inc/admin-pages/class-payment-edit-admin-page.php:1217
+#: inc/admin-pages/class-payment-edit-admin-page.php:1277
+#: inc/admin-pages/class-payment-edit-admin-page.php:1288
+#: inc/admin-pages/class-payment-edit-admin-page.php:1343
 msgid "Edit Payment"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1163
-#: inc/admin-pages/class-payment-edit-admin-page.php:1218
+#: inc/admin-pages/class-payment-edit-admin-page.php:1277
+#: inc/admin-pages/class-payment-edit-admin-page.php:1344
 msgid "Add new Payment"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1192
+#: inc/admin-pages/class-payment-edit-admin-page.php:1306
 msgid "Generate Invoice"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1199
+#: inc/admin-pages/class-payment-edit-admin-page.php:1313
 msgid "Payment URL"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1219
+#: inc/admin-pages/class-payment-edit-admin-page.php:1345
 msgid "Payment updated with success!"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1220
+#: inc/admin-pages/class-payment-edit-admin-page.php:1346
 msgid "Enter Payment Name"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1222
+#: inc/admin-pages/class-payment-edit-admin-page.php:1348
 msgid "Save Payment"
 msgstr ""
 
-#: inc/admin-pages/class-payment-edit-admin-page.php:1224
+#: inc/admin-pages/class-payment-edit-admin-page.php:1350
 msgid "Delete Payment"
 msgstr ""
 
-#: inc/admin-pages/class-payment-list-admin-page.php:92
+#: inc/admin-pages/class-payment-list-admin-page.php:104
 msgid "Each product will be added as a line item."
 msgstr ""
 
-#: inc/admin-pages/class-payment-list-admin-page.php:107
+#: inc/admin-pages/class-payment-list-admin-page.php:119
 msgid "The payment status to attach to the newly created payment."
 msgstr ""
 
-#: inc/admin-pages/class-payment-list-admin-page.php:115
+#: inc/admin-pages/class-payment-list-admin-page.php:127
+#: inc/admin-pages/class-payment-list-admin-page.php:294
 #: inc/admin-pages/class-site-edit-admin-page.php:479
 #: inc/admin-pages/class-site-list-admin-page.php:391
 msgid "Search Membership..."
 msgstr ""
 
-#: inc/admin-pages/class-payment-list-admin-page.php:129
+#: inc/admin-pages/class-payment-list-admin-page.php:141
 msgid "Include Setup Fees"
 msgstr ""
 
-#: inc/admin-pages/class-payment-list-admin-page.php:130
+#: inc/admin-pages/class-payment-list-admin-page.php:142
 msgid "Checking this box will include setup fees attached to the selected products as well."
 msgstr ""
 
-#: inc/admin-pages/class-payment-list-admin-page.php:135
-#: inc/admin-pages/class-payment-list-admin-page.php:279
+#: inc/admin-pages/class-payment-list-admin-page.php:147
+#: inc/admin-pages/class-payment-list-admin-page.php:564
 msgid "Add Payment"
 msgstr ""
 
-#: inc/admin-pages/class-payment-list-admin-page.php:175
+#: inc/admin-pages/class-payment-list-admin-page.php:187
 msgid "Invalid membership."
 msgstr ""
 
-#: inc/admin-pages/class-payment-list-admin-page.php:231
+#: inc/admin-pages/class-payment-list-admin-page.php:238
+msgid "Search Customers..."
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:239
+msgid "The customer to send the invoice to."
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:254
+msgid "Select products to include as line items. Leave empty for custom-only invoices."
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:267
+msgid "Custom Line Items"
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:268
+msgid "Add custom charges (e.g. consulting hours). Use comma-separated entries in the format: description|amount|quantity."
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:286
+msgid "+ Add custom line items"
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:293
+msgid "Membership (optional)"
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:295
+msgid "Optionally link this invoice to an existing membership."
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:309
+msgid "Add a personal note to include in the invoice email..."
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:310
+msgid "This note will be included in the email sent to the customer."
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:318
+msgid "Send Email Notification"
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:319
+msgid "Send the customer an email with a link to pay this invoice."
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:324
+msgid "Create Invoice"
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:364
+msgid "Please select a valid customer."
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:428
+msgid "Please add at least one product or custom line item."
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:516
 msgid "Payment removed successfully."
 msgstr ""
 
-#: inc/admin-pages/class-payment-list-admin-page.php:232
+#: inc/admin-pages/class-payment-list-admin-page.php:517
 msgid "Search Payment"
+msgstr ""
+
+#: inc/admin-pages/class-payment-list-admin-page.php:570
+msgid "Send Invoice"
 msgstr ""
 
 #: inc/admin-pages/class-placeholders-admin-page.php:73
@@ -4476,41 +4579,41 @@ msgstr ""
 msgid "You do not have the permissions required to change settings."
 msgstr ""
 
-#: inc/admin-pages/class-settings-admin-page.php:585
+#: inc/admin-pages/class-settings-admin-page.php:601
 msgid "Save Settings"
 msgstr ""
 
-#: inc/admin-pages/class-settings-admin-page.php:646
+#: inc/admin-pages/class-settings-admin-page.php:662
 msgid "You do not have permission to export settings."
 msgstr ""
 
-#: inc/admin-pages/class-settings-admin-page.php:693
+#: inc/admin-pages/class-settings-admin-page.php:709
 msgid "Upload Settings File"
 msgstr ""
 
-#: inc/admin-pages/class-settings-admin-page.php:694
+#: inc/admin-pages/class-settings-admin-page.php:710
 msgid "Select a JSON file previously exported from Ultimate Multisite."
 msgstr ""
 
-#: inc/admin-pages/class-settings-admin-page.php:702
+#: inc/admin-pages/class-settings-admin-page.php:718
 msgid "I understand this will replace all current settings"
 msgstr ""
 
-#: inc/admin-pages/class-settings-admin-page.php:703
+#: inc/admin-pages/class-settings-admin-page.php:719
 msgid "This action cannot be undone. Make sure you have a backup of your current settings."
 msgstr ""
 
-#: inc/admin-pages/class-settings-admin-page.php:711
+#: inc/admin-pages/class-settings-admin-page.php:727
 #: inc/class-settings.php:1636
 #: inc/class-settings.php:1649
 msgid "Import Settings"
 msgstr ""
 
-#: inc/admin-pages/class-settings-admin-page.php:791
+#: inc/admin-pages/class-settings-admin-page.php:807
 msgid "Something is wrong with the uploaded file."
 msgstr ""
 
-#: inc/admin-pages/class-settings-admin-page.php:842
+#: inc/admin-pages/class-settings-admin-page.php:858
 msgid "Settings successfully imported!"
 msgstr ""
 
@@ -4662,7 +4765,7 @@ msgid "WordPress Cron"
 msgstr ""
 
 #: inc/admin-pages/class-setup-wizard-admin-page.php:629
-#: inc/integrations/class-integration-registry.php:345
+#: inc/integrations/class-integration-registry.php:347
 msgid "Activated"
 msgstr ""
 
@@ -4911,9 +5014,9 @@ msgid "This name will be used as the site title."
 msgstr ""
 
 #: inc/admin-pages/class-site-edit-admin-page.php:677
-#: inc/ui/class-site-actions-element.php:472
-#: inc/ui/class-site-actions-element.php:575
-#: inc/ui/class-site-actions-element.php:576
+#: inc/ui/class-site-actions-element.php:477
+#: inc/ui/class-site-actions-element.php:580
+#: inc/ui/class-site-actions-element.php:581
 msgid "Delete Site"
 msgstr ""
 
@@ -4959,7 +5062,7 @@ msgstr ""
 #: inc/checkout/signup-fields/class-signup-field-site-title.php:69
 #: inc/models/class-checkout-form.php:590
 #: inc/models/class-checkout-form.php:682
-#: inc/models/class-checkout-form.php:1530
+#: inc/models/class-checkout-form.php:1590
 #: inc/ui/class-current-site-element.php:421
 msgid "Site Title"
 msgstr ""
@@ -5076,9 +5179,9 @@ msgstr ""
 #: inc/admin-pages/class-system-info-admin-page.php:414
 #: inc/admin-pages/class-system-info-admin-page.php:494
 #: inc/admin-pages/class-system-info-admin-page.php:499
-#: inc/list-tables/class-domain-list-table.php:105
-#: inc/list-tables/class-domain-list-table.php:118
-#: inc/list-tables/class-domain-list-table.php:131
+#: inc/list-tables/class-domain-list-table.php:115
+#: inc/list-tables/class-domain-list-table.php:128
+#: inc/list-tables/class-domain-list-table.php:141
 #: inc/list-tables/class-webhook-list-table.php:160
 msgid "Yes"
 msgstr ""
@@ -5088,9 +5191,9 @@ msgstr ""
 #: inc/admin-pages/class-system-info-admin-page.php:414
 #: inc/admin-pages/class-system-info-admin-page.php:494
 #: inc/admin-pages/class-system-info-admin-page.php:499
-#: inc/list-tables/class-domain-list-table.php:105
-#: inc/list-tables/class-domain-list-table.php:118
-#: inc/list-tables/class-domain-list-table.php:131
+#: inc/list-tables/class-domain-list-table.php:115
+#: inc/list-tables/class-domain-list-table.php:128
+#: inc/list-tables/class-domain-list-table.php:141
 #: inc/list-tables/class-webhook-list-table.php:160
 msgid "No"
 msgstr ""
@@ -5242,8 +5345,13 @@ msgstr ""
 
 #: inc/admin-pages/class-top-admin-nav-menu.php:143
 #: inc/admin-pages/class-top-admin-nav-menu.php:155
-#: inc/admin-pages/class-top-admin-nav-menu.php:218
+#: inc/admin-pages/class-top-admin-nav-menu.php:220
+#: inc/admin-pages/class-top-admin-nav-menu.php:248
 msgid "Go to the settings page"
+msgstr ""
+
+#: inc/admin-pages/class-top-admin-nav-menu.php:232
+msgid "Addon Settings"
 msgstr ""
 
 #: inc/admin-pages/class-view-logs-admin-page.php:103
@@ -5494,13 +5602,17 @@ msgstr ""
 msgid "A server error happened while processing this item."
 msgstr ""
 
-#: inc/admin-pages/customer-panel/class-account-admin-page.php:141
+#: inc/admin-pages/customer-panel/class-account-admin-page.php:142
+msgid "Your payment method was successfully updated."
+msgstr ""
+
+#: inc/admin-pages/customer-panel/class-account-admin-page.php:144
 msgid "Your account was successfully updated."
 msgstr ""
 
-#: inc/admin-pages/customer-panel/class-account-admin-page.php:200
-#: inc/admin-pages/customer-panel/class-account-admin-page.php:211
-#: inc/admin-pages/customer-panel/class-account-admin-page.php:222
+#: inc/admin-pages/customer-panel/class-account-admin-page.php:206
+#: inc/admin-pages/customer-panel/class-account-admin-page.php:217
+#: inc/admin-pages/customer-panel/class-account-admin-page.php:228
 msgid "Account"
 msgstr ""
 
@@ -5520,7 +5632,7 @@ msgstr ""
 #: inc/models/class-checkout-form.php:782
 #: inc/models/class-checkout-form.php:1001
 #: inc/models/class-checkout-form.php:1245
-#: inc/models/class-checkout-form.php:1441
+#: inc/models/class-checkout-form.php:1501
 #: inc/ui/class-checkout-element.php:112
 msgid "Checkout"
 msgstr ""
@@ -6932,39 +7044,39 @@ msgid "Filter by %s."
 msgstr ""
 
 #: inc/apis/trait-mcp-abilities.php:726
-#: inc/apis/trait-mcp-abilities.php:836
-#: inc/apis/trait-mcp-abilities.php:915
+#: inc/apis/trait-mcp-abilities.php:851
+#: inc/apis/trait-mcp-abilities.php:930
 msgid "ID is required"
 msgstr ""
 
 #. translators: %1$s: entity name, %2$d: ID
 #: inc/apis/trait-mcp-abilities.php:736
-#: inc/apis/trait-mcp-abilities.php:849
-#: inc/apis/trait-mcp-abilities.php:925
+#: inc/apis/trait-mcp-abilities.php:864
+#: inc/apis/trait-mcp-abilities.php:940
 #, php-format
 msgid "%1$s with ID %2$d not found."
 msgstr ""
 
 #. translators: %s: entity name
-#: inc/apis/trait-mcp-abilities.php:815
+#: inc/apis/trait-mcp-abilities.php:830
 #, php-format
 msgid "Failed to create %s. The save operation returned false without a specific error."
 msgstr ""
 
 #. translators: %1$s: entity name, %2$s: field names
-#: inc/apis/trait-mcp-abilities.php:875
+#: inc/apis/trait-mcp-abilities.php:890
 #, php-format
 msgid "Unknown fields for %1$s: %2$s. These fields do not have setter methods and were not applied."
 msgstr ""
 
 #. translators: %1$s: entity name, %2$d: ID
-#: inc/apis/trait-mcp-abilities.php:893
+#: inc/apis/trait-mcp-abilities.php:908
 #, php-format
 msgid "Failed to update %1$s with ID %2$d. The save operation returned false without a specific error."
 msgstr ""
 
 #. translators: %1$d: error count, %2$s: combined messages
-#: inc/apis/trait-mcp-abilities.php:975
+#: inc/apis/trait-mcp-abilities.php:990
 #, php-format
 msgid "Validation failed with %1$d error(s): %2$s"
 msgstr ""
@@ -7070,112 +7182,112 @@ msgid "The payment in question has an invalid status."
 msgstr ""
 
 #: inc/checkout/class-cart.php:800
-#: inc/gateways/class-base-stripe-gateway.php:773
+#: inc/gateways/class-base-stripe-gateway.php:811
 msgid "You are not allowed to modify this membership."
 msgstr ""
 
 #: inc/checkout/class-cart.php:832
-#: inc/checkout/class-cart.php:854
-#: inc/checkout/class-cart.php:976
+#: inc/checkout/class-cart.php:870
+#: inc/checkout/class-cart.php:1010
 msgid "This cart proposes no changes to the current membership."
 msgstr ""
 
 #. translators: %1$d: current number of posts, %2$s: post type name, %3$d: posts quota, %4$s: post type name, %5$d: number of posts to be deleted, %6$s: post type name.
-#: inc/checkout/class-cart.php:996
+#: inc/checkout/class-cart.php:1030
 #, php-format
 msgid "Your site currently has %1$d %2$s but the new plan is limited to %3$d %4$s. You must trash %5$d %6$s before you can downgrade your plan."
 msgstr ""
 
-#: inc/checkout/class-cart.php:1022
+#: inc/checkout/class-cart.php:1056
 msgid "This new plan does NOT support custom domains. You must remove all custom domains before you can downgrade your plan."
 msgstr ""
 
 #. translators: %1$d: current number of custom domains, %2$s: 'custom domain' or 'custom domains', %3$d: domain limit, %4$s: 'custom domain' or 'custom domains', %5$d: number of domains to be removed, %6$s: 'custom domain' or 'custom domains'.
-#: inc/checkout/class-cart.php:1030
+#: inc/checkout/class-cart.php:1064
 #, php-format
 msgid "Your site currently has %1$d %2$s but the new plan is limited to %3$d %4$s. You must remove %5$d %6$s before you can downgrade your plan."
 msgstr ""
 
-#: inc/checkout/class-cart.php:1032
-#: inc/checkout/class-cart.php:1034
-#: inc/checkout/class-cart.php:1036
+#: inc/checkout/class-cart.php:1066
+#: inc/checkout/class-cart.php:1068
+#: inc/checkout/class-cart.php:1070
 msgid "custom domains"
 msgstr ""
 
-#: inc/checkout/class-cart.php:1032
-#: inc/checkout/class-cart.php:1034
-#: inc/checkout/class-cart.php:1036
+#: inc/checkout/class-cart.php:1066
+#: inc/checkout/class-cart.php:1068
+#: inc/checkout/class-cart.php:1070
 msgid "custom domain"
 msgstr ""
 
 #. Translators: Placeholder receives the recurring period description
-#: inc/checkout/class-cart.php:1110
+#: inc/checkout/class-cart.php:1144
 #, php-format
 msgid "You already have an active %s agreement."
 msgstr ""
 
-#: inc/checkout/class-cart.php:1131
+#: inc/checkout/class-cart.php:1165
 msgid "Scheduled Swap Credit"
 msgstr ""
 
-#: inc/checkout/class-cart.php:1132
+#: inc/checkout/class-cart.php:1166
 msgid "Swap scheduled to next billing cycle."
 msgstr ""
 
-#: inc/checkout/class-cart.php:1333
+#: inc/checkout/class-cart.php:1367
 msgid "Prorated amount based on the previous membership."
 msgstr ""
 
 #. translators: %s is the coupon code being used, all-caps. e.g. PROMO10OFF
-#: inc/checkout/class-cart.php:1369
+#: inc/checkout/class-cart.php:1403
 #, php-format
 msgid "The code %s does not exist or is no longer valid."
 msgstr ""
 
 #. translators: two intervals
-#: inc/checkout/class-cart.php:1456
+#: inc/checkout/class-cart.php:1490
 #, php-format
 msgid "Interval %1$s and %2$s do not match."
 msgstr ""
 
-#: inc/checkout/class-cart.php:1640
+#: inc/checkout/class-cart.php:1674
 msgid "The product you are trying to add does not exist."
 msgstr ""
 
-#: inc/checkout/class-cart.php:1660
+#: inc/checkout/class-cart.php:1694
 msgid "The product you are trying to add does not exist for the selected duration."
 msgstr ""
 
-#: inc/checkout/class-cart.php:1675
+#: inc/checkout/class-cart.php:1709
 msgid "There's already a plan in this membership."
 msgstr ""
 
 #. translators: respectively, product name, duration, and duration unit.
-#: inc/checkout/class-cart.php:1742
+#: inc/checkout/class-cart.php:1780
 #, php-format
 msgid "%1$s does not have a valid price variation for that billing period (every %2$s %3$s(s)) and was not added to the cart."
 msgstr ""
 
 #. translators: %1$s is the product name, %2$s is the minimum amount formatted as currency
-#: inc/checkout/class-cart.php:1767
+#: inc/checkout/class-cart.php:1805
 #, php-format
 msgid "The amount for %1$s must be at least %2$s."
 msgstr ""
 
 #. translators: %1$s is the product name, %2$s is the maximum amount formatted as currency
-#: inc/checkout/class-cart.php:1790
+#: inc/checkout/class-cart.php:1828
 #, php-format
 msgid "The amount for %1$s cannot exceed %2$s."
 msgstr ""
 
 #. translators: placeholder is the product name.
-#: inc/checkout/class-cart.php:1887
+#: inc/checkout/class-cart.php:1925
 #, php-format
 msgid "Signup Fee for %s"
 msgstr ""
 
 #. translators: placeholder is the product name.
-#: inc/checkout/class-cart.php:1887
+#: inc/checkout/class-cart.php:1925
 #, php-format
 msgid "Signup Credit for %s"
 msgstr ""
@@ -7349,6 +7461,8 @@ msgid "Valid password"
 msgstr ""
 
 #: inc/checkout/class-checkout.php:2196
+#: views/emails/admin/payment-failed.php:36
+#: views/emails/customer/payment-failed.php:33
 msgid "Payment Gateway"
 msgstr ""
 
@@ -7403,8 +7517,8 @@ msgstr ""
 #: inc/checkout/class-legacy-checkout.php:423
 #: inc/checkout/signup-fields/class-signup-field-template-selection.php:142
 #: inc/models/class-checkout-form.php:902
-#: inc/models/class-checkout-form.php:1477
-#: inc/models/class-checkout-form.php:1494
+#: inc/models/class-checkout-form.php:1537
+#: inc/models/class-checkout-form.php:1554
 msgid "Template Selection"
 msgstr ""
 
@@ -7460,7 +7574,7 @@ msgstr ""
 #: inc/checkout/signup-fields/class-signup-field-site-url.php:66
 #: inc/models/class-checkout-form.php:600
 #: inc/models/class-checkout-form.php:692
-#: inc/models/class-checkout-form.php:1541
+#: inc/models/class-checkout-form.php:1601
 #: views/emails/admin/domain-created.php:79
 #: views/emails/admin/site-published.php:30
 msgid "Site URL"
@@ -8516,37 +8630,52 @@ msgstr ""
 msgid "Finish the Setup Wizard"
 msgstr ""
 
-#: inc/class-dashboard-widgets.php:192
+#: inc/class-dashboard-widgets.php:188
+msgid "Run Setup Wizard Again"
+msgstr ""
+
+#: inc/class-dashboard-widgets.php:193
 #: inc/models/class-checkout-form.php:619
 #: inc/models/class-checkout-form.php:768
 #: inc/models/class-checkout-form.php:1229
-#: inc/models/class-checkout-form.php:1423
+#: inc/models/class-checkout-form.php:1289
+#: inc/models/class-checkout-form.php:1483
+#: inc/ui/class-payment-methods-element.php:113
+#: inc/ui/class-payment-methods-element.php:147
 #: views/dashboard-widgets/billing-info.php:105
 #: views/invoice/template.php:177
 msgid "Payment Method"
 msgstr ""
 
-#: inc/class-dashboard-widgets.php:193
+#: inc/class-dashboard-widgets.php:194
 msgid "You will need to configure at least one payment gateway to be able to receive money from your customers."
 msgstr ""
 
-#: inc/class-dashboard-widgets.php:194
+#: inc/class-dashboard-widgets.php:195
 msgid "Add a Payment Method"
 msgstr ""
 
-#: inc/class-dashboard-widgets.php:205
+#: inc/class-dashboard-widgets.php:196
+msgid "Edit Payment Methods"
+msgstr ""
+
+#: inc/class-dashboard-widgets.php:207
 msgid "Your First Customer"
 msgstr ""
 
-#: inc/class-dashboard-widgets.php:206
+#: inc/class-dashboard-widgets.php:208
 msgid "Open the link below in an incognito tab and go through your newly created signup form."
 msgstr ""
 
-#: inc/class-dashboard-widgets.php:208
+#: inc/class-dashboard-widgets.php:210
 msgid "Create a test Account"
 msgstr ""
 
-#: inc/class-dashboard-widgets.php:287
+#: inc/class-dashboard-widgets.php:211
+msgid "Create another Account"
+msgstr ""
+
+#: inc/class-dashboard-widgets.php:290
 msgid "Forum Discussions"
 msgstr ""
 
@@ -8796,7 +8925,7 @@ msgid "Ultimate Multisite needs to be network active to run properly. You can \"
 msgstr ""
 
 #: inc/class-requirements.php:346
-#: inc/ui/class-checkout-element.php:521
+#: inc/ui/class-checkout-element.php:522
 msgid "here"
 msgstr ""
 
@@ -9537,6 +9666,7 @@ msgstr ""
 #: inc/integrations/providers/enhance/class-enhance-domain-mapping.php:46
 #: inc/integrations/providers/gridpane/class-gridpane-domain-mapping.php:46
 #: inc/integrations/providers/hestia/class-hestia-domain-mapping.php:38
+#: inc/integrations/providers/plesk/class-plesk-domain-mapping.php:49
 #: inc/integrations/providers/rocket/class-rocket-domain-mapping.php:47
 #: inc/integrations/providers/runcloud/class-runcloud-domain-mapping.php:46
 #: inc/integrations/providers/serverpilot/class-serverpilot-domain-mapping.php:49
@@ -9707,6 +9837,7 @@ msgstr ""
 
 #: inc/class-tracker.php:533
 #: inc/integrations/providers/enhance/class-enhance-integration.php:83
+#: inc/integrations/providers/plesk/class-plesk-integration.php:77
 msgid "Unknown error"
 msgstr ""
 
@@ -9824,6 +9955,12 @@ msgstr ""
 msgid "Replace all occurrences of the word \"Sites\" with a different word."
 msgstr ""
 
+#. translators: 1: addon name, 2: required version, 3: installed version
+#: inc/class-wp-ultimo.php:1206
+#, php-format
+msgid "%1$s requires Ultimate Multisite %2$s or higher. You are running %3$s. Please update Ultimate Multisite to avoid errors."
+msgstr ""
+
 #: inc/compat/class-auto-delete-users-compat.php:154
 msgid "Enable Auto Delete Users"
 msgstr ""
@@ -9848,7 +9985,7 @@ msgstr ""
 msgid "Add the user without sending an email that requires their confirmation"
 msgstr ""
 
-#: inc/compat/class-general-compat.php:251
+#: inc/compat/class-general-compat.php:262
 msgid "WP Typography \"Smart Quotes\" replacement is not compatible with Ultimate Multisite and will be automatically disabled."
 msgstr ""
 
@@ -9871,7 +10008,7 @@ msgstr ""
 #: inc/compat/class-legacy-shortcodes.php:372
 #: inc/list-tables/class-product-list-table.php:317
 #: inc/models/class-checkout-form.php:551
-#: inc/models/class-checkout-form.php:1380
+#: inc/models/class-checkout-form.php:1440
 msgid "Plans"
 msgstr ""
 
@@ -13707,105 +13844,105 @@ msgstr ""
 msgid "Regular Site"
 msgstr ""
 
-#: inc/debug/class-debug.php:74
-#: inc/debug/class-debug.php:77
+#: inc/debug/class-debug.php:76
+#: inc/debug/class-debug.php:79
 msgid "Pages"
 msgstr ""
 
-#: inc/debug/class-debug.php:83
-#: inc/debug/class-debug.php:86
+#: inc/debug/class-debug.php:85
+#: inc/debug/class-debug.php:88
 #: views/shortcodes/shortcodes.php:28
 #: views/shortcodes/shortcodes.php:31
 msgid "Generator"
 msgstr ""
 
-#: inc/debug/class-debug.php:92
-#: inc/debug/class-debug.php:95
+#: inc/debug/class-debug.php:94
+#: inc/debug/class-debug.php:97
 msgid "Reset Database"
 msgstr ""
 
-#: inc/debug/class-debug.php:101
-#: inc/debug/class-debug.php:104
+#: inc/debug/class-debug.php:103
+#: inc/debug/class-debug.php:106
 msgid "Drop Database"
 msgstr ""
 
-#: inc/debug/class-debug.php:162
+#: inc/debug/class-debug.php:164
 msgid "Toggle to generate customers."
 msgstr ""
 
-#: inc/debug/class-debug.php:169
+#: inc/debug/class-debug.php:171
 msgid "Number of Customers"
 msgstr ""
 
-#: inc/debug/class-debug.php:179
+#: inc/debug/class-debug.php:181
 msgid "Toggle to generate products."
 msgstr ""
 
-#: inc/debug/class-debug.php:186
+#: inc/debug/class-debug.php:188
 msgid "Number of Products"
 msgstr ""
 
-#: inc/debug/class-debug.php:196
+#: inc/debug/class-debug.php:198
 msgid "Toggle to generate memberships."
 msgstr ""
 
-#: inc/debug/class-debug.php:203
+#: inc/debug/class-debug.php:205
 msgid "Number of Memberships"
 msgstr ""
 
-#: inc/debug/class-debug.php:213
+#: inc/debug/class-debug.php:215
 msgid "Toggle to generate sites."
 msgstr ""
 
-#: inc/debug/class-debug.php:220
+#: inc/debug/class-debug.php:222
 msgid "Number of Sites"
 msgstr ""
 
-#: inc/debug/class-debug.php:230
+#: inc/debug/class-debug.php:232
 msgid "Toggle to generate domains."
 msgstr ""
 
-#: inc/debug/class-debug.php:237
+#: inc/debug/class-debug.php:239
 msgid "Number of Domains"
 msgstr ""
 
-#: inc/debug/class-debug.php:247
+#: inc/debug/class-debug.php:249
 msgid "Toggle to generate discount codes."
 msgstr ""
 
-#: inc/debug/class-debug.php:254
+#: inc/debug/class-debug.php:256
 msgid "Number of Discount Codes"
 msgstr ""
 
-#: inc/debug/class-debug.php:264
+#: inc/debug/class-debug.php:266
 msgid "Toggle to generate payments."
 msgstr ""
 
-#: inc/debug/class-debug.php:271
+#: inc/debug/class-debug.php:273
 msgid "Number of Payments"
 msgstr ""
 
-#: inc/debug/class-debug.php:280
+#: inc/debug/class-debug.php:282
 msgid "Generate Data &rarr;"
 msgstr ""
 
-#: inc/debug/class-debug.php:403
+#: inc/debug/class-debug.php:405
 msgid "Only reset generated data."
 msgstr ""
 
-#: inc/debug/class-debug.php:404
+#: inc/debug/class-debug.php:406
 msgid "Toggle this option to only remove data that was added by the generator previously. Untoggling this option will reset ALL data in Ultimate Multisite tables."
 msgstr ""
 
-#: inc/debug/class-debug.php:412
+#: inc/debug/class-debug.php:414
 msgid "Reset Database &rarr;"
 msgstr ""
 
-#: inc/debug/class-debug.php:489
+#: inc/debug/class-debug.php:491
 msgid "This action will drop the Ultimate Multisite database tables and is irreversable."
 msgstr ""
 
-#: inc/debug/class-debug.php:492
+#: inc/debug/class-debug.php:494
 msgid "Drop Database Tables &rarr;"
 msgstr ""
 
@@ -15361,180 +15498,184 @@ msgstr ""
 msgid "Use Ultimate Multisite default"
 msgstr ""
 
-#: inc/gateways/class-base-gateway.php:617
+#: inc/gateways/class-base-gateway.php:649
 msgid "The current payment integration will be cancelled."
 msgstr ""
 
-#: inc/gateways/class-base-gateway.php:620
+#: inc/gateways/class-base-gateway.php:652
 msgid "You will receive a new invoice on the next billing cycle."
 msgstr ""
 
-#: inc/gateways/class-base-gateway.php:622
+#: inc/gateways/class-base-gateway.php:654
 msgid "The customer will receive a new invoice on the next billing cycle."
 msgstr ""
 
-#: inc/gateways/class-base-gateway.php:628
+#: inc/gateways/class-base-gateway.php:660
 msgid "The current payment integration will be updated."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:425
+#: inc/gateways/class-base-stripe-gateway.php:150
+msgid "Stripe API key is not configured. Please add your Stripe API keys in the Ultimate Multisite settings."
+msgstr ""
+
+#: inc/gateways/class-base-stripe-gateway.php:435
 msgid "Could not reach the Stripe Connect service. Please check that your server can make outbound HTTPS requests and try again."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:433
+#: inc/gateways/class-base-stripe-gateway.php:443
 msgid "Unable to start the Stripe Connect authorization. Please try again or use direct API keys instead."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:564
+#: inc/gateways/class-base-stripe-gateway.php:574
 msgid "Could not reach the Stripe Connect service to complete authorization. Please check your server's outbound connectivity and try again."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:573
+#: inc/gateways/class-base-stripe-gateway.php:583
 msgid "Stripe Connect authorization was not accepted. The link may have expired — please try connecting again."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:581
+#: inc/gateways/class-base-stripe-gateway.php:591
 msgid "Received an unexpected response while completing Stripe Connect. Please try again or use direct API keys instead."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:737
-msgid "Change Payment Method"
-msgstr ""
-
-#: inc/gateways/class-base-stripe-gateway.php:850
+#: inc/gateways/class-base-stripe-gateway.php:897
 msgid "Manage your membership payment methods."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:883
+#: inc/gateways/class-base-stripe-gateway.php:920
+msgid "Stripe Error"
+msgstr ""
+
+#: inc/gateways/class-base-stripe-gateway.php:937
 #: inc/gateways/class-stripe-checkout-gateway.php:67
-#: inc/gateways/class-stripe-gateway.php:97
+#: inc/gateways/class-stripe-gateway.php:123
 msgid "Credit Card"
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:900
+#: inc/gateways/class-base-stripe-gateway.php:954
 msgid "Use Stripe Billing Portal"
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:1046
-#: inc/gateways/class-base-stripe-gateway.php:1070
+#: inc/gateways/class-base-stripe-gateway.php:1100
+#: inc/gateways/class-base-stripe-gateway.php:1124
 msgid "Invalid API Key provided"
 msgstr ""
 
 #. translators: %1$s: HTTP error code, %2$s: error message.
-#: inc/gateways/class-base-stripe-gateway.php:1175
+#: inc/gateways/class-base-stripe-gateway.php:1229
 #, php-format
 msgid "Failed to add stripe webhook: %1$s, %2$s"
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:1195
+#: inc/gateways/class-base-stripe-gateway.php:1249
 #: inc/gateways/class-paypal-gateway.php:345
 msgid "Error: No gateway subscription ID found for this membership."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:1279
+#: inc/gateways/class-base-stripe-gateway.php:1333
 msgid "Amount adjustment based on custom deal."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:1563
+#: inc/gateways/class-base-stripe-gateway.php:1617
 msgid "Invalid payment method"
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:1769
-#: inc/gateways/class-paypal-gateway.php:585
-#: inc/gateways/class-paypal-gateway.php:590
+#: inc/gateways/class-base-stripe-gateway.php:1825
+#: inc/gateways/class-paypal-gateway.php:586
+#: inc/gateways/class-paypal-gateway.php:591
 msgid "Account credit and other discounts"
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:2270
-#: inc/gateways/class-paypal-gateway.php:721
+#: inc/gateways/class-base-stripe-gateway.php:2346
+#: inc/gateways/class-paypal-gateway.php:722
 msgid "Gateway payment ID not found. Cannot process refund automatically."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:2289
+#: inc/gateways/class-base-stripe-gateway.php:2365
 msgid "Gateway payment ID not valid."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:2433
+#: inc/gateways/class-base-stripe-gateway.php:2508
 msgid "An unknown error has occurred."
 msgstr ""
 
 #. translators: 1 is the error code and 2 the message.
-#: inc/gateways/class-base-stripe-gateway.php:2456
+#: inc/gateways/class-base-stripe-gateway.php:2531
 #, php-format
 msgid "An error has occurred (code: %1$s; message: %2$s)."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:2498
+#: inc/gateways/class-base-stripe-gateway.php:2573
 msgid "Event ID not found."
 msgstr ""
 
 #. translators: %s is the customer ID.
-#: inc/gateways/class-base-stripe-gateway.php:2601
+#: inc/gateways/class-base-stripe-gateway.php:2676
 #, php-format
 msgid "Exiting Stripe webhook - This call must be handled by %s webhook"
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:2888
+#: inc/gateways/class-base-stripe-gateway.php:2963
 msgid "Duplicate payment."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:2901
+#: inc/gateways/class-base-stripe-gateway.php:2976
 msgid "Payment not found on refund webhook call."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:2907
+#: inc/gateways/class-base-stripe-gateway.php:2982
 msgid "Payment is not refundable."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:2958
+#: inc/gateways/class-base-stripe-gateway.php:3047
 msgid "Membership cancelled via Stripe webhook."
 msgstr ""
 
 #. translators: 1 is the card brand (e.g. VISA), and 2 is the last 4 digits.
-#: inc/gateways/class-base-stripe-gateway.php:2987
+#: inc/gateways/class-base-stripe-gateway.php:3076
 #, php-format
 msgid "%1$s ending in %2$s"
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:3017
+#: inc/gateways/class-base-stripe-gateway.php:3106
 msgid "Name on Card"
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:3164
+#: inc/gateways/class-base-stripe-gateway.php:3253
 msgid "Missing plan name or price."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:3185
+#: inc/gateways/class-base-stripe-gateway.php:3274
 msgid "Empty plan ID."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:3266
+#: inc/gateways/class-base-stripe-gateway.php:3354
 msgid "Missing product name."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:3278
+#: inc/gateways/class-base-stripe-gateway.php:3366
 msgid "Empty product ID."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:3561
+#: inc/gateways/class-base-stripe-gateway.php:3649
 msgid "Payment already completed."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:3570
+#: inc/gateways/class-base-stripe-gateway.php:3658
 msgid "Payment is not in pending status."
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:3581
+#: inc/gateways/class-base-stripe-gateway.php:3669
 msgid "No Stripe payment intent found for this payment."
 msgstr ""
 
 #. translators: %s is the intent status from Stripe.
-#: inc/gateways/class-base-stripe-gateway.php:3604
+#: inc/gateways/class-base-stripe-gateway.php:3692
 #, php-format
 msgid "Payment intent status is: %s"
 msgstr ""
 
-#: inc/gateways/class-base-stripe-gateway.php:3632
+#: inc/gateways/class-base-stripe-gateway.php:3720
 msgid "Payment verified and completed successfully."
 msgstr ""
 
@@ -15669,122 +15810,122 @@ msgid "PayPal Error:"
 msgstr ""
 
 #. translators: %1$s is the date it will end
-#: inc/gateways/class-paypal-gateway.php:508
+#: inc/gateways/class-paypal-gateway.php:509
 #: views/checkout/paypal/confirm.php:19
 #, php-format
 msgid "Your trial period will end on %1$s."
 msgstr ""
 
 #. translators: $1$s the date membership will start, $2$s amount to be billed.
-#: inc/gateways/class-paypal-gateway.php:527
+#: inc/gateways/class-paypal-gateway.php:528
 #, php-format
 msgid "Your updated membership will start on $1$s, from that date you will be billed %2$s every month."
 msgstr ""
 
 #. translators: $1$s the date membership will start, $2$s amount to be billed, %3$s the description of how often.
-#: inc/gateways/class-paypal-gateway.php:531
+#: inc/gateways/class-paypal-gateway.php:532
 #: views/checkout/paypal/confirm.php:44
 #, php-format
 msgid "Your updated membership will start on %1$s, from that date you will be billed %2$s %3$s."
 msgstr ""
 
 #. translators: $1$s amount to be billed, $2$s how often
-#: inc/gateways/class-paypal-gateway.php:535
+#: inc/gateways/class-paypal-gateway.php:536
 #, php-format
 msgid "After the first payment you will be billed %1$s %2$s."
 msgstr ""
 
 #. translators: $1$s amount to be billed, $2$s how often
-#: inc/gateways/class-paypal-gateway.php:538
+#: inc/gateways/class-paypal-gateway.php:539
 #: views/checkout/paypal/confirm.php:52
 #, php-format
 msgid "After this payment you will be billed %1$s %2$s."
 msgstr ""
 
 #. translators: $1$s amount to be billed, $2$s how often
-#: inc/gateways/class-paypal-gateway.php:542
+#: inc/gateways/class-paypal-gateway.php:543
 #: views/checkout/paypal/confirm.php:59
 #, php-format
 msgid "From that date, you will be billed %1$s %2$s."
 msgstr ""
 
 #. translators: $1$s how often
-#: inc/gateways/class-paypal-gateway.php:545
+#: inc/gateways/class-paypal-gateway.php:546
 #: views/checkout/paypal/confirm.php:62
 #, php-format
 msgid "After this payment you will be billed %1$s."
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:661
-#: inc/gateways/class-paypal-gateway.php:1389
-#: inc/gateways/class-paypal-gateway.php:1542
+#: inc/gateways/class-paypal-gateway.php:662
+#: inc/gateways/class-paypal-gateway.php:1420
+#: inc/gateways/class-paypal-gateway.php:1573
 msgid "Something has gone wrong, please try again"
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:783
+#: inc/gateways/class-paypal-gateway.php:784
 #: inc/list-tables/class-base-list-table.php:674
 #: inc/managers/class-form-manager.php:499
 #: inc/ui/class-billing-info-element.php:383
 #: inc/ui/class-current-site-element.php:487
-#: inc/ui/class-site-actions-element.php:725
-#: inc/ui/class-site-actions-element.php:841
+#: inc/ui/class-site-actions-element.php:730
+#: inc/ui/class-site-actions-element.php:846
 msgid "Something went wrong."
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:798
+#: inc/gateways/class-paypal-gateway.php:799
 msgid "You will be redirected to PayPal to complete the purchase."
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:834
+#: inc/gateways/class-paypal-gateway.php:835
 msgid "PayPal token no longer valid."
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:848
+#: inc/gateways/class-paypal-gateway.php:849
 msgid "Pending payment does not exist."
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:860
+#: inc/gateways/class-paypal-gateway.php:861
 msgid "Original cart does not exist."
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:872
+#: inc/gateways/class-paypal-gateway.php:873
 msgid "Missing membership or customer data."
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:960
+#: inc/gateways/class-paypal-gateway.php:961
 msgid "Exiting PayPal Express IPN - membership ID not found."
 msgstr ""
 
 #. translators: %s: Transaction ID
-#: inc/gateways/class-paypal-gateway.php:1079
+#: inc/gateways/class-paypal-gateway.php:1080
 #, php-format
 msgid "Transaction ID %s failed in PayPal."
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:1085
+#: inc/gateways/class-paypal-gateway.php:1102
 msgid "unknown"
 msgstr ""
 
 #. translators: %1$s: Transaction ID, %2$s: Pending reason
-#: inc/gateways/class-paypal-gateway.php:1087
+#: inc/gateways/class-paypal-gateway.php:1104
 #, php-format
 msgid "Transaction ID %1$s is pending in PayPal for reason: %2$s"
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:1131
+#: inc/gateways/class-paypal-gateway.php:1148
 msgid "Initial payment failed in PayPal Express."
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:1133
+#: inc/gateways/class-paypal-gateway.php:1150
 msgid "Initial payment failed."
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:1146
+#: inc/gateways/class-paypal-gateway.php:1163
 msgid "Membership cancelled via PayPal Express IPN."
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:1390
-#: inc/gateways/class-paypal-gateway.php:1543
+#: inc/gateways/class-paypal-gateway.php:1421
+#: inc/gateways/class-paypal-gateway.php:1574
 #: inc/managers/class-gateway-manager.php:299
 #: inc/managers/class-gateway-manager.php:328
 #: inc/managers/class-gateway-manager.php:338
@@ -15792,12 +15933,12 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: inc/gateways/class-paypal-gateway.php:1565
+#: inc/gateways/class-paypal-gateway.php:1596
 msgid "Invalid response code from PayPal"
 msgstr ""
 
 #. translators: %s is the paypal error message.
-#: inc/gateways/class-paypal-gateway.php:1568
+#: inc/gateways/class-paypal-gateway.php:1599
 #, php-format
 msgid "An unexpected PayPal error occurred. Error message: %s."
 msgstr ""
@@ -15812,12 +15953,12 @@ msgid "Use the settings section below to configure Stripe Checkout as a payment 
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:64
-#: inc/gateways/class-stripe-gateway.php:94
+#: inc/gateways/class-stripe-gateway.php:120
 msgid "Stripe Public Name"
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:65
-#: inc/gateways/class-stripe-gateway.php:95
+#: inc/gateways/class-stripe-gateway.php:121
 msgid "The name to display on the payment method selection field. By default, \"Credit Card\" is used."
 msgstr ""
 
@@ -15826,186 +15967,190 @@ msgid "Stripe Checkout Sandbox Mode"
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:79
-#: inc/gateways/class-stripe-gateway.php:109
+#: inc/gateways/class-stripe-gateway.php:135
 msgid "Toggle this to put Stripe on sandbox mode. This is useful for testing and making sure Stripe is correctly setup to handle your payments."
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:97
-#: inc/gateways/class-stripe-gateway.php:175
+#: inc/gateways/class-stripe-gateway.php:201
 msgid "Stripe Test Publishable Key"
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:99
 #: inc/gateways/class-stripe-checkout-gateway.php:119
-#: inc/gateways/class-stripe-gateway.php:177
-#: inc/gateways/class-stripe-gateway.php:198
+#: inc/gateways/class-stripe-gateway.php:203
+#: inc/gateways/class-stripe-gateway.php:224
 msgid "Make sure you are placing the TEST keys, not the live ones."
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:100
-#: inc/gateways/class-stripe-gateway.php:178
+#: inc/gateways/class-stripe-gateway.php:204
 msgid "pk_test_***********"
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:117
-#: inc/gateways/class-stripe-gateway.php:196
+#: inc/gateways/class-stripe-gateway.php:222
 msgid "Stripe Test Secret Key"
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:120
-#: inc/gateways/class-stripe-gateway.php:199
+#: inc/gateways/class-stripe-gateway.php:225
 msgid "sk_test_***********"
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:137
-#: inc/gateways/class-stripe-gateway.php:217
+#: inc/gateways/class-stripe-gateway.php:243
 msgid "Stripe Live Publishable Key"
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:139
 #: inc/gateways/class-stripe-checkout-gateway.php:159
-#: inc/gateways/class-stripe-gateway.php:219
-#: inc/gateways/class-stripe-gateway.php:240
+#: inc/gateways/class-stripe-gateway.php:245
+#: inc/gateways/class-stripe-gateway.php:266
 msgid "Make sure you are placing the LIVE keys, not the test ones."
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:140
-#: inc/gateways/class-stripe-gateway.php:220
+#: inc/gateways/class-stripe-gateway.php:246
 msgid "pk_live_***********"
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:157
-#: inc/gateways/class-stripe-gateway.php:238
+#: inc/gateways/class-stripe-gateway.php:264
 msgid "Stripe Live Secret Key"
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:160
-#: inc/gateways/class-stripe-gateway.php:241
+#: inc/gateways/class-stripe-gateway.php:267
 msgid "sk_live_***********"
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:171
-#: inc/gateways/class-stripe-gateway.php:253
+#: inc/gateways/class-stripe-gateway.php:279
 msgid "Whenever you change your Stripe settings, Ultimate Multisite will automatically check the webhook URLs on your Stripe account to make sure we get notified about changes in subscriptions and payments."
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:177
-#: inc/gateways/class-stripe-gateway.php:259
+#: inc/gateways/class-stripe-gateway.php:285
 msgid "Webhook Listener URL"
 msgstr ""
 
 #: inc/gateways/class-stripe-checkout-gateway.php:179
-#: inc/gateways/class-stripe-gateway.php:261
+#: inc/gateways/class-stripe-gateway.php:287
 msgid "This is the URL Stripe should send webhook calls to."
 msgstr ""
 
-#: inc/gateways/class-stripe-checkout-gateway.php:406
+#: inc/gateways/class-stripe-checkout-gateway.php:378
+msgid "No payable items for Stripe Checkout. The order total may be zero."
+msgstr ""
+
+#: inc/gateways/class-stripe-checkout-gateway.php:447
 msgid "You will be redirected to a checkout to complete the purchase."
 msgstr ""
 
-#: inc/gateways/class-stripe-checkout-gateway.php:428
-#: inc/gateways/class-stripe-gateway.php:778
+#: inc/gateways/class-stripe-checkout-gateway.php:469
+#: inc/gateways/class-stripe-gateway.php:804
 msgid "Saved Cards"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:80
+#: inc/gateways/class-stripe-gateway.php:106
 #: inc/list-tables/class-payment-list-table.php:240
 msgid "Stripe"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:81
+#: inc/gateways/class-stripe-gateway.php:107
 msgid "Use the settings section below to configure Stripe as a payment method."
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:108
+#: inc/gateways/class-stripe-gateway.php:134
 msgid "Stripe Sandbox Mode"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:126
+#: inc/gateways/class-stripe-gateway.php:152
 msgid "Stripe Authentication"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:127
+#: inc/gateways/class-stripe-gateway.php:153
 msgid "Choose how to authenticate with Stripe. OAuth is recommended for easier setup and platform fees."
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:141
+#: inc/gateways/class-stripe-gateway.php:167
 msgid "Stripe Connect (Recommended)"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:142
+#: inc/gateways/class-stripe-gateway.php:168
 msgid "Connect your Stripe account securely with one click. This provides easier setup and automatic configuration."
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:156
+#: inc/gateways/class-stripe-gateway.php:182
 msgid "Use Direct API Keys (Advanced)"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:157
+#: inc/gateways/class-stripe-gateway.php:183
 msgid "Toggle to manually enter API keys instead of using OAuth. Use this for backwards compatibility or advanced configurations."
 msgstr ""
 
 #. translators: %s is the error message.
-#: inc/gateways/class-stripe-gateway.php:316
+#: inc/gateways/class-stripe-gateway.php:342
 #, php-format
 msgid "Error creating Stripe customer: %s"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:570
+#: inc/gateways/class-stripe-gateway.php:596
 msgid "Missing Stripe payment intent, please try again or contact support if the issue persists."
 msgstr ""
 
 #. translators: first is the customer id, then the customer email.
-#: inc/gateways/class-stripe-gateway.php:605
+#: inc/gateways/class-stripe-gateway.php:631
 #, php-format
 msgid "Customer ID: %1$d - User Email: %2$s"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:711
+#: inc/gateways/class-stripe-gateway.php:737
 msgid "Add new card"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:716
+#: inc/gateways/class-stripe-gateway.php:742
 msgid "Saved Payment Methods"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:878
+#: inc/gateways/class-stripe-gateway.php:904
 msgid "Connected via Stripe Connect"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:879
+#: inc/gateways/class-stripe-gateway.php:905
 msgid "Account ID:"
 msgstr ""
 
 #. translators: %1$s: the current user display name, %2$s: their password.
-#: inc/gateways/class-stripe-gateway.php:882
+#: inc/gateways/class-stripe-gateway.php:908
 #: views/base/addons.php:69
 msgid "Disconnect"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:904
+#: inc/gateways/class-stripe-gateway.php:930
 msgid "Connect your Stripe account with one click."
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:906
+#: inc/gateways/class-stripe-gateway.php:931
 msgid "Connect with Stripe"
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:907
+#: inc/gateways/class-stripe-gateway.php:932
 msgid "You will be redirected to Stripe to securely authorize the connection."
 msgstr ""
 
 #. translators: %s: the fee percentage
-#: inc/gateways/class-stripe-gateway.php:920
+#: inc/gateways/class-stripe-gateway.php:945
 #, php-format
 msgid "There is a %s%% fee per-transaction to use the Stripe integration included in the free Ultimate Multisite plugin."
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:925
+#: inc/gateways/class-stripe-gateway.php:950
 msgid "Remove this fee by purchasing any addon and connecting your store."
 msgstr ""
 
-#: inc/gateways/class-stripe-gateway.php:930
+#: inc/gateways/class-stripe-gateway.php:955
 msgid "No application fee — thank you for your support!"
 msgstr ""
 
@@ -16080,7 +16225,7 @@ msgstr ""
 msgid "An attempt to create a new site failed."
 msgstr ""
 
-#: inc/helpers/class-site-duplicator.php:300
+#: inc/helpers/class-site-duplicator.php:306
 msgid "We were not able to create a new admin user for the site being duplicated."
 msgstr ""
 
@@ -16526,7 +16671,7 @@ msgid "Network configuration not found. Please go back and submit the configurat
 msgstr ""
 
 #. translators: %s full error message.
-#: inc/installers/class-multisite-network-installer.php:266
+#: inc/installers/class-multisite-network-installer.php:279
 #, php-format
 msgid "Failed to network-activate Ultimate Multisite: %s"
 msgstr ""
@@ -16576,35 +16721,35 @@ msgid "Plugin not found."
 msgstr ""
 
 #. translators: %s is the name of a host provider (e.g. Cloudways, WPMUDev, Closte...).
-#: inc/integrations/class-integration-registry.php:358
+#: inc/integrations/class-integration-registry.php:360
 #, php-format
 msgid "%s Integration"
 msgstr ""
 
-#: inc/integrations/class-integration-registry.php:362
+#: inc/integrations/class-integration-registry.php:364
 msgid "Go to the setup wizard to setup this integration."
 msgstr ""
 
 #. translators: %1$s will be replaced with the integration title. E.g. RunCloud
-#: inc/integrations/class-integration-registry.php:394
+#: inc/integrations/class-integration-registry.php:396
 #, php-format
 msgid "It looks like you are using %1$s as your hosting provider, yet the %1$s integration module is not active. In order for the domain mapping integration to work with %1$s, you might want to activate that module."
 msgstr ""
 
 #. translators: %s is the integration name.
-#: inc/integrations/class-integration-registry.php:399
+#: inc/integrations/class-integration-registry.php:401
 #, php-format
 msgid "Activate %s"
 msgstr ""
 
 #. translators: %s is the integration name.
-#: inc/integrations/class-integration-registry.php:412
+#: inc/integrations/class-integration-registry.php:414
 #, php-format
 msgid "The %s integration module is active but not properly configured. Please complete the setup."
 msgstr ""
 
 #. translators: %s is the integration name.
-#: inc/integrations/class-integration-registry.php:417
+#: inc/integrations/class-integration-registry.php:419
 #, php-format
 msgid "Setup %s"
 msgstr ""
@@ -16726,49 +16871,49 @@ msgstr ""
 msgid "e.g. eYP0Jo3Fzzm5SOZCi5nLR0Mki2lbYZ"
 msgstr ""
 
-#: inc/integrations/providers/cloudways/class-cloudways-integration.php:90
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:94
 msgid "Cloudways Server ID"
 msgstr ""
 
-#: inc/integrations/providers/cloudways/class-cloudways-integration.php:91
-#: inc/integrations/providers/runcloud/class-runcloud-integration.php:82
-msgid "The Server ID retrieved in the previous step."
-msgstr ""
-
-#: inc/integrations/providers/cloudways/class-cloudways-integration.php:92
-#: inc/integrations/providers/runcloud/class-runcloud-integration.php:83
-msgid "e.g. 11667"
-msgstr ""
-
 #: inc/integrations/providers/cloudways/class-cloudways-integration.php:95
-msgid "Cloudways App ID"
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:86
+msgid "The Server ID retrieved in the previous step."
 msgstr ""
 
 #: inc/integrations/providers/cloudways/class-cloudways-integration.php:96
 #: inc/integrations/providers/runcloud/class-runcloud-integration.php:87
-#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:89
-msgid "The App ID retrieved in the previous step."
+msgid "e.g. 11667"
 msgstr ""
 
-#: inc/integrations/providers/cloudways/class-cloudways-integration.php:97
-#: inc/integrations/providers/runcloud/class-runcloud-integration.php:88
-#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:90
-msgid "e.g. 940288"
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:99
+msgid "Cloudways App ID"
 msgstr ""
 
 #: inc/integrations/providers/cloudways/class-cloudways-integration.php:100
-msgid "Cloudways Extra Domains"
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:91
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:93
+msgid "The App ID retrieved in the previous step."
 msgstr ""
 
 #: inc/integrations/providers/cloudways/class-cloudways-integration.php:101
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:92
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:94
+msgid "e.g. 940288"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:104
+msgid "Cloudways Extra Domains"
+msgstr ""
+
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:105
 msgid "The Cloudways API is a bit strange in that it doesn't offer a way to add or remove just one domain, only a way to update the whole domain list. That means that Ultimate Multisite will replace all domains you might have there with the list of mapped domains of the network every time a new domain is added."
 msgstr ""
 
-#: inc/integrations/providers/cloudways/class-cloudways-integration.php:102
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:106
 msgid "Comma-separated list of additional domains to add to Cloudways."
 msgstr ""
 
-#: inc/integrations/providers/cloudways/class-cloudways-integration.php:103
+#: inc/integrations/providers/cloudways/class-cloudways-integration.php:107
 msgid "e.g. *.test.com, test.com"
 msgstr ""
 
@@ -16814,63 +16959,63 @@ msgstr ""
 msgid "e.g. username"
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:100
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:103
 msgid "cPanel API Token (Recommended)"
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:101
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:104
 msgid "Create in cPanel → Security → Manage API Tokens. More secure than password authentication."
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:102
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:105
 msgid "e.g. U7HMR63FHY282DQZ4H5BIH16JLYSO01M"
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:106
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:112
 msgid "cPanel Password (Alternative)"
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:107
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:113
 msgid "Only required if not using an API token above. If you use SSO to access cPanel, you may need to request direct credentials from your host."
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:108
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:114
 msgid "password"
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:111
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:117
 msgid "cPanel Host"
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:112
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:118
 msgid "Your server hostname, typically your domain or a server address like server123.hostingprovider.com."
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:113
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:119
 msgid "e.g. yourdomain.com"
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:116
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:122
 msgid "cPanel Port"
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:117
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:123
 msgid "The cPanel port. Standard is 2083 for HTTPS connections."
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:118
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:124
 msgid "Defaults to 2083"
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:122
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:128
 msgid "Root Directory"
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:123
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:129
 msgid "The web root directory where your WordPress installation is located."
 msgstr ""
 
-#: inc/integrations/providers/cpanel/class-cpanel-integration.php:124
+#: inc/integrations/providers/cpanel/class-cpanel-integration.php:130
 msgid "Defaults to /public_html"
 msgstr ""
 
@@ -16993,74 +17138,178 @@ msgid "Hestia user for API calls (often admin)"
 msgstr ""
 
 #: inc/integrations/providers/hestia/class-hestia-integration.php:86
-#: inc/integrations/providers/hestia/class-hestia-integration.php:102
+#: inc/integrations/providers/hestia/class-hestia-integration.php:105
+#: inc/integrations/providers/plesk/class-plesk-integration.php:109
 msgid "e.g. admin"
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:90
+#: inc/integrations/providers/hestia/class-hestia-integration.php:93
 msgid "Hestia API Password"
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:91
+#: inc/integrations/providers/hestia/class-hestia-integration.php:94
 msgid "Optional if using API hash authentication."
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:92
+#: inc/integrations/providers/hestia/class-hestia-integration.php:95
 msgid "••••••••"
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:95
+#: inc/integrations/providers/hestia/class-hestia-integration.php:98
 msgid "Hestia API Hash (Token)"
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:96
+#: inc/integrations/providers/hestia/class-hestia-integration.php:99
 msgid "Optional: API hash/token alternative to password. Provide either this OR a password."
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:97
+#: inc/integrations/providers/hestia/class-hestia-integration.php:100
 msgid "e.g. 1a2b3c4d..."
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:100
+#: inc/integrations/providers/hestia/class-hestia-integration.php:103
 msgid "Hestia Account (Owner)"
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:101
+#: inc/integrations/providers/hestia/class-hestia-integration.php:104
 msgid "The Hestia user that owns the web domain (first argument to v-add-web-domain-alias)."
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:105
+#: inc/integrations/providers/hestia/class-hestia-integration.php:108
 msgid "Base Web Domain"
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:106
+#: inc/integrations/providers/hestia/class-hestia-integration.php:109
 msgid "Existing Hestia web domain that your WordPress is served from. Aliases will be attached to this."
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:107
+#: inc/integrations/providers/hestia/class-hestia-integration.php:110
+#: inc/integrations/providers/plesk/class-plesk-integration.php:121
 msgid "e.g. network.example.com"
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:110
+#: inc/integrations/providers/hestia/class-hestia-integration.php:113
 msgid "Restart Web Service"
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:111
+#: inc/integrations/providers/hestia/class-hestia-integration.php:114
 msgid "Whether to restart/reload services after alias changes (yes/no). Defaults to yes."
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:112
+#: inc/integrations/providers/hestia/class-hestia-integration.php:115
 msgid "yes"
 msgstr ""
 
-#: inc/integrations/providers/hestia/class-hestia-integration.php:132
+#: inc/integrations/providers/hestia/class-hestia-integration.php:135
 msgid "Missing WU_HESTIA_API_URL"
 msgstr ""
 
 #. translators: %1$d: HTTP status code, %2$s: Response body
-#: inc/integrations/providers/hestia/class-hestia-integration.php:186
+#: inc/integrations/providers/hestia/class-hestia-integration.php:189
 #, php-format
 msgid "HTTP %1$d from Hestia API: %2$s"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-domain-mapping.php:59
+msgid "Add domain aliases in Plesk whenever a new domain mapping gets created on your network"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-domain-mapping.php:60
+msgid "SSL certificates will be automatically provisioned if Plesk SSL It! or Let's Encrypt extension is active"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-domain-mapping.php:66
+msgid "Add subdomains in Plesk whenever a new site gets created on your network"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-domain-mapping.php:111
+msgid "Missing WU_PLESK_DOMAIN; cannot add alias."
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-domain-mapping.php:203
+msgid "Missing WU_PLESK_DOMAIN; cannot add subdomain."
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:35
+msgid "Integrates with Plesk to add and remove domain aliases automatically when domains are mapped or removed."
+msgstr ""
+
+#. translators: %s is the error message from the API
+#: inc/integrations/providers/plesk/class-plesk-integration.php:76
+#, php-format
+msgid "Failed to connect to Plesk API: %s"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:89
+msgid "Plesk Host"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:90
+msgid "The hostname or IP address of your Plesk server (e.g., server.example.com). Do not include the port or protocol."
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:91
+msgid "e.g. server.example.com"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:94
+msgid "Plesk Port"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:95
+msgid "The port Plesk listens on. Defaults to 8443 if not set."
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:96
+msgid "8443"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:102
+msgid "Plesk API Key"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:103
+msgid "Generate an API key in Plesk under Tools &amp; Settings &rarr; API. Optional if using username/password authentication."
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:104
+msgid "Your API key"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:107
+msgid "Plesk Username"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:108
+msgid "Plesk admin username. Only required if authenticating with a password instead of an API key."
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:114
+msgid "Plesk Password"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:115
+msgid "Plesk admin password. Optional if using API key authentication."
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:116
+msgid "Your password"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:119
+msgid "Base Domain"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:120
+msgid "The domain in Plesk that your WordPress multisite is served from. Aliases will be attached to this domain."
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:145
+msgid "Missing WU_PLESK_HOST"
+msgstr ""
+
+#: inc/integrations/providers/plesk/class-plesk-integration.php:170
+msgid "Missing Plesk authentication credentials"
 msgstr ""
 
 #: inc/integrations/providers/rocket/class-rocket-integration.php:35
@@ -17099,19 +17348,19 @@ msgstr ""
 msgid "Enter your password"
 msgstr ""
 
-#: inc/integrations/providers/rocket/class-rocket-integration.php:97
+#: inc/integrations/providers/rocket/class-rocket-integration.php:100
 msgid "Rocket.net Site ID"
 msgstr ""
 
-#: inc/integrations/providers/rocket/class-rocket-integration.php:98
+#: inc/integrations/providers/rocket/class-rocket-integration.php:101
 msgid "The Site ID from your Rocket.net control panel."
 msgstr ""
 
-#: inc/integrations/providers/rocket/class-rocket-integration.php:99
+#: inc/integrations/providers/rocket/class-rocket-integration.php:102
 msgid "e.g. 12345"
 msgstr ""
 
-#: inc/integrations/providers/rocket/class-rocket-integration.php:203
+#: inc/integrations/providers/rocket/class-rocket-integration.php:206
 msgid "Failed to authenticate with Rocket.net API"
 msgstr ""
 
@@ -17135,11 +17384,11 @@ msgstr ""
 msgid "e.g. your-api-token-here"
 msgstr ""
 
-#: inc/integrations/providers/runcloud/class-runcloud-integration.php:81
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:85
 msgid "RunCloud Server ID"
 msgstr ""
 
-#: inc/integrations/providers/runcloud/class-runcloud-integration.php:86
+#: inc/integrations/providers/runcloud/class-runcloud-integration.php:90
 msgid "RunCloud App ID"
 msgstr ""
 
@@ -17173,7 +17422,7 @@ msgstr ""
 msgid "ServerPilot API Key"
 msgstr ""
 
-#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:88
+#: inc/integrations/providers/serverpilot/class-serverpilot-integration.php:92
 msgid "ServerPilot App ID"
 msgstr ""
 
@@ -17414,7 +17663,7 @@ msgstr ""
 #: inc/list-tables/class-checkout-form-list-table.php:68
 #: inc/list-tables/class-customer-list-table.php:155
 #: inc/list-tables/class-discount-code-list-table.php:67
-#: inc/list-tables/class-domain-list-table.php:88
+#: inc/list-tables/class-domain-list-table.php:98
 #: inc/list-tables/class-email-list-table.php:113
 #: inc/list-tables/class-line-item-list-table.php:102
 #: inc/list-tables/class-membership-list-table-widget.php:129
@@ -17444,7 +17693,7 @@ msgstr ""
 #: inc/list-tables/class-broadcast-list-table.php:422
 #: inc/list-tables/class-checkout-form-list-table.php:201
 #: inc/list-tables/class-customer-list-table.php:245
-#: inc/list-tables/class-domain-list-table.php:167
+#: inc/list-tables/class-domain-list-table.php:177
 #: inc/list-tables/class-email-list-table.php:201
 #: inc/list-tables/class-event-list-table.php:215
 #: inc/list-tables/class-membership-list-table.php:187
@@ -17455,6 +17704,8 @@ msgstr ""
 #: views/emails/admin/domain-created.php:24
 #: views/emails/admin/domain-created.php:73
 #: views/emails/admin/domain-created.php:116
+#: views/emails/admin/membership-expired.php:24
+#: views/emails/admin/payment-failed.php:24
 #: views/emails/admin/payment-received.php:48
 #: views/emails/admin/payment-received.php:101
 #: views/emails/admin/payment-received.php:143
@@ -17689,8 +17940,8 @@ msgid "No Limits"
 msgstr ""
 
 #: inc/list-tables/class-discount-code-list-table.php:173
-#: inc/list-tables/class-domain-list-table.php:189
-#: views/dashboard-widgets/domain-mapping.php:62
+#: inc/list-tables/class-domain-list-table.php:199
+#: views/dashboard-widgets/domain-mapping.php:73
 msgid "Inactive"
 msgstr ""
 
@@ -17707,33 +17958,33 @@ msgstr ""
 msgid "Dates"
 msgstr ""
 
-#: inc/list-tables/class-domain-list-table.php:165
+#: inc/list-tables/class-domain-list-table.php:175
 #: inc/list-tables/class-sites-domain-list-table.php:63
-#: views/dashboard-widgets/domain-mapping.php:103
+#: views/dashboard-widgets/domain-mapping.php:119
 #: views/dashboard-widgets/my-sites.php:73
 #: views/emails/admin/domain-created.php:42
 msgid "Primary"
 msgstr ""
 
-#: inc/list-tables/class-domain-list-table.php:166
-#: inc/list-tables/class-domain-list-table.php:209
-#: inc/list-tables/class-domain-list-table.php:212
+#: inc/list-tables/class-domain-list-table.php:176
+#: inc/list-tables/class-domain-list-table.php:219
+#: inc/list-tables/class-domain-list-table.php:222
 msgid "HTTPS"
 msgstr ""
 
-#: inc/list-tables/class-domain-list-table.php:198
+#: inc/list-tables/class-domain-list-table.php:208
 msgid "Is Primary"
 msgstr ""
 
-#: inc/list-tables/class-domain-list-table.php:200
+#: inc/list-tables/class-domain-list-table.php:210
 msgid "Not Primary Domain"
 msgstr ""
 
-#: inc/list-tables/class-domain-list-table.php:211
+#: inc/list-tables/class-domain-list-table.php:221
 msgid "Non-HTTPS"
 msgstr ""
 
-#: inc/list-tables/class-domain-list-table.php:220
+#: inc/list-tables/class-domain-list-table.php:230
 msgid "Verification Stage"
 msgstr ""
 
@@ -17950,16 +18201,23 @@ msgstr ""
 #: inc/list-tables/class-membership-list-table.php:175
 #: inc/list-tables/class-payment-list-table.php:190
 #: views/emails/admin/domain-created.php:122
+#: views/emails/admin/membership-expired.php:30
+#: views/emails/admin/payment-failed.php:30
 #: views/emails/admin/payment-received.php:54
 #: views/emails/admin/payment-received.php:107
 #: views/emails/admin/site-published.php:73
+#: views/emails/customer/membership-expired.php:27
 msgid "Reference Code"
 msgstr ""
 
 #: inc/list-tables/class-membership-list-table.php:186
 #: views/emails/admin/domain-created.php:128
+#: views/emails/admin/membership-expired.php:36
+#: views/emails/admin/payment-failed.php:40
 #: views/emails/admin/payment-received.php:113
 #: views/emails/admin/site-published.php:79
+#: views/emails/customer/membership-expired.php:33
+#: views/emails/customer/payment-failed.php:29
 msgid "Expiration"
 msgstr ""
 
@@ -18078,17 +18336,17 @@ msgid "All Sites"
 msgstr ""
 
 #: inc/list-tables/class-sites-domain-list-table.php:63
-#: views/dashboard-widgets/domain-mapping.php:106
+#: views/dashboard-widgets/domain-mapping.php:122
 msgid "Alias"
 msgstr ""
 
 #: inc/list-tables/class-sites-domain-list-table.php:69
-#: views/dashboard-widgets/domain-mapping.php:114
+#: views/dashboard-widgets/domain-mapping.php:130
 msgid "Secure (HTTPS)"
 msgstr ""
 
 #: inc/list-tables/class-sites-domain-list-table.php:69
-#: views/dashboard-widgets/domain-mapping.php:114
+#: views/dashboard-widgets/domain-mapping.php:130
 msgid "Not Secure (HTTP)"
 msgstr ""
 
@@ -18527,6 +18785,22 @@ msgstr ""
 msgid "You have a new pending payment!"
 msgstr ""
 
+#: inc/managers/class-email-manager.php:492
+msgid "Your payment could not be processed"
+msgstr ""
+
+#: inc/managers/class-email-manager.php:505
+msgid "A recurring payment has failed!"
+msgstr ""
+
+#: inc/managers/class-email-manager.php:518
+msgid "Your membership has expired"
+msgstr ""
+
+#: inc/managers/class-email-manager.php:531
+msgid "A membership has expired!"
+msgstr ""
+
 #: inc/managers/class-event-manager.php:199
 msgid "No event was selected."
 msgstr ""
@@ -18579,20 +18853,44 @@ msgstr ""
 msgid "This event is fired every time a new renewal payment is created by Ultimate Multisite."
 msgstr ""
 
+#: inc/managers/class-event-manager.php:482
+msgid "Invoice Sent"
+msgstr ""
+
+#: inc/managers/class-event-manager.php:483
+msgid "This event is fired every time an invoice is sent to a customer by a network admin."
+msgstr ""
+
+#: inc/managers/class-event-manager.php:502
+msgid "Recurring Payment Failed"
+msgstr ""
+
+#: inc/managers/class-event-manager.php:503
+msgid "Fired when an auto-renewing payment fails (Stripe/PayPal)."
+msgstr ""
+
+#: inc/managers/class-event-manager.php:521
+msgid "Membership Expired"
+msgstr ""
+
+#: inc/managers/class-event-manager.php:522
+msgid "Fired when a membership transitions to expired status."
+msgstr ""
+
 #. translators: %1$s is the model name, %2$s is the event type.
-#: inc/managers/class-event-manager.php:484
+#: inc/managers/class-event-manager.php:539
 #, php-format
 msgid "%1$s %2$s"
 msgstr ""
 
 #. translators: %1$s is the model name, %2$s is the event type.
-#: inc/managers/class-event-manager.php:486
+#: inc/managers/class-event-manager.php:541
 #, php-format
 msgid "This event is fired every time a %1$s is %2$s by Ultimate Multisite."
 msgstr ""
 
 #. Translators:  1: Number of successfully removed events.  2: Number of failed events to remove.
-#: inc/managers/class-event-manager.php:637
+#: inc/managers/class-event-manager.php:692
 #, php-format
 msgid "Removed %1$d events successfully. Failed to remove %2$d events."
 msgstr ""
@@ -18936,11 +19234,10 @@ msgstr ""
 #: inc/managers/class-membership-manager.php:204
 #: inc/managers/class-membership-manager.php:316
 #: inc/managers/class-membership-manager.php:387
-#: inc/managers/class-payment-manager.php:344
-#: inc/managers/class-payment-manager.php:389
-#: inc/ui/class-site-actions-element.php:621
-#: inc/ui/class-site-actions-element.php:1112
-#: inc/ui/class-site-actions-element.php:1304
+#: inc/managers/class-payment-manager.php:357
+#: inc/managers/class-payment-manager.php:402
+#: inc/ui/class-site-actions-element.php:626
+#: inc/ui/class-site-actions-element.php:1274
 msgid "An unexpected error happened."
 msgstr ""
 
@@ -19003,25 +19300,25 @@ msgstr ""
 msgid "Hide all admin notices on network sites, except for Ultimate Multisite broadcasts."
 msgstr ""
 
-#: inc/managers/class-payment-manager.php:177
+#: inc/managers/class-payment-manager.php:190
 msgid "Pending Payments"
 msgstr ""
 
-#: inc/managers/class-payment-manager.php:233
+#: inc/managers/class-payment-manager.php:246
 msgid "You have pending payments on your account!"
 msgstr ""
 
-#: inc/managers/class-payment-manager.php:233
+#: inc/managers/class-payment-manager.php:246
 msgid "You do not have pending payments on your account!"
 msgstr ""
 
-#: inc/managers/class-payment-manager.php:260
+#: inc/managers/class-payment-manager.php:273
 #: views/dashboard-widgets/invoices.php:60
 #: views/emails/customer/renewal-payment-created.php:14
 msgid "Pay Now"
 msgstr ""
 
-#: inc/managers/class-payment-manager.php:297
+#: inc/managers/class-payment-manager.php:310
 msgid "This invoice does not exist."
 msgstr ""
 
@@ -19110,7 +19407,7 @@ msgstr ""
 #: inc/models/class-checkout-form.php:611
 #: inc/models/class-checkout-form.php:760
 #: inc/models/class-checkout-form.php:1221
-#: inc/models/class-checkout-form.php:1415
+#: inc/models/class-checkout-form.php:1475
 msgid "Your Order"
 msgstr ""
 
@@ -19142,7 +19439,7 @@ msgid "Continue to the Next Step"
 msgstr ""
 
 #: inc/models/class-checkout-form.php:1024
-#: inc/ui/class-payment-methods-element.php:68
+#: inc/ui/class-payment-methods-element.php:80
 msgid "Payment Methods"
 msgstr ""
 
@@ -19154,12 +19451,21 @@ msgstr ""
 msgid "Finish Payment"
 msgstr ""
 
-#: inc/models/class-checkout-form.php:1429
+#: inc/models/class-checkout-form.php:1281
+msgid "Invoice Summary"
+msgstr ""
+
+#: inc/models/class-checkout-form.php:1295
+#: inc/models/class-checkout-form.php:1305
+msgid "Pay Invoice"
+msgstr ""
+
+#: inc/models/class-checkout-form.php:1489
 msgid "Complete Checkout"
 msgstr ""
 
-#: inc/models/class-checkout-form.php:1552
-#: inc/models/class-checkout-form.php:1560
+#: inc/models/class-checkout-form.php:1612
+#: inc/models/class-checkout-form.php:1620
 msgid "Create Site"
 msgstr ""
 
@@ -19261,20 +19567,20 @@ msgstr ""
 msgid "%1$s one time payment"
 msgstr ""
 
-#: inc/models/class-payment.php:960
+#: inc/models/class-payment.php:966
 msgid "(provisional)"
 msgstr ""
 
-#: inc/models/class-payment.php:1080
+#: inc/models/class-payment.php:1086
 msgid "Full Refund"
 msgstr ""
 
-#: inc/models/class-payment.php:1084
+#: inc/models/class-payment.php:1090
 msgid "Partial Refund"
 msgstr ""
 
 #. translators: %s is the date of processing.
-#: inc/models/class-payment.php:1094
+#: inc/models/class-payment.php:1100
 #, php-format
 msgid "Processed on %s"
 msgstr ""
@@ -19549,7 +19855,7 @@ msgstr ""
 
 #: inc/traits/trait-wp-ultimo-settings-deprecated.php:79
 #: inc/traits/trait-wp-ultimo-settings-deprecated.php:80
-#: inc/ui/class-site-actions-element.php:1222
+#: inc/ui/class-site-actions-element.php:1192
 #: views/dashboard-statistics/widget-countries.php:95
 msgid "Other"
 msgstr ""
@@ -19577,6 +19883,7 @@ msgstr ""
 #: inc/ui/class-domain-mapping-element.php:146
 #: inc/ui/class-invoices-element.php:134
 #: inc/ui/class-limits-element.php:133
+#: inc/ui/class-payment-methods-element.php:114
 #: inc/ui/class-thank-you-element.php:209
 msgid "Leave blank to hide the title completely."
 msgstr ""
@@ -19682,63 +19989,63 @@ msgstr ""
 msgid "Resend verification email"
 msgstr ""
 
-#: inc/ui/class-checkout-element.php:418
+#: inc/ui/class-checkout-element.php:419
 msgid "You already have a membership!"
 msgstr ""
 
-#: inc/ui/class-checkout-element.php:424
+#: inc/ui/class-checkout-element.php:425
 msgid "Go to my account"
 msgstr ""
 
-#: inc/ui/class-checkout-element.php:433
+#: inc/ui/class-checkout-element.php:434
 msgid "You are not allowed to change this membership!"
 msgstr ""
 
 #. Translators: Placeholder receives the limit name
-#: inc/ui/class-checkout-element.php:465
+#: inc/ui/class-checkout-element.php:466
 #, php-format
 msgid "You reached your membership %s limit!"
 msgstr ""
 
-#: inc/ui/class-checkout-element.php:473
+#: inc/ui/class-checkout-element.php:474
 msgid "Buy a new membership"
 msgstr ""
 
-#: inc/ui/class-checkout-element.php:498
+#: inc/ui/class-checkout-element.php:499
 msgid "Upgrade your account"
 msgstr ""
 
-#: inc/ui/class-checkout-element.php:513
+#: inc/ui/class-checkout-element.php:514
 msgid "You need to be the account owner to complete this payment."
 msgstr ""
 
-#: inc/ui/class-checkout-element.php:515
+#: inc/ui/class-checkout-element.php:516
 msgid "You need to be logged in to complete a payment"
 msgstr ""
 
 #. Translators: %s is replaced with <a href="{login_url}">here</a>
-#: inc/ui/class-checkout-element.php:519
+#: inc/ui/class-checkout-element.php:520
 #, php-format
 msgid "Click %s to sign in."
 msgstr ""
 
 #. translators: %s is the id of the form. e.g. main-form
-#: inc/ui/class-checkout-element.php:536
+#: inc/ui/class-checkout-element.php:537
 #, php-format
 msgid "Checkout form %s not found."
 msgstr ""
 
 #. translators: %s is the id of the form. e.g. main-form
-#: inc/ui/class-checkout-element.php:543
+#: inc/ui/class-checkout-element.php:544
 #, php-format
 msgid "Checkout form %s contains no fields."
 msgstr ""
 
-#: inc/ui/class-checkout-element.php:548
+#: inc/ui/class-checkout-element.php:549
 msgid "Registration is not available at this time."
 msgstr ""
 
-#: inc/ui/class-checkout-element.php:556
+#: inc/ui/class-checkout-element.php:557
 msgid "Registration is closed for your location."
 msgstr ""
 
@@ -19772,8 +20079,8 @@ msgid "How many columns to use."
 msgstr ""
 
 #: inc/ui/class-current-membership-element.php:368
-#: inc/ui/class-site-actions-element.php:1014
-#: inc/ui/class-site-actions-element.php:1165
+#: inc/ui/class-site-actions-element.php:1022
+#: inc/ui/class-site-actions-element.php:1135
 msgid "Membership not selected."
 msgstr ""
 
@@ -19783,12 +20090,11 @@ msgstr ""
 
 #: inc/ui/class-current-membership-element.php:380
 #: inc/ui/class-current-membership-element.php:535
-#: inc/ui/class-site-actions-element.php:530
-#: inc/ui/class-site-actions-element.php:627
-#: inc/ui/class-site-actions-element.php:1020
-#: inc/ui/class-site-actions-element.php:1122
-#: inc/ui/class-site-actions-element.php:1171
-#: inc/ui/class-site-actions-element.php:1314
+#: inc/ui/class-site-actions-element.php:535
+#: inc/ui/class-site-actions-element.php:632
+#: inc/ui/class-site-actions-element.php:1028
+#: inc/ui/class-site-actions-element.php:1141
+#: inc/ui/class-site-actions-element.php:1284
 msgid "You are not allowed to do this."
 msgstr ""
 
@@ -19879,6 +20185,10 @@ msgstr ""
 #: views/emails/admin/domain-created.php:54
 #: views/emails/admin/domain-created.php:91
 #: views/emails/admin/domain-created.php:132
+#: views/emails/admin/membership-expired.php:40
+#: views/emails/admin/membership-expired.php:65
+#: views/emails/admin/payment-failed.php:44
+#: views/emails/admin/payment-failed.php:69
 #: views/emails/admin/payment-received.php:76
 #: views/emails/admin/payment-received.php:117
 #: views/emails/admin/payment-received.php:153
@@ -20318,16 +20628,8 @@ msgstr ""
 msgid "The page to redirect user after select a site."
 msgstr ""
 
-#: inc/ui/class-payment-methods-element.php:84
+#: inc/ui/class-payment-methods-element.php:91
 msgid "Displays and manages the customer's saved payment methods."
-msgstr ""
-
-#: inc/ui/class-payment-methods-element.php:116
-msgid "Password Strength Meter"
-msgstr ""
-
-#: inc/ui/class-payment-methods-element.php:124
-msgid "Apply Styles"
 msgstr ""
 
 #: inc/ui/class-simple-text-element.php:84
@@ -20388,7 +20690,7 @@ msgid "Show Change Payment Method"
 msgstr ""
 
 #: inc/ui/class-site-actions-element.php:180
-msgid "Toggle to show/hide the option to cancel the current payment method."
+msgid "Toggle to show/hide the option to change the current payment method."
 msgstr ""
 
 #: inc/ui/class-site-actions-element.php:201
@@ -20404,7 +20706,7 @@ msgid "Change Site Template"
 msgstr ""
 
 #: inc/ui/class-site-actions-element.php:412
-#: inc/ui/class-site-actions-element.php:944
+#: inc/ui/class-site-actions-element.php:949
 msgid "Change Default Site"
 msgstr ""
 
@@ -20413,180 +20715,186 @@ msgid "Change Password"
 msgstr ""
 
 #: inc/ui/class-site-actions-element.php:430
-#: inc/ui/class-site-actions-element.php:805
+#: inc/ui/class-site-actions-element.php:810
 msgid "Change Email"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:441
-msgid "Cancel Current Payment Method"
+#: inc/ui/class-site-actions-element.php:445
+#: inc/ui/class-site-actions-element.php:1089
+msgid "Change Payment Method"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:492
-#: inc/ui/class-site-actions-element.php:1261
-#: inc/ui/class-site-actions-element.php:1262
+#: inc/ui/class-site-actions-element.php:497
+#: inc/ui/class-site-actions-element.php:1231
+#: inc/ui/class-site-actions-element.php:1232
 msgid "Cancel Membership"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:524
+#: inc/ui/class-site-actions-element.php:529
 msgid "Site not selected."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:567
+#: inc/ui/class-site-actions-element.php:572
 msgid "Confirm Site Deletion"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:673
-#: inc/ui/class-site-actions-element.php:789
+#: inc/ui/class-site-actions-element.php:678
+#: inc/ui/class-site-actions-element.php:794
 msgid "Current Password"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:674
 #: inc/ui/class-site-actions-element.php:679
 #: inc/ui/class-site-actions-element.php:684
-#: inc/ui/class-site-actions-element.php:790
+#: inc/ui/class-site-actions-element.php:689
+#: inc/ui/class-site-actions-element.php:795
 msgid "******"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:678
+#: inc/ui/class-site-actions-element.php:683
 msgid "New Password"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:685
+#: inc/ui/class-site-actions-element.php:690
 msgid "Confirm New Password"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:689
+#: inc/ui/class-site-actions-element.php:694
 msgid "Reset Password"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:733
-#: inc/ui/class-site-actions-element.php:849
+#: inc/ui/class-site-actions-element.php:738
+#: inc/ui/class-site-actions-element.php:854
 msgid "Your current password is wrong."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:742
+#: inc/ui/class-site-actions-element.php:747
 msgid "The new password must be at least 6 characters long."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:748
+#: inc/ui/class-site-actions-element.php:753
 msgid "New passwords do not match."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:781
+#: inc/ui/class-site-actions-element.php:786
 msgid "Current Email"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:791
+#: inc/ui/class-site-actions-element.php:796
 msgid "Enter your password to confirm this change."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:795
+#: inc/ui/class-site-actions-element.php:800
 msgid "New Email"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:796
-#: inc/ui/class-site-actions-element.php:800
+#: inc/ui/class-site-actions-element.php:801
+#: inc/ui/class-site-actions-element.php:805
 msgid "newemail@example.com"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:801
+#: inc/ui/class-site-actions-element.php:806
 msgid "Confirm New Email"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:858
+#: inc/ui/class-site-actions-element.php:863
 msgid "Please enter a valid email address."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:864
+#: inc/ui/class-site-actions-element.php:869
 msgid "Email addresses do not match."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:870
+#: inc/ui/class-site-actions-element.php:875
 msgid "The new email address is the same as your current email."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:879
+#: inc/ui/class-site-actions-element.php:884
 msgid "This email address is already in use."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:934
+#: inc/ui/class-site-actions-element.php:939
 msgid "Primary Site"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:935
+#: inc/ui/class-site-actions-element.php:940
 msgid "Change the primary site of your network."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:996
+#: inc/ui/class-site-actions-element.php:1001
 msgid "You need to select a new primary site."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1057
-msgid "Confirm Payment Method Cancellation"
+#: inc/ui/class-site-actions-element.php:1036
+msgid "This payment method does not support online changes."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1069
-#: inc/ui/class-site-actions-element.php:1070
-msgid "Cancel Payment Method"
+#: inc/ui/class-site-actions-element.php:1071
+msgid "You will be redirected to update your payment details."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1208
+#. translators: 1: card brand (e.g. Visa), 2: last 4 digits
+#: inc/ui/class-site-actions-element.php:1076
+#, php-format
+msgid "Your current payment method is %1$s ending in %2$s.<br />"
+msgstr ""
+
+#: inc/ui/class-site-actions-element.php:1178
 msgid "Please tell us why you are cancelling."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1209
+#: inc/ui/class-site-actions-element.php:1179
 msgid "We would love your feedback."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1215
+#: inc/ui/class-site-actions-element.php:1185
 msgid "Select a reason"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1216
-#: inc/ui/class-site-actions-element.php:1322
+#: inc/ui/class-site-actions-element.php:1186
+#: inc/ui/class-site-actions-element.php:1292
 msgid "I no longer need it"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1217
-#: inc/ui/class-site-actions-element.php:1323
+#: inc/ui/class-site-actions-element.php:1187
+#: inc/ui/class-site-actions-element.php:1293
 msgid "It's too expensive"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1218
-#: inc/ui/class-site-actions-element.php:1324
+#: inc/ui/class-site-actions-element.php:1188
+#: inc/ui/class-site-actions-element.php:1294
 msgid "I need more features"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1219
-#: inc/ui/class-site-actions-element.php:1325
+#: inc/ui/class-site-actions-element.php:1189
+#: inc/ui/class-site-actions-element.php:1295
 msgid "Switched to another service"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1220
-#: inc/ui/class-site-actions-element.php:1326
+#: inc/ui/class-site-actions-element.php:1190
+#: inc/ui/class-site-actions-element.php:1296
 msgid "Customer support is less than expected"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1221
-#: inc/ui/class-site-actions-element.php:1327
+#: inc/ui/class-site-actions-element.php:1191
+#: inc/ui/class-site-actions-element.php:1297
 msgid "Too complex"
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1227
+#: inc/ui/class-site-actions-element.php:1197
 msgid "Please provide additional details."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1238
+#: inc/ui/class-site-actions-element.php:1208
 msgid "Type <code class=\"wu-text-red-600\">CANCEL</code> to confirm this membership cancellation."
 msgstr ""
 
 #. translators: %s: Next charge date.
-#: inc/ui/class-site-actions-element.php:1255
+#: inc/ui/class-site-actions-element.php:1225
 #, php-format
 msgid "Your sites will stay working until %s."
 msgstr ""
 
-#: inc/ui/class-site-actions-element.php:1267
+#: inc/ui/class-site-actions-element.php:1237
 msgid "CANCEL"
 msgstr ""
 
@@ -21143,6 +21451,7 @@ msgid "See Main Site"
 msgstr ""
 
 #: views/base/wizard/submit-box.php:16
+#: views/wizards/host-integrations/configuration.php:41
 msgid "← Go Back"
 msgstr ""
 
@@ -21545,6 +21854,8 @@ msgid "Update your membership"
 msgstr ""
 
 #: views/dashboard-widgets/current-membership.php:37
+#: views/dashboard-widgets/payment-methods.php:53
+#: views/dashboard-widgets/payment-methods.php:72
 msgid "Change"
 msgstr ""
 
@@ -21587,15 +21898,15 @@ msgstr ""
 msgid "Site Image: %s"
 msgstr ""
 
-#: views/dashboard-widgets/domain-mapping.php:77
+#: views/dashboard-widgets/domain-mapping.php:88
 msgid "Make Primary"
 msgstr ""
 
-#: views/dashboard-widgets/domain-mapping.php:104
+#: views/dashboard-widgets/domain-mapping.php:120
 msgid "All other mapped domains will redirect to the primary domain."
 msgstr ""
 
-#: views/dashboard-widgets/domain-mapping.php:131
+#: views/dashboard-widgets/domain-mapping.php:168
 msgid "No domains added."
 msgstr ""
 
@@ -21650,6 +21961,26 @@ msgstr ""
 #: views/ui/toolbox.php:45
 #: views/ui/toolbox.php:62
 msgid "Current Site"
+msgstr ""
+
+#: views/dashboard-widgets/payment-methods.php:32
+msgid "No active membership."
+msgstr ""
+
+#. translators: %s: Last 4 digits of card number.
+#: views/dashboard-widgets/payment-methods.php:45
+#, php-format
+msgid "ending in %s"
+msgstr ""
+
+#. translators: %s: Payment gateway name.
+#: views/dashboard-widgets/payment-methods.php:66
+#, php-format
+msgid "Paid via %s"
+msgstr ""
+
+#: views/dashboard-widgets/payment-methods.php:81
+msgid "No payment method on file."
 msgstr ""
 
 #: views/dashboard-widgets/site-actions.php:65
@@ -21769,8 +22100,33 @@ msgid "Go to Site Management &rarr;"
 msgstr ""
 
 #: views/emails/admin/domain-created.php:134
+#: views/emails/admin/membership-expired.php:42
+#: views/emails/admin/payment-failed.php:46
 #: views/emails/admin/payment-received.php:119
 msgid "Go to Membership &rarr;"
+msgstr ""
+
+#: views/emails/admin/membership-expired.php:9
+#: views/emails/admin/payment-failed.php:9
+msgid "Hey there,"
+msgstr ""
+
+#. translators: %1$s: Customer name, %2$s: Customer email.
+#: views/emails/admin/membership-expired.php:11
+#, php-format
+msgid "The membership for %1$s (%2$s) has expired."
+msgstr ""
+
+#: views/emails/admin/membership-expired.php:67
+#: views/emails/admin/payment-failed.php:71
+#: views/emails/admin/payment-received.php:155
+msgid "Go to Customer &rarr;"
+msgstr ""
+
+#. translators: %1$s: Customer name, %2$s: Customer email.
+#: views/emails/admin/payment-failed.php:11
+#, php-format
+msgid "A recurring payment has failed for %1$s (%2$s)."
 msgstr ""
 
 #. translators: %1$s: Customer name, %2$s: Customer email, %3$s: Customer user email, %4$s: Payment total.
@@ -21795,10 +22151,6 @@ msgstr ""
 
 #: views/emails/admin/payment-received.php:78
 msgid "Go to Payment &rarr;"
-msgstr ""
-
-#: views/emails/admin/payment-received.php:155
-msgid "Go to Customer &rarr;"
 msgstr ""
 
 #. translators: %1$s: Site Title, %2$s: Site Url
@@ -21831,6 +22183,8 @@ msgstr ""
 
 #. translators: %s: Customer Name
 #: views/emails/customer/confirm-email-address.php:10
+#: views/emails/customer/membership-expired.php:10
+#: views/emails/customer/payment-failed.php:10
 #: views/emails/customer/payment-received.php:10
 #: views/emails/customer/renewal-payment-created.php:10
 #: views/emails/customer/site-published.php:10
@@ -21854,6 +22208,26 @@ msgstr ""
 #: views/emails/customer/confirm-email-address.php:20
 #, php-format
 msgid "or copy the link %s and paste it onto your browser"
+msgstr ""
+
+#: views/emails/customer/membership-expired.php:12
+msgid "Your membership has expired. If this was unexpected, it may be due to a failed payment that was not resolved during the grace period."
+msgstr ""
+
+#: views/emails/customer/membership-expired.php:14
+msgid "You can re-subscribe or contact support if you need any assistance."
+msgstr ""
+
+#: views/emails/customer/payment-failed.php:12
+msgid "We were unable to process your recent payment. This may be due to an expired card, insufficient funds, or a temporary issue with your payment provider."
+msgstr ""
+
+#: views/emails/customer/payment-failed.php:14
+msgid "Please update your payment method to avoid any interruption to your service."
+msgstr ""
+
+#: views/emails/customer/payment-failed.php:16
+msgid "Update Payment Method"
 msgstr ""
 
 #. translators: %1$s: payment amount.
@@ -22261,7 +22635,6 @@ msgstr ""
 
 #: views/wizards/host-integrations/activation.php:84
 #: views/wizards/host-integrations/configuration-results.php:45
-#: views/wizards/host-integrations/configuration.php:37
 msgid "&larr; Cancel"
 msgstr ""
 
@@ -22341,12 +22714,12 @@ msgid "Done!"
 msgstr ""
 
 #: views/wizards/host-integrations/configuration-results.php:10
-#: views/wizards/host-integrations/configuration.php:10
+#: views/wizards/host-integrations/configuration.php:14
 msgid "We are almost there!"
 msgstr ""
 
 #: views/wizards/host-integrations/configuration-results.php:14
-#: views/wizards/host-integrations/configuration.php:14
+#: views/wizards/host-integrations/configuration.php:18
 msgid "You should have all the information we need in hand right now. The next step is to configure it."
 msgstr ""
 
@@ -22366,7 +22739,7 @@ msgstr ""
 msgid "Test Integration &rarr;"
 msgstr ""
 
-#: views/wizards/host-integrations/configuration.php:43
+#: views/wizards/host-integrations/configuration.php:48
 msgid "Test Configuration &rarr;"
 msgstr ""
 
