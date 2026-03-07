@@ -69,6 +69,13 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	const META_TRANSIENT = 'wu_transient';
 
+	/**
+	 * Meta key for demo expiration timestamp.
+	 *
+	 * @since 2.5.0
+	 */
+	const META_DEMO_EXPIRES_AT = 'wu_demo_expires_at';
+
 	/**  DEFAULT WP_SITE COLUMNS */
 
 	/**
@@ -1415,6 +1422,138 @@ class Site extends Base_Model implements Limitable, Notable {
 		$type = new Site_Type($this->get_type());
 
 		return $type->get_classes();
+	}
+
+	/**
+	 * Check if this is a demo site.
+	 *
+	 * @since 2.5.0
+	 * @return bool
+	 */
+	public function is_demo(): bool {
+
+		return $this->get_type() === Site_Type::DEMO;
+	}
+
+	/**
+	 * Get the demo expiration date/time.
+	 *
+	 * @since 2.5.0
+	 * @return string|null MySQL datetime string or null if not set.
+	 */
+	public function get_demo_expires_at(): ?string {
+
+		$expires_at = $this->get_meta(self::META_DEMO_EXPIRES_AT);
+
+		return $expires_at ?: null;
+	}
+
+	/**
+	 * Set the demo expiration date/time.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param string $expires_at MySQL datetime string for when the demo expires.
+	 * @return void
+	 */
+	public function set_demo_expires_at(string $expires_at): void {
+
+		$this->update_meta(self::META_DEMO_EXPIRES_AT, $expires_at);
+	}
+
+	/**
+	 * Check if this demo site has expired.
+	 *
+	 * @since 2.5.0
+	 * @return bool True if expired, false if still active or not a demo.
+	 */
+	public function is_demo_expired(): bool {
+
+		if ( ! $this->is_demo()) {
+			return false;
+		}
+
+		$expires_at = $this->get_demo_expires_at();
+
+		if (empty($expires_at)) {
+			return false;
+		}
+
+		return $expires_at <= wu_get_current_time('mysql', true);
+	}
+
+	/**
+	 * Calculate and set demo expiration based on settings.
+	 *
+	 * This method calculates the expiration time using the global
+	 * demo_duration and demo_duration_unit settings.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param int|null    $duration      Optional custom duration. Defaults to settings value.
+	 * @param string|null $duration_unit Optional custom unit (hour, day, week). Defaults to settings value.
+	 * @return string The calculated expiration datetime.
+	 */
+	public function calculate_demo_expiration(?int $duration = null, ?string $duration_unit = null): string {
+
+		$duration      = $duration ?? (int) wu_get_setting('demo_duration', 2);
+		$duration_unit = $duration_unit ?? wu_get_setting('demo_duration_unit', 'hour');
+
+		// Convert to seconds.
+		$seconds_map = [
+			'hour' => HOUR_IN_SECONDS,
+			'day'  => DAY_IN_SECONDS,
+			'week' => WEEK_IN_SECONDS,
+		];
+
+		$multiplier = $seconds_map[ $duration_unit ] ?? HOUR_IN_SECONDS;
+		$expires_at = gmdate('Y-m-d H:i:s', time() + ($duration * $multiplier));
+
+		return $expires_at;
+	}
+
+	/**
+	 * Get time remaining until demo expiration.
+	 *
+	 * @since 2.5.0
+	 * @return int|null Seconds remaining, or null if not a demo or no expiration set.
+	 */
+	public function get_demo_time_remaining(): ?int {
+
+		if ( ! $this->is_demo()) {
+			return null;
+		}
+
+		$expires_at = $this->get_demo_expires_at();
+
+		if (empty($expires_at)) {
+			return null;
+		}
+
+		$remaining = strtotime($expires_at) - time();
+
+		return max(0, $remaining);
+	}
+
+	/**
+	 * Get human-readable time remaining for demo.
+	 *
+	 * @since 2.5.0
+	 * @return string|null Human-readable time string, or null if not applicable.
+	 */
+	public function get_demo_time_remaining_human(): ?string {
+
+		$remaining = $this->get_demo_time_remaining();
+
+		if (null === $remaining) {
+			return null;
+		}
+
+		if ($remaining <= 0) {
+			return __('Expired', 'ultimate-multisite');
+		}
+
+		return human_time_diff(time(), time() + $remaining);
 	}
 
 	/**

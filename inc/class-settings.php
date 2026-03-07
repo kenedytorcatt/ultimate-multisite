@@ -1373,6 +1373,90 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 		do_action('wu_settings_site_templates');
 
 		/*
+		 * Demo Sites
+		 * Settings for demo/sandbox site functionality.
+		 */
+		$this->add_field(
+			'sites',
+			'demo_sites_heading',
+			[
+				'title' => __('Demo Sites', 'ultimate-multisite'),
+				'desc'  => __('Configure demo/sandbox site behavior. Demo sites are temporary sites that automatically expire and get deleted after a set period.', 'ultimate-multisite'),
+				'type'  => 'header',
+			]
+		);
+
+		$this->add_field(
+			'sites',
+			'demo_duration',
+			[
+				'title'     => __('Demo Duration', 'ultimate-multisite'),
+				'desc'      => __('How long demo sites should remain active before being automatically deleted. Set to 0 to disable automatic deletion.', 'ultimate-multisite'),
+				'type'      => 'number',
+				'default'   => 2,
+				'min'       => 0,
+				'html_attr' => [
+					'style' => 'width: 80px;',
+				],
+			]
+		);
+
+		$this->add_field(
+			'sites',
+			'demo_duration_unit',
+			[
+				'title'   => __('Demo Duration Unit', 'ultimate-multisite'),
+				'desc'    => __('The time unit for demo duration.', 'ultimate-multisite'),
+				'type'    => 'select',
+				'default' => 'hour',
+				'options' => [
+					'hour' => __('Hours', 'ultimate-multisite'),
+					'day'  => __('Days', 'ultimate-multisite'),
+					'week' => __('Weeks', 'ultimate-multisite'),
+				],
+			]
+		);
+
+		$this->add_field(
+			'sites',
+			'demo_delete_customer',
+			[
+				'title'   => __('Delete Customer After Demo Expires', 'ultimate-multisite'),
+				'desc'    => __('When enabled, the customer account will also be deleted when their demo site expires (only if they have no other memberships).', 'ultimate-multisite'),
+				'type'    => 'toggle',
+				'default' => 0,
+			]
+		);
+
+		$this->add_field(
+			'sites',
+			'demo_expiring_notification',
+			[
+				'title'   => __('Send Expiration Warning Email', 'ultimate-multisite'),
+				'desc'    => __('When enabled, customers will receive an email notification before their demo site expires.', 'ultimate-multisite'),
+				'type'    => 'toggle',
+				'default' => 1,
+			]
+		);
+
+		$this->add_field(
+			'sites',
+			'demo_expiring_warning_time',
+			[
+				'title'     => __('Warning Time Before Expiration', 'ultimate-multisite'),
+				'desc'      => __('How long before the demo expires should the warning email be sent. Uses the same time unit as demo duration.', 'ultimate-multisite'),
+				'type'      => 'number',
+				'default'   => 1,
+				'min'       => 1,
+				'html_attr' => [
+					'style' => 'width: 80px;',
+				],
+			]
+		);
+
+		do_action('wu_settings_demo_sites');
+
+		/*
 		 * Payment Gateways
 		 * This section holds the Payment Gateways settings of the Ultimate Multisite Plugin.
 		 */

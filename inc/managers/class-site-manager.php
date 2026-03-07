@@ -102,6 +102,15 @@ class Site_Manager extends Base_Manager {
 		add_filter('wpmu_validate_blog_signup', [$this, 'allow_hyphens_in_site_name'], 10, 1);
 
 		add_action('wu_daily', [$this, 'delete_pending_sites']);
+
+		// Demo site cleanup - runs hourly to check for expired demo sites.
+		add_action('wu_hourly', [$this, 'check_expired_demo_sites']);
+
+		// Demo site expiring notification - runs hourly to send warning emails.
+		add_action('wu_hourly', [$this, 'check_expiring_demo_sites']);
+
+		// Async handler for demo site deletion.
+		add_action('wu_async_delete_demo_site', [$this, 'async_delete_demo_site'], 10, 1);
 	}
 
 	/**
@@ -249,6 +258,23 @@ class Site_Manager extends Base_Manager {
 	 * @return void
 	 */
 	public function handle_site_published($site, $membership): void {
+		/*
+		 * If this is a demo site, set the expiration time.
+		 */
+		if ($site->is_demo()) {
+			$expires_at = $site->calculate_demo_expiration();
+			$site->set_demo_expires_at($expires_at);
+
+			wu_log_add(
+				'demo-sites',
+				sprintf(
+					// translators: %1$d is site ID, %2$s is expiration datetime.
+					__('Demo site #%1$d created, expires at %2$s', 'ultimate-multisite'),
+					$site->get_id(),
+					$expires_at
+				)
+			);
+		}
 
 		$payload = array_merge(
 			wu_generate_event_payload('site', $site),
@@ -875,5 +901,222 @@ class Site_Manager extends Base_Manager {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Check for expired demo sites and schedule their deletion.
+	 *
+	 * This method runs hourly via the wu_hourly cron hook.
+	 * It finds all demo sites that have passed their expiration time
+	 * and schedules async deletion for each one.
+	 *
+	 * @since 2.5.0
+	 * @return void
+	 */
+	public function check_expired_demo_sites(): void {
+
+		$demo_sites = Site::get_all_by_type(Site_Type::DEMO);
+
+		if (empty($demo_sites)) {
+			return;
+		}
+
+		$current_time = wu_get_current_time('mysql', true);
+
+		foreach ($demo_sites as $site) {
+			$expires_at = $site->get_meta('wu_demo_expires_at');
+
+			// Skip sites without expiration set.
+			if (empty($expires_at)) {
+				continue;
+			}
+
+			// Check if the demo has expired.
+			if ($expires_at <= $current_time) {
+				wu_enqueue_async_action(
+					'wu_async_delete_demo_site',
+					['site_id' => $site->get_id()],
+					'wu_demo_cleanup'
+				);
+			}
+		}
+	}
+
+	/**
+	 * Check for demo sites that are about to expire and send notification emails.
+	 *
+	 * This method runs hourly via the wu_hourly cron hook.
+	 * It finds all demo sites that will expire within the configured warning window
+	 * and fires the demo_site_expiring event for each one.
+	 *
+	 * @since 2.5.0
+	 * @return void
+	 */
+	public function check_expiring_demo_sites(): void {
+
+		// Check if expiration notifications are enabled.
+		if ( ! wu_get_setting('demo_expiring_notification', false)) {
+			return;
+		}
+
+		$demo_sites = Site::get_all_by_type(Site_Type::DEMO);
+
+		if (empty($demo_sites)) {
+			return;
+		}
+
+		// Get the warning time in hours.
+		$warning_hours = (int) wu_get_setting('demo_expiring_warning_time', 24);
+
+		// Calculate warning threshold based on current time.
+		$current_time    = wu_get_current_time('timestamp', true);
+		$warning_seconds = $warning_hours * HOUR_IN_SECONDS;
+
+		foreach ($demo_sites as $site) {
+			$expires_at = $site->get_meta('wu_demo_expires_at');
+
+			// Skip sites without expiration set.
+			if (empty($expires_at)) {
+				continue;
+			}
+
+			// Skip sites already notified.
+			if ($site->get_meta('wu_demo_expiring_notified')) {
+				continue;
+			}
+
+			// Convert expiration to timestamp for comparison.
+			$expires_timestamp = strtotime($expires_at);
+
+			// Skip if already expired (handled by check_expired_demo_sites).
+			if ($expires_timestamp <= $current_time) {
+				continue;
+			}
+
+			// Calculate time remaining until expiration.
+			$time_remaining = $expires_timestamp - $current_time;
+
+			// Check if site is within the warning window.
+			if ($time_remaining > $warning_seconds) {
+				continue;
+			}
+
+			// Get associated data for the event payload.
+			$membership = $site->get_membership();
+			$customer   = $membership ? $membership->get_customer() : null;
+
+			// Skip if no customer to notify.
+			if (empty($customer)) {
+				continue;
+			}
+
+			// Build human-readable time remaining.
+			$time_remaining_human = human_time_diff($current_time, $expires_timestamp);
+
+			// Build the event payload.
+			$payload = [
+				'site'                => $site->to_array(),
+				'membership'          => $membership ? $membership->to_array() : [],
+				'customer'            => $customer->to_array(),
+				'demo_expires_at'     => $expires_at,
+				'demo_time_remaining' => $time_remaining_human,
+				'site_admin_url'      => get_admin_url($site->get_blog_id()),
+				'site_url'            => $site->get_active_site_url(),
+			];
+
+			// Fire the demo_site_expiring event.
+			wu_do_event('demo_site_expiring', $payload);
+
+			// Mark the site as notified to prevent duplicate emails.
+			$site->update_meta('wu_demo_expiring_notified', 1);
+		}
+	}
+
+	/**
+	 * Async handler to delete a demo site.
+	 *
+	 * This method handles the actual deletion of a demo site,
+	 * including the WordPress blog and associated membership/customer
+	 * data if configured to do so.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param int $site_id The site ID to delete.
+	 * @return void
+	 */
+	public function async_delete_demo_site($site_id): void {
+
+		$site = wu_get_site($site_id);
+
+		if (empty($site)) {
+			return;
+		}
+
+		// Verify it's still a demo site (could have been converted).
+		if ($site->get_type() !== Site_Type::DEMO) {
+			return;
+		}
+
+		// Get associated data before deletion.
+		$membership = $site->get_membership();
+		$customer   = $site->get_customer();
+		$blog_id    = $site->get_blog_id();
+
+		// Fire pre-deletion hook for extensibility.
+		do_action('wu_before_demo_site_deleted', $site, $membership, $customer);
+
+		// Delete the WordPress blog if it exists.
+		if ($blog_id) {
+			wpmu_delete_blog($blog_id, true);
+		}
+
+		// Delete the WP Ultimo site record.
+		$result = $site->delete();
+
+		// Optionally delete the membership if it only has this demo site.
+		$delete_membership = apply_filters('wu_demo_site_delete_membership', true, $membership, $site);
+
+		if ($delete_membership && $membership) {
+			$membership_sites = $membership->get_sites();
+
+			// Only delete if this was the only site on the membership.
+			if (empty($membership_sites) || count($membership_sites) === 0) {
+				$membership->delete();
+			}
+		}
+
+		// Optionally delete the customer if they only had this demo.
+		$delete_customer = apply_filters('wu_demo_site_delete_customer', wu_get_setting('demo_delete_customer', false), $customer, $site);
+
+		if ($delete_customer && $customer) {
+			$customer_memberships = $customer->get_memberships();
+
+			// Only delete if this was their only membership.
+			if (empty($customer_memberships) || count($customer_memberships) === 0) {
+				$user_id = $customer->get_user_id();
+
+				$customer->delete();
+
+				// Delete the WordPress user as well.
+				if ($user_id && apply_filters('wu_demo_site_delete_user', true, $user_id)) {
+					require_once ABSPATH . 'wp-admin/includes/user.php';
+					wpmu_delete_user($user_id);
+				}
+			}
+		}
+
+		// Fire post-deletion hook.
+		do_action('wu_after_demo_site_deleted', $site_id, $blog_id, $membership, $customer);
+
+		// Log the deletion.
+		wu_log_add(
+			'demo-cleanup',
+			sprintf(
+				// translators: %1$d is site ID, %2$d is blog ID.
+				__('Deleted expired demo site #%1$d (blog_id: %2$d)', 'ultimate-multisite'),
+				$site_id,
+				$blog_id ?: 0
+			)
+		);
 	}
 }

@@ -361,6 +361,12 @@ class Site_List_Table extends Base_List_Table {
 				'label' => __('Pending', 'ultimate-multisite'),
 				'count' => 0,
 			],
+			'demo'           => [
+				'field' => 'type',
+				'url'   => add_query_arg('type', 'demo'),
+				'label' => __('Demo', 'ultimate-multisite'),
+				'count' => 0,
+			],
 		];
 	}
 

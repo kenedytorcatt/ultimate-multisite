@@ -1436,6 +1436,17 @@ class Checkout {
 		 */
 		$template_id = apply_filters('wu_checkout_template_id', (int) $this->request_or_session('template_id'), $this->membership, $this);
 
+		/*
+		 * Determine the site type based on the product type.
+		 * Demo products create demo sites that auto-expire.
+		 */
+		$site_type = Site_Type::CUSTOMER_OWNED;
+		$plan      = $this->order->get_plan();
+
+		if ($plan && $plan->get_type() === \WP_Ultimo\Database\Products\Product_Type::DEMO) {
+			$site_type = Site_Type::DEMO;
+		}
+
 		$site_data = [
 			'domain'         => $d->domain,
 			'path'           => $d->path,
@@ -1446,7 +1457,7 @@ class Checkout {
 			'transient'      => $transient,
 			'signup_options' => $this->get_site_meta_fields($form_slug, 'site_option'),
 			'signup_meta'    => $this->get_site_meta_fields($form_slug, 'site_meta'),
-			'type'           => Site_Type::CUSTOMER_OWNED,
+			'type'           => $site_type,
 		];
 
 		return $this->membership->create_pending_site($site_data);

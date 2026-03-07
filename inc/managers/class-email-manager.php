@@ -533,6 +533,32 @@ class Email_Manager extends Base_Manager {
 			]
 		);
 
+		/*
+		 * Demo Site Expiring - Customer
+		 */
+		$this->register_default_system_email(
+			[
+				'event'   => 'demo_site_expiring',
+				'slug'    => 'demo_site_expiring_customer',
+				'target'  => 'customer',
+				'title'   => __('Your demo site is about to expire', 'ultimate-multisite'),
+				'content' => wu_get_template_contents('emails/customer/demo-site-expiring'),
+			]
+		);
+
+		/*
+		 * Demo Site Expiring - Admin
+		 */
+		$this->register_default_system_email(
+			[
+				'event'   => 'demo_site_expiring',
+				'slug'    => 'demo_site_expiring_admin',
+				'target'  => 'admin',
+				'title'   => __('A demo site is about to expire', 'ultimate-multisite'),
+				'content' => wu_get_template_contents('emails/admin/demo-site-expiring'),
+			]
+		);
+
 		do_action('wu_system_emails_after_register');
 	}
 

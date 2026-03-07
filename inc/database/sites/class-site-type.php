@@ -38,6 +38,8 @@ class Site_Type extends Enum {
 
 	const MAIN = 'main';
 
+	const DEMO = 'demo';
+
 	/**
 	 * Returns an array with values => CSS Classes.
 	 *
@@ -53,6 +55,7 @@ class Site_Type extends Enum {
 			static::PENDING        => 'wu-bg-purple-200 wu-text-purple-700',
 			static::EXTERNAL       => 'wu-bg-blue-200 wu-text-blue-700',
 			static::MAIN           => 'wu-bg-pink-200 wu-text-pink-700',
+			static::DEMO           => 'wu-bg-orange-200 wu-text-orange-700',
 		];
 	}
 
@@ -70,6 +73,7 @@ class Site_Type extends Enum {
 			static::CUSTOMER_OWNED => __('Customer-Owned', 'ultimate-multisite'),
 			static::PENDING        => __('Pending', 'ultimate-multisite'),
 			static::MAIN           => __('Main Site', 'ultimate-multisite'),
+			static::DEMO           => __('Demo', 'ultimate-multisite'),
 		];
 	}
 }
