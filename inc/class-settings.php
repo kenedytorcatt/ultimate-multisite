@@ -1454,6 +1454,17 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 			]
 		);
 
+		$this->add_field(
+			'sites',
+			'demo_go_live_url',
+			[
+				'title'   => __('Go Live URL', 'ultimate-multisite'),
+				'desc'    => __('The URL customers are sent to when they click "Go Live" on a keep-until-live demo site. Typically this is your checkout form page URL. Leave empty to use the built-in instant activation (no payment collected).', 'ultimate-multisite'),
+				'type'    => 'url',
+				'default' => '',
+			]
+		);
+
 		do_action('wu_settings_demo_sites');
 
 		/*

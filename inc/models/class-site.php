@@ -1436,6 +1436,27 @@ class Site extends Base_Model implements Limitable, Notable {
 	}
 
 	/**
+	 * Check if this demo site is configured to stay until the customer goes live.
+	 *
+	 * Returns true when the associated plan product has demo_behavior = 'keep_until_live'.
+	 * In this mode, the site has no expiration timer and the frontend is blocked
+	 * until the customer explicitly activates the site.
+	 *
+	 * @since 2.5.0
+	 * @return bool
+	 */
+	public function is_keep_until_live(): bool {
+
+		if ( ! $this->is_demo()) {
+			return false;
+		}
+
+		$plan = $this->get_plan();
+
+		return $plan && $plan->is_keep_until_live();
+	}
+
+	/**
 	 * Get the demo expiration date/time.
 	 *
 	 * @since 2.5.0
