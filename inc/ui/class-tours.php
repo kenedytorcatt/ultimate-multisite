@@ -58,6 +58,9 @@ class Tours {
 
 		if ($id) {
 			set_user_setting("wu_tour_$id", true);
+			if (\function_exists('save_user_settings')) {
+				\save_user_settings();
+			}
 
 			wp_send_json_success();
 		}
