@@ -146,13 +146,13 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @throws InvalidArgumentException If $keys is not iterable or contains illegal values.
 	 */
 	public function getMultiple($keys, $default = null) {
-		if (!is_array($keys) && !($keys instanceof \Traversable)) {
+		if (! is_array($keys) && ! ($keys instanceof \Traversable)) {
 			throw new class('Keys must be an array or Traversable') extends \Exception implements InvalidArgumentException {};
 		}
 
 		$result = [];
 		foreach ($keys as $key) {
-			$result[$key] = $this->get($key, $default);
+			$result[ $key ] = $this->get($key, $default);
 		}
 
 		return $result;
@@ -169,13 +169,13 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @throws InvalidArgumentException If $values is not iterable or contains illegal values.
 	 */
 	public function setMultiple($values, $ttl = null) {
-		if (!is_array($values) && !($values instanceof \Traversable)) {
+		if (! is_array($values) && ! ($values instanceof \Traversable)) {
 			throw new class('Values must be an array or Traversable') extends \Exception implements InvalidArgumentException {};
 		}
 
 		$success = true;
 		foreach ($values as $key => $value) {
-			if (!$this->set($key, $value, $ttl)) {
+			if (! $this->set($key, $value, $ttl)) {
 				$success = false;
 			}
 		}
@@ -193,13 +193,13 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @throws InvalidArgumentException If $keys is not iterable or contains illegal values.
 	 */
 	public function deleteMultiple($keys) {
-		if (!is_array($keys) && !($keys instanceof \Traversable)) {
+		if (! is_array($keys) && ! ($keys instanceof \Traversable)) {
 			throw new class('Keys must be an array or Traversable') extends \Exception implements InvalidArgumentException {};
 		}
 
 		$success = true;
 		foreach ($keys as $key) {
-			if (!$this->delete($key)) {
+			if (! $this->delete($key)) {
 				$success = false;
 			}
 		}
@@ -231,7 +231,7 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 * @throws InvalidArgumentException If the key is invalid.
 	 */
 	protected function validateKey($key): void {
-		if (!is_string($key)) {
+		if (! is_string($key)) {
 			throw new class('Cache key must be a string') extends \Exception implements InvalidArgumentException {};
 		}
 
