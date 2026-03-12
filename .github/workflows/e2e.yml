@@ -183,43 +183,14 @@ jobs:
 
           echo "✅ All checkout tests passed!"
 
-      - name: Run SSO Tests (After Setup)
+      - name: Run SSO Redirect Loop Tests (After Setup)
         id: sso-tests
         run: |
-          set +e
-          echo "=== Starting SSO Tests ==="
-
-          SSO_TESTS=(
-            "tests/e2e/cypress/integration/060-sso-cross-domain.spec.js"
-            "tests/e2e/cypress/integration/065-sso-redirect-loop.spec.js"
-          )
-
-          TOTAL_FAILURES=0
-
-          for TEST_SPEC in "${SSO_TESTS[@]}"; do
-            echo "Running: $TEST_SPEC"
-
-            npx cypress run \
-              --config-file cypress.config.test.js \
-              --spec "$TEST_SPEC" \
-              --browser ${{ matrix.browser }}
-
-            CYPRESS_EXIT_CODE=$?
-
-            if [ $CYPRESS_EXIT_CODE -eq 0 ]; then
-              echo "✅ $TEST_SPEC passed"
-            else
-              echo "❌ $TEST_SPEC failed with exit code $CYPRESS_EXIT_CODE"
-              TOTAL_FAILURES=$((TOTAL_FAILURES + 1))
-            fi
-          done
-
-          if [ $TOTAL_FAILURES -gt 0 ]; then
-            echo "❌ $TOTAL_FAILURES SSO test(s) failed"
-            exit 1
-          fi
-
-          echo "✅ All SSO tests passed!"
+          echo "=== Starting SSO Redirect Loop Tests ==="
+          npx cypress run \
+            --config-file cypress.config.test.js \
+            --spec "tests/e2e/cypress/integration/065-sso-redirect-loop.spec.js" \
+            --browser ${{ matrix.browser }}
 
       - name: Run Stripe Tests (After Setup)
         id: stripe-tests

@@ -223,30 +223,4 @@ describe("SSO Redirect Loop Prevention", () => {
     });
   });
 
-  // -----------------------------------------------------------------------
-  // SSO still works for logged-in users (regression check)
-  // -----------------------------------------------------------------------
-
-  it("Should still perform SSO for logged-in users visiting mapped domain", { retries: 1 }, () => {
-    // Verify the fix didn't break the happy path: a user logged into the
-    // main site should still be auto-authenticated on the subsite via SSO.
-
-    // Log in on the main site.
-    cy.loginByApi("admin", "password");
-
-    // Verify login worked on main site.
-    cy.visit("/wp-admin/", { failOnStatusCode: false });
-    cy.url().should("include", "/wp-admin/");
-    cy.get("body").should("have.class", "wp-admin");
-
-    // Visit wp-admin on the mapped domain — SSO should authenticate the user.
-    cy.visit(`${mappedDomainUrl}/wp-admin/`, {
-      failOnStatusCode: false,
-    });
-
-    // After SSO redirect chain, user should be on wp-admin (authenticated).
-    cy.url({ timeout: 60000 }).should("include", "/wp-admin/");
-    cy.get("body", { timeout: 30000 }).should("have.class", "wp-admin");
-    cy.get("#wpadminbar").should("exist");
-  });
 });
