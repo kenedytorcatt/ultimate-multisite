@@ -407,6 +407,47 @@ class SSO_Test extends \WP_UnitTestCase {
 	}
 
 	// ------------------------------------------------------------------
+	// handle_broker JSONP returns error instead of redirect for unattached broker
+	// ------------------------------------------------------------------
+
+	/**
+	 * Verify that when the broker is not attached and the response type is JSONP,
+	 * handle_broker returns a JSONP error response instead of redirecting.
+	 * Redirecting a <script> tag request breaks the wu.sso() callback and
+	 * causes an infinite redirect loop.
+	 */
+	public function test_handle_broker_source_returns_jsonp_error_for_unattached_broker(): void {
+		$source = file_get_contents(
+			dirname(__DIR__, 3) . '/inc/sso/class-sso.php'
+		);
+
+		// The unattached broker JSONP branch must call wu.sso() with an error, not wp_safe_redirect.
+		$pattern = "/isAttached\(\).*?'jsonp'\s*===\s*\\\$response_type.*?wu\.sso\(/s";
+		$this->assertMatchesRegularExpression(
+			$pattern,
+			$source,
+			'handle_broker must return JSONP error (not redirect) when broker is unattached and response type is jsonp'
+		);
+	}
+
+	/**
+	 * Verify that the SSO JS does not redirect in incognito mode.
+	 * The incognito redirect caused an infinite loop:
+	 * redirect -> sso_verify=invalid -> redirect -> repeat.
+	 */
+	public function test_sso_js_does_not_contain_incognito_redirect(): void {
+		$source = file_get_contents(
+			dirname(__DIR__, 3) . '/assets/js/sso.js'
+		);
+
+		$this->assertStringNotContainsString(
+			'is_incognito',
+			$source,
+			'SSO JS should not contain incognito detection — the incognito redirect path caused infinite loops'
+		);
+	}
+
+	// ------------------------------------------------------------------
 	// handle_requests early return
 	// ------------------------------------------------------------------
 
@@ -556,24 +597,29 @@ class SSO_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Verify that the JSONP branch in handle_broker also sets the
+	 * Verify that all JSONP branches set the
 	 * Content-Type: application/javascript header.
+	 *
+	 * There are three JSONP response paths:
+	 * 1. handle_server JSONP success/error response
+	 * 2. handle_broker JSONP error for unattached broker
+	 * 3. handle_broker JSONP "nothing to see here" for attached broker
 	 */
 	public function test_handle_broker_source_sets_javascript_content_type_for_jsonp(): void {
 		$source = file_get_contents(
 			dirname(__DIR__, 3) . '/inc/sso/class-sso.php'
 		);
 
-		// There should be two JSONP blocks with the header — count them.
+		// There should be three JSONP blocks with the header.
 		$count = preg_match_all(
 			"/header\(\s*'Content-Type:\s*application\/javascript;\s*charset=utf-8'\s*\)/",
 			$source
 		);
 
 		$this->assertSame(
-			2,
+			3,
 			$count,
-			'Both JSONP response paths (handle_server and handle_broker) must set the Content-Type header'
+			'All three JSONP response paths must set the Content-Type header'
 		);
 	}
 

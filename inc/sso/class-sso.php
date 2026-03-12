@@ -543,21 +543,40 @@ class SSO {
 
 		// Attach through redirect if the client isn't attached yet.
 		if ( ! $broker->isAttached()) {
+			/*
+			 * For JSONP requests (initiated by a <script> tag), we must NOT
+			 * redirect — the browser follows 302s transparently for script
+			 * tags, but the final response from the server will be a redirect
+			 * (not JavaScript), so the wu.sso() callback never fires.
+			 * Instead, return a JSONP error so the JS can handle it gracefully
+			 * and set the wu_sso_denied cookie to prevent further attempts.
+			 */
+			if ('jsonp' === $response_type) {
+				header('Content-Type: application/javascript; charset=utf-8');
+
+				printf(
+					'wu.sso(%s, %d);',
+					wp_json_encode(
+						[
+							'code'    => 0,
+							'message' => 'Broker not attached',
+						]
+					),
+					200
+				);
+
+				status_header(200);
+
+				exit;
+			}
+
 			$return_url = $this->get_current_url();
 
-			if ( 'jsonp' === $response_type) {
-				$attach_url = $broker->getAttachUrl(
-					[
-						'_jsonp' => '1',
-					]
-				);
-			} else {
-				$attach_url = $broker->getAttachUrl(
-					[
-						'return_url' => $return_url,
-					]
-				);
-			}
+			$attach_url = $broker->getAttachUrl(
+				[
+					'return_url' => $return_url,
+				]
+			);
 
 			wp_safe_redirect($attach_url, 302, 'WP-Ultimo-SSO');
 
@@ -743,9 +762,7 @@ class SSO {
 			return;
 		}
 
-		wp_register_script('wu-detect-incognito', wu_get_asset('detectincognito.js', 'js/lib'), false, wu_get_version(), true);
-
-		wp_register_script('wu-sso', wu_get_asset('sso.js', 'js'), ['wu-cookie-helpers', 'wu-detect-incognito'], wu_get_version(), true);
+		wp_register_script('wu-sso', wu_get_asset('sso.js', 'js'), ['wu-cookie-helpers'], wu_get_version(), true);
 
 		$sso_path = $this->get_url_path();
 
