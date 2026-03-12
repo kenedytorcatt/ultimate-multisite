@@ -10,6 +10,8 @@ parameters:
     - ./views
     - ./inc
     - ./ultimate-multisite.php
+  excludePaths:
+    - ./tests
   ignoreErrors:
       -
           message: '#Variable \$.* might not be defined.#'

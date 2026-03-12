@@ -14,6 +14,11 @@
 		<exclude-pattern>/tests/</exclude-pattern>
 	</rule>
 
+	<!-- Test files legitimately need direct DB access for data setup/teardown — no caching needed. -->
+	<rule ref="WordPress.DB.DirectDatabaseQuery">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+
 	<!-- How to scan -->
 	<!-- Usage instructions: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Usage -->
 	<!-- Annotated ruleset: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Annotated-ruleset.xml -->
