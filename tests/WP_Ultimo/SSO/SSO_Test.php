@@ -1,4 +1,9 @@
 <?php
+/**
+ * SSO unit tests.
+ *
+ * @package WP_Ultimo\SSO
+ */
 
 namespace WP_Ultimo\SSO;
 
@@ -10,6 +15,9 @@ namespace WP_Ultimo\SSO;
  */
 class SSO_Test extends \WP_UnitTestCase {
 
+	/**
+	 * Set up test fixtures.
+	 */
 	protected function setUp(): void {
 		parent::setUp();
 
@@ -23,6 +31,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * Tear down test fixtures.
+	 */
 	protected function tearDown(): void {
 		remove_all_filters('wu_sso_enabled');
 		remove_all_filters('wu_sso_salt');
@@ -42,12 +53,18 @@ class SSO_Test extends \WP_UnitTestCase {
 	// is_enabled
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test is_enabled returns true when the filter returns true.
+	 */
 	public function test_is_enabled_returns_true_when_filter_returns_true(): void {
 		$sso = SSO::get_instance();
 
 		$this->assertTrue($sso->is_enabled());
 	}
 
+	/**
+	 * Test is_enabled returns false when the filter returns false.
+	 */
 	public function test_is_enabled_returns_false_when_filter_returns_false(): void {
 		remove_all_filters('wu_sso_enabled');
 		add_filter('wu_sso_enabled', '__return_false');
@@ -61,6 +78,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// force_secure_login_cookie
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test force_secure_login_cookie returns a boolean value.
+	 */
 	public function test_force_secure_login_cookie_returns_boolean(): void {
 		$sso    = SSO::get_instance();
 		$result = $sso->force_secure_login_cookie();
@@ -72,12 +92,18 @@ class SSO_Test extends \WP_UnitTestCase {
 	// get_url_path
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test get_url_path defaults to 'sso'.
+	 */
 	public function test_get_url_path_defaults_to_sso(): void {
 		$sso = SSO::get_instance();
 
 		$this->assertSame('sso', $sso->get_url_path());
 	}
 
+	/**
+	 * Test get_url_path appends the action suffix.
+	 */
 	public function test_get_url_path_appends_action(): void {
 		$sso = SSO::get_instance();
 
@@ -85,6 +111,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertSame('sso-login', $sso->get_url_path('login'));
 	}
 
+	/**
+	 * Test get_url_path respects the wu_sso_get_url_path filter.
+	 */
 	public function test_get_url_path_respects_filter(): void {
 		add_filter(
 			'wu_sso_get_url_path',
@@ -103,6 +132,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// encode / decode
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test encode returns a non-numeric string.
+	 */
 	public function test_encode_returns_non_numeric_string(): void {
 		$sso     = SSO::get_instance();
 		$encoded = $sso->encode(42, $sso->salt());
@@ -111,6 +143,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertNotSame('42', $encoded);
 	}
 
+	/**
+	 * Test decode returns the original value after encoding.
+	 */
 	public function test_decode_returns_original_value(): void {
 		$sso     = SSO::get_instance();
 		$salt    = $sso->salt();
@@ -120,6 +155,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertSame(999, $decoded);
 	}
 
+	/**
+	 * Test different salts produce different encoded values.
+	 */
 	public function test_different_salts_produce_different_encodings(): void {
 		$sso = SSO::get_instance();
 
@@ -133,6 +171,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// get_strategy
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test get_strategy returns a valid strategy string.
+	 */
 	public function test_get_strategy_returns_string(): void {
 		$sso = SSO::get_instance();
 
@@ -141,6 +182,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertContains($strategy, ['ajax', 'redirect']);
 	}
 
+	/**
+	 * Test get_strategy respects the wu_sso_get_strategy filter.
+	 */
 	public function test_get_strategy_respects_filter(): void {
 		add_filter(
 			'wu_sso_get_strategy',
@@ -158,6 +202,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// get_return_type
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test get_return_type defaults to 'redirect' when no request param is set.
+	 */
 	public function test_get_return_type_defaults_to_redirect(): void {
 		unset($_REQUEST['return_type']);
 
@@ -166,6 +213,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertSame('redirect', $sso->get_return_type());
 	}
 
+	/**
+	 * Test get_return_type accepts 'jsonp' as a valid return type.
+	 */
 	public function test_get_return_type_accepts_jsonp(): void {
 		$_REQUEST['return_type'] = 'jsonp';
 
@@ -174,6 +224,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertSame('jsonp', $sso->get_return_type());
 	}
 
+	/**
+	 * Test get_return_type accepts 'json' as a valid return type.
+	 */
 	public function test_get_return_type_accepts_json(): void {
 		$_REQUEST['return_type'] = 'json';
 
@@ -182,6 +235,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertSame('json', $sso->get_return_type());
 	}
 
+	/**
+	 * Test get_return_type rejects invalid values and defaults to 'redirect'.
+	 */
 	public function test_get_return_type_rejects_invalid_and_defaults_to_redirect(): void {
 		$_REQUEST['return_type'] = 'xml';
 
@@ -194,6 +250,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// add_sso_removable_query_args
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test add_sso_removable_query_args adds the SSO path to the list.
+	 */
 	public function test_add_sso_removable_query_args_adds_sso_path(): void {
 		$sso  = SSO::get_instance();
 		$args = $sso->add_sso_removable_query_args([]);
@@ -201,6 +260,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertContains('sso', $args);
 	}
 
+	/**
+	 * Test add_sso_removable_query_args preserves existing arguments.
+	 */
 	public function test_add_sso_removable_query_args_preserves_existing(): void {
 		$sso  = SSO::get_instance();
 		$args = $sso->add_sso_removable_query_args(['existing_arg']);
@@ -213,6 +275,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// target_user_id
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test set_target_user_id and get_target_user_id round-trip.
+	 */
 	public function test_set_and_get_target_user_id(): void {
 		$sso = SSO::get_instance();
 
@@ -229,6 +294,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// calculate_secret_from_date
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test calculate_secret_from_date produces consistent hashes.
+	 */
 	public function test_calculate_secret_produces_consistent_hash(): void {
 		$sso = SSO::get_instance();
 
@@ -238,6 +306,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertSame($secret_a, $secret_b);
 	}
 
+	/**
+	 * Test calculate_secret_from_date differs for different dates.
+	 */
 	public function test_calculate_secret_differs_for_different_dates(): void {
 		$sso = SSO::get_instance();
 
@@ -247,6 +318,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertNotSame($secret_a, $secret_b);
 	}
 
+	/**
+	 * Test calculate_secret_from_date throws on invalid date input.
+	 */
 	public function test_calculate_secret_throws_on_invalid_date(): void {
 		$sso = SSO::get_instance();
 
@@ -259,6 +333,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// with_sso (static)
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test with_sso adds the sso=login query parameter.
+	 */
 	public function test_with_sso_adds_sso_login_param(): void {
 		$url    = 'https://example.com/checkout';
 		$result = SSO::with_sso($url);
@@ -266,6 +343,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString('sso=login', $result);
 	}
 
+	/**
+	 * Test with_sso preserves existing query parameters.
+	 */
 	public function test_with_sso_preserves_existing_query_params(): void {
 		$url    = 'https://example.com/checkout?plan=pro';
 		$result = SSO::with_sso($url);
@@ -274,6 +354,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString('sso=login', $result);
 	}
 
+	/**
+	 * Test with_sso returns the original URL when SSO is disabled.
+	 */
 	public function test_with_sso_returns_original_url_when_disabled(): void {
 		remove_all_filters('wu_sso_enabled');
 		add_filter('wu_sso_enabled', '__return_false');
@@ -288,6 +371,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// get_final_return_url
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test get_final_return_url includes sso=done and wp-login.php.
+	 */
 	public function test_get_final_return_url_includes_done_and_wp_login(): void {
 		$sso = SSO::get_instance();
 		$url = 'https://example.com/sso?redirect_to=https%3A%2F%2Fexample.com%2Fdashboard';
@@ -299,6 +385,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString('redirect_to=', $final);
 	}
 
+	/**
+	 * Test get_final_return_url strips the SSO path from the URL.
+	 */
 	public function test_get_final_return_url_strips_sso_path_from_url_path(): void {
 		$sso   = SSO::get_instance();
 		$url   = 'https://sub.example.com/sso';
@@ -313,12 +402,18 @@ class SSO_Test extends \WP_UnitTestCase {
 	// get_broker_by_id
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test get_broker_by_id returns null for an invalid ID.
+	 */
 	public function test_get_broker_by_id_returns_null_for_invalid_id(): void {
 		$sso = SSO::get_instance();
 
 		$this->assertNull($sso->get_broker_by_id('completely-invalid'));
 	}
 
+	/**
+	 * Test get_broker_by_id returns an array for a valid site.
+	 */
 	public function test_get_broker_by_id_returns_array_for_valid_site(): void {
 		$blog_id = get_current_blog_id();
 
@@ -337,6 +432,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// handle_broker early returns
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test handle_broker returns early on the main site.
+	 */
 	public function test_handle_broker_returns_early_on_main_site(): void {
 		// On the main site, handle_broker should return without doing anything.
 		$this->assertTrue(is_main_site(), 'Test expects to run on main site');
@@ -413,7 +511,7 @@ class SSO_Test extends \WP_UnitTestCase {
 	/**
 	 * Verify that when the broker is not attached and the response type is JSONP,
 	 * handle_broker returns a JSONP error response instead of redirecting.
-	 * Redirecting a <script> tag request breaks the wu.sso() callback and
+	 * Redirecting a script tag request breaks the wu.sso() callback and
 	 * causes an infinite redirect loop.
 	 */
 	public function test_handle_broker_source_returns_jsonp_error_for_unattached_broker(): void {
@@ -451,6 +549,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// handle_requests early return
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test handle_requests returns early without SSO action params.
+	 */
 	public function test_handle_requests_returns_early_without_sso_action(): void {
 		// With no SSO-related request params, handle_requests should return immediately.
 		$sso = SSO::get_instance();
@@ -465,6 +566,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// Session handler
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test session handler isActive returns false by default.
+	 */
 	public function test_session_handler_is_active_returns_false(): void {
 		$sso     = SSO::get_instance();
 		$handler = new SSO_Session_Handler($sso);
@@ -472,6 +576,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertFalse($handler->isActive());
 	}
 
+	/**
+	 * Test session handler getId reads the broker request parameter.
+	 */
 	public function test_session_handler_get_id_reads_broker_param(): void {
 		$_REQUEST['broker'] = 'test-broker-id';
 
@@ -481,6 +588,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertSame('test-broker-id', $handler->getId());
 	}
 
+	/**
+	 * Test session handler start throws when user is not logged in.
+	 */
 	public function test_session_handler_start_throws_when_not_logged_in(): void {
 		wp_set_current_user(0);
 
@@ -493,13 +603,16 @@ class SSO_Test extends \WP_UnitTestCase {
 		$handler->start();
 	}
 
+	/**
+	 * Test session handler resume sets target user ID from transient.
+	 */
 	public function test_session_handler_resume_sets_target_user_id_from_transient(): void {
 		$user_id = self::factory()->user->create();
 		$site_id = get_current_blog_id();
 
-		$sso     = SSO::get_instance();
-		$salt    = $sso->salt();
-		$broker  = $sso->encode($site_id, $salt);
+		$sso    = SSO::get_instance();
+		$salt   = $sso->salt();
+		$broker = $sso->encode($site_id, $salt);
 
 		set_site_transient("sso-{$broker}-{$site_id}", $user_id, 180);
 
@@ -513,6 +626,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		delete_site_transient("sso-{$broker}-{$site_id}");
 	}
 
+	/**
+	 * Test session handler resume does not set user when transient is missing.
+	 */
 	public function test_session_handler_resume_does_not_set_user_when_transient_missing(): void {
 		$sso  = SSO::get_instance();
 		$salt = $sso->salt();
@@ -532,6 +648,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// SSO Broker
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test broker getAttachUrl includes required parameters.
+	 */
 	public function test_broker_get_attach_url_includes_required_params(): void {
 		$sso = SSO::get_instance();
 
@@ -555,6 +674,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertSame('https://example.com/page', $query['return_url']);
 	}
 
+	/**
+	 * Test broker is_must_redirect_call returns false initially.
+	 */
 	public function test_broker_is_must_redirect_call_returns_false_initially(): void {
 		$sso = SSO::get_instance();
 
@@ -627,6 +749,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// cache() returns PSR-16 cache
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test cache returns a PSR-16 compatible instance.
+	 */
 	public function test_cache_returns_psr16_compatible_instance(): void {
 		$sso   = SSO::get_instance();
 		$cache = $sso->cache();
@@ -638,6 +763,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// build_server_request
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test build_server_request returns a PSR-7 instance.
+	 */
 	public function test_build_server_request_returns_psr7_instance(): void {
 		$sso     = SSO::get_instance();
 		$request = $sso->build_server_request('GET');
@@ -649,6 +777,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// get_server
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test get_server returns a Jasny SSO Server instance.
+	 */
 	public function test_get_server_returns_server_instance(): void {
 		$sso    = SSO::get_instance();
 		$server = $sso->get_server();
@@ -660,6 +791,9 @@ class SSO_Test extends \WP_UnitTestCase {
 	// add_additional_origins
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test add_additional_origins includes the main site domain.
+	 */
 	public function test_add_additional_origins_includes_main_site_domain(): void {
 		global $current_site;
 
@@ -670,6 +804,9 @@ class SSO_Test extends \WP_UnitTestCase {
 		$this->assertContains("https://{$current_site->domain}", $origins);
 	}
 
+	/**
+	 * Test add_additional_origins preserves existing origins.
+	 */
 	public function test_add_additional_origins_preserves_existing_origins(): void {
 		$sso     = SSO::get_instance();
 		$origins = $sso->add_additional_origins(['https://existing.com']);
