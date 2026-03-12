@@ -46,7 +46,7 @@ abstract class Base_PayPal_Gateway extends Base_Gateway {
 	 * @since 2.0.0
 	 * @var string
 	 */
-	protected $bn_code = 'UltimateMultisite_SP_PPCP';
+	protected $bn_code = 'ULTIMATE_SP_PPCP';
 
 	/**
 	 * Holds if we are in test mode.
