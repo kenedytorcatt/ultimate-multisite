@@ -26,6 +26,7 @@ use Jasny\SSO\Broker\NotAttachedException;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use WP_Ultimo\SSO\Exception\SSO_Exception;
 use WP_Ultimo\SSO\Exception\SSO_Session_Exception;
+use WP_Ultimo\SSO\WordPress_Simple_Cache;
 
 defined('ABSPATH') || exit;
 
