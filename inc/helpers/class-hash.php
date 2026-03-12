@@ -88,12 +88,13 @@ class Hash {
 		$base     = strlen($alphabet);
 		$seed     = self::derive_seed($group);
 
-		$number = 0;
+		$number      = 0;
+		$hash_length = strlen($hash);
 
-		for ($i = 0; $i < strlen($hash); $i++) {
+		for ($i = 0; $i < $hash_length; $i++) {
 			$pos = strpos($alphabet, $hash[ $i ]);
 
-			if ($pos === false) {
+			if (false === $pos) {
 				return false;
 			}
 
