@@ -57,8 +57,14 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 */
 	public function get($key, $default = null) {
 		$this->validateKey($key);
-		$value = get_transient($this->prefix . $key);
-		return false !== $value ? $value : $default;
+		$raw = get_site_transient($this->prefix . $key);
+
+		// Check if key exists by looking for wrapped structure.
+		if (false === $raw || ! is_array($raw) || ! array_key_exists('v', $raw)) {
+			return $default;
+		}
+
+		return $raw['v'];
 	}
 
 	/**
@@ -75,7 +81,8 @@ class WordPress_Simple_Cache implements CacheInterface {
 	public function set($key, $value, $ttl = null) {
 		$this->validateKey($key);
 		$expiration = $this->ttlToSeconds($ttl);
-		return set_transient($this->prefix . $key, $value, $expiration);
+		// Wrap value in array to distinguish false values from missing keys.
+		return set_site_transient($this->prefix . $key, array('v' => $value), $expiration);
 	}
 
 	/**
@@ -89,7 +96,7 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 */
 	public function delete($key) {
 		$this->validateKey($key);
-		return delete_transient($this->prefix . $key);
+		return delete_site_transient($this->prefix . $key);
 	}
 
 	/**
@@ -106,21 +113,21 @@ class WordPress_Simple_Cache implements CacheInterface {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
-				$wpdb->esc_like('_transient_' . $this->prefix) . '%'
+				"SELECT meta_key FROM {$wpdb->sitemeta} WHERE meta_key LIKE %s",
+				$wpdb->esc_like('_site_transient_' . $this->prefix) . '%'
 			)
 		);
 		// phpcs:enable
 
-		if (!is_array($results)) {
+		if (! is_array($results)) {
 			return false;
 		}
 
 		$success = true;
 		foreach ($results as $result) {
-			// Extract the transient name from option_name
-			$transient_name = str_replace('_transient_', '', $result->option_name);
-			if (!delete_transient($transient_name)) {
+			// Extract the transient name from meta_key.
+			$transient_name = str_replace('_site_transient_', '', $result->meta_key);
+			if (! delete_site_transient($transient_name)) {
 				$success = false;
 			}
 		}
@@ -211,7 +218,8 @@ class WordPress_Simple_Cache implements CacheInterface {
 	 */
 	public function has($key) {
 		$this->validateKey($key);
-		return false !== get_transient($this->prefix . $key);
+		$raw = get_site_transient($this->prefix . $key);
+		return false !== $raw && is_array($raw) && array_key_exists('v', $raw);
 	}
 
 	/**
