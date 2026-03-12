@@ -34,6 +34,19 @@ defined('ABSPATH') || exit;
 	<div id="wu-login-error-<?php echo esc_attr($field_type); ?>" class="wu-bg-red-100 wu-text-red-800 wu-p-3 wu-rounded wu-text-sm wu-mb-3 wu-hidden">
 	</div>
 
+	<?php
+	/**
+	 * Fires inside the inline login prompt, before the action buttons.
+	 *
+	 * Useful for adding captcha widgets or additional fields.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param string $field_type The field type ('email' or 'username').
+	 */
+	do_action('wu_inline_login_prompt_before_submit', $field_type);
+	?>
+
 	<div class="wu-flex wu-flex-wrap wu-items-center wu-justify-between wu-gap-2">
 		<a
 			href="<?php echo esc_url(wp_lostpassword_url(wu_get_current_url())); ?>"

@@ -152,6 +152,28 @@ Yes. Ultimate Multisite was always supported by WP Engine, but getting domain ma
 Ultimate Multisite should work with any hosting provider. The only difference is that some hosting company like Closte, Serverpilot, WPMUDEV, WP Engine, Cloudways, Gridpane and Runcloud.io has a tighter integration for domain mapping capabilities so they work out of the box. For other hosts that don't use cpanel, you may need to set up domain mapping manually.
 For a private server with a dedicated IP, the webserver can be setup to serve the wordpress install by default and no extra steps are required for domain mapping.
 
+= Site screenshots show a Cloudflare challenge page instead of the actual site =
+
+Ultimate Multisite uses [thum.io](https://www.thum.io/) to generate site screenshots. If your network is behind Cloudflare with Bot Fight Mode or similar protections enabled, thum.io's screenshot bot may be blocked and return a Cloudflare challenge page instead of your site screenshot.
+
+**Solution:** Create a Cloudflare WAF exception rule to allow thum.io's bot:
+
+1. Log in to your [Cloudflare dashboard](https://dash.cloudflare.com/)
+2. Select your domain
+3. Go to **Security → WAF → Custom rules**
+4. Click **Create rule**
+5. Configure the rule:
+   - **Rule name:** `Allow thum.io screenshot bot`
+   - **Field:** `User Agent`
+   - **Operator:** `contains`
+   - **Value:** `Thum.io`
+   - **Action:** `Skip` → Select all skip options (WAF, Rate Limiting, etc.)
+6. Click **Deploy**
+
+Alternatively, if you use Cloudflare's Super Bot Fight Mode, you can add an exception in **Security → Bots → Configure Super Bot Fight Mode** to allow verified bots or specific user agents.
+
+**Note:** Screenshots require sites to be publicly accessible. Local development environments cannot generate screenshots regardless of Cloudflare settings.
+
 == Requirements ==
 
 - WordPress Multisite 5.3 or higher
