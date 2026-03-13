@@ -17,9 +17,27 @@ use WP_UnitTestCase;
 class Geolocation_Test extends WP_UnitTestCase {
 
 	/**
-	 * Reset static properties after each test.
+	 * Original $_SERVER values to restore after each test.
+	 *
+	 * @var array
+	 */
+	private $original_server = [];
+
+	/**
+	 * Save original $_SERVER values before each test.
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		$this->original_server = $_SERVER;
+	}
+
+	/**
+	 * Reset static properties and restore $_SERVER after each test.
 	 */
 	public function tearDown(): void {
+		// Restore original $_SERVER to avoid polluting other tests
+		$_SERVER = $this->original_server;
+
 		// Reset the static memory cache and cached IP
 		$this->reset_static_properties();
 		parent::tearDown();
