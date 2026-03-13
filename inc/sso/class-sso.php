@@ -24,10 +24,9 @@ use Jasny\SSO\Server\ServerException;
 use Jasny\SSO\Server\BrokerException;
 use Jasny\SSO\Broker\NotAttachedException;
 use Nyholm\Psr7\Factory\Psr17Factory;
-use Symfony\Component\Cache\Adapter\FilesystemAdapter;
-use Symfony\Component\Cache\Psr16Cache;
 use WP_Ultimo\SSO\Exception\SSO_Exception;
 use WP_Ultimo\SSO\Exception\SSO_Session_Exception;
+use WP_Ultimo\SSO\WordPress_Simple_Cache;
 
 defined('ABSPATH') || exit;
 
@@ -46,7 +45,7 @@ class SSO {
 	 * The cache system for sessions.
 	 *
 	 * @since 2.0.11
-	 * @var Psr16Cache
+	 * @var \Psr\SimpleCache\CacheInterface
 	 */
 	protected $cache;
 
@@ -917,10 +916,8 @@ class SSO {
 	public function cache() {
 
 		if (null === $this->cache) {
-			// the PSR-6 cache object that you want to use
-			$psr6_cache = new FilesystemAdapter();
-
-			$this->cache = new Psr16Cache($psr6_cache);
+			// Use WordPress transients-based PSR-16 cache implementation
+			$this->cache = new WordPress_Simple_Cache('wu_sso_');
 		}
 
 		return apply_filters('wu_sso_cache', $this->cache, $this);

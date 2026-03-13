@@ -18,6 +18,10 @@ body {
 .wu-setup #wu-thank-you-element table {
   width: 100%;
 }
+#wu-sites > div {
+  max-width: 100%;
+  overflow: hidden;
+}
 .wu-setup .button .dashicons,
 .wu-setup .button .dashicons-before::before {
   height: 16px;

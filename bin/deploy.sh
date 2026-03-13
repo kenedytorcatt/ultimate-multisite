@@ -3,15 +3,20 @@
 set -euo pipefail
 
 # Deploy script for Ultimate Multisite
-# Usage: bin/deploy.sh 2.4.6
+# Usage: bin/deploy.sh 2.4.6          (stable release)
+#        bin/deploy.sh 2.4.6-beta.1   (pre-release)
 #
 # This script:
-# 1) Updates versions in readme.txt, plugin header, WP_Ultimo::VERSION, composer.json, package.json
-# 2) Ensures changelog entry exists; replaces XX-XX date; syncs entry into README.md Recent Changes
+# 1) Updates versions in plugin header, WP_Ultimo::VERSION, composer.json, package.json
+#    (and readme.txt Stable tag for stable releases only)
+# 2) For stable releases: ensures changelog entry exists; replaces XX-XX date; syncs to README.md
+#    For pre-releases: skips changelog sync
 # 3) Commits and pushes to main
 # 4) Runs npm build to generate ultimate-multisite.zip
 # 5) Tags and creates a GitHub release, attaching the ZIP and including changelog + PR log
-# 6) Deploys to WordPress.org SVN trunk and tags/<version>
+# 6) For stable releases only: deploys to WordPress.org SVN trunk and tags/<version>
+#
+# Pre-release suffixes: alpha, beta, rc, dev, preview (e.g. 2.4.6-beta.1)
 #
 # Requirements:
 # - Run from repository root or anywhere; script will cd into ultimate-multisite directory automatically
@@ -42,12 +47,26 @@ cd "$PLUGIN_DIR"
 VERSION="${1:-}"
 if [[ -z "$VERSION" ]]; then
   echo "Usage: $(basename "$0") <version>"
+  echo "       $(basename "$0") <version>-beta.1"
+  echo ""
+  echo "Pre-release versions (alpha, beta, rc, dev, preview) skip:"
+  echo "  - readme.txt Stable tag update"
+  echo "  - Changelog date replacement and README.md sync"
+  echo "  - WordPress.org SVN deployment"
   exit 1
 fi
 
-if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "Error: Version must be in form X.Y.Z (e.g., 2.4.6)"
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc|dev|preview)\.[0-9]+)?$ ]]; then
+  echo "Error: Version must be in form X.Y.Z or X.Y.Z-beta.N (e.g., 2.4.6 or 2.4.6-beta.1)"
   exit 1
+fi
+
+# Detect pre-release versions
+IS_PRERELEASE=false
+if [[ "$VERSION" =~ -(alpha|beta|rc|dev|preview)\. ]]; then
+  IS_PRERELEASE=true
+  echo "==> Pre-release detected: $VERSION"
+  echo "    Skipping: readme.txt Stable tag, changelog sync, WordPress.org SVN"
 fi
 
 DATE_TODAY=$(date +%Y-%m-%d)
@@ -89,8 +108,13 @@ ensure_clean_git() {
 update_versions() {
   echo "==> Updating versions to $VERSION"
 
-  # readme.txt Stable tag
-  sed -i.bak -E "s/^(Stable tag:[[:space:]]*).*/\\1$VERSION/" readme.txt
+  # readme.txt Stable tag (skip for pre-releases)
+  if [[ "$IS_PRERELEASE" == "false" ]]; then
+    sed -i.bak -E "s/^(Stable tag:[[:space:]]*).*/\\1$VERSION/" readme.txt
+    rm -f readme.txt.bak
+  else
+    echo "    Skipping readme.txt Stable tag (pre-release)"
+  fi
 
   # ultimate-multisite.php header Version and @version
   sed -i.bak -E "s/^( \* Version:[[:space:]]*).*/\\1$VERSION/" ultimate-multisite.php
@@ -109,6 +133,11 @@ update_versions() {
 }
 
 sync_changelog_and_date() {
+  if [[ "$IS_PRERELEASE" == "true" ]]; then
+    echo "==> Skipping changelog sync (pre-release)"
+    return
+  fi
+
   echo "==> Updating changelog date and syncing to README.md"
 
   # Ensure changelog entry exists and replace XX-XX with today's date
@@ -163,7 +192,11 @@ sync_changelog_and_date() {
 
 commit_and_push() {
   echo "==> Committing and pushing changes to main"
-  git add readme.txt README.md ultimate-multisite.php inc/class-wp-ultimo.php composer.json package.json
+  if [[ "$IS_PRERELEASE" == "true" ]]; then
+    git add ultimate-multisite.php inc/class-wp-ultimo.php composer.json package.json
+  else
+    git add readme.txt README.md ultimate-multisite.php inc/class-wp-ultimo.php composer.json package.json
+  fi
   git commit -m "chore(release): v$VERSION" || true
   git push origin main
 }
@@ -205,12 +238,18 @@ generate_release_notes() {
   fi
 
   RELEASE_NOTES_FILE=$(mktemp)
+  # For pre-releases, use the base version (X.Y.Z) to find changelog entries
+  local changelog_ver="$VERSION"
+  if [[ "$IS_PRERELEASE" == "true" ]]; then
+    changelog_ver="${VERSION%%-*}"
+  fi
+
   {
     echo "## Release v$VERSION"
     echo
     echo "### Highlights"
     # Take the bullet lines from the readme.txt changelog block
-    awk -v ver="$VERSION" '
+    awk -v ver="$changelog_ver" '
       $0 ~ ("^Version [[]" ver "[]] - Released on") { on=1; next }
       on {
         if ($0 ~ /^Version [[]/) exit
@@ -249,9 +288,14 @@ tag_and_github_release() {
       gh release edit "v$VERSION" --notes-file "$RELEASE_NOTES_FILE" || true
       gh release upload "v$VERSION" "$ZIP_PATH" --clobber || true
     else
+      local prerelease_flag=""
+      if [[ "$IS_PRERELEASE" == "true" ]]; then
+        prerelease_flag="--prerelease"
+      fi
       gh release create "v$VERSION" "$ZIP_PATH" \
         --title "v$VERSION" \
-        --notes-file "$RELEASE_NOTES_FILE"
+        --notes-file "$RELEASE_NOTES_FILE" \
+        $prerelease_flag
     fi
   else
     echo "Skipping GitHub release step: 'gh' missing or GH_TOKEN not set."
@@ -316,8 +360,13 @@ main() {
   build_zip
   generate_release_notes
   tag_and_github_release
-  deploy_to_wporg_svn
-  echo "\n✅ Deployment of v$VERSION completed."
+  if [[ "$IS_PRERELEASE" == "false" ]]; then
+    deploy_to_wporg_svn
+  else
+    echo "==> Skipping WordPress.org SVN deployment (pre-release)"
+  fi
+  echo ""
+  echo "✅ Deployment of v$VERSION completed."
 }
 
 main "$@"

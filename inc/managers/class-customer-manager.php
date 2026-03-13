@@ -337,7 +337,7 @@ class Customer_Manager extends Base_Manager {
 	 */
 	public function maybe_add_to_main_site($customer, $checkout): void {
 
-		if ( ! wu_get_setting('add_users_to_main_site')) {
+		if ( ! wu_get_setting('add_users_to_main_site', false)) {
 			return;
 		}
 

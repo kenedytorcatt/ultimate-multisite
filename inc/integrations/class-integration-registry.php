@@ -128,6 +128,7 @@ class Integration_Registry {
 		$this->register(new Providers\Cloudflare\Cloudflare_Integration());
 		$this->register(new Providers\Hestia\Hestia_Integration());
 		$this->register(new Providers\Enhance\Enhance_Integration());
+		$this->register(new Providers\Plesk\Plesk_Integration());
 		$this->register(new Providers\Rocket\Rocket_Integration());
 		$this->register(new Providers\WPEngine\WPEngine_Integration());
 		$this->register(new Providers\WPMUDEV\WPMUDEV_Integration());
@@ -173,6 +174,7 @@ class Integration_Registry {
 		$this->add_capability('cloudflare', new Providers\Cloudflare\Cloudflare_Domain_Mapping());
 		$this->add_capability('hestia', new Providers\Hestia\Hestia_Domain_Mapping());
 		$this->add_capability('enhance', new Providers\Enhance\Enhance_Domain_Mapping());
+		$this->add_capability('plesk', new Providers\Plesk\Plesk_Domain_Mapping());
 		$this->add_capability('rocket', new Providers\Rocket\Rocket_Domain_Mapping());
 		$this->add_capability('wpengine', new Providers\WPEngine\WPEngine_Domain_Mapping());
 		$this->add_capability('wpmudev', new Providers\WPMUDEV\WPMUDEV_Domain_Mapping());

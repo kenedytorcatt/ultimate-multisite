@@ -259,6 +259,12 @@ class Site_Duplicator {
 
 		wp_cache_flush();
 
+		// Ensure the requested title is applied after duplication, since the
+		// table copy may overwrite the blogname option set during site creation.
+		if (! empty($args->title)) {
+			update_blog_option($args->to_site_id, 'blogname', $args->title);
+		}
+
 		/**
 		 * Allow developers to hook after a site duplication happens.
 		 *

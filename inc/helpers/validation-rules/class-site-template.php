@@ -62,7 +62,7 @@ class Site_Template extends Rule {
 		}
 
 		if ($site->get_type() === Site_Type::CUSTOMER_OWNED) {
-			if (! wu_get_setting('allow_own_site_as_template')) {
+			if (! wu_get_setting('allow_own_site_as_template', false)) {
 				$this->message = __('You can not use your sites as template', 'ultimate-multisite');
 
 				return false;

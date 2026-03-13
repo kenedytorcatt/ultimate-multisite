@@ -156,7 +156,7 @@ class Jumper {
 
 		$treated_lines = [];
 
-		$saved_links = wu_get_setting('jumper_custom_links');
+		$saved_links = wu_get_setting('jumper_custom_links', '');
 
 		$lines = explode(PHP_EOL, (string) $saved_links);
 

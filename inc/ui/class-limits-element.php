@@ -266,7 +266,7 @@ class Limits_Element extends Base_Element {
 		 */
 		$post_types = apply_filters('wu_get_post_types', $post_types);
 
-		$items_to_display = wu_get_setting('limits_and_quotas');
+		$items_to_display = wu_get_setting('limits_and_quotas', []);
 
 		$atts['site']             = $this->site;
 		$atts['post_types']       = $post_types;

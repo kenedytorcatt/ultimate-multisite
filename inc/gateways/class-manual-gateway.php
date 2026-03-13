@@ -400,7 +400,7 @@ class Manual_Gateway extends Base_Gateway {
 
 					<div class="wu-bg-gray-100 wu-rounded wu-p-4">
 
-						<?php echo do_shortcode(wu_get_setting('manual_payment_instructions')); ?>
+						<?php echo do_shortcode(wu_get_setting('manual_payment_instructions', '')); ?>
 
 					</div>
 

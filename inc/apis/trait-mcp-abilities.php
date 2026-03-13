@@ -66,12 +66,6 @@ trait MCP_Abilities {
 	 */
 	public function enable_mcp_abilities(): void {
 
-		$is_enabled = \WP_Ultimo\MCP_Adapter::get_instance()->is_mcp_enabled();
-
-		if (! $is_enabled) {
-			return;
-		}
-
 		if (! function_exists('wp_register_ability')) {
 			return;
 		}
@@ -753,6 +747,21 @@ trait MCP_Abilities {
 	 * @return array
 	 */
 	public function mcp_get_items(array $args): array {
+
+		// Remove empty filter values that AI models send as defaults
+		// (e.g., blog_id: 0, domain: "") which would create invalid WHERE clauses.
+		$filter_columns = array_keys($this->get_model_filter_columns());
+
+		foreach ($filter_columns as $column) {
+			if (isset($args[$column]) && empty($args[$column]) && $args[$column] !== false) {
+				unset($args[$column]);
+			}
+		}
+
+		// Also strip empty search strings.
+		if (isset($args['search']) && $args['search'] === '') {
+			unset($args['search']);
+		}
 
 		$query_args = array_merge(
 			[

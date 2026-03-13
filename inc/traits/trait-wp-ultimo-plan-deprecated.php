@@ -196,7 +196,7 @@ trait WP_Ultimo_Plan_Deprecated {
 		 * Site, Disk Space and Trial
 		 * Gets the Disk Space and Sites to be displayed on the pricing table options
 		 */
-		if (wu_get_setting('enable_multiple_sites') && $this->should_display_quota_on_pricing_tables('sites')) {
+		if (wu_get_setting('enable_multiple_sites', false) && $this->should_display_quota_on_pricing_tables('sites')) {
 			$is_unlimited = (int) $this->get_limitations()->sites->get_limit() === 0 || ! $this->get_limitations()->sites->is_enabled();
 			$value        = $is_unlimited ? __('Unlimited', 'ultimate-multisite') : $this->get_limitations()->sites->get_limit();
 
@@ -232,7 +232,7 @@ trait WP_Ultimo_Plan_Deprecated {
 		/**
 		 * Display Trial, if some
 		 */
-		$trial_days      = wu_get_setting('trial');
+		$trial_days      = wu_get_setting('trial', 0);
 		$trial_days_plan = $this->get_trial_duration();
 
 		if ($trial_days > 0 || $trial_days_plan) {
