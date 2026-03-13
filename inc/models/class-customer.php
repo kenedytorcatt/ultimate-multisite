@@ -398,10 +398,23 @@ class Customer extends Base_Model implements Billable, Notable {
 		$this->has_trialed = $this->get_meta(self::META_HAS_TRIALED);
 
 		if ( ! $this->has_trialed) {
+			/*
+			 * Exclude pending memberships from this check.
+			 *
+			 * WP Ultimo sets date_trial_end at form submit, before payment is
+			 * collected. Without this filter an abandoned checkout permanently
+			 * blocks future trials because has_trialed() finds the pending
+			 * membership and returns true immediately.
+			 *
+			 * We intentionally keep 'cancelled' in scope: a user who started a
+			 * trial, then cancelled their active membership, genuinely consumed
+			 * their trial and should not receive a second one.
+			 */
 			$trial = wu_get_memberships(
 				[
 					'customer_id'            => $this->get_id(),
 					'date_trial_end__not_in' => [null, '0000-00-00 00:00:00'],
+					'status__not_in'         => ['pending'],
 					'fields'                 => 'ids',
 					'number'                 => 1,
 				]

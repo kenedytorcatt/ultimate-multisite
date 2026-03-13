@@ -3,99 +3,102 @@ import Shepherd from 'shepherd.js';
 
 (function($) {
 
-  $(document).ready(function() {
-    _.each(wu_tours, function(tour, tour_id) {
+	$(document).ready(function() {
+		_.each(wu_tours, function(tour, tour_id) {
 
-      window[tour_id] = new Shepherd.Tour({
-        useModalOverlay: true,
-        includeStyles: false,
-        styleVariables: {
-          arrowSize: 1.1,
-        },
-        defaultStepOptions: {
-          classes: 'wu-p-2 wu-bg-white wu-shadow-sm wu-rounded wu-text-left wu-text-gray-700',
-          scrollTo: {
-            block: 'center',
-            behavior: 'smooth',
-          },
-          tippyOptions: {
-            zIndex: 999999,
-            onCreate(instance) {
+			window[ tour_id ] = new Shepherd.Tour({
+				useModalOverlay: true,
+				includeStyles: false,
+				styleVariables: {
+					arrowSize: 1.1,
+				},
+				defaultStepOptions: {
+					classes: 'wu-p-2 wu-bg-white wu-shadow-sm wu-rounded wu-text-left wu-text-gray-700',
+					scrollTo: {
+						block: 'center',
+						behavior: 'smooth',
+					},
+					tippyOptions: {
+						zIndex: 999999,
+						onCreate(instance) {
 
-              instance.popper.classList.add('wu-styling');
+							instance.popper.classList.add('wu-styling');
 
-              const elements = instance.popperChildren.content.children[0].children[0].children;
+							const elements = instance.popperChildren.content.children[ 0 ].children[ 0 ].children;
 
-              if (elements[0].children[0]) {
+							if (elements[ 0 ].children[ 0 ]) {
 
-                elements[0].children[0].classList.add('wu-p-2', 'wu-pb-0', 'wu-m-0', 'wu--mb-1', 'wu-text-gray-800');
+								elements[ 0 ].children[ 0 ].classList.add('wu-p-2', 'wu-pb-0', 'wu-m-0', 'wu--mb-1', 'wu-text-gray-800');
 
-              } // end if;
+							} // end if;
 
-              elements[1].classList.add('wu-p-2');
+							elements[ 1 ].classList.add('wu-p-2');
 
-              elements[2].classList.add('wu--mt-1', 'wu-p-2', 'wu-bg-gray-200', 'wu-rounded', 'wu-text-right');
+							elements[ 2 ].classList.add('wu--mt-1', 'wu-p-2', 'wu-bg-gray-200', 'wu-rounded', 'wu-text-right');
 
-            },
-          },
-        },
-      });
+						},
+					},
+				},
+			});
 
-      window[tour_id].on('complete', function() {
+			const markTourFinished = function() {
 
-        $.ajax({
-          url: ajaxurl,
-          data: {
-            action: 'wu_mark_tour_as_finished',
-            tour_id,
-            nonce: wu_tours_vars.nonce,
-          },
-        });
+				$.ajax({
+					url: ajaxurl,
+					data: {
+						action: 'wu_mark_tour_as_finished',
+						tour_id,
+						nonce: wu_tours_vars.nonce,
+					},
+				});
 
-      });
+			};
 
-      _.each(tour, function(step, step_index) {
+			window[ tour_id ].on('complete', markTourFinished);
+			window[ tour_id ].on('cancel', markTourFinished);
 
-        const last_step = (step_index + 1) === tour.length;
+			_.each(tour, function(step, step_index) {
 
-        const action_url = function(url, target = '_blank') {
+				const last_step = (step_index + 1) === tour.length;
 
-          return () => {
+				const action_url = function(url, target = '_blank') {
 
-            window.open(url, target);
+					return () => {
 
-          };
+						window.open(url, target);
 
-        };
+					};
 
-        step.buttons = _.isArray(step.buttons) ? step.buttons : [];
+				};
 
-        step.buttons = _.map(step.buttons, function(item) {
+				step.buttons = _.isArray(step.buttons) ? step.buttons : [];
 
-          item.action = action_url(item.url, item.target);
+				step.buttons = _.map(step.buttons, function(item) {
 
-          return item;
+					item.action = action_url(item.url, item.target);
 
-        });
+					return item;
 
-        window[tour_id].addStep({
-          ...step,
-          buttons: [
-            ...step.buttons,
-            {
-              classes: 'button button-primary wu-text-xs sm:wu-normal-case',
-              text: last_step ? wu_tours_vars.i18n.finish : wu_tours_vars.i18n.next,
-              action: window[tour_id].next,
-            },
-          ],
-        });
+				});
 
-      });
+				window[ tour_id ].addStep({
+					...step,
+					buttons: [
+						...step.buttons,
+						{
+							classes: 'button button-primary wu-text-xs sm:wu-normal-case',
+							text: last_step ? wu_tours_vars.i18n.finish : wu_tours_vars.i18n.next,
+							action: window[ tour_id ].next,
+						},
+					],
+				});
 
-      window[tour_id].start();
+			});
 
-    });
+			window[ tour_id ].start();
 
-  });
+		});
+
+	});
 
 }(jQuery));
