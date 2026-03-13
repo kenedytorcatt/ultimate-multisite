@@ -910,4 +910,42 @@ class Limitations_Test extends WP_UnitTestCase {
 		// Disk space should be additive
 		$this->assertEquals(600, $limits->disk_space->get_limit(), 'Disk space should be summed');
 	}
+
+	/**
+	 * Test that get_available_site_templates returns integers, not strings.
+	 *
+	 * Regression test for issue #351: When template IDs are stored as string keys
+	 * in the limit array, they must be converted to integers for proper comparison
+	 * in the Site_Template validation rule.
+	 */
+	public function test_available_site_templates_returns_integers(): void {
+
+		$limitations = new Limitations([
+			'site_templates' => [
+				'enabled' => true,
+				'mode'    => 'choose_available_templates',
+				'limit'   => [
+					'123' => ['behavior' => 'available'],
+					'456' => ['behavior' => 'pre_selected'],
+					'789' => ['behavior' => 'not_available'],
+				],
+			],
+		]);
+
+		$available = $limitations->site_templates->get_available_site_templates();
+
+		// Should return integers, not strings
+		$this->assertContains(123, $available, 'Template 123 should be in available array as integer');
+		$this->assertContains(456, $available, 'Template 456 should be in available array as integer');
+		$this->assertNotContains(789, $available, 'Template 789 should not be available');
+
+		// Verify strict type checking
+		foreach ($available as $template_id) {
+			$this->assertIsInt($template_id, 'All template IDs should be integers');
+		}
+
+		// Verify in_array works with strict comparison
+		$this->assertTrue(in_array(123, $available, true), 'in_array with strict=true should find integer 123');
+		$this->assertTrue(in_array(456, $available, true), 'in_array with strict=true should find integer 456');
+	}
 }
