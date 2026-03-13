@@ -102,7 +102,7 @@ class Geolocation {
 	 */
 	public static function get_ip_address(): string {
 		// Return cached IP if available (same request optimization)
-		if (null === self::$cached_ip) {
+		if (null !== self::$cached_ip) {
 			return self::$cached_ip;
 		}
 
@@ -366,6 +366,8 @@ class Geolocation {
 		// This method is kept for backwards compatibility
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+
 	/**
 	 * Maybe trigger a DB update for the first time.
 	 *
@@ -376,9 +378,10 @@ class Geolocation {
 	 */
 	public static function maybe_update_database(
 		string $new_value,
-		// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		string $old_value
 	): string {
+
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		return $new_value;
 	}
 

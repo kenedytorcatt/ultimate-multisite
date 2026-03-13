@@ -207,7 +207,7 @@ class Geolocation_Test extends WP_UnitTestCase {
 		$this->assertStringEndsWith('GeoLite2-Country.mmdb', $path);
 
 		// Should contain wp-content/uploads
-		$this->assertStringContains('uploads', $path);
+		$this->assertStringContainsString('uploads', $path);
 	}
 
 	/**
