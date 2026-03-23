@@ -42,7 +42,6 @@ class CPanel_Integration extends Integration {
 
 		parent::__construct('cpanel', 'cPanel');
 
-		$this->set_description(__('cPanel is the management panel being used on a large number of shared and dedicated hosts across the globe.', 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('cpanel.svg', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/cpanel');
 		$this->set_constants(
@@ -54,6 +53,14 @@ class CPanel_Integration extends Integration {
 		);
 		$this->set_optional_constants(['WU_CPANEL_PORT', 'WU_CPANEL_ROOT_DIR']);
 		$this->set_supports(['autossl']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __('cPanel is the management panel being used on a large number of shared and dedicated hosts across the globe.', 'ultimate-multisite');
 	}
 
 	/**

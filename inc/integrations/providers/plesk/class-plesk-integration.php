@@ -32,7 +32,6 @@ class Plesk_Integration extends Integration {
 
 		parent::__construct('plesk', 'Plesk');
 
-		$this->set_description(__('Integrates with Plesk to add and remove domain aliases automatically when domains are mapped or removed.', 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('plesk.svg', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/plesk');
 		$this->set_constants(
@@ -44,6 +43,14 @@ class Plesk_Integration extends Integration {
 		);
 		$this->set_optional_constants(['WU_PLESK_PORT', 'WU_PLESK_USERNAME']);
 		$this->set_supports(['autossl', 'no-instructions']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __('Integrates with Plesk to add and remove domain aliases automatically when domains are mapped or removed.', 'ultimate-multisite');
 	}
 
 	/**

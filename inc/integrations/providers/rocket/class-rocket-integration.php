@@ -32,11 +32,18 @@ class Rocket_Integration extends Integration {
 
 		parent::__construct('rocket', 'Rocket.net');
 
-		$this->set_description(__('Rocket.net is a fully API-driven managed WordPress hosting platform built for speed, security, and scalability. With edge-first private cloud infrastructure and automatic SSL management, Rocket.net makes it easy to deploy and manage WordPress sites at scale.', 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('rocket.svg', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/rocket');
 		$this->set_constants(['WU_ROCKET_EMAIL', 'WU_ROCKET_PASSWORD', 'WU_ROCKET_SITE_ID']);
 		$this->set_supports(['autossl']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __('Rocket.net is a fully API-driven managed WordPress hosting platform built for speed, security, and scalability. With edge-first private cloud infrastructure and automatic SSL management, Rocket.net makes it easy to deploy and manage WordPress sites at scale.', 'ultimate-multisite');
 	}
 
 	/**

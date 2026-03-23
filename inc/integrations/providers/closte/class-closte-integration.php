@@ -41,11 +41,18 @@ class Closte_Integration extends Integration {
 
 		parent::__construct('closte', 'Closte');
 
-		$this->set_description(__('Closte serverless hosting integration with automatic domain mapping and SSL.', 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('closte.svg', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/closte');
 		$this->set_constants(['CLOSTE_CLIENT_API_KEY']);
 		$this->set_supports(['autossl', 'no-instructions', 'no-config']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __('Closte serverless hosting integration with automatic domain mapping and SSL.', 'ultimate-multisite');
 	}
 
 	/**

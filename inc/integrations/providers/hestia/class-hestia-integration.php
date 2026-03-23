@@ -29,7 +29,6 @@ class Hestia_Integration extends Integration {
 
 		parent::__construct('hestia', 'Hestia Control Panel');
 
-		$this->set_description(__('Integrates with Hestia Control Panel to add and remove web domain aliases automatically when domains are mapped or removed.', 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('hestia.svg', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/hestia');
 		$this->set_constants(
@@ -43,6 +42,14 @@ class Hestia_Integration extends Integration {
 		);
 		$this->set_optional_constants(['WU_HESTIA_RESTART']);
 		$this->set_supports(['no-instructions']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __('Integrates with Hestia Control Panel to add and remove web domain aliases automatically when domains are mapped or removed.', 'ultimate-multisite');
 	}
 
 	/**
