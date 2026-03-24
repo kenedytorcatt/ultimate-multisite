@@ -172,21 +172,17 @@
 
 		selectize.on('item_add', function(value) {
 
-			let active_item = {
-				url: null,
-			};
+			/*
+			 * Look up the selected item directly from selectize's options store,
+			 * which is keyed by the valueField and is always populated when an
+			 * item is added. This replaces the previous approach of searching
+			 * through a custom savedItems array with a hardcoded 'setting_id'
+			 * field comparison, which failed when savedItems was not yet populated
+			 * or when the valueField differed from 'setting_id'.
+			 */
+			const active_item = selectize.options[ value ];
 
-			jQuery.each(selectize.savedItems, function(index, item) {
-
-				if (item.setting_id === value) {
-
-					active_item = item;
-
-				} // end if;
-
-			});
-
-			if (active_item.url) {
+			if (active_item && active_item.url) {
 
 				window.location.href = active_item.url;
 
