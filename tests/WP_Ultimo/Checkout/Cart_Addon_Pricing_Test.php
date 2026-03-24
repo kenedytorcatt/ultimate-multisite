@@ -128,7 +128,7 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 		}
 
 		// Create a discount code (10% off, applies to renewals).
-		self::$discount_code = wu_create_discount_code(
+		$discount_code_result = wu_create_discount_code(
 			array(
 				'name'              => 'Test Discount',
 				'code'              => 'TEST10',
@@ -140,9 +140,11 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 			)
 		);
 
-		if ( is_wp_error(self::$discount_code) ) {
-			self::fail('Failed to create test discount code');
+		if ( is_wp_error($discount_code_result) ) {
+			self::fail('Failed to create test discount code: ' . $discount_code_result->get_error_message());
 		}
+
+		self::$discount_code = $discount_code_result;
 
 		// Create an active membership for the customer.
 		self::$membership = wu_create_membership(
