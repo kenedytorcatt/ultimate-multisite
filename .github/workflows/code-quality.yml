@@ -41,6 +41,7 @@ jobs:
         run: |
           echo "Running PHPStan on changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
           vendor/bin/phpstan analyse --error-format=checkstyle --no-progress ${{ steps.changed-files.outputs.all_changed_files }} > phpstan-report.xml || true
+          [ -s phpstan-report.xml ] || echo '<?xml version="1.0" encoding="UTF-8"?><checkstyle></checkstyle>' > phpstan-report.xml
 
       - name: Annotate PR with PHPCS results
         uses: staabm/annotate-pull-request-from-checkstyle-action@v1

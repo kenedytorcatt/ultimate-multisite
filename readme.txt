@@ -249,6 +249,20 @@ No personal data, domains, IP addresses, or payment information are collected.
 == Changelog ==
 Version [2.4.13] - Released on 2026-XX-XX
 - Fix: Selectize dropdowns with more than 1000 options (e.g. TLD lists) were silently truncated due to the library's default maxOptions limit.
+- Fix: Returning to checkout after an abandoned signup no longer charges full price instead of the trial price.
+- Fix: Returning to a checkout URL after a cancelled payment no longer shows an "invalid status" error.
+- Fix: A declined credit card no longer permanently blocks the customer from starting a free trial.
+- Fix: Choosing a site name that is already taken now shows a clear error message instead of silently adding a number to the name.
+- Fix: Customers who cancel during an active trial are no longer incorrectly marked as having used their trial.
+- Fix: If site creation fails during signup, the system can now retry automatically instead of getting stuck on "Creating your site" forever.
+- Fix: Site screenshots are no longer taken before the template has finished copying, which was producing blank images.
+- Fix: Site creation for complex templates no longer times out on servers with strict PHP execution limits.
+- Fix: The "pending payment" popup no longer appears on every login after an abandoned checkout.
+- Fix: Customers with an abandoned checkout can now choose a different plan without being blocked by the old pending payment notice.
+- Fix: The "thank you" page now detects when a site is ready within seconds instead of waiting up to 4 minutes, even with payment gateways that process asynchronously (e.g. Stripe).
+- Fix: The "thank you" page no longer breaks if the network connection drops briefly during site creation polling.
+- Fix: The "thank you" page now works correctly with CDN and page caching plugins that serve stale content after site creation completes.
+- Fix: PHP 8.2 compatibility issue in folder creation that could cause a critical error during the setup wizard.
 
 Version [2.4.12] - Released on 2026-02-27
 - New: Send Invoice and Resend Invoice workflows for payments.

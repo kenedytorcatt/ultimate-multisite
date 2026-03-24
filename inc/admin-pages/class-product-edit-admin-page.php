@@ -1000,6 +1000,31 @@ class Product_Edit_Admin_Page extends Edit_Admin_Page {
 			],
 		];
 
+		$sections['demo-settings'] = [
+			'title'  => __('Demo Settings', 'ultimate-multisite'),
+			'desc'   => __('Configure how this demo product behaves. These settings only apply when the product type is "Demo".', 'ultimate-multisite'),
+			'icon'   => 'dashicons-wu-clock',
+			'v-show' => 'product_type === "demo"',
+			'state'  => [
+				'demo_behavior' => $this->get_object()->get_demo_behavior(),
+			],
+			'fields' => [
+				'demo_behavior' => [
+					'type'      => 'select',
+					'title'     => __('Demo Expiry Behavior', 'ultimate-multisite'),
+					'desc'      => __('Choose what happens when the customer\'s demo period ends. <strong>Delete after time</strong> automatically removes the site after the configured duration. <strong>Keep until live</strong> keeps the site indefinitely with the frontend blocked — the customer must explicitly activate it to make it visible to visitors.', 'ultimate-multisite'),
+					'value'     => $this->get_object()->get_demo_behavior(),
+					'options'   => [
+						'delete_after_time' => __('Delete after time (auto-expire)', 'ultimate-multisite'),
+						'keep_until_live'   => __('Keep until customer goes live', 'ultimate-multisite'),
+					],
+					'html_attr' => [
+						'v-model' => 'demo_behavior',
+					],
+				],
+			],
+		];
+
 		return apply_filters('wu_product_options_sections', $sections, $this->get_object());
 	}
 

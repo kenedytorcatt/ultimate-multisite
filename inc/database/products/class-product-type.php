@@ -32,6 +32,8 @@ class Product_Type extends Enum {
 
 	const SERVICE = 'service';
 
+	const DEMO = 'demo';
+
 	/**
 	 * Returns an array with values => CSS Classes.
 	 *
@@ -44,6 +46,7 @@ class Product_Type extends Enum {
 			static::PLAN    => 'wu-bg-green-200 wu-text-green-700',
 			static::PACKAGE => 'wu-bg-gray-200 wu-text-blue-700',
 			static::SERVICE => 'wu-bg-yellow-200 wu-text-yellow-700',
+			static::DEMO    => 'wu-bg-orange-200 wu-text-orange-700',
 		];
 	}
 
@@ -59,6 +62,7 @@ class Product_Type extends Enum {
 			static::PLAN    => __('Plan', 'ultimate-multisite'),
 			static::PACKAGE => __('Package', 'ultimate-multisite'),
 			static::SERVICE => __('Service', 'ultimate-multisite'),
+			static::DEMO    => __('Demo', 'ultimate-multisite'),
 		];
 	}
 }

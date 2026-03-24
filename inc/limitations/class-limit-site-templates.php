@@ -221,7 +221,8 @@ class Limit_Site_Templates extends Limit {
 			if (self::BEHAVIOR_AVAILABLE === $site_settings->behavior ||
 				self::BEHAVIOR_PRE_SELECTED === $site_settings->behavior ||
 				self::MODE_DEFAULT === $this->mode) {
-				$available[] = $site_id;
+				// Convert to integer to match type used in validation (absint)
+				$available[] = absint($site_id);
 			}
 		}
 
@@ -248,7 +249,8 @@ class Limit_Site_Templates extends Limit {
 			$site_settings = (object) $site_settings;
 
 			if (self::BEHAVIOR_PRE_SELECTED === $site_settings->behavior) {
-				$pre_selected_site_template = $site_id;
+				// Convert to integer to match type used in validation (absint)
+				$pre_selected_site_template = absint($site_id);
 			}
 		}
 

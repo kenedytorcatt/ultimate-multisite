@@ -64,7 +64,8 @@
         "symfony/polyfill-php83": "^1.31.0",
         "symfony/polyfill-php84": "^1.31.0",
         "ext-curl": "*",
-        "pondermatic/composer-archive-project": "^1.1"
+        "pondermatic/composer-archive-project": "^1.1",
+        "maxmind-db/reader": "^1.12"
     },
     "require-dev": {
 

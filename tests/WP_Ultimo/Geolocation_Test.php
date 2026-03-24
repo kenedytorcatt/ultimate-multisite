@@ -1,0 +1,531 @@
+<?php
+/**
+ * Test case for Geolocation class.
+ *
+ * @package WP_Ultimo
+ * @subpackage Tests
+ */
+
+namespace WP_Ultimo\Tests;
+
+use WP_Ultimo\Geolocation;
+use WP_UnitTestCase;
+
+/**
+ * Test Geolocation functionality.
+ */
+class Geolocation_Test extends WP_UnitTestCase {
+
+	/**
+	 * Original $_SERVER values to restore after each test.
+	 *
+	 * @var array
+	 */
+	private $original_server = [];
+
+	/**
+	 * Save original $_SERVER values before each test.
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		$this->original_server = $_SERVER;
+	}
+
+	/**
+	 * Reset static properties and restore $_SERVER after each test.
+	 */
+	public function tearDown(): void {
+		// Restore original $_SERVER to avoid polluting other tests
+		$_SERVER = $this->original_server;
+
+		// Reset the static memory cache and cached IP
+		$this->reset_static_properties();
+		parent::tearDown();
+	}
+
+	/**
+	 * Reset static properties via reflection.
+	 */
+	private function reset_static_properties(): void {
+		$reflection = new \ReflectionClass(Geolocation::class);
+
+		$memory_cache = $reflection->getProperty('memory_cache');
+		if (PHP_VERSION_ID < 80100) {
+			$memory_cache->setAccessible(true);
+		}
+		$memory_cache->setValue(null, []);
+
+		$cached_ip = $reflection->getProperty('cached_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$cached_ip->setAccessible(true);
+		}
+		$cached_ip->setValue(null, null);
+
+		$reader = $reflection->getProperty('reader');
+		if (PHP_VERSION_ID < 80100) {
+			$reader->setAccessible(true);
+		}
+		$reader_value = $reader->getValue();
+		if (null !== $reader_value) {
+			try {
+				$reader_value->close();
+			} catch (\Exception $e) {
+				// Ignore errors on close - reader may already be closed.
+				unset($e); // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+			}
+		}
+		$reader->setValue(null, null);
+	}
+
+	/**
+	 * Test cache group constant.
+	 */
+	public function test_cache_group_constant() {
+		$this->assertEquals('wu_geolocation', Geolocation::CACHE_GROUP);
+	}
+
+	/**
+	 * Test validate_ip with valid IPv4 address.
+	 */
+	public function test_validate_ip_valid_ipv4() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('validate_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null, '192.168.1.1');
+		$this->assertEquals('192.168.1.1', $result);
+	}
+
+	/**
+	 * Test validate_ip with IPv4 address including port.
+	 */
+	public function test_validate_ip_ipv4_with_port() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('validate_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null, '192.168.1.1:8080');
+		$this->assertEquals('192.168.1.1', $result);
+	}
+
+	/**
+	 * Test validate_ip with valid IPv6 address.
+	 */
+	public function test_validate_ip_valid_ipv6() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('validate_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null, '::1');
+		$this->assertEquals('::1', $result);
+	}
+
+	/**
+	 * Test validate_ip with IPv6 address including port.
+	 */
+	public function test_validate_ip_ipv6_with_port() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('validate_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null, '[::1]:8080');
+		$this->assertEquals('::1', $result);
+	}
+
+	/**
+	 * Test validate_ip with invalid IP.
+	 */
+	public function test_validate_ip_invalid() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('validate_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null, 'invalid-ip');
+		$this->assertEquals('', $result);
+	}
+
+	/**
+	 * Test validate_ip with empty string.
+	 */
+	public function test_validate_ip_empty() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('validate_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null, '');
+		$this->assertEquals('', $result);
+	}
+
+	/**
+	 * Test is_private_ip with private IPv4 ranges.
+	 */
+	public function test_is_private_ip_private_ranges() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('is_private_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		// Private ranges
+		$this->assertTrue($method->invoke(null, '192.168.1.1'));
+		$this->assertTrue($method->invoke(null, '10.0.0.1'));
+		$this->assertTrue($method->invoke(null, '172.16.0.1'));
+		$this->assertTrue($method->invoke(null, '127.0.0.1'));
+		$this->assertTrue($method->invoke(null, '::1'));
+	}
+
+	/**
+	 * Test is_private_ip with public IPv4 addresses.
+	 */
+	public function test_is_private_ip_public_ranges() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('is_private_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		// Public addresses
+		$this->assertFalse($method->invoke(null, '8.8.8.8'));
+		$this->assertFalse($method->invoke(null, '1.1.1.1'));
+		$this->assertFalse($method->invoke(null, '208.67.222.222'));
+	}
+
+	/**
+	 * Test is_private_ip with empty string.
+	 */
+	public function test_is_private_ip_empty() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('is_private_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$this->assertTrue($method->invoke(null, ''));
+	}
+
+	/**
+	 * Test get_local_database_path returns expected path structure.
+	 */
+	public function test_get_local_database_path_structure() {
+		$path = Geolocation::get_local_database_path();
+
+		// Should contain the expected filename
+		$this->assertStringEndsWith('GeoLite2-Country.mmdb', $path);
+
+		// Should contain wp-content/uploads
+		$this->assertStringContainsString('uploads', $path);
+	}
+
+	/**
+	 * Test supports_geolite2 returns true with Composer package.
+	 */
+	public function test_supports_geolite2_with_composer() {
+		// With the maxmind-db/reader package installed via Composer,
+		// this should return true
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('supports_geolite2');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null);
+		$this->assertTrue($result, 'MaxMind\Db\Reader class should be available via Composer');
+	}
+
+	/**
+	 * Test is_geolocation_enabled with enabled values.
+	 */
+	public function test_is_geolocation_enabled_enabled_values() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('is_geolocation_enabled');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$this->assertTrue($method->invoke(null, 'geolocation'));
+		$this->assertTrue($method->invoke(null, 'geolocation_ajax'));
+	}
+
+	/**
+	 * Test is_geolocation_enabled with disabled values.
+	 */
+	public function test_is_geolocation_enabled_disabled_values() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('is_geolocation_enabled');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$this->assertFalse($method->invoke(null, ''));
+		$this->assertFalse($method->invoke(null, 'base'));
+		$this->assertFalse($method->invoke(null, 'shop'));
+	}
+
+	/**
+	 * Test geolocate_ip returns expected structure.
+	 */
+	public function test_geolocate_ip_structure() {
+		$result = Geolocation::geolocate_ip('127.0.0.1');
+
+		$this->assertIsArray($result);
+		$this->assertArrayHasKey('ip', $result);
+		$this->assertArrayHasKey('country', $result);
+		$this->assertArrayHasKey('state', $result);
+		$this->assertEquals('127.0.0.1', $result['ip']);
+	}
+
+	/**
+	 * Test geolocate_ip with fallback for private IP.
+	 */
+	public function test_geolocate_ip_private_ip_with_fallback() {
+		$result = Geolocation::geolocate_ip('192.168.1.1', true);
+
+		$this->assertIsArray($result);
+		$this->assertEquals('192.168.1.1', $result['ip']);
+		// Should either be empty or the filtered default country
+		$this->assertIsString($result['country']);
+	}
+
+	/**
+	 * Test clear_cache clears the memory cache.
+	 */
+	public function test_clear_cache() {
+		// First geolocate to populate cache
+		Geolocation::geolocate_ip('127.0.0.1');
+
+		// Clear cache
+		Geolocation::clear_cache();
+
+		$reflection = new \ReflectionClass(Geolocation::class);
+
+		// Check memory cache is cleared
+		$memory_cache = $reflection->getProperty('memory_cache');
+		if (PHP_VERSION_ID < 80100) {
+			$memory_cache->setAccessible(true);
+		}
+		$this->assertEquals([], $memory_cache->getValue());
+
+		// Check cached_ip is cleared
+		$cached_ip = $reflection->getProperty('cached_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$cached_ip->setAccessible(true);
+		}
+		$this->assertNull($cached_ip->getValue());
+	}
+
+	/**
+	 * Test get_external_ip_address returns placeholder for private IP.
+	 */
+	public function test_get_external_ip_address_private_ip() {
+		// Mock REMOTE_ADDR to be a private IP
+		$_SERVER['REMOTE_ADDR'] = '192.168.1.1';
+
+		$result = Geolocation::get_external_ip_address();
+
+		$this->assertEquals('0.0.0.0', $result);
+
+		// Clean up
+		unset($_SERVER['REMOTE_ADDR']);
+		$this->reset_static_properties();
+	}
+
+	/**
+	 * Test get_external_ip_address returns IP for public address.
+	 */
+	public function test_get_external_ip_address_public_ip() {
+		// Mock REMOTE_ADDR to be a public IP
+		$_SERVER['REMOTE_ADDR'] = '8.8.8.8';
+
+		$result = Geolocation::get_external_ip_address();
+
+		$this->assertEquals('8.8.8.8', $result);
+
+		// Clean up
+		unset($_SERVER['REMOTE_ADDR']);
+		$this->reset_static_properties();
+	}
+
+	/**
+	 * Test get_country_from_headers with Cloudflare header.
+	 */
+	public function test_get_country_from_headers_cloudflare() {
+		$_SERVER['HTTP_CF_IPCOUNTRY'] = 'US';
+
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('get_country_from_headers');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null);
+		$this->assertEquals('US', $result);
+
+		// Clean up
+		unset($_SERVER['HTTP_CF_IPCOUNTRY']);
+	}
+
+	/**
+	 * Test get_country_from_headers with invalid country code.
+	 */
+	public function test_get_country_from_headers_invalid_code() {
+		$_SERVER['HTTP_CF_IPCOUNTRY'] = 'USA'; // Invalid: 3 letters
+
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('get_country_from_headers');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null);
+		$this->assertEquals('', $result);
+
+		// Clean up
+		unset($_SERVER['HTTP_CF_IPCOUNTRY']);
+	}
+
+	/**
+	 * Test get_country_from_headers with no headers.
+	 */
+	public function test_get_country_from_headers_no_headers() {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('get_country_from_headers');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null);
+		$this->assertEquals('', $result);
+	}
+
+	/**
+	 * Test maybe_update_database returns new value.
+	 */
+	public function test_maybe_update_database_returns_new_value() {
+		$result = Geolocation::maybe_update_database('new_value', 'old_value');
+		$this->assertEquals('new_value', $result);
+	}
+
+	/**
+	 * Test update_database is deprecated but callable.
+	 */
+	public function test_update_database_deprecated_callable() {
+		// Should not throw an error
+		Geolocation::update_database();
+		$this->assertTrue(true);
+	}
+
+	/**
+	 * Test geolocate_ip caching with same IP.
+	 */
+	public function test_geolocate_ip_caching() {
+		$ip = '127.0.0.1';
+
+		// First call
+		$result1 = Geolocation::geolocate_ip($ip);
+
+		// Second call should return from cache
+		$result2 = Geolocation::geolocate_ip($ip);
+
+		$this->assertEquals($result1, $result2);
+	}
+
+	/**
+	 * Test close_reader handles null reader gracefully.
+	 */
+	public function test_close_reader_null() {
+		// Should not throw an error when reader is null
+		Geolocation::close_reader();
+		$this->assertTrue(true);
+	}
+
+	/**
+	 * Test disable_geolocation_on_legacy_php returns unchanged value.
+	 */
+	public function test_disable_geolocation_on_legacy_php() {
+		$result = Geolocation::disable_geolocation_on_legacy_php('some_value');
+		$this->assertEquals('some_value', $result);
+	}
+
+	/**
+	 * Test validate_ip with various edge cases.
+	 *
+	 * @param string $input    The IP address to validate.
+	 * @param string $expected The expected result.
+	 * @dataProvider validate_ip_provider
+	 */
+	public function test_validate_ip_edge_cases($input, $expected) {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('validate_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null, $input);
+		$this->assertEquals($expected, $result);
+	}
+
+	/**
+	 * Data provider for validate_ip edge cases.
+	 */
+	public static function validate_ip_provider() {
+		return [
+			'empty_string'       => ['', ''],
+			'valid_ipv4'         => ['192.168.1.1', '192.168.1.1'],
+			'ipv4_with_port'     => ['192.168.1.1:8080', '192.168.1.1'],
+			'valid_ipv6'         => ['::1', '::1'],
+			'ipv6_with_port'     => ['[::1]:8080', '::1'],
+			'invalid_ip'         => ['not-an-ip', ''],
+			'partial_ip'         => ['192.168', ''],
+			'ipv4_with_brackets' => ['[192.168.1.1]', '192.168.1.1'],
+		];
+	}
+
+	/**
+	 * Test is_private_ip with various edge cases.
+	 *
+	 * @param string $input    The IP address to check.
+	 * @param bool   $expected The expected result.
+	 * @dataProvider is_private_ip_provider
+	 */
+	public function test_is_private_ip_edge_cases($input, $expected) {
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('is_private_ip');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$result = $method->invoke(null, $input);
+		$this->assertEquals($expected, $result);
+	}
+
+	/**
+	 * Data provider for is_private_ip edge cases.
+	 */
+	public static function is_private_ip_provider() {
+		return [
+			'empty_string'          => ['', true],
+			'private_192_168'       => ['192.168.1.1', true],
+			'private_10_0_0'        => ['10.0.0.1', true],
+			'private_172_16'        => ['172.16.0.1', true],
+			'private_172_31'        => ['172.31.255.255', true],
+			'private_loopback'      => ['127.0.0.1', true],
+			'private_ipv6_loopback' => ['::1', true],
+			'private_ipv6'          => ['fe80::1', true],
+			'public_google_dns'     => ['8.8.8.8', false],
+			'public_cloudflare'     => ['1.1.1.1', false],
+			'public_quad9'          => ['9.9.9.9', false],
+		];
+	}
+}

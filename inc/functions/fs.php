@@ -61,9 +61,10 @@ function wu_maybe_create_folder($folder, ...$path) {
 		if ( ! file_exists($htaccess)) {
 			$fp = @fopen($htaccess, 'w'); // phpcs:ignore
 
-			@fwrite($fp, 'deny from all'); // phpcs:ignore
-
-			@fclose($fp); // phpcs:ignore
+			if ($fp) {
+				@fwrite($fp, 'deny from all'); // phpcs:ignore
+				@fclose($fp); // phpcs:ignore
+			}
 		}
 
 		// Creates index
@@ -72,9 +73,10 @@ function wu_maybe_create_folder($folder, ...$path) {
 		if ( ! file_exists($index)) {
 			$fp = @fopen($index, 'w'); // phpcs:ignore
 
-			@fwrite($fp, ''); // phpcs:ignore
-
-			@fclose($fp); // phpcs:ignore
+			if ($fp) {
+				@fwrite($fp, ''); // phpcs:ignore
+				@fclose($fp); // phpcs:ignore
+			}
 		}
 	}
 

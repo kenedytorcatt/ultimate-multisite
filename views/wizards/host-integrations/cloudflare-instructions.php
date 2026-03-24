@@ -50,3 +50,31 @@ defined('ABSPATH') || exit;
 <p class="wu-text-sm"><?php esc_html_e('Copy the API Token (it won\'t be shown again, so you need to copy it now!). We will use it on the next step alongside with the Zone ID', 'ultimate-multisite'); ?></p>
 
 <p class="wu-text-center"><i><?php esc_html_e('Done!', 'ultimate-multisite'); ?></i></p>
+
+<hr class="wu-my-6">
+
+<h3 class="wu-m-0 wu-py-4 wu-text-lg" id="cloudflare-saas-custom-hostnames">
+	<?php esc_html_e('Cloudflare for SaaS — Custom Hostnames (Optional)', 'ultimate-multisite'); ?>
+</h3>
+
+<p class="wu-text-sm wu-bg-green-100 wu-p-4 wu-text-green-700 wu-rounded">
+	<strong><?php esc_html_e('What is this?', 'ultimate-multisite'); ?></strong><br>
+	<?php esc_html_e('Cloudflare for SaaS lets you issue SSL certificates for custom domains mapped to your multisite — without requiring each customer to add your IP to their DNS. When a new domain is added to a subsite, Ultimate Multisite will automatically register it as a Custom Hostname in your SaaS zone so Cloudflare can provision the SSL certificate.', 'ultimate-multisite'); ?>
+</p>
+
+<p class="wu-text-sm">
+	<?php esc_html_e('To enable this feature, you need a Cloudflare zone configured as a SaaS provider zone. This is separate from your main DNS zone. Follow these steps:', 'ultimate-multisite'); ?>
+</p>
+
+<ol class="wu-text-sm wu-list-decimal wu-pl-6 wu-space-y-2">
+	<li><?php esc_html_e('In your Cloudflare dashboard, open the zone you want to use as the SaaS provider zone (this is typically your main domain zone).', 'ultimate-multisite'); ?></li>
+	<li><?php esc_html_e('Go to SSL/TLS → Custom Hostnames and enable Cloudflare for SaaS for that zone.', 'ultimate-multisite'); ?></li>
+	<li><?php esc_html_e('Copy the Zone ID of that SaaS zone from the Overview sidebar — this is your SaaS Zone ID.', 'ultimate-multisite'); ?></li>
+	<li><?php esc_html_e('Ensure your API token has the "SSL and Certificates: Edit" permission in addition to "DNS: Edit" for the SaaS zone.', 'ultimate-multisite'); ?></li>
+	<li><?php esc_html_e('Paste the SaaS Zone ID into the SaaS Zone ID (Custom Hostnames) field on the next step.', 'ultimate-multisite'); ?></li>
+</ol>
+
+<p class="wu-text-sm wu-bg-yellow-100 wu-p-4 wu-text-yellow-700 wu-rounded wu-mt-4">
+	<strong><?php esc_html_e('Customer DNS requirement:', 'ultimate-multisite'); ?></strong><br>
+	<?php esc_html_e('Your customers must add a CNAME record pointing their custom domain to your fallback origin (e.g. your main domain or a dedicated CNAME target). Cloudflare will verify domain ownership via HTTP before issuing the certificate.', 'ultimate-multisite'); ?>
+</p>

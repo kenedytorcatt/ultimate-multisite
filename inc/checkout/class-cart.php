@@ -488,7 +488,28 @@ class Cart implements \JsonSerializable {
 		 * The next step is to deal with membership changes.
 		 * These include downgrades/upgrades and addons.
 		 */
-		$is_membership_change = $this->build_from_membership($this->attributes->membership_id);
+
+		/*
+		 * Ignore pending membership_id from session/request.
+		 *
+		 * An abandoned checkout leaves a 'pending' membership whose ID gets
+		 * sent as membership_id + cart_type='upgrade', causing the new plan to
+		 * be treated as an upgrade (full price, no trial).
+		 *
+		 * @since 2.4.13
+		 */
+		$membership_id = $this->attributes->membership_id;
+
+		if ($membership_id) {
+			$maybe_pending = wu_get_membership($membership_id);
+
+			if ($maybe_pending && $maybe_pending->get_status() === 'pending') {
+				$membership_id   = false;
+				$this->cart_type = 'new';
+			}
+		}
+
+		$is_membership_change = $this->build_from_membership($membership_id);
 
 		/*
 		 * If this is a membership change,
@@ -701,6 +722,19 @@ class Cart implements \JsonSerializable {
 			/**
 			 * We should return false to continue in case of membership updates.
 			 */
+			return false;
+		}
+
+		/*
+		 * Treat cancelled payments same as completed -- ignore silently.
+		 *
+		 * When a user abandons checkout, cleanup cancels the WU payment.
+		 * If they return to the same URL, the payment is now 'cancelled'.
+		 * Instead of showing "invalid status" error, just build a fresh cart.
+		 *
+		 * @since 2.4.13
+		 */
+		if ($payment->get_status() === 'cancelled') {
 			return false;
 		}
 
@@ -2019,6 +2053,47 @@ class Cart implements \JsonSerializable {
 		// Check if this is the initial membership payment with trial
 		if ($this->membership && $this->payment && $this->membership->is_trialing()) {
 			return empty($this->payment->get_total());
+		}
+
+		/*
+		 * Use WooCommerce Subscriptions as source of truth for trial eligibility
+		 * when WCS is active.
+		 *
+		 * The original has_trialed() only checks WU memberships. A declined card
+		 * creates a cancelled membership with a trial date, permanently blocking
+		 * future trials. With WCS, only subscriptions that reached 'active' count
+		 * as real subscription history.
+		 *
+		 * @since 2.4.13
+		 */
+		if (function_exists('wcs_get_users_subscriptions')) {
+			$user_id = $customer->get_user_id();
+
+			$wcs_subscriptions = wcs_get_users_subscriptions($user_id);
+
+			foreach ($wcs_subscriptions as $subscription) {
+				/*
+				 * Skip cancelled subscriptions whose parent order was never
+				 * completed. A declined card creates a WCS subscription that gets
+				 * auto-cancelled before any payment processes -- this is NOT real
+				 * subscription history and should not block the trial.
+				 *
+				 * @since 2.4.14
+				 */
+				if ($subscription->has_status(['cancelled'])) {
+					$parent_order = $subscription->get_parent();
+
+					if ( ! $parent_order || ! $parent_order->has_status(['completed', 'processing', 'refunded'])) {
+						continue;
+					}
+				}
+
+				if ($subscription->has_status(['active', 'on-hold', 'cancelled', 'expired'])) {
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		return ! $customer->has_trialed();

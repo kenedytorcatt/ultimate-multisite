@@ -76,6 +76,13 @@ class Product extends Base_Model implements Limitable {
 	const META_LEGACY_OPTIONS = 'legacy_options';
 
 	/**
+	 * Meta key for demo behavior setting.
+	 *
+	 * @since 2.5.0
+	 */
+	const META_DEMO_BEHAVIOR = 'wu_demo_behavior';
+
+	/**
 	 * Meta key for PWYW minimum amount.
 	 */
 	const META_PWYW_MINIMUM_AMOUNT = 'wu_pwyw_minimum_amount';
@@ -311,6 +318,14 @@ class Product extends Base_Model implements Limitable {
 	protected $network_id;
 
 	/**
+	 * Demo behavior (delete_after_time or keep_until_live).
+	 *
+	 * @since 2.5.0
+	 * @var string|null
+	 */
+	protected $demo_behavior = null;
+
+	/**
 	 * Contact us Label.
 	 *
 	 * @since 2.0.0
@@ -426,6 +441,7 @@ class Product extends Base_Model implements Limitable {
 			'pwyw_minimum_amount'   => 'numeric|default:0',
 			'pwyw_suggested_amount' => 'numeric|default:0',
 			'pwyw_recurring_mode'   => 'in:customer_choice,force_recurring,force_one_time|default:customer_choice',
+			'demo_behavior'         => 'in:delete_after_time,keep_until_live|default:delete_after_time',
 		];
 	}
 
@@ -1312,6 +1328,47 @@ class Product extends Base_Model implements Limitable {
 		$this->meta[ self::META_CONTACT_US_LINK ] = $contact_us_link;
 
 		$this->contact_us_link = $this->meta[ self::META_CONTACT_US_LINK ];
+	}
+
+	/**
+	 * Get the demo behavior setting for this product.
+	 *
+	 * @since 2.5.0
+	 * @return string 'delete_after_time' or 'keep_until_live'.
+	 */
+	public function get_demo_behavior(): string {
+
+		if (null === $this->demo_behavior) {
+			$this->demo_behavior = $this->get_meta(self::META_DEMO_BEHAVIOR, 'delete_after_time');
+		}
+
+		return $this->demo_behavior ?: 'delete_after_time';
+	}
+
+	/**
+	 * Set the demo behavior for this product.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param string $behavior Either 'delete_after_time' or 'keep_until_live'.
+	 * @return void
+	 */
+	public function set_demo_behavior(string $behavior): void {
+
+		$this->meta[ self::META_DEMO_BEHAVIOR ] = $behavior;
+
+		$this->demo_behavior = $behavior;
+	}
+
+	/**
+	 * Check if this demo product uses the "keep until live" behavior.
+	 *
+	 * @since 2.5.0
+	 * @return bool
+	 */
+	public function is_keep_until_live(): bool {
+
+		return $this->get_type() === Product_Type::DEMO && $this->get_demo_behavior() === 'keep_until_live';
 	}
 
 	/**
