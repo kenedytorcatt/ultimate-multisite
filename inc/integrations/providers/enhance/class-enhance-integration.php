@@ -29,7 +29,6 @@ class Enhance_Integration extends Integration {
 
 		parent::__construct('enhance', 'Enhance Control Panel');
 
-		$this->set_description(__('Enhance is a modern control panel that provides powerful hosting automation and management capabilities.', 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('enhance.svg', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/enhance');
 		$this->set_constants(
@@ -41,6 +40,14 @@ class Enhance_Integration extends Integration {
 			]
 		);
 		$this->set_supports(['autossl', 'no-instructions']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __('Enhance is a modern control panel that provides powerful hosting automation and management capabilities.', 'ultimate-multisite');
 	}
 
 	/**

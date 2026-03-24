@@ -390,15 +390,46 @@ class Dashboard_Admin_Page extends Base_Admin_Page {
 	 */
 	public function output_widget_revenues($unknown = null, $metabox = null): void {
 
+		$mrr           = wu_calculate_mrr();
+		$gross_revenue = wu_calculate_revenue($this->start_date, $this->end_date);
+		$refunds       = wu_calculate_refunds($this->start_date, $this->end_date);
+
+		$base_currency = wu_get_setting('currency_symbol', 'USD');
+
+		/**
+		 * Filters a revenue amount displayed on the dashboard.
+		 *
+		 * Allows addons (e.g. multi-currency) to convert amounts
+		 * to the base currency for consistent reporting.
+		 *
+		 * @since 2.3.0
+		 *
+		 * @param float  $amount   The revenue amount.
+		 * @param string $currency The currency of the amount.
+		 * @return float
+		 */
+		$mrr           = apply_filters('wu_dashboard_revenue_amount', $mrr, $base_currency);
+		$gross_revenue = apply_filters('wu_dashboard_revenue_amount', $gross_revenue, $base_currency);
+		$refunds       = apply_filters('wu_dashboard_revenue_amount', $refunds, $base_currency);
+
 		wu_get_template(
 			'dashboard-statistics/widget-revenue',
 			[
-				'mrr'           => wu_calculate_mrr(),
-				'gross_revenue' => wu_calculate_revenue($this->start_date, $this->end_date),
-				'refunds'       => wu_calculate_refunds($this->start_date, $this->end_date),
+				'mrr'           => $mrr,
+				'gross_revenue' => $gross_revenue,
+				'refunds'       => $refunds,
 				'product_stats' => wu_calculate_financial_data_by_product($this->start_date, $this->end_date),
 			]
 		);
+
+		/**
+		 * Fires after the revenue widget is rendered on the dashboard.
+		 *
+		 * Allows addons to append additional information (e.g. exchange rate status).
+		 *
+		 * @since 2.3.0
+		 */
+		do_action('wu_dashboard_after_revenue_widget');
 	}
 
 	/**

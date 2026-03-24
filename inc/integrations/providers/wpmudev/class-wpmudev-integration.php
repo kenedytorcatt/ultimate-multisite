@@ -32,11 +32,18 @@ class WPMUDEV_Integration extends Integration {
 
 		parent::__construct('wpmudev', 'WPMU DEV Hosting');
 
-		$this->set_description(__('WPMU DEV is one of the largest companies in the WordPress space. Founded in 2004, it was one of the first companies to scale the Website as a Service model with products such as Edublogs and CampusPress.', 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('wpmudev.webp', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/wpmu-dev');
 		$this->set_constants(['WPMUDEV_HOSTING_SITE_ID']);
 		$this->set_supports(['autossl', 'no-instructions', 'no-config']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __('WPMU DEV is one of the largest companies in the WordPress space. Founded in 2004, it was one of the first companies to scale the Website as a Service model with products such as Edublogs and CampusPress.', 'ultimate-multisite');
 	}
 
 	/**

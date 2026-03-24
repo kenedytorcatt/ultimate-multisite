@@ -32,12 +32,19 @@ class Cloudflare_Integration extends Integration {
 
 		parent::__construct('cloudflare', 'Cloudflare');
 
-		$this->set_description(__('Cloudflare secures and ensures the reliability of your external-facing resources such as websites, APIs, and applications. It protects your internal resources such as behind-the-firewall applications, teams, and devices. And it is your platform for developing globally-scalable applications.', 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('cloudflare.svg', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/cloudflare');
 		$this->set_constants(['WU_CLOUDFLARE_API_KEY', 'WU_CLOUDFLARE_ZONE_ID']);
 		$this->set_optional_constants(['WU_CLOUDFLARE_SAAS_ZONE_ID']);
 		$this->set_supports(['autossl']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __('Cloudflare secures and ensures the reliability of your external-facing resources such as websites, APIs, and applications. It protects your internal resources such as behind-the-firewall applications, teams, and devices. And it is your platform for developing globally-scalable applications.', 'ultimate-multisite');
 	}
 
 	/**

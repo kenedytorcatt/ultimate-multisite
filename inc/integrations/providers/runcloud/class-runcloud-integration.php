@@ -29,7 +29,6 @@ class RunCloud_Integration extends Integration {
 
 		parent::__construct('runcloud', 'RunCloud');
 
-		$this->set_description(__('With RunCloud, you don\'t need to be a Linux expert to build a website powered by DigitalOcean, AWS, or Google Cloud. Use our graphical interface and build a business on the cloud affordably.', 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('runcloud.svg', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/runcloud');
 		$this->set_constants(
@@ -40,6 +39,14 @@ class RunCloud_Integration extends Integration {
 			]
 		);
 		$this->set_supports(['autossl']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __('With RunCloud, you don\'t need to be a Linux expert to build a website powered by DigitalOcean, AWS, or Google Cloud. Use our graphical interface and build a business on the cloud affordably.', 'ultimate-multisite');
 	}
 
 	/**

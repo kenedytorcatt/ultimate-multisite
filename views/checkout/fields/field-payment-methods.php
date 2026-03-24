@@ -40,6 +40,12 @@ $active_gateways = wu_get_active_gateway_as_options();
 				<?php $field->print_html_attributes(); ?>
 			>
 
+			<?php if (! empty($option_name)) : ?>
+				<div class="wu-payment-method-badge wu-mb-2">
+					<?php echo wp_kses_post($option_name); ?>
+				</div>
+			<?php endif; ?>
+
 		<?php else : ?>
 
 			<label class="wu-block" for="field-<?php echo esc_attr($field->id); ?>-<?php echo esc_attr($option_value); ?>">
@@ -55,7 +61,7 @@ $active_gateways = wu_get_active_gateway_as_options();
 					<?php checked((string) $field->value === (string) $option_value, true); ?>
 				>
 
-				<?php echo esc_html($option_name); ?>
+				<?php echo wp_kses_post($option_name); ?>
 
 			</label>
 

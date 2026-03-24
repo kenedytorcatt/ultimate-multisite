@@ -32,11 +32,18 @@ class GridPane_Integration extends Integration {
 
 		parent::__construct('gridpane', 'Gridpane');
 
-		$this->set_description(__("GridPane is the world's first hosting control panel built exclusively for serious WordPress professionals.", 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('gridpane.webp', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/gridpane');
 		$this->set_constants(['WU_GRIDPANE', 'WU_GRIDPANE_API_KEY', 'WU_GRIDPANE_APP_ID', 'WU_GRIDPANE_SERVER_ID']);
 		$this->set_supports(['autossl', 'no-config']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __("GridPane is the world's first hosting control panel built exclusively for serious WordPress professionals.", 'ultimate-multisite');
 	}
 
 	/**

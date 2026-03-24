@@ -19,6 +19,8 @@ use WP_Ultimo\Gateways\Free_Gateway;
 use WP_Ultimo\Gateways\Stripe_Gateway;
 use WP_Ultimo\Gateways\Stripe_Checkout_Gateway;
 use WP_Ultimo\Gateways\PayPal_Gateway;
+use WP_Ultimo\Gateways\PayPal_REST_Gateway;
+use WP_Ultimo\Gateways\PayPal_Webhook_Handler;
 use WP_Ultimo\Gateways\Manual_Gateway;
 
 // Exit if accessed directly
@@ -428,10 +430,27 @@ class Gateway_Manager extends Base_Manager {
 		wu_register_gateway('stripe-checkout', __('Stripe Checkout', 'ultimate-multisite'), $stripe_checkout_desc, Stripe_Checkout_Gateway::class);
 
 		/*
-		 * PayPal Payments
+		 * PayPal Payments (REST API - Modern)
 		 */
-		$paypal_desc = __('PayPal is the leading provider in checkout solutions and it is the easier way to get your network subscriptions going.', 'ultimate-multisite');
-		wu_register_gateway('paypal', __('PayPal', 'ultimate-multisite'), $paypal_desc, PayPal_Gateway::class);
+		$paypal_rest_desc = __('Modern PayPal integration with Connect with PayPal onboarding. Recommended for new setups.', 'ultimate-multisite');
+		wu_register_gateway('paypal-rest', __('PayPal', 'ultimate-multisite'), $paypal_rest_desc, PayPal_REST_Gateway::class);
+
+		/*
+		 * PayPal Payments (Legacy NVP API)
+		 * Only show if already active or has existing credentials configured.
+		 */
+		$legacy_paypal_active    = in_array('paypal', (array) wu_get_setting('active_gateways', []), true);
+		$legacy_paypal_has_creds = wu_get_setting('paypal_test_username', '') || wu_get_setting('paypal_live_username', '');
+
+		if ($legacy_paypal_active || $legacy_paypal_has_creds) {
+			$paypal_desc = __('PayPal Express Checkout (Legacy). Uses username/password/signature authentication. For existing integrations only.', 'ultimate-multisite');
+			wu_register_gateway('paypal', __('PayPal (Legacy)', 'ultimate-multisite'), $paypal_desc, PayPal_Gateway::class);
+		}
+
+		/*
+		 * Initialize PayPal REST webhook handler
+		 */
+		PayPal_Webhook_Handler::get_instance()->init();
 
 		/*
 		 * Manual Payments
@@ -543,11 +562,11 @@ class Gateway_Manager extends Base_Manager {
 
 		add_action("wu_{$gateway_id}_process_webhooks", [$gateway, 'process_webhooks']);
 
-		add_action("wu_{$gateway_id}_remote_payment_url", [$gateway, 'get_payment_url_on_gateway']); // @phpstan-ignore-line Used as filter via apply_filters.
+		add_filter("wu_{$gateway_id}_remote_payment_url", [$gateway, 'get_payment_url_on_gateway']);
 
-		add_action("wu_{$gateway_id}_remote_subscription_url", [$gateway, 'get_subscription_url_on_gateway']);
+		add_filter("wu_{$gateway_id}_remote_subscription_url", [$gateway, 'get_subscription_url_on_gateway']);
 
-		add_action("wu_{$gateway_id}_remote_customer_url", [$gateway, 'get_customer_url_on_gateway']);
+		add_filter("wu_{$gateway_id}_remote_customer_url", [$gateway, 'get_customer_url_on_gateway']);
 
 		/*
 		 * Renders the gateway fields.
@@ -556,7 +575,7 @@ class Gateway_Manager extends Base_Manager {
 			'wu_checkout_gateway_fields',
 			function () use ($gateway) {
 
-				$field_content = call_user_func([$gateway, 'fields']); // @phpstan-ignore-line Subclass implementations return string.
+				$field_content = $gateway->fields();
 
 				ob_start();
 

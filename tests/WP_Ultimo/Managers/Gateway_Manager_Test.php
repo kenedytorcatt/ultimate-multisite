@@ -12,6 +12,7 @@ use WP_Ultimo\Managers\Gateway_Manager;
 use WP_Ultimo\Gateways\Base_Gateway;
 use WP_Ultimo\Gateways\Free_Gateway;
 use WP_Ultimo\Gateways\Manual_Gateway;
+use WP_Ultimo\Gateways\PayPal_REST_Gateway;
 use WP_UnitTestCase;
 
 /**
@@ -65,6 +66,8 @@ class Gateway_Manager_Test extends WP_UnitTestCase {
 		$this->assertIsArray($registered_gateways);
 		$this->assertArrayHasKey('free', $registered_gateways);
 		$this->assertArrayHasKey('manual', $registered_gateways);
+		$this->assertArrayHasKey('paypal-rest', $registered_gateways);
+		// Legacy PayPal is conditionally registered (only when active or has credentials)
 	}
 
 	/**
@@ -180,5 +183,109 @@ class Gateway_Manager_Test extends WP_UnitTestCase {
 		} catch (\Error $e) {
 			$this->assertTrue($e instanceof \Error);
 		}
+	}
+
+	/**
+	 * Test legacy PayPal is hidden when no credentials or active gateway.
+	 */
+	public function test_legacy_paypal_hidden_without_config(): void {
+
+		// Ensure no legacy PayPal credentials or active status
+		wu_save_setting('paypal_test_username', '');
+		wu_save_setting('paypal_live_username', '');
+		wu_save_setting('active_gateways', ['stripe']);
+
+		// Clear registered gateways
+		$reflection = new \ReflectionClass($this->manager);
+		$property   = $reflection->getProperty('registered_gateways');
+
+		if (PHP_VERSION_ID < 80100) {
+			$property->setAccessible(true);
+		}
+
+		$property->setValue($this->manager, []);
+
+		$this->manager->add_default_gateways();
+
+		$registered = $this->manager->get_registered_gateways();
+
+		$this->assertArrayHasKey('paypal-rest', $registered);
+		$this->assertArrayNotHasKey('paypal', $registered, 'Legacy PayPal should NOT be registered without credentials');
+	}
+
+	/**
+	 * Test legacy PayPal is shown when it has existing credentials.
+	 */
+	public function test_legacy_paypal_shown_with_credentials(): void {
+
+		wu_save_setting('paypal_test_username', 'legacy_api_user');
+		wu_save_setting('active_gateways', ['stripe']);
+
+		$reflection = new \ReflectionClass($this->manager);
+		$property   = $reflection->getProperty('registered_gateways');
+
+		if (PHP_VERSION_ID < 80100) {
+			$property->setAccessible(true);
+		}
+
+		$property->setValue($this->manager, []);
+
+		$this->manager->add_default_gateways();
+
+		$registered = $this->manager->get_registered_gateways();
+
+		$this->assertArrayHasKey('paypal', $registered, 'Legacy PayPal should be registered when credentials exist');
+
+		// Cleanup
+		wu_save_setting('paypal_test_username', '');
+	}
+
+	/**
+	 * Test legacy PayPal is shown when it is an active gateway.
+	 */
+	public function test_legacy_paypal_shown_when_active(): void {
+
+		wu_save_setting('paypal_test_username', '');
+		wu_save_setting('paypal_live_username', '');
+		wu_save_setting('active_gateways', ['paypal']);
+
+		$reflection = new \ReflectionClass($this->manager);
+		$property   = $reflection->getProperty('registered_gateways');
+
+		if (PHP_VERSION_ID < 80100) {
+			$property->setAccessible(true);
+		}
+
+		$property->setValue($this->manager, []);
+
+		$this->manager->add_default_gateways();
+
+		$registered = $this->manager->get_registered_gateways();
+
+		$this->assertArrayHasKey('paypal', $registered, 'Legacy PayPal should be registered when it is active');
+
+		// Cleanup
+		wu_save_setting('active_gateways', []);
+	}
+
+	/**
+	 * Test PayPal REST gateway is always registered.
+	 */
+	public function test_paypal_rest_always_registered(): void {
+
+		$reflection = new \ReflectionClass($this->manager);
+		$property   = $reflection->getProperty('registered_gateways');
+
+		if (PHP_VERSION_ID < 80100) {
+			$property->setAccessible(true);
+		}
+
+		$property->setValue($this->manager, []);
+
+		$this->manager->add_default_gateways();
+
+		$registered = $this->manager->get_registered_gateways();
+
+		$this->assertArrayHasKey('paypal-rest', $registered, 'PayPal REST should always be registered');
 	}
 }
