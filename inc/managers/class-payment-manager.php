@@ -153,7 +153,22 @@ class Payment_Manager extends Base_Manager {
 			return;
 		}
 
+		/*
+		 * Skip pending memberships for payment popup.
+		 *
+		 * A membership is created in 'pending' before payment is collected.
+		 * Without this, an abandoned checkout triggers the "pending payment"
+		 * popup on every login.
+		 *
+		 * @since 2.4.13
+		 */
+		$skip_statuses = ['pending'];
+
 		foreach ($customer->get_memberships() as $membership) {
+			if (in_array($membership->get_status(), $skip_statuses, true)) {
+				continue;
+			}
+
 			$pending_payment = $membership->get_last_pending_payment();
 
 			if ($pending_payment) {

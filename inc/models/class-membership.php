@@ -2045,6 +2045,17 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 				return true;
 			}
 
+			/*
+			 * Reset is_publishing on failure so the retry mechanism
+			 * (cron / manual) can try again instead of staying stuck
+			 * in a "Creating" state forever.
+			 *
+			 * @since 2.4.13-beta.12
+			 */
+			$pending_site->set_publishing(false);
+
+			$this->update_pending_site($pending_site);
+
 			return $saved;
 		}
 

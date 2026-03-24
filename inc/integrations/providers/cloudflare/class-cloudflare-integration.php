@@ -35,6 +35,7 @@ class Cloudflare_Integration extends Integration {
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('cloudflare.svg', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/cloudflare');
 		$this->set_constants(['WU_CLOUDFLARE_API_KEY', 'WU_CLOUDFLARE_ZONE_ID']);
+		$this->set_optional_constants(['WU_CLOUDFLARE_SAAS_ZONE_ID']);
 		$this->set_supports(['autossl']);
 	}
 
@@ -86,17 +87,22 @@ class Cloudflare_Integration extends Integration {
 	public function get_fields(): array {
 
 		return [
-			'WU_CLOUDFLARE_ZONE_ID' => [
+			'WU_CLOUDFLARE_ZONE_ID'      => [
 				'title'       => __('Zone ID', 'ultimate-multisite'),
 				'placeholder' => __('e.g. 644c7705723d62e31f700bb798219c75', 'ultimate-multisite'),
 			],
-			'WU_CLOUDFLARE_API_KEY' => [
+			'WU_CLOUDFLARE_API_KEY'      => [
 				'title'       => __('API Key', 'ultimate-multisite'),
 				'placeholder' => __('e.g. xKGbxxVDpdcUv9dUzRf4i4ngv0QNf1wCtbehiec_o', 'ultimate-multisite'),
 				'type'        => 'password',
 				'html_attr'   => [
 					'autocomplete' => 'new-password',
 				],
+			],
+			'WU_CLOUDFLARE_SAAS_ZONE_ID' => [
+				'title'       => __('SaaS Zone ID (Custom Hostnames)', 'ultimate-multisite'),
+				'placeholder' => __('e.g. 644c7705723d62e31f700bb798219c75', 'ultimate-multisite'),
+				'desc'        => __('Optional. The Zone ID of your Cloudflare for SaaS zone. When set, custom domains added to subsites will be registered as Custom Hostnames in that zone, enabling automatic SSL via Cloudflare SaaS.', 'ultimate-multisite'),
 			],
 		];
 	}
@@ -142,9 +148,11 @@ class Cloudflare_Integration extends Integration {
 		);
 
 		if ( ! is_wp_error($response)) {
-			$body = wp_remote_retrieve_body($response);
+			$body        = wp_remote_retrieve_body($response);
+			$status_code = wp_remote_retrieve_response_code($response);
 
-			if (wp_remote_retrieve_response_code($response) === 200) {
+			// Accept 200 OK and 201 Created (returned by Custom Hostnames POST).
+			if (200 === $status_code || 201 === $status_code) {
 				return json_decode($body);
 			} else {
 				$error_message = wp_remote_retrieve_response_message($response);

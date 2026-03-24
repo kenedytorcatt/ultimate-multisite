@@ -65,6 +65,12 @@ class Cloudflare_Domain_Mapping extends Base_Capability_Module implements Domain
 
 		$explainer_lines['will_not']['send_domain'] = __('Add domain mappings as new CloudFlare zones', 'ultimate-multisite');
 
+		if ($this->get_cloudflare()->get_credential('WU_CLOUDFLARE_SAAS_ZONE_ID')) {
+			$explainer_lines['will']['custom_hostnames'] = __('Register custom domains as Custom Hostnames in your Cloudflare for SaaS zone, enabling automatic SSL provisioning for mapped domains', 'ultimate-multisite');
+		} else {
+			$explainer_lines['will_not']['custom_hostnames'] = __('Register custom domains as Cloudflare Custom Hostnames (requires SaaS Zone ID to be configured)', 'ultimate-multisite');
+		}
+
 		return $explainer_lines;
 	}
 
@@ -93,33 +99,113 @@ class Cloudflare_Domain_Mapping extends Base_Capability_Module implements Domain
 	}
 
 	/**
-	 * Handles adding a domain to Cloudflare.
+	 * Handles adding a custom domain via the Cloudflare for SaaS Custom Hostnames API.
 	 *
-	 * Cloudflare does not add domain mappings as zones.
+	 * When a SaaS Zone ID is configured, registers the domain as a Custom Hostname
+	 * in that zone so Cloudflare can provision an SSL certificate automatically.
+	 * Falls back silently when the SaaS Zone ID is not set.
 	 *
 	 * @since 2.5.0
 	 *
-	 * @param string $domain  The domain name.
-	 * @param int    $site_id The site ID.
+	 * @param string $domain  The domain name being mapped.
+	 * @param int    $site_id The site ID receiving the mapping.
 	 * @return void
 	 */
 	public function on_add_domain(string $domain, int $site_id): void {
-		// Cloudflare doesn't add domain mappings as zones.
+
+		$saas_zone_id = $this->get_cloudflare()->get_credential('WU_CLOUDFLARE_SAAS_ZONE_ID');
+
+		if ( ! $saas_zone_id) {
+			return;
+		}
+
+		$data = apply_filters(
+			'wu_cloudflare_custom_hostname_data',
+			[
+				'hostname' => $domain,
+				'ssl'      => [
+					'method' => 'http',
+					'type'   => 'dv',
+				],
+			],
+			$domain,
+			$site_id
+		);
+
+		$result = $this->get_cloudflare()->cloudflare_api_call(
+			"client/v4/zones/$saas_zone_id/custom_hostnames",
+			'POST',
+			$data
+		);
+
+		if (is_wp_error($result)) {
+			wu_log_add(
+				'integration-cloudflare',
+				sprintf('Failed to create Custom Hostname for "%s". Reason: %s', $domain, $result->get_error_message()),
+				LogLevel::ERROR
+			);
+
+			return;
+		}
+
+		wu_log_add('integration-cloudflare', sprintf('Created Custom Hostname for "%s" in Cloudflare SaaS zone.', $domain));
 	}
 
 	/**
-	 * Handles removing a domain from Cloudflare.
+	 * Handles removing a custom domain from the Cloudflare for SaaS Custom Hostnames API.
 	 *
-	 * Cloudflare does not manage domain mappings as zones.
+	 * Looks up the Custom Hostname by hostname and deletes it from the SaaS zone.
+	 * Falls back silently when the SaaS Zone ID is not set.
 	 *
 	 * @since 2.5.0
 	 *
-	 * @param string $domain  The domain name.
+	 * @param string $domain  The domain name being removed.
 	 * @param int    $site_id The site ID.
 	 * @return void
 	 */
 	public function on_remove_domain(string $domain, int $site_id): void {
-		// Cloudflare doesn't manage domain mappings as zones.
+
+		$saas_zone_id = $this->get_cloudflare()->get_credential('WU_CLOUDFLARE_SAAS_ZONE_ID');
+
+		if ( ! $saas_zone_id) {
+			return;
+		}
+
+		// Look up the Custom Hostname ID by hostname value.
+		$list_result = $this->get_cloudflare()->cloudflare_api_call(
+			"client/v4/zones/$saas_zone_id/custom_hostnames",
+			'GET',
+			['hostname' => $domain]
+		);
+
+		if (is_wp_error($list_result) || empty($list_result->result)) {
+			wu_log_add(
+				'integration-cloudflare',
+				sprintf('Could not find Custom Hostname for "%s" to delete. Skipping.', $domain),
+				LogLevel::WARNING
+			);
+
+			return;
+		}
+
+		$custom_hostname_id = $list_result->result[0]->id;
+
+		$delete_result = $this->get_cloudflare()->cloudflare_api_call(
+			"client/v4/zones/$saas_zone_id/custom_hostnames/$custom_hostname_id",
+			'DELETE'
+		);
+
+		if (is_wp_error($delete_result)) {
+			wu_log_add(
+				'integration-cloudflare',
+				sprintf('Failed to delete Custom Hostname for "%s". Reason: %s', $domain, $delete_result->get_error_message()),
+				LogLevel::ERROR
+			);
+
+			return;
+		}
+
+		wu_log_add('integration-cloudflare', sprintf('Deleted Custom Hostname for "%s" from Cloudflare SaaS zone.', $domain));
 	}
 
 	/**

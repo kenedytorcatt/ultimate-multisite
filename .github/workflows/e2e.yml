@@ -183,6 +183,15 @@ jobs:
 
           echo "✅ All checkout tests passed!"
 
+      - name: Run SSO Redirect Loop Tests (After Setup)
+        id: sso-tests
+        run: |
+          echo "=== Starting SSO Redirect Loop Tests ==="
+          npx cypress run \
+            --config-file cypress.config.test.js \
+            --spec "tests/e2e/cypress/integration/065-sso-redirect-loop.spec.js" \
+            --browser ${{ matrix.browser }}
+
       - name: Run Stripe Tests (After Setup)
         id: stripe-tests
         env:

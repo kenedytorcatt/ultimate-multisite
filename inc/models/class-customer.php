@@ -398,14 +398,49 @@ class Customer extends Base_Model implements Billable, Notable {
 		$this->has_trialed = $this->get_meta(self::META_HAS_TRIALED);
 
 		if ( ! $this->has_trialed) {
-			$trial = wu_get_memberships(
+			/*
+			 * Exclude pending (abandoned checkout) and trialing memberships
+			 * from trial check. A user "has trialed" only once their trial
+			 * ends and converts to a paid active membership.
+			 *
+			 * @since 2.4.13
+			 */
+			$trial_memberships = wu_get_memberships(
 				[
 					'customer_id'            => $this->get_id(),
 					'date_trial_end__not_in' => [null, '0000-00-00 00:00:00'],
-					'fields'                 => 'ids',
-					'number'                 => 1,
+					'status__not_in'         => ['pending', 'trialing'],
+					'number'                 => 50,
 				]
 			);
+
+			/*
+			 * Cancelled memberships with no completed payment are from
+			 * declined cards, not real trials. Do not count them as
+			 * "has trialed".
+			 *
+			 * @since 2.4.14
+			 */
+			$trial = [];
+
+			foreach ($trial_memberships as $m) {
+				if ($m->get_status() === 'cancelled') {
+					$paid = $m->get_payments(
+						[
+							'status' => 'completed',
+							'number' => 1,
+						]
+					);
+
+					if (empty($paid)) {
+						continue;
+					}
+				}
+
+				$trial[] = $m->get_id();
+
+				break;
+			}
 
 			if ( ! empty($trial)) {
 				$this->update_meta(self::META_HAS_TRIALED, true);

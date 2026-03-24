@@ -96,7 +96,10 @@ document.addEventListener("DOMContentLoaded", () => {
         creating: wu_thank_you.creating,
         next_queue: parseInt(wu_thank_you.next_queue, 10) + 5,
         random: 0,
-        progress_in_seconds: 0
+        progress_in_seconds: 0,
+        stopped_count: 0,
+        running_count: 0,
+        site_ready: false
       };
     },
     computed: {
@@ -105,35 +108,69 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     },
     mounted() {
-      if (wu_thank_you.has_pending_site) {
-        this.check_site_created();
-        return;
-      }
-      if (this.next_queue <= 0 || wu_thank_you.creating) {
-        return;
-      }
-      const interval_seconds = setInterval(() => {
-        this.progress_in_seconds++;
-        if (this.progress_in_seconds >= this.next_queue) {
-          clearInterval(interval_seconds);
-          window.location.reload();
-        }
-        if (this.progress_in_seconds % 5 === 0) {
-          fetch("/wp-cron.php?doing_wp_cron");
-        }
-      }, 1e3);
+      /*
+       * Kick wp-cron immediately to start the async site creation ASAP.
+       *
+       * Always start polling regardless of has_pending_site. The page may
+       * load before the pending site is created (during Stripe webhook
+       * delay). Without polling, the user stares at "Creating" forever
+       * even after the site is ready.
+       *
+       * @since 2.4.13
+       */
+      fetch("/wp-cron.php?doing_wp_cron");
+      this.check_site_created();
     },
     methods: {
       async check_site_created() {
         const url = new URL(wu_thank_you.ajaxurl);
         url.searchParams.set("action", "wu_check_pending_site_created");
         url.searchParams.set("membership_hash", wu_thank_you.membership_hash);
-        const response = await fetch(url).then((request) => request.json());
+        let response;
+        try {
+          response = await fetch(url).then((request) => request.json());
+        } catch (e) {
+          // Network error or non-JSON response -- retry in 3s without stopping.
+          this.stopped_count++;
+          setTimeout(this.check_site_created, 3000);
+          return;
+        }
         if (response.publish_status === "completed") {
-          window.location.reload();
+          this.creating = false;
+          this.site_ready = true;
+          // Reload with cache buster so CDN/cache plugins don't serve stale page
+          setTimeout(() => {
+            var sep = window.location.href.indexOf("?") > -1 ? "&" : "?";
+            window.location.href = window.location.href.split("#")[0] + sep + "_t=" + Date.now();
+          }, 1500);
+        } else if (response.publish_status === "running") {
+          this.creating = true;
+          this.stopped_count = 0;
+          this.running_count++;
+          // Kick cron every 3 polls to keep Action Scheduler active during site creation.
+          if (this.running_count % 3 === 0) {
+            fetch("/wp-cron.php?doing_wp_cron");
+          }
+          if (this.running_count > 60) {
+            fetch("/wp-cron.php?doing_wp_cron");
+            setTimeout(() => {
+              window.location.reload();
+            }, 3e3);
+          } else {
+            // Adaptive polling: 1.5s for first 30s, then 3s
+            var wait = this.running_count < 20 ? 1500 : 3000;
+            setTimeout(this.check_site_created, wait);
+          }
         } else {
-          this.creating = response.publish_status === "running";
-          setTimeout(this.check_site_created, 3e3);
+          // status === "stopped": async job not started yet or site already created.
+          // Reload after 3 consecutive stopped responses (9 seconds total).
+          this.creating = false;
+          this.stopped_count++;
+          if (this.stopped_count >= 3) {
+            window.location.reload();
+          } else {
+            setTimeout(this.check_site_created, 3e3);
+          }
         }
       }
     }

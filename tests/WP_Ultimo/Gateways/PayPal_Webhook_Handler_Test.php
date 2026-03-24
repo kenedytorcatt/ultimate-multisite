@@ -62,7 +62,7 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 	public function test_api_base_url_sandbox(): void {
 
 		$reflection = new \ReflectionClass($this->handler);
-		$method = $reflection->getMethod('get_api_base_url');
+		$method     = $reflection->getMethod('get_api_base_url');
 
 		$url = $method->invoke($this->handler);
 		$this->assertEquals('https://api-m.sandbox.paypal.com', $url);
@@ -79,7 +79,7 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 		$handler->init();
 
 		$reflection = new \ReflectionClass($handler);
-		$method = $reflection->getMethod('get_api_base_url');
+		$method     = $reflection->getMethod('get_api_base_url');
 
 		$url = $method->invoke($handler);
 		$this->assertEquals('https://api-m.paypal.com', $url);
@@ -100,7 +100,7 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 		);
 
 		$reflection = new \ReflectionClass($this->handler);
-		$method = $reflection->getMethod('verify_webhook_signature');
+		$method     = $reflection->getMethod('verify_webhook_signature');
 
 		$result = $method->invoke($this->handler, '{"test": true}');
 		$this->assertFalse($result);
@@ -123,7 +123,7 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 		add_filter('wu_paypal_skip_webhook_verification', '__return_true');
 
 		$reflection = new \ReflectionClass($this->handler);
-		$method = $reflection->getMethod('verify_webhook_signature');
+		$method     = $reflection->getMethod('verify_webhook_signature');
 
 		$result = $method->invoke($this->handler, '{"test": true}');
 		$this->assertTrue($result);
@@ -137,16 +137,16 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 	public function test_verify_signature_fails_without_webhook_id(): void {
 
 		// Set headers but no webhook ID
-		$_SERVER['HTTP_PAYPAL_AUTH_ALGO'] = 'SHA256withRSA';
-		$_SERVER['HTTP_PAYPAL_CERT_URL'] = 'https://api.sandbox.paypal.com/cert.pem';
-		$_SERVER['HTTP_PAYPAL_TRANSMISSION_ID'] = 'trans-123';
-		$_SERVER['HTTP_PAYPAL_TRANSMISSION_SIG'] = 'sig-abc';
+		$_SERVER['HTTP_PAYPAL_AUTH_ALGO']         = 'SHA256withRSA';
+		$_SERVER['HTTP_PAYPAL_CERT_URL']          = 'https://api.sandbox.paypal.com/cert.pem';
+		$_SERVER['HTTP_PAYPAL_TRANSMISSION_ID']   = 'trans-123';
+		$_SERVER['HTTP_PAYPAL_TRANSMISSION_SIG']  = 'sig-abc';
 		$_SERVER['HTTP_PAYPAL_TRANSMISSION_TIME'] = '2026-01-01T00:00:00Z';
 
 		wu_save_setting('paypal_rest_sandbox_webhook_id', '');
 
 		$reflection = new \ReflectionClass($this->handler);
-		$method = $reflection->getMethod('verify_webhook_signature');
+		$method     = $reflection->getMethod('verify_webhook_signature');
 
 		$result = $method->invoke($this->handler, '{"test": true}');
 		$this->assertFalse($result);
@@ -167,7 +167,7 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 	public function test_get_membership_by_subscription_empty(): void {
 
 		$reflection = new \ReflectionClass($this->handler);
-		$method = $reflection->getMethod('get_membership_by_subscription');
+		$method     = $reflection->getMethod('get_membership_by_subscription');
 
 		$result = $method->invoke($this->handler, '');
 		$this->assertNull($result);
@@ -179,7 +179,7 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 	public function test_get_membership_by_subscription_not_found(): void {
 
 		$reflection = new \ReflectionClass($this->handler);
-		$method = $reflection->getMethod('get_membership_by_subscription');
+		$method     = $reflection->getMethod('get_membership_by_subscription');
 
 		$result = $method->invoke($this->handler, 'I-NONEXISTENT123');
 		$this->assertEmpty($result);
@@ -191,38 +191,44 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 	public function test_handle_subscription_activated(): void {
 
 		// Create test data
-		$customer = wu_create_customer([
-			'user_id'    => self::factory()->user->create(),
-			'email'      => 'paypal-test@example.com',
-			'username'   => 'paypaltest',
-		]);
+		$customer = wu_create_customer(
+			[
+				'user_id'  => self::factory()->user->create(),
+				'email'    => 'paypal-test@example.com',
+				'username' => 'paypaltest',
+			]
+		);
 
-		$product = wu_create_product([
-			'name'            => 'PayPal Test Plan',
-			'slug'            => 'paypal-test-plan',
-			'type'            => 'plan',
-			'amount'          => 29.99,
-			'recurring'       => true,
-			'duration'        => 1,
-			'duration_unit'   => 'month',
-			'currency'        => 'USD',
-			'list_order'      => 0,
-			'pricing_type'    => 'paid',
-			'feature_list'    => [],
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'PayPal Test Plan',
+				'slug'          => 'paypal-test-plan',
+				'type'          => 'plan',
+				'amount'        => 29.99,
+				'recurring'     => true,
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'currency'      => 'USD',
+				'list_order'    => 0,
+				'pricing_type'  => 'paid',
+				'feature_list'  => [],
+			]
+		);
 
-		$membership = wu_create_membership([
-			'customer_id'             => $customer->get_id(),
-			'plan_id'                 => $product->get_id(),
-			'gateway'                 => 'paypal-rest',
-			'gateway_subscription_id' => 'I-TESTACTIVATE',
-			'status'                  => Membership_Status::PENDING,
-			'amount'                  => 29.99,
-			'currency'                => 'USD',
-		]);
+		$membership = wu_create_membership(
+			[
+				'customer_id'             => $customer->get_id(),
+				'plan_id'                 => $product->get_id(),
+				'gateway'                 => 'paypal-rest',
+				'gateway_subscription_id' => 'I-TESTACTIVATE',
+				'status'                  => Membership_Status::PENDING,
+				'amount'                  => 29.99,
+				'currency'                => 'USD',
+			]
+		);
 
 		$reflection = new \ReflectionClass($this->handler);
-		$method = $reflection->getMethod('handle_subscription_activated');
+		$method     = $reflection->getMethod('handle_subscription_activated');
 
 		$method->invoke($this->handler, ['id' => 'I-TESTACTIVATE']);
 
@@ -236,39 +242,45 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 	 */
 	public function test_handle_subscription_cancelled(): void {
 
-		$customer = wu_create_customer([
-			'user_id'    => self::factory()->user->create(),
-			'email'      => 'paypal-cancel@example.com',
-			'username'   => 'paypalcancel',
-		]);
+		$customer = wu_create_customer(
+			[
+				'user_id'  => self::factory()->user->create(),
+				'email'    => 'paypal-cancel@example.com',
+				'username' => 'paypalcancel',
+			]
+		);
 
-		$product = wu_create_product([
-			'name'            => 'PayPal Cancel Plan',
-			'slug'            => 'paypal-cancel-plan',
-			'type'            => 'plan',
-			'amount'          => 19.99,
-			'recurring'       => true,
-			'duration'        => 1,
-			'duration_unit'   => 'month',
-			'currency'        => 'USD',
-			'list_order'      => 0,
-			'pricing_type'    => 'paid',
-			'feature_list'    => [],
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'PayPal Cancel Plan',
+				'slug'          => 'paypal-cancel-plan',
+				'type'          => 'plan',
+				'amount'        => 19.99,
+				'recurring'     => true,
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'currency'      => 'USD',
+				'list_order'    => 0,
+				'pricing_type'  => 'paid',
+				'feature_list'  => [],
+			]
+		);
 
-		$membership = wu_create_membership([
-			'customer_id'             => $customer->get_id(),
-			'plan_id'                 => $product->get_id(),
-			'gateway'                 => 'paypal-rest',
-			'gateway_subscription_id' => 'I-TESTCANCEL',
-			'status'                  => Membership_Status::ACTIVE,
-			'auto_renew'              => true,
-			'amount'                  => 19.99,
-			'currency'                => 'USD',
-		]);
+		$membership = wu_create_membership(
+			[
+				'customer_id'             => $customer->get_id(),
+				'plan_id'                 => $product->get_id(),
+				'gateway'                 => 'paypal-rest',
+				'gateway_subscription_id' => 'I-TESTCANCEL',
+				'status'                  => Membership_Status::ACTIVE,
+				'auto_renew'              => true,
+				'amount'                  => 19.99,
+				'currency'                => 'USD',
+			]
+		);
 
 		$reflection = new \ReflectionClass($this->handler);
-		$method = $reflection->getMethod('handle_subscription_cancelled');
+		$method     = $reflection->getMethod('handle_subscription_cancelled');
 
 		$method->invoke($this->handler, ['id' => 'I-TESTCANCEL']);
 
@@ -282,38 +294,44 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 	 */
 	public function test_handle_payment_completed_creates_renewal(): void {
 
-		$customer = wu_create_customer([
-			'user_id'    => self::factory()->user->create(),
-			'email'      => 'paypal-renew@example.com',
-			'username'   => 'paypalrenew',
-		]);
+		$customer = wu_create_customer(
+			[
+				'user_id'  => self::factory()->user->create(),
+				'email'    => 'paypal-renew@example.com',
+				'username' => 'paypalrenew',
+			]
+		);
 
-		$product = wu_create_product([
-			'name'            => 'PayPal Renewal Plan',
-			'slug'            => 'paypal-renewal-plan',
-			'type'            => 'plan',
-			'amount'          => 49.99,
-			'recurring'       => true,
-			'duration'        => 1,
-			'duration_unit'   => 'month',
-			'currency'        => 'USD',
-			'list_order'      => 0,
-			'pricing_type'    => 'paid',
-			'feature_list'    => [],
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'PayPal Renewal Plan',
+				'slug'          => 'paypal-renewal-plan',
+				'type'          => 'plan',
+				'amount'        => 49.99,
+				'recurring'     => true,
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'currency'      => 'USD',
+				'list_order'    => 0,
+				'pricing_type'  => 'paid',
+				'feature_list'  => [],
+			]
+		);
 
-		$membership = wu_create_membership([
-			'customer_id'             => $customer->get_id(),
-			'plan_id'                 => $product->get_id(),
-			'gateway'                 => 'paypal-rest',
-			'gateway_subscription_id' => 'I-TESTRENEWAL',
-			'status'                  => Membership_Status::ACTIVE,
-			'amount'                  => 49.99,
-			'currency'                => 'USD',
-		]);
+		$membership = wu_create_membership(
+			[
+				'customer_id'             => $customer->get_id(),
+				'plan_id'                 => $product->get_id(),
+				'gateway'                 => 'paypal-rest',
+				'gateway_subscription_id' => 'I-TESTRENEWAL',
+				'status'                  => Membership_Status::ACTIVE,
+				'amount'                  => 49.99,
+				'currency'                => 'USD',
+			]
+		);
 
 		$reflection = new \ReflectionClass($this->handler);
-		$method = $reflection->getMethod('handle_payment_completed');
+		$method     = $reflection->getMethod('handle_payment_completed');
 
 		$resource = [
 			'id'                   => 'SALE-12345',
@@ -336,9 +354,11 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 		$method->invoke($this->handler, $resource);
 
 		// Still only one payment
-		$all_payments = wu_get_payments([
-			'gateway_payment_id' => 'SALE-12345',
-		]);
+		$all_payments = wu_get_payments(
+			[
+				'gateway_payment_id' => 'SALE-12345',
+			]
+		);
 		$this->assertCount(1, $all_payments);
 	}
 
@@ -347,38 +367,44 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 	 */
 	public function test_handle_subscription_suspended(): void {
 
-		$customer = wu_create_customer([
-			'user_id'    => self::factory()->user->create(),
-			'email'      => 'paypal-suspend@example.com',
-			'username'   => 'paypalsuspend',
-		]);
+		$customer = wu_create_customer(
+			[
+				'user_id'  => self::factory()->user->create(),
+				'email'    => 'paypal-suspend@example.com',
+				'username' => 'paypalsuspend',
+			]
+		);
 
-		$product = wu_create_product([
-			'name'            => 'PayPal Suspend Plan',
-			'slug'            => 'paypal-suspend-plan',
-			'type'            => 'plan',
-			'amount'          => 9.99,
-			'recurring'       => true,
-			'duration'        => 1,
-			'duration_unit'   => 'month',
-			'currency'        => 'USD',
-			'list_order'      => 0,
-			'pricing_type'    => 'paid',
-			'feature_list'    => [],
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'PayPal Suspend Plan',
+				'slug'          => 'paypal-suspend-plan',
+				'type'          => 'plan',
+				'amount'        => 9.99,
+				'recurring'     => true,
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'currency'      => 'USD',
+				'list_order'    => 0,
+				'pricing_type'  => 'paid',
+				'feature_list'  => [],
+			]
+		);
 
-		$membership = wu_create_membership([
-			'customer_id'             => $customer->get_id(),
-			'plan_id'                 => $product->get_id(),
-			'gateway'                 => 'paypal-rest',
-			'gateway_subscription_id' => 'I-TESTSUSPEND',
-			'status'                  => Membership_Status::ACTIVE,
-			'amount'                  => 9.99,
-			'currency'                => 'USD',
-		]);
+		$membership = wu_create_membership(
+			[
+				'customer_id'             => $customer->get_id(),
+				'plan_id'                 => $product->get_id(),
+				'gateway'                 => 'paypal-rest',
+				'gateway_subscription_id' => 'I-TESTSUSPEND',
+				'status'                  => Membership_Status::ACTIVE,
+				'amount'                  => 9.99,
+				'currency'                => 'USD',
+			]
+		);
 
 		$reflection = new \ReflectionClass($this->handler);
-		$method = $reflection->getMethod('handle_subscription_suspended');
+		$method     = $reflection->getMethod('handle_subscription_suspended');
 
 		$method->invoke($this->handler, ['id' => 'I-TESTSUSPEND']);
 
@@ -392,49 +418,57 @@ class PayPal_Webhook_Handler_Test extends WP_UnitTestCase {
 	 */
 	public function test_handle_capture_refunded(): void {
 
-		$customer = wu_create_customer([
-			'user_id'    => self::factory()->user->create(),
-			'email'      => 'paypal-refund@example.com',
-			'username'   => 'paypalrefund',
-		]);
+		$customer = wu_create_customer(
+			[
+				'user_id'  => self::factory()->user->create(),
+				'email'    => 'paypal-refund@example.com',
+				'username' => 'paypalrefund',
+			]
+		);
 
-		$product = wu_create_product([
-			'name'            => 'PayPal Refund Plan',
-			'slug'            => 'paypal-refund-plan',
-			'type'            => 'plan',
-			'amount'          => 59.99,
-			'recurring'       => false,
-			'duration'        => 0,
-			'duration_unit'   => 'month',
-			'currency'        => 'USD',
-			'list_order'      => 0,
-			'pricing_type'    => 'paid',
-			'feature_list'    => [],
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'PayPal Refund Plan',
+				'slug'          => 'paypal-refund-plan',
+				'type'          => 'plan',
+				'amount'        => 59.99,
+				'recurring'     => false,
+				'duration'      => 0,
+				'duration_unit' => 'month',
+				'currency'      => 'USD',
+				'list_order'    => 0,
+				'pricing_type'  => 'paid',
+				'feature_list'  => [],
+			]
+		);
 
-		$membership = wu_create_membership([
-			'customer_id' => $customer->get_id(),
-			'plan_id'     => $product->get_id(),
-			'gateway'     => 'paypal-rest',
-			'status'      => Membership_Status::ACTIVE,
-			'amount'      => 59.99,
-			'currency'    => 'USD',
-		]);
+		$membership = wu_create_membership(
+			[
+				'customer_id' => $customer->get_id(),
+				'plan_id'     => $product->get_id(),
+				'gateway'     => 'paypal-rest',
+				'status'      => Membership_Status::ACTIVE,
+				'amount'      => 59.99,
+				'currency'    => 'USD',
+			]
+		);
 
-		$payment = wu_create_payment([
-			'customer_id'        => $customer->get_id(),
-			'membership_id'      => $membership->get_id(),
-			'gateway'            => 'paypal-rest',
-			'gateway_payment_id' => '8MC585209K746631H',
-			'status'             => Payment_Status::COMPLETED,
-			'total'              => 59.99,
-			'subtotal'           => 59.99,
-			'currency'           => 'USD',
-			'product_id'         => $product->get_id(),
-		]);
+		$payment = wu_create_payment(
+			[
+				'customer_id'        => $customer->get_id(),
+				'membership_id'      => $membership->get_id(),
+				'gateway'            => 'paypal-rest',
+				'gateway_payment_id' => '8MC585209K746631H',
+				'status'             => Payment_Status::COMPLETED,
+				'total'              => 59.99,
+				'subtotal'           => 59.99,
+				'currency'           => 'USD',
+				'product_id'         => $product->get_id(),
+			]
+		);
 
 		$reflection = new \ReflectionClass($this->handler);
-		$method = $reflection->getMethod('handle_capture_refunded');
+		$method     = $reflection->getMethod('handle_capture_refunded');
 
 		$resource = [
 			'id'     => 'REFUND-456',

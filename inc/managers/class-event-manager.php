@@ -528,6 +528,29 @@ class Event_Manager extends Base_Manager {
 			]
 		);
 
+		/**
+		 * Demo Site Expiring.
+		 */
+		wu_register_event_type(
+			'demo_site_expiring',
+			[
+				'name'            => __('Demo Site Expiring', 'ultimate-multisite'),
+				'desc'            => __('Fired when a demo site is about to expire, based on the warning time setting.', 'ultimate-multisite'),
+				'payload'         => fn() => array_merge(
+					wu_generate_event_payload('site'),
+					wu_generate_event_payload('membership'),
+					wu_generate_event_payload('customer'),
+					[
+						'demo_expires_at'     => '2025-12-31 23:59:59',
+						'demo_time_remaining' => '1 hour',
+						'site_admin_url'      => 'https://example.com/wp-admin/',
+						'site_url'            => 'https://example.com/',
+					]
+				),
+				'deprecated_args' => [],
+			]
+		);
+
 		$models = $this->models_events;
 
 		foreach ($models as $model => $params) {
