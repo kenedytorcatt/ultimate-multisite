@@ -69,12 +69,16 @@ class Membership_List_Table_Widget extends Base_List_Table {
 		];
 
 		/**
-		 * Accounts for hashes
+		 * Accounts for hashes.
+		 *
+		 * Models encode hashes with an empty group string (the default $model value).
+		 * Decode with the same empty group and use strict !== false so a decoded
+		 * value of 0 is still treated as a valid ID.
 		 */
 		if (isset($query_args['search']) && strlen((string) $query_args['search']) === Hash::LENGTH) {
-			$item_id = Hash::decode($query_args['search']);
+			$item_id = Hash::decode($query_args['search'], '');
 
-			if ($item_id) {
+			if ($item_id !== false) {
 				unset($query_args['search']);
 
 				$query_args['id'] = $item_id;

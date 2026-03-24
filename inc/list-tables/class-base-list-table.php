@@ -251,12 +251,17 @@ class Base_List_Table extends \WP_List_Table {
 		}
 
 		/**
-		 * Accounts for hashes
+		 * Accounts for hashes.
+		 *
+		 * Models encode hashes with an empty group string (the default $model value).
+		 * We must decode with the same empty group so the ID round-trips correctly.
+		 * We also use strict `!== false` instead of a truthy check so that a decoded
+		 * value of 0 (which is falsy) is still treated as a valid ID.
 		 */
 		if (isset($query_args['search']) && strlen((string) $query_args['search']) === Hash::LENGTH) {
-			$item_id = Hash::decode($query_args['search']);
+			$item_id = Hash::decode($query_args['search'], '');
 
-			if ($item_id) {
+			if ($item_id !== false) {
 				unset($query_args['search']);
 
 				$query_args['id'] = $item_id;
