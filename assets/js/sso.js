@@ -1,46 +1,27 @@
-/* global wu_create_cookie, wu_sso_config, wu_read_cookie, detectIncognito */
+/* global wu_create_cookie, wu_sso_config, wu_read_cookie */
 (function(o) {
 
-  window.wu = window.wu || {};
+	window.wu = window.wu || {};
 
-  window.is_incognito = false;
+	window.wu.sso_denied = function() {
 
-  window.wu.sso_denied = function() {
+		wu_create_cookie('wu_sso_denied', 1, o.expiration_in_days);
 
-    wu_create_cookie('wu_sso_denied', 1, o.expiration_in_days);
+	};
 
-  };
+	const w = document.createElement('script');
 
-  window.wu.check_for_incognito_window = function() {
+	w.type = 'text/javascript';
 
-    try {
+	w.async = true;
 
-      detectIncognito(results => window.is_incognito = results.isPrivate);
+	w.defer = true;
 
-    } catch (e) {
+	w.src = o.server_url + '?_jsonp=1';
 
-      // If detectIncognito fails, assume not incognito
-      window.is_incognito = false;
+	const denied = wu_read_cookie('wu_sso_denied');
 
-    }
-
-  }
-
-  window.wu.check_for_incognito_window();
-
-  const w = document.createElement('script');
-
-  w.type = 'text/javascript';
-
-  w.async = true;
-
-  w.defer = true;
-
-  w.src = o.server_url + '?_jsonp=1';
-
-  const denied = wu_read_cookie('wu_sso_denied');
-
-  document.head.insertAdjacentHTML('beforeend', `
+	document.head.insertAdjacentHTML('beforeend', `
     <style>
       @keyframes fade_in {
         from { opacity: 0; }
@@ -78,83 +59,73 @@
     </style>
   `);
 
-  if (! o.is_user_logged_in && ! denied) {
+	if (! o.is_user_logged_in && ! denied) {
 
-    const s = document.getElementsByTagName('script')[0];
+		const s = document.getElementsByTagName('script')[ 0 ];
 
-    s.parentNode.insertBefore(w, s);
+		s.parentNode.insertBefore(w, s);
 
-    document.body.insertAdjacentHTML('beforeend', '<div class="sso-overlay">&nbsp;</div>');
+		document.body.insertAdjacentHTML('beforeend', '<div class="sso-overlay">&nbsp;</div>');
 
-  }
+	}
 
-  window.wu.sso = function(payload) {
+	window.wu.sso = function(payload) {
 
-    const encodedLocation = encodeURIComponent(window.location.href);
+		const encodedLocation = encodeURIComponent(window.location.href);
 
-    if (payload.code === 200) {
+		if (payload.code === 200) {
 
-      if (o.use_overlay) {
+			if (o.use_overlay) {
 
-        document.body.classList.add('sso-loading');
+				document.body.classList.add('sso-loading');
 
-      }
+			}
 
-      /**
-       * In case we're dealing with http (without ssl),
-       * we force a redirect to bypass browser cookie
-       * limitations.
-       *
-       * Otherwise, on the else block,
-       * we redirect with the verification code attached,
-       * to perform a regular SSO flow.
-       */
-      if (payload.verify === 'must-redirect') {
+			/**
+			 * In case we're dealing with http (without ssl),
+			 * we force a redirect to bypass browser cookie
+			 * limitations.
+			 *
+			 * Otherwise, on the else block,
+			 * we redirect with the verification code attached,
+			 * to perform a regular SSO flow.
+			 */
+			if (payload.verify === 'must-redirect') {
 
-        window.location.replace(`${ o.server_url }?return_url=${ encodedLocation }`);
+				window.location.replace(`${ o.server_url }?return_url=${ encodedLocation }`);
 
-      } else {
-        window.location.replace(`${ o.server_url }?sso_verify=${ payload.verify }&return_url=${ encodedLocation }`);
-      }
+			} else {
+				window.location.replace(`${ o.server_url }?sso_verify=${ payload.verify }&return_url=${ encodedLocation }`);
+			}
 
-    } else {
+		} else {
 
-      /**
-       * If we are in a incognito window,
-       * we give it another try with a full redirect,
-       * as chrome settings might be blocking
-       * cookies from being sent anyways.
-       */
-      if (window.is_incognito) {
+			/**
+			 * SSO failed (user not logged in on main site).
+			 * Set the denied cookie so we don't try again for 5 minutes,
+			 * and remove the loading overlay.
+			 *
+			 * Previously, incognito windows would attempt a full redirect
+			 * as a fallback, but this caused an infinite redirect loop:
+			 * redirect -> sso_verify=invalid -> redirect -> repeat.
+			 * The denied cookie now prevents re-entry in all cases.
+			 */
+			window.wu.sso_denied();
 
-        if (o.use_overlay) {
+			document.body.classList.remove('sso-loading');
 
-          document.body.classList.add('sso-loading');
+		}
 
-        }
+	};
 
-        window.location.replace(`${o.server_url}?return_url=${ encodedLocation }`);
+	(function clean_up_query_args() {
 
-        return;
+		if (window.history.replaceState) {
 
-      }
+			window.history.replaceState(null, null, o.filtered_url + window.location.hash);
 
-      window.wu.sso_denied();
+		}
 
-      document.body.classList.remove('sso-loading');
-
-    }
-
-  };
-
-  (function clean_up_query_args() {
-
-    if (window.history.replaceState) {
-
-      window.history.replaceState(null, null, o.filtered_url + window.location.hash);
-
-    }
-
-  }());
+	}());
 
 }(wu_sso_config));
