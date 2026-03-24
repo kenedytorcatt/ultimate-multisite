@@ -170,6 +170,32 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Set up before each test: authenticate as the test customer.
+	 *
+	 * The Cart class uses wu_get_current_customer() which calls get_current_user_id().
+	 * Without setting the current user, the permission check in build_from_membership()
+	 * fails and the cart type stays 'upgrade' instead of being set to 'addon'.
+	 *
+	 * @since 2.0.12
+	 * @return void
+	 */
+	public function set_up() {
+		parent::set_up();
+		wp_set_current_user(self::$customer->get_user_id());
+	}
+
+	/**
+	 * Tear down after each test: reset the current user.
+	 *
+	 * @since 2.0.12
+	 * @return void
+	 */
+	public function tear_down() {
+		wp_set_current_user(0);
+		parent::tear_down();
+	}
+
+	/**
 	 * Test that addon purchases only charge for the addon, not the existing plan.
 	 *
 	 * Bug: Previously, adding a €5 addon to a €90/month membership would charge ~€89.59
