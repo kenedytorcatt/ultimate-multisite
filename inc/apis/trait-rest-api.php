@@ -86,6 +86,7 @@ trait Rest_Api {
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [$this, 'get_items_rest'],
 					'permission_callback' => [$this, 'get_items_permissions_check'],
+					'args'                => $this->get_collection_params(),
 				],
 			];
 		}
@@ -178,7 +179,10 @@ trait Rest_Api {
 	}
 
 	/**
-	 * Returns a list of items.
+	 * Returns a list of items with WP REST API standard pagination support.
+	 *
+	 * Supports `page` and `per_page` query parameters and sets the
+	 * `X-WP-Total` and `X-WP-TotalPages` response headers.
 	 *
 	 * @since 2.0.0
 	 *
@@ -187,9 +191,87 @@ trait Rest_Api {
 	 */
 	public function get_items_rest($request) {
 
-		$items = $this->model_class::query($request->get_params());
+		$params = $request->get_params();
 
-		return rest_ensure_response($items);
+		/*
+		 * Map WP REST API standard pagination params to BerlinDB query params.
+		 * `per_page` → `number` (items per page)
+		 * `page`     → `offset` (calculated from page number)
+		 */
+		$per_page = isset($params['per_page']) ? absint($params['per_page']) : 10;
+		$page     = isset($params['page']) ? absint($params['page']) : 1;
+
+		if ($per_page < 1) {
+			$per_page = 10;
+		}
+
+		if ($page < 1) {
+			$page = 1;
+		}
+
+		$offset = ($page - 1) * $per_page;
+
+		// Remove REST-specific params before passing to the query layer.
+		unset($params['page'], $params['per_page']);
+
+		// Set BerlinDB pagination params.
+		$params['number'] = $per_page;
+		$params['offset'] = $offset;
+
+		$items = $this->model_class::query($params);
+
+		/*
+		 * Get the total count for pagination headers.
+		 * BerlinDB returns an integer when `count` is set to true.
+		 */
+		$count_params          = $params;
+		$count_params['count'] = true;
+
+		unset($count_params['number'], $count_params['offset']);
+
+		$total = (int) $this->model_class::query($count_params);
+
+		$max_pages = $per_page > 0 ? (int) ceil($total / $per_page) : 1;
+
+		$response = rest_ensure_response($items);
+
+		$response->header('X-WP-Total', $total);
+		$response->header('X-WP-TotalPages', $max_pages);
+
+		return $response;
+	}
+
+	/**
+	 * Returns the query params for collections.
+	 *
+	 * Registers the standard WP REST API pagination parameters (`page` and
+	 * `per_page`) so they appear in the schema and are validated before the
+	 * callback fires.
+	 *
+	 * @since 2.0.0
+	 * @return array
+	 */
+	public function get_collection_params() {
+
+		return [
+			'page'     => [
+				'description'       => __('Current page of the collection.', 'ultimate-multisite'),
+				'type'              => 'integer',
+				'default'           => 1,
+				'sanitize_callback' => 'absint',
+				'validate_callback' => 'rest_validate_request_arg',
+				'minimum'           => 1,
+			],
+			'per_page' => [
+				'description'       => __('Maximum number of items to be returned in result set.', 'ultimate-multisite'),
+				'type'              => 'integer',
+				'default'           => 10,
+				'minimum'           => 1,
+				'maximum'           => 100,
+				'sanitize_callback' => 'absint',
+				'validate_callback' => 'rest_validate_request_arg',
+			],
+		];
 	}
 
 	/**
