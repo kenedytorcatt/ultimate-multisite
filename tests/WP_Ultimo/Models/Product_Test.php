@@ -1098,8 +1098,14 @@ class Product_Test extends \WP_UnitTestCase {
 	 */
 	public function test_get_set_feature_list(): void {
 		$features = [
-			['feature' => '10 Sites', 'tooltip' => ''],
-			['feature' => '100GB Storage', 'tooltip' => 'SSD storage'],
+			[
+				'feature' => '10 Sites',
+				'tooltip' => '',
+			],
+			[
+				'feature' => '100GB Storage',
+				'tooltip' => 'SSD storage',
+			],
 		];
 		$this->product->set_feature_list($features);
 		$this->assertEquals($features, $this->product->get_feature_list());
@@ -1526,19 +1532,21 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test creating a product with wu_create_product helper.
 	 */
 	public function test_wu_create_product(): void {
-		$product = wu_create_product([
-			'name'         => 'Created Product',
-			'slug'         => 'created-product',
-			'description'  => 'A test product',
-			'pricing_type' => 'paid',
-			'amount'       => 29.99,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Created Product',
+				'slug'          => 'created-product',
+				'description'   => 'A test product',
+				'pricing_type'  => 'paid',
+				'amount'        => 29.99,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 		$this->assertGreaterThan(0, $product->get_id());
@@ -1550,18 +1558,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test retrieving a product by ID with wu_get_product.
 	 */
 	public function test_wu_get_product_by_id(): void {
-		$product = wu_create_product([
-			'name'         => 'Fetch By ID',
-			'slug'         => 'fetch-by-id',
-			'pricing_type' => 'paid',
-			'amount'       => 9.99,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Fetch By ID',
+				'slug'          => 'fetch-by-id',
+				'pricing_type'  => 'paid',
+				'amount'        => 9.99,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 
@@ -1575,18 +1585,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test retrieving a product by slug with wu_get_product.
 	 */
 	public function test_wu_get_product_by_slug(): void {
-		$product = wu_create_product([
-			'name'         => 'Fetch By Slug',
-			'slug'         => 'fetch-by-slug',
-			'pricing_type' => 'paid',
-			'amount'       => 9.99,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Fetch By Slug',
+				'slug'          => 'fetch-by-slug',
+				'pricing_type'  => 'paid',
+				'amount'        => 9.99,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 

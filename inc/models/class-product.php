@@ -1450,22 +1450,16 @@ class Product extends Base_Model implements Limitable {
 		 * Use absint() for duration comparison to avoid strict type mismatches
 		 * when $duration arrives as a string from AJAX POST data (e.g. "1" vs 1).
 		 */
-		$duration_matches_base = (
-			absint($duration) === $this->get_duration() && $this->get_duration_unit() === $duration_unit
-		);
+		$duration_matches_base = absint($duration) === $this->get_duration() && $this->get_duration_unit() === $duration_unit;
 
 		/*
 		 * Treat "1 year" and "12 months" as equivalent durations so that a product
 		 * configured with duration=12/unit=month is visible when the period selector
 		 * is set to duration=1/unit=year, and vice-versa.
 		 */
-		$duration_matches_base = $duration_matches_base || (
-			absint($duration) === 1 && 'year' === $duration_unit &&
-			$this->get_duration() === 12 && 'month' === $this->get_duration_unit()
-		) || (
-			absint($duration) === 12 && 'month' === $duration_unit &&
-			$this->get_duration() === 1 && 'year' === $this->get_duration_unit()
-		);
+		$is_1year_request_12month_product  = 1 === absint($duration) && 'year' === $duration_unit && 12 === $this->get_duration() && 'month' === $this->get_duration_unit();
+		$is_12month_request_1year_product  = 12 === absint($duration) && 'month' === $duration_unit && 1 === $this->get_duration() && 'year' === $this->get_duration_unit();
+		$duration_matches_base             = $duration_matches_base || $is_1year_request_12month_product || $is_12month_request_1year_product;
 
 		if ( ! $duration_matches_base) {
 			$price_variation = $this->get_price_variation($duration, $duration_unit);
@@ -1574,7 +1568,7 @@ class Product extends Base_Model implements Limitable {
 				 * that a variation saved as "12 months" matches a request for
 				 * "1 year" (and vice-versa).
 				 */
-				if ($pv_duration === 12 && 'month' === $pv_duration_unit) {
+				if (12 === $pv_duration && 'month' === $pv_duration_unit) {
 					$pv_duration      = 1;
 					$pv_duration_unit = 'year';
 				}
