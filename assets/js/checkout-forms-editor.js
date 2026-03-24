@@ -85,6 +85,10 @@
 
             this.preview = ! this.preview;
 
+          } else {
+
+            this.preview = true;
+
           } // end if;
 
           if (this.preview) {
@@ -93,10 +97,12 @@
 
             const that = this;
 
-            // eslint-disable-next-line max-len
-            that.iframe_preview_url = that.register_page + '?action=wu_generate_checkout_form_preview' + '&form_id=' + that.form_id + '&type=' + type + '&uniq=' + (Math.random() * 1000);
+            const preview_type = type !== null ? type : 'user';
 
-            $('#wp-ultimo-checkout-preview').on('load', function() {
+            // eslint-disable-next-line max-len
+            that.iframe_preview_url = that.register_page + '?action=wu_generate_checkout_form_preview' + '&form_id=' + that.form_id + '&type=' + preview_type + '&uniq=' + (Math.random() * 1000);
+
+            $('#wp-ultimo-checkout-preview').off('load').one('load', function() {
 
               that.loading_preview = false;
 
@@ -112,12 +118,7 @@
 
             });
 
-          }
-
-          // eslint-disable-next-line no-console
-          console.log('no preview');
-
-          // end if;
+          } // end if;
 
         },
         add_step(data, cb = null) {
