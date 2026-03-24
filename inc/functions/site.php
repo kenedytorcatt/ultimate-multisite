@@ -57,6 +57,58 @@ function wu_get_site_by_hash($hash) {
 }
 
 /**
+ * Returns blog IDs that match a search term via mapped domain or site title.
+ *
+ * BerlinDB's schema-based search only covers the columns defined in
+ * Sites_Schema (blog_id, domain, path). Mapped domains and site titles
+ * (blogname) live outside that schema, so we collect their IDs here and
+ * merge them into the main query in wu_get_sites().
+ *
+ * @since 2.5.0
+ *
+ * @param string       $search      The search term.
+ * @param array|false  $blog_id__in Optional array of blog IDs to restrict the search to.
+ * @param int          $limit       Maximum number of IDs to return.
+ * @return int[]
+ */
+function wu_get_sites_extra_ids_for_search($search, $blog_id__in = false, $limit = 100) {
+
+	// Find sites with a matching mapped domain.
+	$domain_ids = wu_get_domains(
+		[
+			'number'      => $limit,
+			'search'      => '*' . $search . '*',
+			'fields'      => ['blog_id'],
+			'blog_id__in' => $blog_id__in,
+		]
+	);
+
+	$domain_ids = array_column($domain_ids, 'blog_id');
+
+	/*
+	 * Find sites whose title (blogname) matches the search term.
+	 * The title is stored in wp_blogmeta and is not part of the BerlinDB
+	 * sites schema, so we query it directly.
+	 */
+	global $wpdb;
+
+	$title_search_like = '%' . $wpdb->esc_like($search) . '%';
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$title_ids = $wpdb->get_col(
+		$wpdb->prepare(
+			"SELECT blog_id FROM {$wpdb->blogmeta} WHERE meta_key = 'blogname' AND meta_value LIKE %s",
+			$title_search_like
+		)
+	);
+
+	$title_ids = array_map('intval', (array) $title_ids);
+
+	// Merge and deduplicate.
+	return array_values(array_unique(array_merge($domain_ids, $title_ids)));
+}
+
+/**
  * Queries sites.
  *
  * @since 2.0.0
@@ -69,44 +121,54 @@ function wu_get_sites($query = []) {
 		$query['number'] = 100;
 	}
 
-	// If we're just counting, skip the domain search merge logic
-	// and do a simple count query.
-
+	// If we're just counting, do a simple count query.
 	if ( ! empty($query['count'])) {
+		if ( ! empty($query['search'])) {
+			/*
+			 * When counting with a search term we need to account for sites
+			 * matched by mapped domain or by title (blogname), neither of which
+			 * is in the BerlinDB schema.  Collect the extra IDs, exclude them
+			 * from the schema count, and add them back in.
+			 */
+			$extra_ids = wu_get_sites_extra_ids_for_search($query['search'], $query['blog_id__in'] ?? false, $query['number']);
+
+			if ( ! empty($extra_ids)) {
+				$count_query                    = $query;
+				$existing_not_in                = isset($count_query['blog_id__not_in']) ? (array) $count_query['blog_id__not_in'] : [];
+				$count_query['blog_id__not_in'] = array_unique(array_merge($existing_not_in, $extra_ids));
+				unset($count_query['search']);
+
+				$schema_count = (int) \WP_Ultimo\Models\Site::query($count_query);
+
+				return $schema_count + count($extra_ids);
+			}
+		}
+
 		return \WP_Ultimo\Models\Site::query($query);
 	}
 
 	if ( ! empty($query['search'])) {
-		// We also want to find sites with a matching mapped domain.
-		$domain_ids = wu_get_domains(
-			[
-				'number'      => $query['number'],
-				'search'      => '*' . $query['search'] . '*',
-				'fields'      => ['blog_id'],
-				'blog_id__in' => $query['blog_id__in'] ?? false,
-			]
-		);
+		// We also want to find sites with a matching mapped domain or title.
+		$extra_ids = wu_get_sites_extra_ids_for_search($query['search'], $query['blog_id__in'] ?? false, $query['number']);
 
-		$domain_ids = array_column($domain_ids, 'blog_id');
+		if ( ! empty($extra_ids)) {
+			$sites_with_extra_query                = $query;
+			$sites_with_extra_query['blog_id__in'] = $extra_ids;
 
-		if ( ! empty($domain_ids)) {
-			$sites_with_domain_query                = $query;
-			$sites_with_domain_query['blog_id__in'] = $domain_ids;
+			unset($sites_with_extra_query['search']);
+			$sites_by_extra = \WP_Ultimo\Models\Site::query($sites_with_extra_query);
 
-			unset($sites_with_domain_query['search']);
-			$sites_by_domain = \WP_Ultimo\Models\Site::query($sites_with_domain_query);
-
-			$query['number']         -= count($sites_by_domain);
+			$query['number']         -= count($sites_by_extra);
 			$existing_not_in          = isset($query['blog_id__not_in']) ? (array) $query['blog_id__not_in'] : [];
-			$query['blog_id__not_in'] = array_unique(array_merge($existing_not_in, $domain_ids));
+			$query['blog_id__not_in'] = array_unique(array_merge($existing_not_in, $extra_ids));
 
 			if ($query['number'] <= 0) {
 				// We reached the limit already.
-				return $sites_by_domain;
+				return $sites_by_extra;
 			}
 			$sites = \WP_Ultimo\Models\Site::query($query);
-			// return matches by domain first.
-			return array_merge($sites_by_domain, $sites);
+			// Return matches by domain/title first.
+			return array_merge($sites_by_extra, $sites);
 		}
 	}
 
