@@ -36,6 +36,20 @@ defined('ABSPATH') || exit;
 		<?php esc_html_e('You now have everything you need in place to start building your Website as a Service business!', 'ultimate-multisite'); ?>
 	</p>
 
+	<p class="wu-text-sm wu-text-gray-500 wu-my-4">
+		<?php
+		printf(
+			/* translators: %s is a link to the hosting integrations setup page */
+			esc_html__('If you use cPanel or another hosting provider, configure the integration under %s before creating template sites to ensure subdomains are automatically provisioned.', 'ultimate-multisite'),
+			sprintf(
+				'<a href="%s" class="wu-text-blue-600 hover:wu-underline">%s</a>',
+				esc_url(wu_network_admin_url('wp-ultimo-hosting-integration-wizard')),
+				esc_html__('Settings → Hosting Integrations', 'ultimate-multisite')
+			)
+		);
+		?>
+	</p>
+
 	</div>
 
 </div>

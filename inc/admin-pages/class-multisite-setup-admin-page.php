@@ -214,6 +214,20 @@ class Multisite_Setup_Admin_Page extends Wizard_Admin_Page {
 				],
 				'default' => '1',
 			],
+			'subdomain_recommendation' => [
+				'type' => 'note',
+				'desc' => '<div class="wu-bg-blue-50 wu-border wu-border-blue-200 wu-rounded-lg wu-p-4">
+					<div class="wu-flex">
+						<div class="wu-flex-shrink-0">
+							<span class="dashicons dashicons-info wu-text-blue-500"></span>
+						</div>
+						<div class="wu-ml-3">
+							<h4 class="wu-text-sm wu-font-medium wu-text-blue-800">' . esc_html__('Sub-domains are recommended for most businesses', 'multisite-ultimate') . '</h4>
+							<p class="wu-text-sm wu-text-blue-700 wu-mt-1">' . esc_html__('Sub-domains (e.g. site1.yourdomain.com) allow custom domain mapping and look more professional. Sub-directories (e.g. yourdomain.com/site1) are simpler to set up but cannot be changed later without rebuilding your network.', 'multisite-ultimate') . '</p>
+						</div>
+					</div>
+				</div>',
+			],
 			'network_details_header'   => [
 				'type'  => 'header',
 				'title' => __('Network Details', 'multisite-ultimate'),
