@@ -166,9 +166,9 @@ class Customer_Has_Trialed_Test extends WP_UnitTestCase {
 
 		$fresh = wu_get_customer(self::$customer->get_id());
 
-		$this->assertTrue(
+		$this->assertFalse(
 			(bool) $fresh->has_trialed(),
-			'A trialing membership must count as a used trial.'
+			'A trialing membership must NOT count as a used trial -- the trial is still active.'
 		);
 
 		self::$customer->delete_meta(Customer::META_HAS_TRIALED);
@@ -177,10 +177,13 @@ class Customer_Has_Trialed_Test extends WP_UnitTestCase {
 
 	/**
 	 * A cancelled membership that went through a genuine trial (date_trial_end
-	 * still set in the DB) must continue to block a second trial.
+	 * still set in the DB) AND has a completed payment must continue to block
+	 * a second trial.
 	 *
-	 * This validates the fix is scoped to 'pending' only — not 'cancelled' —
-	 * so users who cancel after actually using a trial cannot get another free one.
+	 * A cancelled membership without a completed payment is from a declined
+	 * card, not a genuine trial -- those should NOT block future trials.
+	 *
+	 * @since 2.4.14
 	 */
 	public function test_cancelled_membership_after_genuine_trial_still_blocks_second_trial(): void {
 
@@ -201,11 +204,58 @@ class Customer_Has_Trialed_Test extends WP_UnitTestCase {
 			['id' => $membership->get_id()]
 		);
 
+		// A genuine trial that was consumed must have a completed payment.
+		wu_create_payment(
+			[
+				'customer_id'   => self::$customer->get_id(),
+				'membership_id' => $membership->get_id(),
+				'status'        => 'completed',
+				'total'         => 9.99,
+				'gateway'       => 'manual',
+			]
+		);
+
 		$fresh = wu_get_customer(self::$customer->get_id());
 
 		$this->assertTrue(
 			(bool) $fresh->has_trialed(),
-			'A cancelled membership with date_trial_end still set must block a second trial.'
+			'A cancelled membership with date_trial_end and a completed payment must block a second trial.'
+		);
+
+		self::$customer->delete_meta(Customer::META_HAS_TRIALED);
+		$membership->delete();
+	}
+
+	/**
+	 * A cancelled membership from a declined card (no completed payment)
+	 * must NOT block future trials.
+	 *
+	 * @since 2.4.14
+	 */
+	public function test_cancelled_membership_without_payment_does_not_block_trial(): void {
+
+		$membership = wu_create_membership(
+			[
+				'customer_id' => self::$customer->get_id(),
+				'plan_id'     => self::$product->get_id(),
+				'status'      => 'cancelled',
+				'recurring'   => true,
+			]
+		);
+
+		// date_trial_end is set but no completed payment -- declined card scenario.
+		global $wpdb;
+		$wpdb->update(
+			$wpdb->prefix . 'wu_memberships',
+			['date_trial_end' => gmdate('Y-m-d H:i:s', strtotime('-1 day'))],
+			['id' => $membership->get_id()]
+		);
+
+		$fresh = wu_get_customer(self::$customer->get_id());
+
+		$this->assertFalse(
+			(bool) $fresh->has_trialed(),
+			'A cancelled membership without a completed payment (declined card) must NOT block future trials.'
 		);
 
 		self::$customer->delete_meta(Customer::META_HAS_TRIALED);

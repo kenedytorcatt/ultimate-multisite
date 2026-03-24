@@ -338,7 +338,20 @@ class Checkout_Element extends Base_Element {
 
 			$pending_payment = $membership->get_last_pending_payment();
 
-			if ($pending_payment && ! $membership->is_active() && $membership->get_status() !== Membership_Status::TRIALING) {
+			/*
+			 * Pending payment notice logic:
+			 * - active/trialing with pending payment -> show notice AND block form
+			 * - pending (abandoned checkout) with pending payment -> show notice
+			 *   but do NOT block the form so user can pick a different plan.
+			 *
+			 * @since 2.4.13
+			 */
+			$membership_is_active_or_trialing = $membership->is_active()
+				|| $membership->get_status() === Membership_Status::TRIALING;
+
+			$membership_is_pending = $membership->get_status() === Membership_Status::PENDING;
+
+			if ($pending_payment && ($membership_is_active_or_trialing || $membership_is_pending)) {
 				/**
 				 *  We are talking about membership with a pending payment
 				 */
@@ -357,7 +370,12 @@ class Checkout_Element extends Base_Element {
 				echo '<br>' . wp_kses_post(sprintf(__('Click <a href="%s">here</a> to pay.', 'ultimate-multisite'), esc_attr($payment_url)));
 
 				echo '</p>';
-				return;
+
+				// Only block the form for active/trialing memberships.
+				// For pending (abandoned) memberships, show the notice but let them continue.
+				if ($membership_is_active_or_trialing) {
+					return;
+				}
 			}
 
 			$membership_blocked_forms = [

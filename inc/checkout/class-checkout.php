@@ -1343,6 +1343,23 @@ class Checkout {
 		}
 
 		if ('autogenerate' === $site_url && $site_title) {
+			/*
+			 * Check if the base URL from user-provided title is already taken
+			 * BEFORE auto-appending a number. Users should be told "that name
+			 * is taken" instead of silently getting e.g. "honeys1".
+			 *
+			 * @since 2.4.13
+			 */
+			$base_url = wu_generate_site_url_from_title($site_title);
+			$d_check  = wu_get_site_domain_and_path($base_url, $this->request_or_session('site_domain'));
+
+			if (domain_exists($d_check->domain, $d_check->path)) {
+				return new \WP_Error(
+					'site_url_taken',
+					__('That site name is already taken. Please choose a different name.', 'ultimate-multisite')
+				);
+			}
+
 			$site_url = wu_generate_unique_site_url($site_title, $this->request_or_session('site_domain'));
 		} elseif ('autogenerate' === $site_url && $this->customer) {
 			$site_url = wu_generate_unique_site_url($this->customer->get_username(), $this->request_or_session('site_domain'));
@@ -1370,6 +1387,22 @@ class Checkout {
 				$site_url   = $this->customer->get_username();
 				$site_title = $site_title ?: $site_url;
 			} elseif ('site_title' === $auto_generate_url && $site_title) {
+				/*
+				 * When generating URL from user-provided title, check if the
+				 * base URL is already taken BEFORE auto-appending a number.
+				 *
+				 * @since 2.4.13
+				 */
+				$base_url = wu_generate_site_url_from_title($site_title);
+				$d_check  = wu_get_site_domain_and_path($base_url, $this->request_or_session('site_domain'));
+
+				if (domain_exists($d_check->domain, $d_check->path)) {
+					return new \WP_Error(
+						'site_url_taken',
+						__('That site name is already taken. Please choose a different name.', 'ultimate-multisite')
+					);
+				}
+
 				$site_url = wu_generate_unique_site_url($site_title, $this->request_or_session('site_domain'));
 			} else {
 				// Fallback to legacy behavior - generate from site title if available

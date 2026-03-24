@@ -1653,7 +1653,15 @@ class Site extends Base_Model implements Limitable, Notable {
 			}
 
 			if ( ! is_wp_error($saved) && wu_get_setting('enable_screenshot_generator', true)) {
-				wu_enqueue_async_action(
+				/*
+				 * Delay screenshot by 90 seconds so the template is fully
+				 * copied before the screenshot is taken. Without this delay,
+				 * screenshots are taken immediately and show blank pages.
+				 *
+				 * @since 2.4.13
+				 */
+				wu_schedule_single_action(
+					time() + 90,
 					'wu_async_take_screenshot',
 					[
 						'site_id' => $saved,

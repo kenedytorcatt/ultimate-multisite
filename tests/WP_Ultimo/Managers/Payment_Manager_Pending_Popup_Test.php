@@ -104,9 +104,15 @@ class Payment_Manager_Pending_Popup_Test extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A cancelled membership must NOT trigger the popup.
+	 * A cancelled membership with a pending payment SHOULD trigger the popup.
+	 *
+	 * Only pending (abandoned checkout) memberships are skipped. Cancelled
+	 * memberships may have legitimate pending payments that the user should
+	 * be reminded about.
+	 *
+	 * @since 2.4.13
 	 */
-	public function test_cancelled_membership_does_not_trigger_popup(): void {
+	public function test_cancelled_membership_triggers_popup(): void {
 
 		$product = wu_create_product(
 			[
@@ -143,9 +149,9 @@ class Payment_Manager_Pending_Popup_Test extends WP_UnitTestCase {
 
 		$this->manager->check_pending_payments($this->wp_user);
 
-		$this->assertEmpty(
+		$this->assertNotEmpty(
 			get_user_meta($this->wp_user->ID, 'wu_show_pending_payment_popup', true),
-			'A cancelled membership must not trigger the pending payment popup.'
+			'A cancelled membership with a pending payment should trigger the popup.'
 		);
 
 		$membership->delete();
