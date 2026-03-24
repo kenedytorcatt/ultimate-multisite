@@ -95,4 +95,23 @@ class Form_Manager_Test extends \WP_UnitTestCase {
 		$this->assertIsString($url);
 		$this->assertStringContainsString('url_test_form', $url);
 	}
+
+	/**
+	 * Test that handle_model_delete_form aborts when confirm is not set.
+	 *
+	 * @since 2.0.0
+	 */
+	public function test_handle_model_delete_form_requires_confirmation(): void {
+
+		$manager = $this->get_manager_instance();
+
+		// Ensure 'confirm' is not set in the request.
+		unset($_REQUEST['confirm']);
+		$_REQUEST['model'] = 'membership';
+		$_REQUEST['id']    = '1';
+
+		$this->expectException(\WPDieException::class);
+
+		$manager->handle_model_delete_form();
+	}
 }

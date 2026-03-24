@@ -21,6 +21,7 @@ use WP_Ultimo\Helpers\Validation_Rules\Products;
 use WP_Ultimo\Helpers\Validation_Rules\Country;
 use WP_Ultimo\Helpers\Validation_Rules\State;
 use WP_Ultimo\Helpers\Validation_Rules\City;
+use WP_Ultimo\Helpers\Validation_Rules\Unique_Customer_Email;
 
 // Exit if accessed directly
 defined('ABSPATH') || exit;
@@ -110,6 +111,7 @@ class Validator {
 		$this->validator->addValidator('country', new Country());
 		$this->validator->addValidator('state', new State());
 		$this->validator->addValidator('city', new City());
+		$this->validator->addValidator('unique_customer_email', new Unique_Customer_Email());
 	}
 
 	/**

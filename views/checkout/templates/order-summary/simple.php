@@ -259,7 +259,7 @@ defined('ABSPATH') || exit;
 		printf(esc_html__('Discount applied: %1$s - %2$s (%3$s) %4$s', 'ultimate-multisite'), '{{ order.discount_code.name }}', '{{ order.discount_code.code }}', '{{ order.discount_code.discount_description }}', '{{ wu_format_money(-order.totals.total_discounts) }}');
 		?>
 
-		<a class="wu-no-underline wu-ml-2" href="#" v-on:click.prevent="discount_code = ''">
+		<a class="wu-no-underline wu-ml-2" href="#" v-on:click.prevent="discount_code = ''; toggle_discount_code = false">
 
 			<?php esc_html_e('Remove', 'ultimate-multisite'); ?>
 

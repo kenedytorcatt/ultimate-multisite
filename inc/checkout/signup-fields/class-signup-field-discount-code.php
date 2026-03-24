@@ -166,7 +166,7 @@ class Signup_Field_Discount_Code extends Base_Signup_Field {
 		$checkout_fields = [];
 
 		$checkout_fields['discount_code_checkbox'] = [
-			'id'        => 'discount_code',
+			'id'        => 'discount_code_checkbox',
 			'type'      => 'toggle',
 			'name'      => __('Have a coupon code?', 'ultimate-multisite'),
 			'class'     => 'wu-w-auto',

@@ -248,6 +248,10 @@ class Site_Edit_Admin_Page extends Edit_Admin_Page {
 	 */
 	public function handle_transfer_site_modal(): void {
 
+		if ( ! wu_request('confirm')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the transfer.', 'ultimate-multisite')));
+		}
+
 		global $wpdb;
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verification happens in the form handler
@@ -298,6 +302,15 @@ class Site_Edit_Admin_Page extends Edit_Admin_Page {
 	public function register_widgets(): void {
 
 		parent::register_widgets();
+
+		/**
+		 * Allows other components to register widgets on the Site edit page.
+		 *
+		 * @since 2.5.0
+		 *
+		 * @param Site_Edit_Admin_Page $page The current admin page instance.
+		 */
+		do_action('wu_edit_site_page_register_widgets', $this);
 
 		$label = $this->get_object()->get_type_label();
 

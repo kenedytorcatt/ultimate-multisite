@@ -188,6 +188,10 @@ class Limitation_Manager {
 	 */
 	public function handle_confirm_limitations_reset(): void {
 
+		if ( ! wu_request('confirm')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the limitations reset.', 'ultimate-multisite')));
+		}
+
 		$id = wu_request('id');
 
 		$model = wu_request('model');

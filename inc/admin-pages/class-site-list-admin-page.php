@@ -186,6 +186,10 @@ class Site_List_Admin_Page extends List_Admin_Page {
 	 */
 	public function handle_publish_pending_site_modal(): void {
 
+		if ( ! wu_request('confirm')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the publication.', 'ultimate-multisite')));
+		}
+
 		$membership = wu_get_membership(wu_request('membership_id'));
 
 		if ( ! $membership) {
@@ -547,7 +551,7 @@ class Site_List_Admin_Page extends List_Admin_Page {
 	 */
 	public function action_links() {
 
-		return [
+		$links = [
 			[
 				'label'   => __('Add Site', 'ultimate-multisite'),
 				'icon'    => 'wu-circle-with-plus',
@@ -555,6 +559,16 @@ class Site_List_Admin_Page extends List_Admin_Page {
 				'url'     => wu_get_form_url('add_new_site'),
 			],
 		];
+
+		/**
+		 * Filters the action links for the Sites list page.
+		 *
+		 * @since 2.5.0
+		 *
+		 * @param array $links The action links.
+		 * @return array
+		 */
+		return apply_filters('wu_site_list_page_action_links', $links);
 	}
 
 	/**

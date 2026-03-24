@@ -1098,8 +1098,14 @@ class Product_Test extends \WP_UnitTestCase {
 	 */
 	public function test_get_set_feature_list(): void {
 		$features = [
-			['feature' => '10 Sites', 'tooltip' => ''],
-			['feature' => '100GB Storage', 'tooltip' => 'SSD storage'],
+			[
+				'feature' => '10 Sites',
+				'tooltip' => '',
+			],
+			[
+				'feature' => '100GB Storage',
+				'tooltip' => 'SSD storage',
+			],
 		];
 		$this->product->set_feature_list($features);
 		$this->assertEquals($features, $this->product->get_feature_list());
@@ -1526,19 +1532,21 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test creating a product with wu_create_product helper.
 	 */
 	public function test_wu_create_product(): void {
-		$product = wu_create_product([
-			'name'         => 'Created Product',
-			'slug'         => 'created-product',
-			'description'  => 'A test product',
-			'pricing_type' => 'paid',
-			'amount'       => 29.99,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Created Product',
+				'slug'          => 'created-product',
+				'description'   => 'A test product',
+				'pricing_type'  => 'paid',
+				'amount'        => 29.99,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 		$this->assertGreaterThan(0, $product->get_id());
@@ -1550,18 +1558,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test retrieving a product by ID with wu_get_product.
 	 */
 	public function test_wu_get_product_by_id(): void {
-		$product = wu_create_product([
-			'name'         => 'Fetch By ID',
-			'slug'         => 'fetch-by-id',
-			'pricing_type' => 'paid',
-			'amount'       => 9.99,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Fetch By ID',
+				'slug'          => 'fetch-by-id',
+				'pricing_type'  => 'paid',
+				'amount'        => 9.99,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 
@@ -1575,18 +1585,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test retrieving a product by slug with wu_get_product.
 	 */
 	public function test_wu_get_product_by_slug(): void {
-		$product = wu_create_product([
-			'name'         => 'Fetch By Slug',
-			'slug'         => 'fetch-by-slug',
-			'pricing_type' => 'paid',
-			'amount'       => 9.99,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Fetch By Slug',
+				'slug'          => 'fetch-by-slug',
+				'pricing_type'  => 'paid',
+				'amount'        => 9.99,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 
@@ -1615,18 +1627,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test creating a product with wu_create_product and then updating it.
 	 */
 	public function test_product_create_and_update(): void {
-		$product = wu_create_product([
-			'name'         => 'Update Test',
-			'slug'         => 'update-test',
-			'pricing_type' => 'paid',
-			'amount'       => 10.00,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Update Test',
+				'slug'          => 'update-test',
+				'pricing_type'  => 'paid',
+				'amount'        => 10.00,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 
@@ -1644,18 +1658,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test creating a product and then deleting it.
 	 */
 	public function test_product_create_and_delete(): void {
-		$product = wu_create_product([
-			'name'         => 'Delete Test',
-			'slug'         => 'delete-test',
-			'pricing_type' => 'paid',
-			'amount'       => 10.00,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Delete Test',
+				'slug'          => 'delete-test',
+				'pricing_type'  => 'paid',
+				'amount'        => 10.00,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 		$product_id = $product->get_id();
@@ -1671,10 +1687,12 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test wu_create_product returns WP_Error without required fields.
 	 */
 	public function test_wu_create_product_validation_error(): void {
-		$result = wu_create_product([
-			'name' => '',
-			'slug' => '',
-		]);
+		$result = wu_create_product(
+			[
+				'name' => '',
+				'slug' => '',
+			]
+		);
 
 		$this->assertInstanceOf(\WP_Error::class, $result);
 	}
@@ -1773,13 +1791,15 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test creating product from constructor array.
 	 */
 	public function test_product_construction_from_array(): void {
-		$product = new Product([
-			'name'         => 'From Array',
-			'slug'         => 'from-array',
-			'amount'       => 15.00,
-			'type'         => 'service',
-			'pricing_type' => 'paid',
-		]);
+		$product = new Product(
+			[
+				'name'         => 'From Array',
+				'slug'         => 'from-array',
+				'amount'       => 15.00,
+				'type'         => 'service',
+				'pricing_type' => 'paid',
+			]
+		);
 
 		$this->assertSame('From Array', $product->get_name());
 		$this->assertSame('from-array', $product->get_slug());
@@ -1792,11 +1812,13 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test product mapping for product_group to group.
 	 */
 	public function test_product_group_mapping(): void {
-		$product = new Product([
-			'name'          => 'Mapping Test',
-			'slug'          => 'mapping-test',
-			'product_group' => 'gold',
-		]);
+		$product = new Product(
+			[
+				'name'          => 'Mapping Test',
+				'slug'          => 'mapping-test',
+				'product_group' => 'gold',
+			]
+		);
 
 		$this->assertSame('gold', $product->get_group());
 	}
@@ -1813,18 +1835,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test exists returns true for saved product.
 	 */
 	public function test_exists_true_for_saved(): void {
-		$product = wu_create_product([
-			'name'         => 'Exists Test',
-			'slug'         => 'exists-test',
-			'pricing_type' => 'paid',
-			'amount'       => 10.00,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Exists Test',
+				'slug'          => 'exists-test',
+				'pricing_type'  => 'paid',
+				'amount'        => 10.00,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 		$this->assertTrue($product->exists());
@@ -1890,18 +1914,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test get_limitations returns Limitations object.
 	 */
 	public function test_get_limitations_returns_object(): void {
-		$product = wu_create_product([
-			'name'         => 'Limits Test',
-			'slug'         => 'limits-test',
-			'pricing_type' => 'paid',
-			'amount'       => 10.00,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Limits Test',
+				'slug'          => 'limits-test',
+				'pricing_type'  => 'paid',
+				'amount'        => 10.00,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 
@@ -1931,18 +1957,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test creating a free product with wu_create_product.
 	 */
 	public function test_wu_create_free_product(): void {
-		$product = wu_create_product([
-			'name'         => 'Free Product',
-			'slug'         => 'free-product',
-			'pricing_type' => 'free',
-			'amount'       => 0,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => false,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Free Product',
+				'slug'          => 'free-product',
+				'pricing_type'  => 'free',
+				'amount'        => 0,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => false,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 		$this->assertTrue($product->is_free());
@@ -1953,19 +1981,21 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test creating a product with setup fee via wu_create_product.
 	 */
 	public function test_wu_create_product_with_setup_fee(): void {
-		$product = wu_create_product([
-			'name'         => 'Setup Fee Product',
-			'slug'         => 'setup-fee-product',
-			'pricing_type' => 'paid',
-			'amount'       => 19.99,
-			'setup_fee'    => 50.00,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Setup Fee Product',
+				'slug'          => 'setup-fee-product',
+				'pricing_type'  => 'paid',
+				'amount'        => 19.99,
+				'setup_fee'     => 50.00,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 		$this->assertEquals(50.00, $product->get_setup_fee());
@@ -1977,18 +2007,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test creating a product of type package.
 	 */
 	public function test_wu_create_package_product(): void {
-		$product = wu_create_product([
-			'name'         => 'Package Product',
-			'slug'         => 'package-product',
-			'pricing_type' => 'paid',
-			'amount'       => 5.00,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'package',
-			'recurring'    => false,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Package Product',
+				'slug'          => 'package-product',
+				'pricing_type'  => 'paid',
+				'amount'        => 5.00,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'package',
+				'recurring'     => false,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 		$this->assertSame('package', $product->get_type());
@@ -1998,18 +2030,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test creating a product of type service.
 	 */
 	public function test_wu_create_service_product(): void {
-		$product = wu_create_product([
-			'name'         => 'Service Product',
-			'slug'         => 'service-product',
-			'pricing_type' => 'paid',
-			'amount'       => 100.00,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'service',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Service Product',
+				'slug'          => 'service-product',
+				'pricing_type'  => 'paid',
+				'amount'        => 100.00,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'service',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 		$this->assertSame('service', $product->get_type());
@@ -2019,20 +2053,22 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test product with trial and recurring.
 	 */
 	public function test_product_with_trial_and_recurring(): void {
-		$product = wu_create_product([
-			'name'                => 'Trial Product',
-			'slug'                => 'trial-product',
-			'pricing_type'        => 'paid',
-			'amount'              => 29.99,
-			'currency'            => 'USD',
-			'duration'            => 1,
-			'duration_unit'       => 'month',
-			'type'                => 'plan',
-			'recurring'           => true,
-			'trial_duration'      => 14,
-			'trial_duration_unit' => 'day',
-			'active'              => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'                => 'Trial Product',
+				'slug'                => 'trial-product',
+				'pricing_type'        => 'paid',
+				'amount'              => 29.99,
+				'currency'            => 'USD',
+				'duration'            => 1,
+				'duration_unit'       => 'month',
+				'type'                => 'plan',
+				'recurring'           => true,
+				'trial_duration'      => 14,
+				'trial_duration_unit' => 'day',
+				'active'              => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 		$this->assertTrue($product->has_trial());
@@ -2045,19 +2081,21 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test product with yearly billing cycles.
 	 */
 	public function test_product_yearly_with_billing_cycles(): void {
-		$product = wu_create_product([
-			'name'           => 'Yearly Cycles',
-			'slug'           => 'yearly-cycles',
-			'pricing_type'   => 'paid',
-			'amount'         => 199.99,
-			'currency'       => 'USD',
-			'duration'       => 1,
-			'duration_unit'  => 'year',
-			'type'           => 'plan',
-			'recurring'      => true,
-			'billing_cycles' => 3,
-			'active'         => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'           => 'Yearly Cycles',
+				'slug'           => 'yearly-cycles',
+				'pricing_type'   => 'paid',
+				'amount'         => 199.99,
+				'currency'       => 'USD',
+				'duration'       => 1,
+				'duration_unit'  => 'year',
+				'type'           => 'plan',
+				'recurring'      => true,
+				'billing_cycles' => 3,
+				'active'         => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 		$this->assertSame(3, $product->get_billing_cycles());
@@ -2111,17 +2149,139 @@ class Product_Test extends \WP_UnitTestCase {
 		$this->product->set_duration(1);
 		$this->product->set_duration_unit('month');
 		$this->product->set_pricing_type('paid');
-		$this->product->set_price_variations([
+		$this->product->set_price_variations(
 			[
-				'duration'      => 1,
-				'duration_unit' => 'year',
-				'amount'        => 199.99,
-			],
-		]);
+				[
+					'duration'      => 1,
+					'duration_unit' => 'year',
+					'amount'        => 199.99,
+				],
+			]
+		);
 
 		$result = $this->product->get_as_variation(1, 'year');
 		$this->assertInstanceOf(Product::class, $result);
 		$this->assertEquals(199.99, $result->get_amount());
+	}
+
+	/**
+	 * Test get_as_variation handles string duration from AJAX POST data (issue #328).
+	 *
+	 * When duration arrives as a string "1" from AJAX, the strict !== comparison
+	 * with the integer 1 returned by get_duration() must not cause a false mismatch.
+	 */
+	public function test_get_as_variation_string_duration_matches_base(): void {
+		$this->product->set_amount(19.99);
+		$this->product->set_duration(1);
+		$this->product->set_duration_unit('month');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations([]);
+
+		// Simulate AJAX POST: duration arrives as string "1", not integer 1.
+		$result = $this->product->get_as_variation('1', 'month');
+		$this->assertInstanceOf(Product::class, $result);
+		$this->assertEquals(19.99, $result->get_amount());
+	}
+
+	/**
+	 * Test get_as_variation treats a yearly product as matching "1 year" request (issue #328).
+	 *
+	 * A product configured with duration=1/unit=year must be visible when the period
+	 * selector requests duration=1/unit=year, even when no price variations are stored.
+	 */
+	public function test_get_as_variation_yearly_product_matches_year_request(): void {
+		$this->product->set_amount(199.99);
+		$this->product->set_duration(1);
+		$this->product->set_duration_unit('year');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations([]);
+
+		$result = $this->product->get_as_variation(1, 'year');
+		$this->assertInstanceOf(Product::class, $result);
+		$this->assertEquals(199.99, $result->get_amount());
+	}
+
+	/**
+	 * Test get_as_variation treats "12 months" and "1 year" as equivalent (issue #328).
+	 *
+	 * A product configured with duration=12/unit=month must be visible when the period
+	 * selector requests duration=1/unit=year (and vice-versa).
+	 */
+	public function test_get_as_variation_12months_equals_1year(): void {
+		$this->product->set_amount(199.99);
+		$this->product->set_duration(12);
+		$this->product->set_duration_unit('month');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations([]);
+
+		// Request "1 year" — should match a product configured as "12 months".
+		$result = $this->product->get_as_variation(1, 'year');
+		$this->assertInstanceOf(Product::class, $result);
+		$this->assertEquals(199.99, $result->get_amount());
+	}
+
+	/**
+	 * Test get_as_variation treats "1 year" product as matching "12 months" request (issue #328).
+	 */
+	public function test_get_as_variation_1year_equals_12months(): void {
+		$this->product->set_amount(199.99);
+		$this->product->set_duration(1);
+		$this->product->set_duration_unit('year');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations([]);
+
+		// Request "12 months" — should match a product configured as "1 year".
+		$result = $this->product->get_as_variation(12, 'month');
+		$this->assertInstanceOf(Product::class, $result);
+		$this->assertEquals(199.99, $result->get_amount());
+	}
+
+	/**
+	 * Test get_price_variation finds a "12 month" variation when requesting "1 year" (issue #328).
+	 */
+	public function test_get_price_variation_12months_variation_found_for_1year_request(): void {
+		$this->product->set_amount(19.99);
+		$this->product->set_duration(1);
+		$this->product->set_duration_unit('month');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations(
+			[
+				[
+					'duration'      => 12,
+					'duration_unit' => 'month',
+					'amount'        => 199.99,
+				],
+			]
+		);
+
+		// Requesting "1 year" should find the "12 months" variation.
+		$variation = $this->product->get_price_variation(1, 'year');
+		$this->assertNotFalse($variation);
+		$this->assertEquals(199.99, $variation['amount']);
+	}
+
+	/**
+	 * Test get_price_variation finds a "1 year" variation when requesting "12 months" (issue #328).
+	 */
+	public function test_get_price_variation_1year_variation_found_for_12months_request(): void {
+		$this->product->set_amount(19.99);
+		$this->product->set_duration(1);
+		$this->product->set_duration_unit('month');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations(
+			[
+				[
+					'duration'      => 1,
+					'duration_unit' => 'year',
+					'amount'        => 199.99,
+				],
+			]
+		);
+
+		// Requesting "12 months" should find the "1 year" variation.
+		$variation = $this->product->get_price_variation(12, 'month');
+		$this->assertNotFalse($variation);
+		$this->assertEquals(199.99, $variation['amount']);
 	}
 
 	/**
@@ -2137,7 +2297,7 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test json serialize returns same as to_array.
 	 */
 	public function test_json_serialize(): void {
-		$array = $this->product->to_array();
+		$array     = $this->product->to_array();
 		$json_data = $this->product->jsonSerialize();
 
 		$this->assertEquals($array, $json_data);
@@ -2147,18 +2307,20 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test duplicate creates a copy.
 	 */
 	public function test_duplicate(): void {
-		$product = wu_create_product([
-			'name'         => 'Original',
-			'slug'         => 'original',
-			'pricing_type' => 'paid',
-			'amount'       => 10.00,
-			'currency'     => 'USD',
-			'duration'     => 1,
-			'duration_unit' => 'month',
-			'type'         => 'plan',
-			'recurring'    => true,
-			'active'       => true,
-		]);
+		$product = wu_create_product(
+			[
+				'name'          => 'Original',
+				'slug'          => 'original',
+				'pricing_type'  => 'paid',
+				'amount'        => 10.00,
+				'currency'      => 'USD',
+				'duration'      => 1,
+				'duration_unit' => 'month',
+				'type'          => 'plan',
+				'recurring'     => true,
+				'active'        => true,
+			]
+		);
 
 		$this->assertInstanceOf(Product::class, $product);
 
@@ -2186,11 +2348,13 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test product attributes method sets multiple values.
 	 */
 	public function test_attributes_method(): void {
-		$this->product->attributes([
-			'name'   => 'Attr Test',
-			'amount' => 55.00,
-			'type'   => 'service',
-		]);
+		$this->product->attributes(
+			[
+				'name'   => 'Attr Test',
+				'amount' => 55.00,
+				'type'   => 'service',
+			]
+		);
 
 		$this->assertSame('Attr Test', $this->product->get_name());
 		$this->assertEquals(55.00, $this->product->get_amount());

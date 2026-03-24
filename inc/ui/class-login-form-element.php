@@ -823,9 +823,16 @@ class Login_Form_Element extends Base_Element {
 				'wrapper_classes' => 'wu-items-end wu-bg-none',
 			];
 
+			/*
+			 * Use wp_lostpassword_url() so the lostpassword_url filter keeps
+			 * users on their subsite domain instead of redirecting to the main
+			 * network site's wp-login.php.
+			 *
+			 * @see https://github.com/Ultimate-Multisite/ultimate-multisite/issues/291
+			 */
 			$fields['lost-password'] = [
 				'type'            => 'html',
-				'content'         => sprintf('<a class="wu-text-xs wu-block wu-text-center wu--mt-4" href="%s">%s</a>', esc_url(add_query_arg('action', 'lostpassword')), __('Lost your password?')), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				'content'         => sprintf('<a class="wu-text-xs wu-block wu-text-center wu--mt-4" href="%s">%s</a>', esc_url(wp_lostpassword_url()), __('Lost your password?')), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'classes'         => '',
 				'wrapper_classes' => 'wu-items-end wu-bg-none',
 			];

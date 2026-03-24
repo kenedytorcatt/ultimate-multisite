@@ -21,6 +21,7 @@ use Stripe\WebhookEndpoint;
 use WP_Ultimo\Checkout\Cart;
 use WP_Ultimo\Exception\Runtime_Exception;
 use WP_Ultimo\Models\Membership;
+use WP_Ultimo\Database\Memberships\Membership_Status;
 use WP_Ultimo\Database\Payments\Payment_Status;
 use WP_Ultimo\Checkout\Line_Item;
 use WP_Ultimo\Models\Payment;
@@ -608,6 +609,15 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			wu_save_setting("{$id}_live_publishable_key", $data['publishableKey']);
 		}
 
+		// Re-initialise API keys with the newly saved OAuth token so that the
+		// webhook installation below uses the correct credentials immediately.
+		$this->setup_api_keys($id);
+
+		// Install the webhook endpoint on the connected Stripe account right away.
+		// The install_webhook() method is normally triggered by wu_after_save_settings,
+		// but OAuth connect bypasses that flow, so we call it directly here.
+		$this->install_webhook_for_oauth();
+
 		// Redirect back to settings
 		$redirect_url = add_query_arg(
 			[
@@ -620,6 +630,66 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 		wp_safe_redirect($redirect_url);
 		exit;
+	}
+
+	/**
+	 * Install the Stripe webhook endpoint immediately after an OAuth connect.
+	 *
+	 * The standard install_webhook() method is hooked to wu_after_save_settings and
+	 * only fires when direct API keys change. OAuth connect saves tokens directly via
+	 * wu_save_setting() and never triggers that hook, so this method provides a
+	 * dedicated path to ensure the webhook is registered right after connect.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	protected function install_webhook_for_oauth(): void {
+
+		$webhook_url = $this->get_webhook_listener_url();
+
+		try {
+			$existing_webhook = $this->has_webhook_installed();
+
+			if (is_wp_error($existing_webhook)) {
+				wu_log_add('stripe', sprintf('install_webhook_for_oauth: could not check existing webhooks — %s', $existing_webhook->get_error_message()));
+
+				return;
+			}
+
+			if ($existing_webhook) {
+				if ('disabled' === $existing_webhook->status) {
+					$this->get_stripe_client()->webhookEndpoints->update(
+						$existing_webhook->id,
+						['status' => 'enabled']
+					);
+
+					wu_log_add('stripe', 'install_webhook_for_oauth: re-enabled existing webhook endpoint.');
+				} else {
+					wu_log_add('stripe', 'install_webhook_for_oauth: webhook endpoint already exists and is enabled.');
+				}
+
+				return;
+			}
+
+			$this->get_stripe_client()->webhookEndpoints->create(
+				[
+					'enabled_events' => ['*'],
+					'url'            => $webhook_url,
+					'description'    => 'Added by Ultimate Multisite. Required to correctly handle changes in subscription status.',
+				]
+			);
+
+			wu_log_add('stripe', 'install_webhook_for_oauth: webhook endpoint created successfully.');
+		} catch (\Throwable $e) {
+			$error_code = $e->getCode();
+
+			if (empty($error_code)) {
+				$error_code = method_exists($e, 'getHttpStatus') ? $e->getHttpStatus() : 500;
+			}
+
+			// translators: %1$s: HTTP error code, %2$s: error message.
+			wu_log_add('stripe', sprintf(__('install_webhook_for_oauth: failed to create webhook endpoint: %1$s, %2$s', 'ultimate-multisite'), $error_code, $e->getMessage()));
+		}
 	}
 
 	/**
@@ -1154,6 +1224,9 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 		/*
 		 * Checked if the Stripe Settings changed, so we can install webhooks.
+		 * Include OAuth access tokens so that connecting via Stripe Connect also
+		 * triggers webhook installation — previously only direct API key changes
+		 * were detected, leaving OAuth-connected sites without a webhook endpoint.
 		 */
 		$changed_settings = [
 			$settings[ "{$id}_sandbox_mode" ],
@@ -1161,6 +1234,8 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			$settings[ "{$id}_test_sk_key" ],
 			$settings[ "{$id}_live_pk_key" ],
 			$settings[ "{$id}_live_sk_key" ],
+			wu_get_isset($settings, "{$id}_test_access_token", ''),
+			wu_get_isset($settings, "{$id}_live_access_token", ''),
 		];
 
 		$original_settings = [
@@ -1169,6 +1244,8 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			$saved_settings[ "{$id}_test_sk_key" ],
 			$saved_settings[ "{$id}_live_pk_key" ],
 			$saved_settings[ "{$id}_live_sk_key" ],
+			wu_get_isset($saved_settings, "{$id}_test_access_token", ''),
+			wu_get_isset($saved_settings, "{$id}_live_access_token", ''),
 		];
 
 		if ($changed_settings == $original_settings) { // phpcs:ignore
@@ -2589,8 +2666,14 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			throw new \Exception(esc_html__('Event ID not found.', 'ultimate-multisite'));
 		}
 
-		// Set the right mode for this request
-		if (isset($received_event->livemode) && ! $received_event->livemode !== $this->test_mode) {
+		// Set the right mode for this request.
+		// Fix: operator precedence bug — `! $received_event->livemode !== $this->test_mode`
+		// was evaluated as `(!livemode) !== test_mode`, which is always true for live events
+		// in test mode, causing setup_api_keys() to load the wrong key set and the subsequent
+		// events->retrieve() call to fail with an authentication error.
+		// Correct logic: if the event's livemode flag disagrees with our current test_mode
+		// setting, update test_mode to match the incoming event so the right keys are loaded.
+		if (isset($received_event->livemode) && (bool) $received_event->livemode === $this->test_mode) {
 			$this->test_mode = ! $received_event->livemode;
 		}
 
@@ -3038,6 +3121,113 @@ class Base_Stripe_Gateway extends Base_Gateway {
 			}
 
 			do_action('wu_stripe_charge_failed', $payment_event, $event, $membership);
+
+			return;
+		}
+
+		/*
+		 * Subscription status changed (e.g. active → past_due, unpaid, paused, or canceled).
+		 *
+		 * Stripe fires customer.subscription.updated whenever any subscription attribute changes,
+		 * including the status field. We only act when the status has actually changed to a
+		 * non-active state so that routine billing-cycle updates (current_period_end changes)
+		 * do not trigger unnecessary membership status transitions.
+		 *
+		 * Mapping:
+		 *  - past_due  → membership expires (grace period; Stripe will retry and may recover)
+		 *  - unpaid    → membership expires (Stripe gave up retrying)
+		 *  - canceled  → membership cancelled (handled by subscription.deleted too, belt-and-suspenders)
+		 *  - paused    → membership expires
+		 */
+		if ('customer.subscription.updated' === $event->type) {
+			wu_log_add('stripe', 'Processing Stripe customer.subscription.updated webhook.');
+
+			if ($membership->get_gateway_subscription_id() === $payment_event->id) {
+				$stripe_status = $payment_event->status ?? '';
+
+				$previous_attributes = $event->data->previous_attributes ?? null;
+				$previous_status     = $previous_attributes->status ?? null;
+
+				// Only act when the status field itself changed.
+				if (null !== $previous_status && $previous_status !== $stripe_status) {
+					wu_log_add('stripe', sprintf('Subscription %s status changed: %s → %s', $payment_event->id, $previous_status, $stripe_status));
+
+					if (in_array($stripe_status, ['past_due', 'unpaid', 'paused'], true)) {
+						/*
+						 * Mark the membership as expired so access is revoked.
+						 * Stripe may still recover the payment (retries), in which case
+						 * the invoice.payment_succeeded webhook will renew the membership.
+						 */
+						if ($membership->is_active()) {
+							$membership->set_status(Membership_Status::EXPIRED);
+							$membership->save();
+
+							$membership->add_note(
+								[
+									// translators: %s is the Stripe subscription status (e.g. "past_due").
+									'text' => sprintf(__('Membership expired via Stripe webhook — subscription status: %s.', 'ultimate-multisite'), $stripe_status),
+								]
+							);
+
+							do_action('wu_stripe_subscription_status_changed', $membership, $stripe_status, $previous_status, $this);
+						}
+					} elseif ('canceled' === $stripe_status) {
+						/*
+						 * Belt-and-suspenders: customer.subscription.deleted fires for hard
+						 * cancellations, but some cancellation paths only fire .updated with
+						 * status=canceled. Handle both to avoid missed cancellations.
+						 */
+						if ($membership->is_active()) {
+							$membership->cancel();
+
+							$membership->add_note(['text' => __('Membership cancelled via Stripe webhook (subscription.updated).', 'ultimate-multisite')]);
+						}
+					} elseif ('active' === $stripe_status || 'trialing' === $stripe_status) {
+						/*
+						 * Subscription recovered (e.g. past_due → active after successful retry).
+						 * Renew the membership if it is currently expired.
+						 */
+						if (Membership_Status::EXPIRED === $membership->get_status()) {
+							$renewal_date = new \DateTime();
+
+							foreach ($payment_event->items->data as $item) {
+								$end_timestamp = $item->current_period_end;
+								break;
+							}
+
+							if ( ! empty($end_timestamp)) {
+								$renewal_date->setTimestamp($end_timestamp);
+								$renewal_date->setTime(23, 59, 59);
+
+								$stripe_estimated_charge_timestamp = $end_timestamp + (2 * HOUR_IN_SECONDS);
+
+								if ($stripe_estimated_charge_timestamp > $renewal_date->getTimestamp()) {
+									$renewal_date->setTimestamp($stripe_estimated_charge_timestamp);
+								}
+
+								$expiration = $renewal_date->format('Y-m-d H:i:s');
+							} else {
+								$expiration = '';
+							}
+
+							$new_status = 'trialing' === $stripe_status ? Membership_Status::TRIALING : Membership_Status::ACTIVE;
+
+							$membership->renew($membership->is_recurring(), $new_status, $expiration);
+
+							$membership->add_note(
+								[
+									// translators: %s is the Stripe subscription status (e.g. "active").
+									'text' => sprintf(__('Membership renewed via Stripe webhook — subscription recovered to status: %s.', 'ultimate-multisite'), $stripe_status),
+								]
+							);
+
+							do_action('wu_stripe_subscription_status_changed', $membership, $stripe_status, $previous_status, $this);
+						}
+					}
+				}
+			} else {
+				wu_log_add('stripe', sprintf('subscription.updated: event sub ID (%s) does not match membership sub ID (%s) — skipping.', $payment_event->id, $membership->get_gateway_subscription_id()));
+			}
 
 			return;
 		}

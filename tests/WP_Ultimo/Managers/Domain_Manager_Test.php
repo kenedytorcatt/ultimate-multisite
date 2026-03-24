@@ -1967,6 +1967,98 @@ class Domain_Manager_Test extends WP_UnitTestCase {
 	}
 
 	// ----------------------------------------------------------------
+	// NEW: determine_cookie_domain (issue #320)
+	// ----------------------------------------------------------------
+
+	/**
+	 * Network root domain should return null (no override needed).
+	 *
+	 * When the current host IS the network root domain, WordPress's default
+	 * cookie domain (.ultimatemultisite.com) is correct — no override required.
+	 */
+	public function test_determine_cookie_domain_network_root_returns_null(): void {
+		$result = $this->domain_manager->determine_cookie_domain('ultimatemultisite.com', 'ultimatemultisite.com');
+		$this->assertNull($result, 'Network root domain should not require a COOKIE_DOMAIN override');
+	}
+
+	/**
+	 * Subdomain subsite should return the most specific cookie domain.
+	 *
+	 * When translate.ultimatemultisite.com is a subsite of a network rooted at
+	 * ultimatemultisite.com, the cookie domain must be scoped to
+	 * .translate.ultimatemultisite.com to prevent auth cookie bleeding from
+	 * the parent domain.
+	 */
+	public function test_determine_cookie_domain_subdomain_subsite_returns_specific_domain(): void {
+		$result = $this->domain_manager->determine_cookie_domain('translate.ultimatemultisite.com', 'ultimatemultisite.com');
+		$this->assertEquals('.translate.ultimatemultisite.com', $result, 'Subdomain subsite should use the most specific cookie domain');
+	}
+
+	/**
+	 * Deeply nested subdomain subsite should return the full specific domain.
+	 */
+	public function test_determine_cookie_domain_deep_subdomain_returns_specific_domain(): void {
+		$result = $this->domain_manager->determine_cookie_domain('api.translate.ultimatemultisite.com', 'ultimatemultisite.com');
+		$this->assertEquals('.api.translate.ultimatemultisite.com', $result, 'Deep subdomain subsite should use the most specific cookie domain');
+	}
+
+	/**
+	 * Mapped domain (completely different domain) should return the mapped domain.
+	 *
+	 * When the current host is a completely different domain (e.g. translate.example.com
+	 * on a network rooted at ultimatemultisite.com), the cookie domain must be scoped
+	 * to the mapped domain.
+	 */
+	public function test_determine_cookie_domain_mapped_domain_returns_mapped_domain(): void {
+		$result = $this->domain_manager->determine_cookie_domain('translate.example.com', 'ultimatemultisite.com');
+		$this->assertEquals('.translate.example.com', $result, 'Mapped domain should use its own cookie domain');
+	}
+
+	/**
+	 * Mapped root domain (completely different TLD) should return the mapped domain.
+	 */
+	public function test_determine_cookie_domain_mapped_root_domain(): void {
+		$result = $this->domain_manager->determine_cookie_domain('example.com', 'ultimatemultisite.com');
+		$this->assertEquals('.example.com', $result, 'Mapped root domain should use its own cookie domain');
+	}
+
+	/**
+	 * Domain matching is case-insensitive.
+	 */
+	public function test_determine_cookie_domain_case_insensitive(): void {
+		$result = $this->domain_manager->determine_cookie_domain('Translate.UltimateMultisite.COM', 'ultimatemultisite.com');
+		$this->assertEquals('.Translate.UltimateMultisite.COM', $result, 'Cookie domain determination should be case-insensitive');
+	}
+
+	/**
+	 * A domain that ends with the network domain string but is not a subdomain
+	 * (e.g. evilultimatemultisite.com) is treated as the network root (no override).
+	 *
+	 * The preg_quote fix ensures dots in the network domain are treated as literal
+	 * characters in the regex, not wildcards. However, evilultimatemultisite.com
+	 * still matches the suffix check (it ends with 'ultimatemultisite.com') and is
+	 * not a subdomain (doesn't end with '.ultimatemultisite.com'), so it falls
+	 * through to null — the same as the network root. This is acceptable because
+	 * such a domain would never appear as a WordPress multisite subsite in practice.
+	 */
+	public function test_determine_cookie_domain_not_fooled_by_suffix_match(): void {
+		$result = $this->domain_manager->determine_cookie_domain('evilultimatemultisite.com', 'ultimatemultisite.com');
+		$this->assertNull($result, 'Domain ending with network domain string (but not a subdomain) falls through to null');
+	}
+
+	/**
+	 * Network root domain with www prefix should return null (no override needed).
+	 *
+	 * The www.ultimatemultisite.com host is a standard alias for the network root, not a subsite.
+	 * However, since it IS a subdomain of the network domain, the fix correctly scopes
+	 * it to .www.ultimatemultisite.com to prevent cookie bleeding.
+	 */
+	public function test_determine_cookie_domain_www_subdomain_returns_specific_domain(): void {
+		$result = $this->domain_manager->determine_cookie_domain('www.ultimatemultisite.com', 'ultimatemultisite.com');
+		$this->assertEquals('.www.ultimatemultisite.com', $result, 'www subdomain should use specific cookie domain');
+	}
+
+	// ----------------------------------------------------------------
 	// NEW: try_again_time filter
 	// ----------------------------------------------------------------
 

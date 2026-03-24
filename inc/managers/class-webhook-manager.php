@@ -207,20 +207,44 @@ class Webhook_Manager extends Base_Manager {
 		check_ajax_referer('wu_webhook_send_test', 'nonce');
 		$event = wu_get_event_type(sanitize_text_field(wp_unslash($_POST['webhook_event'] ?? '')));
 
-		$webhook_data = [
-			'active'      => true,
-			'id'          => wu_request('webhook_id'),
-			'webhook_url' => wu_request('webhook_url'),
-		];
+		$webhook_id = absint(wu_request('webhook_id'));
 
-		$webhook = new Webhook($webhook_data);
+		/*
+		 * Fetch the webhook from the database using the provided ID so that the
+		 * webhook URL is always read from the persisted record rather than relying
+		 * on the client to supply it.  This fixes the blank-URL bug reported in
+		 * issue #90 where the POST value could be empty.
+		 *
+		 * Fall back to constructing a transient Webhook from POST data only when
+		 * no valid ID is provided (e.g. during a preview before the record is saved).
+		 */
+		if ($webhook_id) {
+			$webhook = wu_get_webhook($webhook_id);
+
+			if ( ! $webhook) {
+				wp_send_json_error(
+					[
+						'message' => __('Webhook not found.', 'ultimate-multisite'),
+					]
+				);
+
+				return;
+			}
+		} else {
+			$webhook_data = [
+				'active'      => true,
+				'webhook_url' => wu_request('webhook_url'),
+			];
+
+			$webhook = new Webhook($webhook_data);
+		}
 
 		$response = $this->send_webhook($webhook, wu_maybe_lazy_load_payload($event['payload']), true, false);
 
 		wp_send_json(
 			[
 				'response' => htmlentities2($response),
-				'id'       => wu_request('webhook_id'),
+				'id'       => $webhook_id,
 			]
 		);
 	}

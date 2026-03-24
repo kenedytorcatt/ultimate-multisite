@@ -649,6 +649,7 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 
 		$this->handle_export();
 		$this->handle_import_redirect();
+		$this->handle_orphaned_delete_redirect();
 		$this->register_forms();
 
 		parent::page_loaded();
@@ -868,6 +869,78 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 				<p><?php esc_html_e('Settings successfully imported!', 'ultimate-multisite'); ?></p>
 			</div>
 				<?php
+			}
+		);
+	}
+
+	/**
+	 * Display a success or info message after orphaned tables/users deletion redirect.
+	 *
+	 * Handles the redirect from both the orphaned tables and orphaned users deletion
+	 * modals, showing the admin a notice with the number of items deleted.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	protected function handle_orphaned_delete_redirect() {
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! isset($_GET['deleted']) || ! isset($_GET['type']) || 'other' !== wu_request('tab')) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$deleted_count = absint($_GET['deleted']);
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$type = sanitize_key($_GET['type']);
+
+		add_action(
+			'wu_page_wizard_after_title',
+			function () use ($deleted_count, $type) {
+
+				if ('tables' === $type) {
+					if ($deleted_count > 0) {
+						$message = sprintf(
+							/* translators: %d: number of deleted tables */
+							_n(
+								'Successfully deleted %d orphaned database table.',
+								'Successfully deleted %d orphaned database tables.',
+								$deleted_count,
+								'ultimate-multisite'
+							),
+							$deleted_count
+						);
+						$notice_class = 'notice-success';
+					} else {
+						$message      = __('No orphaned database tables were found to delete.', 'ultimate-multisite');
+						$notice_class = 'notice-info';
+					}
+				} elseif ('users' === $type) {
+					if ($deleted_count > 0) {
+						$message = sprintf(
+							/* translators: %d: number of deleted users */
+							_n(
+								'Successfully deleted %d orphaned user account.',
+								'Successfully deleted %d orphaned user accounts.',
+								$deleted_count,
+								'ultimate-multisite'
+							),
+							$deleted_count
+						);
+						$notice_class = 'notice-success';
+					} else {
+						$message      = __('No orphaned user accounts were found to delete.', 'ultimate-multisite');
+						$notice_class = 'notice-info';
+					}
+				} else {
+					return;
+				}
+
+				printf(
+					'<div id="message" class="updated notice wu-admin-notice %s is-dismissible"><p>%s</p></div>',
+					esc_attr($notice_class),
+					esc_html($message)
+				);
 			}
 		);
 	}

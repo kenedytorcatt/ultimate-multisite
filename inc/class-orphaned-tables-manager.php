@@ -196,12 +196,18 @@ class Orphaned_Tables_Manager {
 			[
 				'tab'     => 'other',
 				'deleted' => $deleted_count,
+				'type'    => 'tables',
 			]
 		);
 
 		wp_send_json_success(
 			[
 				'redirect_url' => $redirect_to,
+				'message'      => sprintf(
+					/* translators: %d: number of deleted tables */
+					_n('Successfully deleted %d orphaned table.', 'Successfully deleted %d orphaned tables.', $deleted_count, 'ultimate-multisite'),
+					$deleted_count
+				),
 			]
 		);
 	}
