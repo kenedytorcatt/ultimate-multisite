@@ -85,13 +85,20 @@ class Dashboard_Widgets_Test extends \WP_UnitTestCase {
 	 */
 	public function test_enqueue_scripts_skips_non_index_page(): void {
 
-		global $pagenow;
+		global $pagenow, $wp_scripts;
 
-		$original = $pagenow;
-		$pagenow  = 'options.php';
+		$original        = $pagenow;
+		$original_queue  = isset( $wp_scripts ) ? $wp_scripts->queue : [];
+		$pagenow         = 'options.php';
 
-		// Dequeue wu-vue in case it was enqueued by a previous test
-		wp_dequeue_script('wu-vue');
+		// Reset the script queue so that wu-vue dependents enqueued by prior
+		// tests do not cause wp_script_is() to return true via recurse_deps().
+		// wp_script_is('wu-vue', 'enqueued') returns true if wu-vue itself OR
+		// any script that depends on it is in the queue.
+		if ( isset( $wp_scripts ) ) {
+			$wp_scripts->queue = [];
+			$wp_scripts->done  = [];
+		}
 
 		$instance = $this->get_instance();
 		$instance->enqueue_scripts();
@@ -99,6 +106,10 @@ class Dashboard_Widgets_Test extends \WP_UnitTestCase {
 		// Should not enqueue scripts on non-index pages
 		$this->assertFalse(wp_script_is('wu-vue', 'enqueued'));
 
+		// Restore original queue and pagenow
+		if ( isset( $wp_scripts ) ) {
+			$wp_scripts->queue = $original_queue;
+		}
 		$pagenow = $original;
 	}
 
