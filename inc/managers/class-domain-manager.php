@@ -172,17 +172,89 @@ class Domain_Manager extends Base_Manager {
 	}
 
 	/**
-	 * Set COOKIE_DOMAIN if not defined in sites with mapped domains.
+	 * Set COOKIE_DOMAIN if not defined in sites with mapped domains or subdomain subsites.
+	 *
+	 * Two cases require an explicit COOKIE_DOMAIN:
+	 *
+	 * 1. Mapped domains: the current host does not end with DOMAIN_CURRENT_SITE
+	 *    (e.g. translate.example.com on a network rooted at ultimatemultisite.com).
+	 *    Cookie domain must be scoped to the mapped domain to avoid leaking to the
+	 *    network root.
+	 *
+	 * 2. Subdomain subsites that are subdomains of other subsites: when both
+	 *    ultimatemultisite.com and translate.ultimatemultisite.com are separate
+	 *    subsites, WordPress sets auth cookies for .ultimatemultisite.com. The
+	 *    browser sends those cookies to translate.ultimatemultisite.com as well,
+	 *    making it impossible to maintain independent sessions. Setting COOKIE_DOMAIN
+	 *    to .translate.ultimatemultisite.com scopes the cookie to the specific
+	 *    subdomain and prevents cross-subsite cookie bleeding.
 	 *
 	 * @since 2.0.12
+	 * @since 2.4.8 Also handles subdomain subsites to prevent cross-subsite cookie bleeding.
 	 *
 	 * @return void
 	 */
 	protected function set_cookie_domain() {
-		$host = sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'] ?? ''));
-		if (defined('DOMAIN_CURRENT_SITE') && ! defined('COOKIE_DOMAIN') && ! preg_match('/' . DOMAIN_CURRENT_SITE . '$/', '.' . $host)) {
-			define('COOKIE_DOMAIN', '.' . $host);
+
+		if ( ! defined('DOMAIN_CURRENT_SITE') || defined('COOKIE_DOMAIN')) {
+			return;
 		}
+
+		$host           = sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'] ?? ''));
+		$network_domain = DOMAIN_CURRENT_SITE;
+		$cookie_domain  = $this->determine_cookie_domain($host, $network_domain);
+
+		if (null !== $cookie_domain) {
+			define('COOKIE_DOMAIN', $cookie_domain);
+		}
+	}
+
+	/**
+	 * Determines the appropriate COOKIE_DOMAIN value for the given host and network domain.
+	 *
+	 * Returns the cookie domain string (with leading dot) when an explicit override is needed,
+	 * or null when the WordPress default (the network domain) is appropriate.
+	 *
+	 * Two cases require an explicit COOKIE_DOMAIN:
+	 *
+	 * 1. Mapped domains: the current host does not end with DOMAIN_CURRENT_SITE
+	 *    (e.g. translate.example.com on a network rooted at ultimatemultisite.com).
+	 *    Cookie domain must be scoped to the mapped domain to avoid leaking to the
+	 *    network root.
+	 *
+	 * 2. Subdomain subsites that are subdomains of other subsites: when both
+	 *    ultimatemultisite.com and translate.ultimatemultisite.com are separate
+	 *    subsites, WordPress sets auth cookies for .ultimatemultisite.com. The
+	 *    browser sends those cookies to translate.ultimatemultisite.com as well,
+	 *    making it impossible to maintain independent sessions. Setting COOKIE_DOMAIN
+	 *    to .translate.ultimatemultisite.com scopes the cookie to the specific
+	 *    subdomain and prevents cross-subsite cookie bleeding.
+	 *
+	 * @since 2.4.8
+	 *
+	 * @param string $host           The current HTTP host (e.g. translate.ultimatemultisite.com).
+	 * @param string $network_domain The network root domain (DOMAIN_CURRENT_SITE).
+	 * @return string|null The cookie domain string (e.g. '.translate.ultimatemultisite.com'),
+	 *                     or null when no override is needed.
+	 */
+	public function determine_cookie_domain(string $host, string $network_domain): ?string {
+
+		// Case 1: Mapped domain — host does not belong to the network domain at all.
+		if ( ! preg_match('/' . preg_quote($network_domain, '/') . '$/', '.' . $host)) {
+			return '.' . $host;
+		}
+
+		// Case 2: Subdomain subsite — host is a subdomain of the network domain
+		// (e.g. translate.ultimatemultisite.com on a network rooted at ultimatemultisite.com).
+		// Without an explicit COOKIE_DOMAIN, WordPress uses .ultimatemultisite.com, which
+		// bleeds into all subsites sharing that parent domain. Scope the cookie to the
+		// most specific domain so each subdomain subsite maintains independent sessions.
+		if (strcasecmp($host, $network_domain) !== 0 && str_ends_with(strtolower($host), '.' . strtolower($network_domain))) {
+			return '.' . $host;
+		}
+
+		// Host is the network root domain itself — no override needed.
+		return null;
 	}
 
 	/**
