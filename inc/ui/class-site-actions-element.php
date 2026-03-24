@@ -618,6 +618,10 @@ class Site_Actions_Element extends Base_Element {
 	 */
 	public function handle_delete_site() {
 
+		if ( ! wu_request('confirm')) {
+			return new \WP_Error('not-confirmed', __('Please confirm the site deletion.', 'ultimate-multisite'));
+		}
+
 		global $wpdb;
 
 		$site = wu_get_site_by_hash(wu_request('site'));

@@ -186,6 +186,10 @@ class Site_List_Admin_Page extends List_Admin_Page {
 	 */
 	public function handle_publish_pending_site_modal(): void {
 
+		if ( ! wu_request('confirm')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the publication.', 'ultimate-multisite')));
+		}
+
 		$membership = wu_get_membership(wu_request('membership_id'));
 
 		if ( ! $membership) {

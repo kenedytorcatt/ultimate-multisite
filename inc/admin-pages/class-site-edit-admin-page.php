@@ -248,6 +248,10 @@ class Site_Edit_Admin_Page extends Edit_Admin_Page {
 	 */
 	public function handle_transfer_site_modal(): void {
 
+		if ( ! wu_request('confirm')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the transfer.', 'ultimate-multisite')));
+		}
+
 		global $wpdb;
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verification happens in the form handler

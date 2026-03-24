@@ -234,6 +234,10 @@ class Payment_Edit_Admin_Page extends Edit_Admin_Page {
 	 */
 	public function handle_delete_line_item_modal(): void {
 
+		if ( ! wu_request('confirm')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the deletion.', 'ultimate-multisite')));
+		}
+
 		$payment = wu_get_payment(wu_request('id'));
 
 		$line_item = wu_get_line_item(wu_request('line_item_id'), $payment->get_id());
@@ -392,6 +396,10 @@ class Payment_Edit_Admin_Page extends Edit_Admin_Page {
 	 * @return void
 	 */
 	public function handle_refund_payment_modal(): void {
+
+		if ( ! wu_request('confirm')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the refund.', 'ultimate-multisite')));
+		}
 
 		$amount = wu_to_float(wu_request('amount'));
 

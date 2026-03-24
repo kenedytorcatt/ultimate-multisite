@@ -364,6 +364,10 @@ class Notes_Manager extends Base_Manager {
 	 */
 	public function handle_clear_notes_modal(): void {
 
+		if ( ! wu_request('confirm_clear_notes')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm clearing all notes.', 'ultimate-multisite')));
+		}
+
 		$model         = wu_request('model');
 		$function_name = "wu_get_{$model}";
 		$object        = $function_name(wu_request('object_id'));
@@ -462,6 +466,10 @@ class Notes_Manager extends Base_Manager {
 	 * @return void
 	 */
 	public function handle_delete_note_modal(): void {
+
+		if ( ! wu_request('confirm_delete_note')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the note deletion.', 'ultimate-multisite')));
+		}
 
 		$model         = wu_request('model');
 		$function_name = "wu_get_{$model}";

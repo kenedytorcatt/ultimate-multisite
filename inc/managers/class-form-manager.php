@@ -447,6 +447,15 @@ class Form_Manager extends Base_Manager {
 
 		if ($model) {
 			/*
+			 * Require the confirmation toggle to be flipped before proceeding.
+			 * The submit button is disabled client-side via Vue, but we must
+			 * enforce this server-side as well to prevent bypasses.
+			 */
+			if ( ! wu_request('confirm')) {
+				wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the deletion.', 'ultimate-multisite')));
+			}
+
+			/*
 			 * Handle meta key deletion
 			 */
 			if ($meta_key) {
