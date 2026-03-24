@@ -19,6 +19,25 @@ defined('ABSPATH') || exit;
  */
 function wu_get_input($raw = false) {
 
+	/**
+	 * Filters the raw input body before it is parsed.
+	 *
+	 * Primarily used in unit tests to inject a mock payload without needing
+	 * to write to php://input. Return a non-null value to bypass the
+	 * filesystem read entirely.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param mixed $override Return a non-null value to use as the input body.
+	 *                        For $raw=false, return an object/array; for $raw=true, return a string.
+	 * @param bool  $raw      Whether the raw string was requested.
+	 */
+	$override = apply_filters('wu_get_input_override', null, $raw);
+
+	if (null !== $override) {
+		return $override;
+	}
+
 	// Init filesystem if not yet initiated.
 	require_once ABSPATH . 'wp-admin/includes/file.php';
 	WP_Filesystem();
