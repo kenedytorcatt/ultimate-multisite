@@ -387,7 +387,7 @@ class Debug {
 
 		wp_send_json_success(
 			[
-				'redirect_url' => wu_network_admin_url('wp-ultimo'),
+				'redirect_url' => wu_network_admin_url('ultimate-multisite'),
 			]
 		);
 	}

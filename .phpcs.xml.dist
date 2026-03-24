@@ -8,6 +8,7 @@
 	<exclude-pattern>/node_modules/</exclude-pattern>
 	<exclude-pattern>/dependencies/</exclude-pattern>
 	<exclude-pattern>/../wordpress/</exclude-pattern>
+	<exclude-pattern>/inc/site-exporter/mu-migration/</exclude-pattern>
 
 	<!-- Test files use PHPUnit naming conventions (PascalCase), not WordPress file naming. -->
 	<rule ref="WordPress.Files.FileName">
@@ -120,7 +121,7 @@
             </property>
         </properties>
     </rule>
-    <rule ref="WordPress.WP.I18n.MissingArgDomain">
+    <rule ref="WordPress.WP.I18n">
         <properties>
             <property name="text_domain" type="array">
                 <element value="ultimate-multisite"/>
