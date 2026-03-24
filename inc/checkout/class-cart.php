@@ -1784,6 +1784,21 @@ class Cart implements \JsonSerializable {
 		$duration      = $product->get_duration();
 		$duration_unit = $product->get_duration_unit();
 
+		/**
+		 * Filters the product amount when it is added to the cart.
+		 *
+		 * Allows addons (e.g. multi-currency) to convert the product
+		 * price to a different currency before line items are created.
+		 *
+		 * @since 2.3.0
+		 *
+		 * @param float                       $amount  The product amount.
+		 * @param \WP_Ultimo\Models\Product   $product The product being added.
+		 * @param \WP_Ultimo\Checkout\Cart    $cart    The cart instance.
+		 * @return float
+		 */
+		$amount = apply_filters('wu_cart_product_amount', $amount, $product, $this);
+
 		/*
 		 * Deal with price variations.
 		 *
@@ -1934,7 +1949,24 @@ class Cart implements \JsonSerializable {
 		/**
 		 * Signup Fees
 		 */
-		if (empty($product->get_setup_fee())) {
+		$setup_fee = $product->get_setup_fee();
+
+		/**
+		 * Filters the product setup fee when it is added to the cart.
+		 *
+		 * Allows addons (e.g. multi-currency) to convert the setup fee
+		 * to a different currency before the line item is created.
+		 *
+		 * @since 2.3.0
+		 *
+		 * @param float                       $setup_fee The product setup fee.
+		 * @param \WP_Ultimo\Models\Product   $product   The product being added.
+		 * @param \WP_Ultimo\Checkout\Cart    $cart      The cart instance.
+		 * @return float
+		 */
+		$setup_fee = apply_filters('wu_cart_product_setup_fee', $setup_fee, $product, $this);
+
+		if (empty($setup_fee)) {
 			return true;
 		}
 
@@ -1956,7 +1988,7 @@ class Cart implements \JsonSerializable {
 		}
 
 		// translators: placeholder is the product name.
-		$description = ($product->get_setup_fee() > 0) ? __('Signup Fee for %s', 'ultimate-multisite') : __('Signup Credit for %s', 'ultimate-multisite');
+		$description = ($setup_fee > 0) ? __('Signup Fee for %s', 'ultimate-multisite') : __('Signup Credit for %s', 'ultimate-multisite');
 
 		$description = sprintf($description, $product->get_name());
 
@@ -1979,7 +2011,7 @@ class Cart implements \JsonSerializable {
 				'title'       => $description,
 				'taxable'     => $product->is_taxable(),
 				'recurring'   => false,
-				'unit_price'  => $product->get_setup_fee(),
+				'unit_price'  => $setup_fee,
 				'quantity'    => $quantity,
 			],
 			$product,
@@ -2884,7 +2916,19 @@ class Cart implements \JsonSerializable {
 	 */
 	public function get_currency() {
 
-		return $this->currency;
+		/**
+		 * Filters the cart currency.
+		 *
+		 * Allows addons (e.g. multi-currency) to override the currency
+		 * used for the current cart/checkout session.
+		 *
+		 * @since 2.3.0
+		 *
+		 * @param string                     $currency The current currency code.
+		 * @param \WP_Ultimo\Checkout\Cart   $cart     The cart instance.
+		 * @return string
+		 */
+		return apply_filters('wu_cart_get_currency', $this->currency, $this);
 	}
 
 	/**

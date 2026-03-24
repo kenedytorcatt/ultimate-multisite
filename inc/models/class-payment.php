@@ -354,8 +354,11 @@ class Payment extends Base_Model implements Notable {
 	 */
 	public function get_currency(): string {
 
-		// return $this->currency; For now, multi-currency is not yet supported.
-		return wu_get_setting('currency_symbol', 'USD');
+		if (! empty($this->currency)) {
+			return $this->currency;
+		}
+
+		return wu_get_setting('currency', 'USD');
 	}
 
 	/**

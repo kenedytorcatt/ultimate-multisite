@@ -29,7 +29,6 @@ class Cloudways_Integration extends Integration {
 
 		parent::__construct('cloudways', 'Cloudways');
 
-		$this->set_description(__('Focus on your business and avoid all the web hosting hassles. Our managed hosting guarantees unmatched performance, reliability and choice with 24/7 support that acts as your extended team, making Cloudways an ultimate choice for growing agencies and e-commerce businesses.', 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('cloudways.webp', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/cloudways');
 		$this->set_constants(
@@ -42,6 +41,14 @@ class Cloudways_Integration extends Integration {
 		);
 		$this->set_optional_constants(['WU_CLOUDWAYS_EXTRA_DOMAINS']);
 		$this->set_supports(['autossl']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __('Focus on your business and avoid all the web hosting hassles. Our managed hosting guarantees unmatched performance, reliability and choice with 24/7 support that acts as your extended team, making Cloudways an ultimate choice for growing agencies and e-commerce businesses.', 'ultimate-multisite');
 	}
 
 	/**

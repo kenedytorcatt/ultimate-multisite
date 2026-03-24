@@ -187,7 +187,15 @@ class Membership_List_Table extends Base_List_Table {
 			'id'              => __('ID', 'ultimate-multisite'),
 		];
 
-		return $columns;
+		/**
+		 * Filters the columns displayed in the memberships list table.
+		 *
+		 * @since 2.3.0
+		 *
+		 * @param array $columns The list table columns.
+		 * @return array
+		 */
+		return apply_filters('wu_memberships_list_table_columns', $columns);
 	}
 
 	/**

@@ -33,11 +33,18 @@ class ServerPilot_Integration extends Integration {
 
 		parent::__construct('serverpilot', 'ServerPilot');
 
-		$this->set_description(__('ServerPilot is a cloud service for hosting WordPress and other PHP websites on servers at DigitalOcean, Amazon, Google, or any other server provider. You can think of ServerPilot as a modern, centralized hosting control panel.', 'ultimate-multisite'));
 		$this->set_logo(function_exists('wu_get_asset') ? wu_get_asset('serverpilot.svg', 'img/hosts') : '');
 		$this->set_tutorial_link('https://ultimatemultisite.com/docs/user-guide/host-integrations/serverpilot');
 		$this->set_constants(['WU_SERVER_PILOT_CLIENT_ID', 'WU_SERVER_PILOT_API_KEY', 'WU_SERVER_PILOT_APP_ID']);
 		$this->set_supports(['autossl']);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_description(): string {
+
+		return __('ServerPilot is a cloud service for hosting WordPress and other PHP websites on servers at DigitalOcean, Amazon, Google, or any other server provider. You can think of ServerPilot as a modern, centralized hosting control panel.', 'ultimate-multisite');
 	}
 
 	/**

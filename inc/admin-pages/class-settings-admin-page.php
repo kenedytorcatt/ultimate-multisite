@@ -627,6 +627,16 @@ class Settings_Admin_Page extends Wizard_Admin_Page {
 		);
 
 		$form->render();
+
+		/**
+		 * Fires after a settings section's form is rendered.
+		 *
+		 * The dynamic portion of the hook name, `$section_slug`, refers to the
+		 * settings section slug (e.g. 'multi-currency', 'payment-gateways').
+		 *
+		 * @since 2.3.0
+		 */
+		do_action("wu_settings_{$section_slug}_after");
 	}
 
 	/**
