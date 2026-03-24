@@ -338,9 +338,22 @@ class Checkout_Element extends Base_Element {
 
 			$pending_payment = $membership->get_last_pending_payment();
 
-			if ($pending_payment && ! $membership->is_active() && $membership->get_status() !== Membership_Status::TRIALING) {
+			/*
+			 * Pending payment notice logic:
+			 * - active/trialing with pending payment -> show notice AND block form
+			 * - pending (abandoned checkout) with pending payment -> show notice
+			 *   but do NOT block the form so user can pick a different plan.
+			 *
+			 * @since 2.4.13
+			 */
+			$membership_is_active_or_trialing = $membership->is_active()
+				|| $membership->get_status() === Membership_Status::TRIALING;
+
+			$membership_is_pending = $membership->get_status() === Membership_Status::PENDING;
+
+			if ($pending_payment && ! $membership_is_active_or_trialing && ! $membership_is_pending) {
 				/**
-				 *  We are talking about membership with a pending payment
+				 *  Non-active, non-pending membership with a pending payment
 				 */
 				echo '<p>';
 				// Translators: Placeholder receives the customer display name
@@ -358,6 +371,28 @@ class Checkout_Element extends Base_Element {
 
 				echo '</p>';
 				return;
+			} elseif ($pending_payment && $membership_is_pending) {
+				/*
+				 * Pending membership (abandoned checkout) with a pending payment.
+				 * Show the notice but do NOT block the form -- the user should
+				 * be able to choose a different plan.
+				 */
+				echo '<p>';
+				// Translators: Placeholder receives the customer display name
+				printf(esc_html__('Hi %s. You have a pending payment for your membership!', 'ultimate-multisite'), esc_html($customer->get_display_name()));
+
+				$payment_url = add_query_arg(
+					[
+						'payment' => $pending_payment->get_hash(),
+					],
+					wu_get_registration_url()
+				);
+
+				// Translators: The link to registration url with payment hash
+				echo '<br>' . wp_kses_post(sprintf(__('Click <a href="%s">here</a> to pay.', 'ultimate-multisite'), esc_attr($payment_url)));
+
+				echo '</p>';
+				// Do NOT return -- allow the checkout form to render below
 			}
 
 			$membership_blocked_forms = [

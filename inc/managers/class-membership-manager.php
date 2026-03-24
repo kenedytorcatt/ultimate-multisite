@@ -134,6 +134,20 @@ class Membership_Manager extends Base_Manager {
 	 */
 	public function async_publish_pending_site($membership_id) {
 
+		/*
+		 * Allow unlimited execution time for site initialization.
+		 *
+		 * Complex site templates (Elementor kits, Freemius SDK, Rank Math,
+		 * large database tables) can exceed PHP's default time limit,
+		 * killing the process and leaving the Action Scheduler action
+		 * stuck in-progress status.
+		 *
+		 * @since 2.4.13
+		 */
+		if (function_exists('set_time_limit')) {
+			set_time_limit(0);
+		}
+
 		$membership = wu_get_membership($membership_id);
 
 		if ( ! $membership) {

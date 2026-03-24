@@ -106,47 +106,77 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     },
     mounted() {
-      if (wu_thank_you.has_pending_site) {
-        this.check_site_created();
-        return;
-      }
-      if (this.next_queue <= 0 || wu_thank_you.creating) {
-        return;
-      }
-      const interval_seconds = setInterval(() => {
-        this.progress_in_seconds++;
-        if (this.progress_in_seconds >= this.next_queue) {
-          clearInterval(interval_seconds);
-          window.location.reload();
-        }
-        if (this.progress_in_seconds % 5 === 0) {
-          fetch("/wp-cron.php?doing_wp_cron");
-        }
-      }, 1e3);
+      /*
+       * Always start polling for site creation, regardless of
+       * has_pending_site state at page load.
+       *
+       * With async payment gateways (Stripe webhooks), the thank-you
+       * page loads before on_order_completed fires, so has_pending_site
+       * is false at mount time. Without this fix, users were stuck on
+       * "Creating your site" for the full countdown timer (4+ minutes)
+       * even though the site was ready in ~30 seconds.
+       *
+       * The AJAX endpoint handles all states gracefully:
+       * - No pending site yet: returns non-completed status, polling continues
+       * - Pending site exists, still creating: returns "running"
+       * - Site ready: returns "completed", triggers reload
+       *
+       * @since 2.4.13
+       */
+      this.check_site_created();
     },
     methods: {
       async check_site_created() {
         const url = new URL(wu_thank_you.ajaxurl);
         url.searchParams.set("action", "wu_check_pending_site_created");
         url.searchParams.set("membership_hash", wu_thank_you.membership_hash);
-        const response = await fetch(url).then((request) => request.json());
+
+        /*
+         * Track polling state for adaptive polling and cron kicks.
+         */
+        if (typeof this.running_count === "undefined") {
+          this.running_count = 0;
+          this.stopped_count = 0;
+        }
+
+        let response;
+
+        try {
+          response = await fetch(url).then((request) => request.json());
+        } catch (e) {
+          /*
+           * Network error or non-JSON response (e.g. Cloudflare challenge).
+           * Retry in 3s without stopping the polling loop.
+           */
+          this.stopped_count++;
+          setTimeout(this.check_site_created, 3000);
+          return;
+        }
+
         if (response.publish_status === "completed") {
           window.location.reload();
-        } else if (response.publish_status === "running") {
-          this.creating = true;
-          this.stopped_count = 0;
-          setTimeout(this.check_site_created, 3e3);
         } else {
-          // status === "stopped": async job not started yet or site already created.
-          // Reload after 3 consecutive stopped responses (9 seconds total) to
-          // avoid showing "Creating..." forever when the site is already ready.
-          this.creating = false;
-          this.stopped_count++;
-          if (this.stopped_count >= 3) {
-            window.location.reload();
-          } else {
-            setTimeout(this.check_site_created, 3e3);
+          this.creating = response.publish_status === "running";
+          this.running_count++;
+
+          /*
+           * Kick wp-cron.php every 3 polls to keep Action Scheduler active.
+           */
+          if (this.running_count % 3 === 0) {
+            fetch("/wp-cron.php?doing_wp_cron").catch(() => {});
           }
+
+          /*
+           * Adaptive polling: 1.5s for the first 30s, then 3s.
+           * Force-reload at 60 polls (~90s) as a safety net.
+           */
+          if (this.running_count >= 60) {
+            window.location.reload();
+            return;
+          }
+
+          const delay = this.running_count < 20 ? 1500 : 3000;
+          setTimeout(this.check_site_created, delay);
         }
       }
     }
