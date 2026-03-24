@@ -351,9 +351,9 @@ class Checkout_Element extends Base_Element {
 
 			$membership_is_pending = $membership->get_status() === Membership_Status::PENDING;
 
-			if ($pending_payment && ! $membership_is_active_or_trialing && ! $membership_is_pending) {
+			if ($pending_payment && ($membership_is_active_or_trialing || $membership_is_pending)) {
 				/**
-				 *  Non-active, non-pending membership with a pending payment
+				 *  We are talking about membership with a pending payment
 				 */
 				echo '<p>';
 				// Translators: Placeholder receives the customer display name
@@ -370,29 +370,12 @@ class Checkout_Element extends Base_Element {
 				echo '<br>' . wp_kses_post(sprintf(__('Click <a href="%s">here</a> to pay.', 'ultimate-multisite'), esc_attr($payment_url)));
 
 				echo '</p>';
-				return;
-			} elseif ($pending_payment && $membership_is_pending) {
-				/*
-				 * Pending membership (abandoned checkout) with a pending payment.
-				 * Show the notice but do NOT block the form -- the user should
-				 * be able to choose a different plan.
-				 */
-				echo '<p>';
-				// Translators: Placeholder receives the customer display name
-				printf(esc_html__('Hi %s. You have a pending payment for your membership!', 'ultimate-multisite'), esc_html($customer->get_display_name()));
 
-				$payment_url = add_query_arg(
-					[
-						'payment' => $pending_payment->get_hash(),
-					],
-					wu_get_registration_url()
-				);
-
-				// Translators: The link to registration url with payment hash
-				echo '<br>' . wp_kses_post(sprintf(__('Click <a href="%s">here</a> to pay.', 'ultimate-multisite'), esc_attr($payment_url)));
-
-				echo '</p>';
-				// Do NOT return -- allow the checkout form to render below
+				// Only block the form for active/trialing memberships.
+				// For pending (abandoned) memberships, show the notice but let them continue.
+				if ($membership_is_active_or_trialing) {
+					return;
+				}
 			}
 
 			$membership_blocked_forms = [
