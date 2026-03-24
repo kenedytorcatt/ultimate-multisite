@@ -3133,7 +3133,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 				$previous_status     = $previous_attributes->status ?? null;
 
 				// Only act when the status field itself changed.
-				if ($previous_status !== null && $previous_status !== $stripe_status) {
+				if (null !== $previous_status && $previous_status !== $stripe_status) {
 					wu_log_add('stripe', sprintf('Subscription %s status changed: %s → %s', $payment_event->id, $previous_status, $stripe_status));
 
 					if (in_array($stripe_status, ['past_due', 'unpaid', 'paused'], true)) {

@@ -321,7 +321,7 @@ class Stripe_Webhook_Process_Test extends \WP_UnitTestCase {
 		try {
 			// Should not throw — the gateway should switch to live mode.
 			$this->gateway->process_webhooks();
-		} catch (\Exception $e) {
+		} catch (\Exception $e) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 			// Ignorable exceptions (e.g. no membership found) are acceptable.
 		} finally {
 			remove_all_filters('wu_get_input_override');
@@ -690,7 +690,14 @@ class Stripe_Webhook_Process_Test extends \WP_UnitTestCase {
 		// Expect all() to be called (checking for existing webhook).
 		$webhook_endpoints_mock->expects($this->once())
 			->method('all')
-			->willReturn(\Stripe\Collection::constructFrom(['object' => 'list', 'data' => []]));
+			->willReturn(
+				\Stripe\Collection::constructFrom(
+					[
+						'object' => 'list',
+						'data'   => [],
+					]
+				)
+			);
 
 		// Expect create() to be called (no existing webhook found).
 		$webhook_endpoints_mock->expects($this->once())
