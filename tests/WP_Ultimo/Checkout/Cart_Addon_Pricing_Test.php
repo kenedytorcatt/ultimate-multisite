@@ -170,9 +170,10 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 
 		// Set the discount code on the membership.
 		// Note: wu_create_membership() uses shortcode_atts() which strips unknown keys,
-		// so 'discount_code' must be set separately via set_discount_code().
-		self::$membership->set_discount_code(self::$discount_code->get_code());
-		self::$membership->save();
+		// so 'discount_code' must be set separately via update_meta().
+		// We store the code string (not the object) so get_discount_code() can
+		// look it up via wu_get_discount_code_by_code() on retrieval.
+		self::$membership->update_meta('discount_code', self::$discount_code->get_code());
 	}
 
 	/**
