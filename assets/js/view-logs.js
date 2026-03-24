@@ -1,4 +1,4 @@
-/* global ajaxurl, wu_block_ui, ClipboardJS, wu_log_payload, wu_view_logs, Vue */
+/* global ajaxurl, wu_block_ui, ClipboardJS, wu_log_payload, wu_view_logs, Vue, wu_ajax_error */
 (function($) {
 
   $(document).ready(function() {
@@ -56,6 +56,15 @@
                 console.warn('Browser does not support pushState.', err);
 
               } // end try;
+
+            },
+            error(jqXHR) {
+
+              app.loading = false;
+
+              block.unblock();
+
+              wu_ajax_error(jqXHR);
 
             },
 

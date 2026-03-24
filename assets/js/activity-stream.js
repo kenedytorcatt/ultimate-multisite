@@ -1,3 +1,4 @@
+/* global Vue, ajaxurl, wu_moment, wu_activity_stream_nonce, wu_ajax_error */
 document.addEventListener('DOMContentLoaded', function() {
 	Object.defineProperty(Vue.prototype, '$moment', {
 		value: wu_moment
@@ -53,6 +54,11 @@ document.addEventListener('DOMContentLoaded', function() {
 						if (data.success) {
 							Vue.set(wuActivityStream, 'queried', data.data);
 						}
+					},
+					error: function(jqXHR) {
+						that.loading = false;
+						Vue.set(wuActivityStream, 'loading', false);
+						wu_ajax_error(jqXHR);
 					},
 				})
 			},

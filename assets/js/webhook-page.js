@@ -1,4 +1,4 @@
-/* global Vue, ajaxurl, Swal, wu_event_payload_preview, ClipboardJS, wu_webhook_page */
+/* global Vue, ajaxurl, Swal, wu_event_payload_preview, ClipboardJS, wu_webhook_page, wu_ajax_error */
 (function ($) {
 
 	jQuery(document).ready(function () {
@@ -47,37 +47,42 @@
 					webhook_url,
 					webhook_event,
 				},
-				success(data) {
+			success(data) {
 
-					if (data.response) {
+				if (data.response) {
 
-						$('[data-loading="wu_action_button_loading_' + data.id + '"]').addClass('hidden');
+					$('[data-loading="wu_action_button_loading_' + data.id + '"]').addClass('hidden');
 
-						Swal.fire({
-							title: 'Test Response',
-							icon: 'success',
-							// eslint-disable-next-line max-len
-							html: '<pre id="content" class="wu-overflow-auto wu-p-4 wu-m-0 wu-mt-2 wu-rounded wu-text-left wu-bg-gray-800 wu-text-white wu-font-mono wu-border wu-border-solid wu-border-gray-300 wu-max-h-screen wu-overflow-y-auto">' + JSON.stringify(data.response, null, 2) + '</pre>',
-							showCloseButton: true,
-							showCancelButton: false,
-						});
+					Swal.fire({
+						title: 'Test Response',
+						icon: 'success',
+						// eslint-disable-next-line max-len
+						html: '<pre id="content" class="wu-overflow-auto wu-p-4 wu-m-0 wu-mt-2 wu-rounded wu-text-left wu-bg-gray-800 wu-text-white wu-font-mono wu-border wu-border-solid wu-border-gray-300 wu-max-h-screen wu-overflow-y-auto">' + JSON.stringify(data.response, null, 2) + '</pre>',
+						showCloseButton: true,
+						showCancelButton: false,
+					});
 
-					} else {
+				} else {
 
-						$('[data-loading="wu_action_button_loading_' + data.id + '"]').addClass('hidden');
+					$('[data-loading="wu_action_button_loading_' + data.id + '"]').addClass('hidden');
 
-						Swal.fire({
-							title: wu_webhook_page.i18n.error_title,
-							icon: 'error',
-							html: wu_webhook_page.i18n.error_message,
-							showCloseButton: true,
-							showCancelButton: false,
-						});
+					Swal.fire({
+						title: wu_webhook_page.i18n.error_title,
+						icon: 'error',
+						html: wu_webhook_page.i18n.error_message,
+						showCloseButton: true,
+						showCancelButton: false,
+					});
 
-					} // end if;
+				} // end if;
 
-				},
-			});
+			},
+			error(jqXHR) {
+
+				wu_ajax_error(jqXHR);
+
+			},
+		});
 
 		});
 
@@ -118,15 +123,22 @@
 								action: 'wu_get_event_payload_preview',
 								event: app.event,
 							},
-							success(response) {
+						success(response) {
 
-								app.payload = response.data ?? {};
+							app.payload = response.data ?? {};
 
-								app.loading = false;
+							app.loading = false;
 
-							},
+						},
+						error(jqXHR) {
 
-						});
+							app.loading = false;
+
+							wu_ajax_error(jqXHR);
+
+						},
+
+					});
 
 					},
 
