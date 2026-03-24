@@ -189,11 +189,14 @@ function wu_is_plan_type(string $type): bool {
 	 * This filter allows addons to register additional product types
 	 * that should be recognized as plans in validation and segregation.
 	 *
+	 * Demo products are included by default as they function like plans
+	 * but create sites with automatic expiration.
+	 *
 	 * @since 2.3.0
 	 * @param array $plan_types Array of product types to treat as plans.
 	 * @return array
 	 */
-	$plan_types = apply_filters('wu_plan_product_types', ['plan']);
+	$plan_types = apply_filters('wu_plan_product_types', ['plan', 'demo']);
 
 	return in_array($type, $plan_types, true);
 }
