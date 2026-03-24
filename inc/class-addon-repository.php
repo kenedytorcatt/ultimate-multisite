@@ -163,7 +163,7 @@ class Addon_Repository {
 	 * @param \WP_Upgrader $upgrader The WP_Upgrader instance.
 	 * @param array        $hook_extra Extra arguments passed to hooked filters.
 	 */
-	public function upgrader_pre_download(bool $reply, $package, \WP_Upgrader $upgrader, $hook_extra) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	public function upgrader_pre_download($reply, $package, \WP_Upgrader $upgrader, $hook_extra) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		if (str_starts_with($package, MULTISITE_ULTIMATE_UPDATE_URL)) {
 			$access_token = $this->get_access_token();
 
