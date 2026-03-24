@@ -30,3 +30,5 @@ baseline-test.json
 current-test.json
 performance-report.md
 tests/simple-performance-results-*.json
+# AI agent loop state (framework artifacts)
+.agents/loop-state/
