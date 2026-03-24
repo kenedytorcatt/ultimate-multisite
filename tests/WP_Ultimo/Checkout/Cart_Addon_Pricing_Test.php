@@ -144,7 +144,15 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 			self::fail('Failed to create test discount code: ' . $discount_code_result->get_error_message());
 		}
 
-		self::$discount_code = $discount_code_result;
+		// Reload the discount code from DB to ensure all fields (including apply_to_renewals)
+		// reflect the persisted values. This avoids relying on the in-memory object which may
+		// have been modified by the validation layer during save().
+		$saved_discount_code = wu_get_discount_code_by_code('TEST10');
+		if ( ! $saved_discount_code ) {
+			self::fail('Discount code TEST10 was not saved to the database');
+		}
+
+		self::$discount_code = $saved_discount_code;
 
 		// Create an active membership for the customer.
 		self::$membership = wu_create_membership(
@@ -170,10 +178,13 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 
 		// Set the discount code on the membership.
 		// Note: wu_create_membership() uses shortcode_atts() which strips unknown keys,
-		// so 'discount_code' must be set separately via update_meta().
-		// We store the code string (not the object) so get_discount_code() can
-		// look it up via wu_get_discount_code_by_code() on retrieval.
-		self::$membership->update_meta('discount_code', self::$discount_code->get_code());
+		// so 'discount_code' must be set separately after creation.
+		// We use set_discount_code() with the object and save() to persist it reliably
+		// across all PHP versions. Storing the object directly avoids a DB lookup via
+		// wu_get_discount_code_by_code() which may fail if the discount_codes table
+		// is not yet registered in $wpdb at the time of the lookup.
+		self::$membership->set_discount_code(self::$discount_code);
+		self::$membership->save();
 	}
 
 	/**
