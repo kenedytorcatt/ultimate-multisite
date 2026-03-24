@@ -341,15 +341,41 @@ class Ajax implements \WP_Ultimo\Interfaces\Singleton {
 			$all_fields = array_merge($all_fields, $section['fields']);
 		}
 
-		$_settings = \Arrch\Arrch::find(
+		$search_term = strtolower(trim((string) $query['search'], '*'));
+
+		/*
+		 * Filter settings that match the search term against setting_id, title,
+		 * or desc fields (case-insensitive), excluding header-type fields.
+		 * The previous implementation only searched setting_id, which meant users
+		 * could not find settings by their human-readable titles.
+		 */
+		$_settings = array_filter(
 			$all_fields,
-			[
-				'sort_key' => 'title',
-				'where'    => [
-					['setting_id', '~', trim((string) $query['search'], '*')],
-					['type', '!=', 'header'],
-				],
-			]
+			function ($item) use ($search_term) {
+
+				if (wu_get_isset($item, 'type') === 'header') {
+					return false;
+				}
+
+				$setting_id = strtolower((string) wu_get_isset($item, 'setting_id', ''));
+				$title      = strtolower((string) wu_get_isset($item, 'title', ''));
+				$desc       = strtolower((string) wu_get_isset($item, 'desc', ''));
+
+				return str_contains($setting_id, $search_term)
+					|| str_contains($title, $search_term)
+					|| str_contains($desc, $search_term);
+			}
+		);
+
+		usort(
+			$_settings,
+			function ($a, $b) {
+
+				return strcmp(
+					(string) wu_get_isset($a, 'title', ''),
+					(string) wu_get_isset($b, 'title', '')
+				);
+			}
 		);
 
 		return array_values($_settings);
