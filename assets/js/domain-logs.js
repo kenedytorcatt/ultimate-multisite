@@ -1,3 +1,4 @@
+/* global ajaxurl, wu_domain_logs, wu_block_ui, wu_ajax_error */
 (function ($) {
 	$(document).ready(
 		function () {
@@ -17,6 +18,13 @@
 							if (typeof callback !== 'undefined') {
 								callback();
 							}
+						},
+						error(jqXHR) {
+							if (typeof callback !== 'undefined') {
+								callback();
+							}
+
+							wu_ajax_error(jqXHR);
 						},
 					}
 				);

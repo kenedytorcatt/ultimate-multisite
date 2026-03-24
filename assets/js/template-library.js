@@ -122,10 +122,13 @@
             app.loading = false;
 
           },
-          error() {
+          error(jqXHR) {
 
             app.templates = [];
             app.loading = false;
+
+            // eslint-disable-next-line no-undef
+            wu_ajax_error(jqXHR);
 
           },
         });

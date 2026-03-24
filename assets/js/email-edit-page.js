@@ -1,4 +1,4 @@
-/* global ajaxurl, Vue, wu_event_payload_placeholders, _ */
+/* global ajaxurl, Vue, wu_event_payload_placeholders, _, wu_ajax_error */
 (function($) {
 
   $(document).ready(function() {
@@ -54,6 +54,13 @@
               app.placeholders = response;
 
               app.loading = false;
+
+            },
+            error(jqXHR) {
+
+              app.loading = false;
+
+              wu_ajax_error(jqXHR);
 
             },
 

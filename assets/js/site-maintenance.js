@@ -1,4 +1,4 @@
-/* global wu_site_maintenance, wu_block_ui */
+/* global wu_site_maintenance, wu_block_ui, wu_ajax_error */
 (function($) {
 
   $(document).ready(function() {
@@ -36,10 +36,11 @@
 
         }, // end success;
 
-        error(error) {
+        error(jqXHR) {
 
-          // eslint-disable-next-line no-console
-          console.error(error);
+          blocked.unblock();
+
+          wu_ajax_error(jqXHR);
 
         }, // end error;
 

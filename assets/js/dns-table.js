@@ -1,3 +1,4 @@
+/* global ajaxurl, Vue, wu_dns_table_config, wu_ajax_error */
 (function($) {
 
     wu_dns_table = new Vue({
@@ -37,6 +38,13 @@
                     Vue.set(wu_dns_table, 'error', data.data);
 
                 }
+
+            },
+            error: function(jqXHR) {
+
+                Vue.set(wu_dns_table, 'loading', false);
+
+                wu_ajax_error(jqXHR);
 
             },
         })

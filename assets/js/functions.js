@@ -1,6 +1,114 @@
 /* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
-/* global wu_settings, wu_input_masks, wu_money_input_masks, Cleave, ClipboardJS, wu_fields, tinymce, wu_media_frame, fontIconPicker */
+/* global wu_settings, wu_input_masks, wu_money_input_masks, Cleave, ClipboardJS, wu_fields, tinymce, wu_media_frame, fontIconPicker, wu_ajax_errors */
+
+/**
+ * Display a user-visible error message when an AJAX request fails.
+ *
+ * Uses SweetAlert2 when available (most admin pages load it), otherwise
+ * injects a standard WordPress admin notice at the top of #wpbody-content.
+ *
+ * @param {Object|string} jqXHR    The jQuery XHR object or a plain error string.
+ * @param {string}        context  Optional human-readable context label (e.g. "loading logs").
+ * @return {void}
+ */
+window.wu_ajax_error = function( jqXHR, context ) {
+
+	var i18n = ( typeof wu_ajax_errors !== 'undefined' ) ? wu_ajax_errors : {};
+
+	var title   = i18n.error_title   || 'Request Failed';
+	var generic = i18n.error_message || 'An unexpected error occurred. Please try again or contact support if the problem persists.';
+	var suffix  = context ? ( ' ' + ( i18n.while_prefix || 'while' ) + ' ' + context + '.' ) : '';
+
+	var message = generic + suffix;
+
+	// Try to extract a more specific message from the response body.
+	if ( jqXHR && typeof jqXHR === 'object' ) {
+
+		var status = jqXHR.status;
+
+		if ( jqXHR.responseJSON ) {
+
+			var rj = jqXHR.responseJSON;
+
+			if ( rj.data && rj.data[ 0 ] && rj.data[ 0 ].message ) {
+
+				message = rj.data[ 0 ].message + suffix;
+
+			} else if ( rj.message ) {
+
+				message = rj.message + suffix;
+
+			} // end if;
+
+		} else if ( status === 403 ) {
+
+			message = ( i18n.error_403 || 'You do not have permission to perform this action.' ) + suffix;
+
+		} else if ( status === 404 ) {
+
+			message = ( i18n.error_404 || 'The requested resource was not found.' ) + suffix;
+
+		} else if ( status === 0 || status === 503 ) {
+
+			message = ( i18n.error_network || 'A network error occurred. Please check your connection and try again.' ) + suffix;
+
+		} // end if;
+
+	} else if ( typeof jqXHR === 'string' && jqXHR.length ) {
+
+		message = jqXHR + suffix;
+
+	} // end if;
+
+	// SweetAlert2 path (preferred — matches existing admin UI patterns).
+	if ( typeof Swal !== 'undefined' ) {
+
+		Swal.fire({
+			title: title,
+			icon: 'error',
+			text: message,
+			showCloseButton: true,
+			showCancelButton: false,
+		});
+
+		return;
+
+	} // end if;
+
+	// Fallback: inject a standard WP admin notice.
+	var $notice = jQuery(
+		'<div class="notice notice-error is-dismissible wu-ajax-error-notice">' +
+		'<p><strong>' + jQuery( '<span>' ).text( title ).html() + ':</strong> ' + jQuery( '<span>' ).text( message ).html() + '</p>' +
+		'<button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button>' +
+		'</div>'
+	);
+
+	$notice.find( '.notice-dismiss' ).on( 'click', function() {
+
+		$notice.fadeOut( 200, function() { $notice.remove(); } );
+
+	} );
+
+	var $target = jQuery( '#wpbody-content' ).first();
+
+	if ( ! $target.length ) {
+
+		$target = jQuery( 'body' );
+
+	} // end if;
+
+	$target.prepend( $notice );
+
+	// Auto-dismiss after 8 seconds.
+	setTimeout( function() {
+
+		$notice.fadeOut( 400, function() { $notice.remove(); } );
+
+	}, 8000 );
+
+}; // end wu_ajax_error;
+
 window.wu_initialize_tooltip = function() {
 
 	jQuery('[role="tooltip"]').tipTip({

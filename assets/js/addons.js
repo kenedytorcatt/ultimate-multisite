@@ -97,6 +97,14 @@
             app.loading = false;
 
           },
+          error(jqXHR) {
+
+            app.loading = false;
+
+            // eslint-disable-next-line no-undef
+            wu_ajax_error(jqXHR);
+
+          },
         });
 
       },

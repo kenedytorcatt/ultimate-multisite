@@ -208,6 +208,22 @@ class Scripts {
 		);
 
 		/*
+		 * Localize AJAX error strings used by window.wu_ajax_error().
+		 */
+		wp_localize_script(
+			'wu-functions',
+			'wu_ajax_errors',
+			[
+				'error_title'   => __('Request Failed', 'ultimate-multisite'),
+				'error_message' => __('An unexpected error occurred. Please try again or contact support if the problem persists.', 'ultimate-multisite'),
+				'error_403'     => __('You do not have permission to perform this action.', 'ultimate-multisite'),
+				'error_404'     => __('The requested resource was not found.', 'ultimate-multisite'),
+				'error_network' => __('A network error occurred. Please check your connection and try again.', 'ultimate-multisite'),
+				'while_prefix'  => __('while', 'ultimate-multisite'),
+			]
+		);
+
+		/*
 		 * Adds Fields & Components
 		 */
 		$this->register_script(
