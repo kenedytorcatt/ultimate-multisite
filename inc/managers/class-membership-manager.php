@@ -133,7 +133,6 @@ class Membership_Manager extends Base_Manager {
 	 * @return void
 	 */
 	public function async_publish_pending_site($membership_id) {
-
 		/*
 		 * Allow unlimited execution time for site initialization.
 		 *

@@ -425,7 +425,12 @@ class Customer extends Base_Model implements Billable, Notable {
 
 			foreach ($trial_memberships as $m) {
 				if ($m->get_status() === 'cancelled') {
-					$paid = $m->get_payments(['status' => 'completed', 'number' => 1]);
+					$paid = $m->get_payments(
+						[
+							'status' => 'completed',
+							'number' => 1,
+						]
+					);
 
 					if (empty($paid)) {
 						continue;
