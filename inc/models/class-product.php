@@ -1573,7 +1573,7 @@ class Product extends Base_Model implements Limitable {
 					$pv_duration_unit = 'year';
 				}
 
-				if ($pv_duration === absint($duration) && $pv_duration_unit === $duration_unit) {
+				if (absint($duration) === $pv_duration && $duration_unit === $pv_duration_unit) {
 					$pv['monthly_amount'] = $pv['amount'] / (wu_convert_duration_unit_to_month($duration_unit) * absint($duration));
 
 					$price_variation = $pv;
