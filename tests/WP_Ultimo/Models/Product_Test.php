@@ -2149,13 +2149,15 @@ class Product_Test extends \WP_UnitTestCase {
 		$this->product->set_duration(1);
 		$this->product->set_duration_unit('month');
 		$this->product->set_pricing_type('paid');
-		$this->product->set_price_variations([
+		$this->product->set_price_variations(
 			[
-				'duration'      => 1,
-				'duration_unit' => 'year',
-				'amount'        => 199.99,
-			],
-		]);
+				[
+					'duration'      => 1,
+					'duration_unit' => 'year',
+					'amount'        => 199.99,
+				],
+			]
+		);
 
 		$result = $this->product->get_as_variation(1, 'year');
 		$this->assertInstanceOf(Product::class, $result);
@@ -2242,13 +2244,15 @@ class Product_Test extends \WP_UnitTestCase {
 		$this->product->set_duration(1);
 		$this->product->set_duration_unit('month');
 		$this->product->set_pricing_type('paid');
-		$this->product->set_price_variations([
+		$this->product->set_price_variations(
 			[
-				'duration'      => 12,
-				'duration_unit' => 'month',
-				'amount'        => 199.99,
-			],
-		]);
+				[
+					'duration'      => 12,
+					'duration_unit' => 'month',
+					'amount'        => 199.99,
+				],
+			]
+		);
 
 		// Requesting "1 year" should find the "12 months" variation.
 		$variation = $this->product->get_price_variation(1, 'year');
@@ -2264,13 +2268,15 @@ class Product_Test extends \WP_UnitTestCase {
 		$this->product->set_duration(1);
 		$this->product->set_duration_unit('month');
 		$this->product->set_pricing_type('paid');
-		$this->product->set_price_variations([
+		$this->product->set_price_variations(
 			[
-				'duration'      => 1,
-				'duration_unit' => 'year',
-				'amount'        => 199.99,
-			],
-		]);
+				[
+					'duration'      => 1,
+					'duration_unit' => 'year',
+					'amount'        => 199.99,
+				],
+			]
+		);
 
 		// Requesting "12 months" should find the "1 year" variation.
 		$variation = $this->product->get_price_variation(12, 'month');
@@ -2342,11 +2348,13 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test product attributes method sets multiple values.
 	 */
 	public function test_attributes_method(): void {
-		$this->product->attributes([
-			'name'   => 'Attr Test',
-			'amount' => 55.00,
-			'type'   => 'service',
-		]);
+		$this->product->attributes(
+			[
+				'name'   => 'Attr Test',
+				'amount' => 55.00,
+				'type'   => 'service',
+			]
+		);
 
 		$this->assertSame('Attr Test', $this->product->get_name());
 		$this->assertEquals(55.00, $this->product->get_amount());
