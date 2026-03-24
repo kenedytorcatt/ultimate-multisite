@@ -573,6 +573,238 @@
 					} // end if;
 
 				},
+				/**
+				 * Runs client-side validation against the rules exposed by PHP.
+				 *
+				 * Returns an array of error objects { code, message } for any
+				 * failing rules. An empty array means the form is valid client-side.
+				 * Server-side rules (uniqueness, DB lookups) are still checked via AJAX.
+				 *
+				 * @param {Object} values Key/value map of current form field values.
+				 * @return {Array} Array of { code, message } error objects.
+				 */
+				validate_client_side(values) {
+
+					const rules = (typeof wu_checkout !== 'undefined' && wu_checkout.validation_rules) ? wu_checkout.validation_rules : {};
+					const i18n = (typeof wu_checkout !== 'undefined' && wu_checkout.i18n) ? wu_checkout.i18n : {};
+					const errors = [];
+
+					/**
+					 * Retrieve a display label for a field, falling back to the field ID.
+					 *
+					 * @param {string} field Field ID.
+					 * @return {string} Human-readable label.
+					 */
+					function label(field) {
+
+						const labels = (typeof wu_checkout !== 'undefined' && wu_checkout.field_labels) ? wu_checkout.field_labels : {};
+
+						return labels[ field ] || field.replace(/_/g, ' ');
+
+					}
+
+					/**
+					 * Resolve the current value for a field from the values map.
+					 * Falls back to an empty string so rule checks are always safe.
+					 *
+					 * @param {string} field Field ID.
+					 * @return {string} Current field value as a string.
+					 */
+					function val(field) {
+
+						return (values[ field ] !== undefined && values[ field ] !== null) ? String(values[ field ]) : '';
+
+					}
+
+					/**
+					 * Add an error for a field if one does not already exist.
+					 *
+					 * @param {string} field
+					 * @param {string} message
+					 */
+					function addError(field, message) {
+
+						const alreadyHas = errors.some(function(e) {
+
+							return e.code === field;
+
+						});
+
+						if (! alreadyHas) {
+
+							errors.push({ code: field, message });
+
+						}
+
+					}
+
+					Object.keys(rules).forEach(function(field) {
+
+						const fieldRules = rules[ field ];
+						const fieldVal = val(field);
+
+						fieldRules.forEach(function(ruleObj) {
+
+							const rule = ruleObj.rule;
+							const param = ruleObj.param;
+
+							switch (rule) {
+
+								case 'required': {
+
+									if (fieldVal.trim() === '') {
+
+										// translators: %s is the field label.
+										addError(field, (i18n.field_required || '%s is required.').replace('%s', label(field)));
+
+									}
+
+									break;
+
+								}
+
+								case 'required_without': {
+
+									// Required when the referenced field is absent/empty.
+									if (val(param).trim() === '' && fieldVal.trim() === '') {
+
+										addError(field, (i18n.field_required || '%s is required.').replace('%s', label(field)));
+
+									}
+
+									break;
+
+								}
+
+								case 'required_with': {
+
+									// Required when the referenced field is present/non-empty.
+									if (val(param).trim() !== '' && fieldVal.trim() === '') {
+
+										addError(field, (i18n.field_required || '%s is required.').replace('%s', label(field)));
+
+									}
+
+									break;
+
+								}
+
+								case 'email': {
+
+									if (fieldVal.trim() !== '' && ! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fieldVal)) {
+
+										addError(field, (i18n.field_invalid_email || '%s must be a valid email address.').replace('%s', label(field)));
+
+									}
+
+									break;
+
+								}
+
+								case 'min': {
+
+									const minLen = parseInt(param, 10);
+
+									if (! isNaN(minLen) && fieldVal.length > 0 && fieldVal.length < minLen) {
+
+										addError(field, (i18n.field_min_length || '%s must be at least %d characters.').replace('%s', label(field)).replace('%d', minLen));
+
+									}
+
+									break;
+
+								}
+
+								case 'max': {
+
+									const maxLen = parseInt(param, 10);
+
+									if (! isNaN(maxLen) && fieldVal.length > maxLen) {
+
+										addError(field, (i18n.field_max_length || '%s must not exceed %d characters.').replace('%s', label(field)).replace('%d', maxLen));
+
+									}
+
+									break;
+
+								}
+
+								case 'alpha_dash': {
+
+									if (fieldVal.trim() !== '' && ! /^[a-zA-Z0-9_-]+$/.test(fieldVal)) {
+
+										addError(field, (i18n.field_alpha_dash || '%s may only contain letters, numbers, dashes, and underscores.').replace('%s', label(field)));
+
+									}
+
+									break;
+
+								}
+
+								case 'lowercase': {
+
+									if (fieldVal.trim() !== '' && fieldVal !== fieldVal.toLowerCase()) {
+
+										addError(field, (i18n.field_lowercase || '%s must be lowercase.').replace('%s', label(field)));
+
+									}
+
+									break;
+
+								}
+
+								case 'same': {
+
+									if (fieldVal !== val(param)) {
+
+										addError(field, (i18n.field_same || '%s must match %s.').replace('%s', label(field)).replace('%s', label(param)));
+
+									}
+
+									break;
+
+								}
+
+								case 'integer': {
+
+									if (fieldVal.trim() !== '' && ! /^\d+$/.test(fieldVal.trim())) {
+
+										addError(field, (i18n.field_integer || '%s must be a whole number.').replace('%s', label(field)));
+
+									}
+
+									break;
+
+								}
+
+								case 'accepted': {
+
+									// "accepted" means the value must be truthy (1, true, "on", "yes").
+									const accepted = [ '1', 'true', 'on', 'yes' ];
+
+									if (fieldVal.trim() !== '' && ! accepted.includes(fieldVal.toLowerCase())) {
+
+										addError(field, (i18n.field_accepted || '%s must be accepted.').replace('%s', label(field)));
+
+									}
+
+									break;
+
+								}
+
+								// Rules handled server-side only (unique, products, country, etc.) are skipped.
+								default:
+									break;
+
+							}
+
+						});
+
+					});
+
+					return errors;
+
+				},
 				validate_form() {
 
 					this.errors = [];
@@ -590,6 +822,37 @@
 
 					}, {});
 
+					/*
+				 * Run client-side validation first.
+				 *
+				 * Build a values map from the serialised form data plus Vue-managed
+				 * fields so the validator has the same picture as the server.
+				 * This gives instant feedback without a network round-trip.
+				 */
+					const form_values = Object.assign({}, form_data_obj, {
+						products: this.products,
+						membership_id: this.membership_id,
+						payment_id: this.payment_id,
+						valid_password: this.valid_password ? '1' : '',
+						user_id: form_data_obj.user_id || '',
+					});
+
+					const client_errors = this.validate_client_side(form_values);
+
+					if (client_errors.length) {
+
+						this.errors = client_errors;
+
+						this.unblock();
+
+						return;
+
+					}
+
+					/*
+				 * Client-side checks passed — proceed with the AJAX validation
+				 * which handles server-only rules (uniqueness, DB lookups, etc.).
+				 */
 					const form_data = jQuery.param({
 						...form_data_obj,
 						products: this.products,
