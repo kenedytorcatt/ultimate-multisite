@@ -155,9 +155,9 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 				'currency'        => 'EUR',
 				'duration'        => 1,
 				'duration_unit'   => 'month',
+				'recurring'       => true,
 				'status'          => Membership_Status::ACTIVE,
 				'times_billed'    => 1,
-				'discount_code'   => self::$discount_code->get_code(),
 				'date_created'    => wu_date()->modify('-15 days')->format('Y-m-d H:i:s'),
 				'date_renewed'    => wu_date()->modify('-15 days')->format('Y-m-d H:i:s'),
 				'date_expiration' => wu_date()->modify('+15 days')->format('Y-m-d H:i:s'),
@@ -167,6 +167,12 @@ class Cart_Addon_Pricing_Test extends WP_UnitTestCase {
 		if ( is_wp_error(self::$membership) ) {
 			self::fail('Failed to create test membership');
 		}
+
+		// Set the discount code on the membership.
+		// Note: wu_create_membership() uses shortcode_atts() which strips unknown keys,
+		// so 'discount_code' must be set separately via set_discount_code().
+		self::$membership->set_discount_code(self::$discount_code->get_code());
+		self::$membership->save();
 	}
 
 	/**
