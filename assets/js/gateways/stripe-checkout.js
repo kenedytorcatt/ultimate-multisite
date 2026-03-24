@@ -1,9 +1,9 @@
 /* eslint-disable */
-/* global wu_stripe_checkout, Stripe */
+/* global wu_stripe_checkout */
 
-const stripeCheckout = function(publicKey) {
+const stripeCheckout = function() {
 
-  wp.hooks.addAction('wu_on_form_success', 'nextpress/wp-ultimo', async function(checkout, results) {
+  wp.hooks.addAction('wu_on_form_success', 'nextpress/wp-ultimo', function(checkout, results) {
 
     if (checkout.gateway === 'stripe-checkout' && results.gateway.slug !== 'free' && results.gateway.data && results.gateway.data.stripe_session_id) {
 
@@ -11,24 +11,17 @@ const stripeCheckout = function(publicKey) {
       // set_prevent_submission not work in this case
       checkout.prevent_submission = true;
 
-      // When the customer clicks on the button, redirect
-      // them to Checkout.
-      const stripe = await Stripe(publicKey);
+      // Prefer the direct session URL returned by the server (modern Stripe approach).
+      // Fall back to constructing the URL from the session ID for backwards compatibility.
+      var checkoutUrl = results.gateway.data.stripe_checkout_url;
 
-      stripe.redirectToCheckout({
-        sessionId: results.gateway.data.stripe_session_id,
-      }).then(function(result) {
-        if (result.error) {
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        // Fallback: construct the Stripe Checkout URL from the session ID.
+        window.location.href = 'https://checkout.stripe.com/pay/' + results.gateway.data.stripe_session_id;
+      }
 
-          console.log(result.error.message);
-
-          var displayError = document.getElementById('error-message');
-
-          displayError.textContent = result.error.message;
-
-        }
-      });
-      
     } // end if;
 
   });
@@ -40,6 +33,6 @@ const stripeCheckout = function(publicKey) {
  */
 wp.hooks.addAction('wu_checkout_loaded', 'nextpress/wp-ultimo', function() {
 
-  stripeCheckout(wu_stripe_checkout.pk_key);
+  stripeCheckout();
 
 });
