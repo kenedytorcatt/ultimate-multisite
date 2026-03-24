@@ -2049,7 +2049,7 @@ class Domain_Manager_Test extends WP_UnitTestCase {
 	/**
 	 * Network root domain with www prefix should return null (no override needed).
 	 *
-	 * www.ultimatemultisite.com is a standard alias for the network root, not a subsite.
+	 * The www.ultimatemultisite.com host is a standard alias for the network root, not a subsite.
 	 * However, since it IS a subdomain of the network domain, the fix correctly scopes
 	 * it to .www.ultimatemultisite.com to prevent cookie bleeding.
 	 */
