@@ -45,7 +45,7 @@ class Hash {
 	 * @param string  $group Hash group. Used to increase entropy.
 	 * @return string
 	 */
-	public static function encode($number, $group = 'wp-ultimo') {
+	public static function encode($number, $group = 'ultimate-multisite') {
 
 		$alphabet = self::shuffle_alphabet($group);
 		$base     = strlen($alphabet);
@@ -78,7 +78,7 @@ class Hash {
 	 * @param string $group Hash group. Used to increase entropy.
 	 * @return string|int
 	 */
-	public static function decode($hash, $group = 'wp-ultimo') {
+	public static function decode($hash, $group = 'ultimate-multisite') {
 
 		if (empty($hash) || ! is_string($hash)) {
 			return false;
