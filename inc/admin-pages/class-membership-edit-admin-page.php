@@ -280,6 +280,10 @@ class Membership_Edit_Admin_Page extends Edit_Admin_Page {
 	 */
 	public function handle_transfer_membership_modal(): void {
 
+		if ( ! wu_request('confirm')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the transfer.', 'ultimate-multisite')));
+		}
+
 		$membership = wu_get_membership(wu_request('id'));
 
 		if ( ! $membership) {

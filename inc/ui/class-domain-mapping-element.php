@@ -507,6 +507,10 @@ class Domain_Mapping_Element extends Base_Element {
 	 */
 	public function handle_user_delete_domain_modal(): void {
 
+		if ( ! wu_request('confirm')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the deletion.', 'ultimate-multisite')));
+		}
+
 		if (wu_request('user_id')) {
 			$customer = wu_get_customer_by_user_id(wu_request('user_id'));
 		}
@@ -590,6 +594,10 @@ class Domain_Mapping_Element extends Base_Element {
 	 * @return void
 	 */
 	public function handle_user_make_domain_primary_modal(): void {
+
+		if ( ! wu_request('confirm')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the action.', 'ultimate-multisite')));
+		}
 
 		$current_site = wu_request('current_site');
 

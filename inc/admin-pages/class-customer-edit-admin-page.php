@@ -255,6 +255,10 @@ class Customer_Edit_Admin_Page extends Edit_Admin_Page {
 	 */
 	public function handle_transfer_customer_modal(): void {
 
+		if ( ! wu_request('confirm')) {
+			wp_send_json_error(new \WP_Error('not-confirmed', __('Please confirm the transfer.', 'ultimate-multisite')));
+		}
+
 		global $wpdb;
 
 		$customer    = wu_get_customer(wu_request('id'));
