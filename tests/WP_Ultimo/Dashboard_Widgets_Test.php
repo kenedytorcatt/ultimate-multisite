@@ -7,6 +7,9 @@
 
 namespace WP_Ultimo;
 
+/**
+ * Unit tests for Dashboard_Widgets.
+ */
 class Dashboard_Widgets_Test extends \WP_UnitTestCase {
 
 	/**

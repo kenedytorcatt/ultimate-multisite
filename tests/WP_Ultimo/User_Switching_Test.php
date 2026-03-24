@@ -7,6 +7,9 @@
 
 namespace WP_Ultimo;
 
+/**
+ * Unit tests for User_Switching.
+ */
 class User_Switching_Test extends \WP_UnitTestCase {
 
 	/**

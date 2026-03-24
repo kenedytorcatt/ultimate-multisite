@@ -7,6 +7,9 @@
 
 namespace WP_Ultimo;
 
+/**
+ * Unit tests for Views.
+ */
 class Views_Test extends \WP_UnitTestCase {
 
 	/**

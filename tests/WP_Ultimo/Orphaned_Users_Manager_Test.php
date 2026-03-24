@@ -7,6 +7,9 @@
 
 namespace WP_Ultimo;
 
+/**
+ * Unit tests for Orphaned_Users_Manager.
+ */
 class Orphaned_Users_Manager_Test extends \WP_UnitTestCase {
 
 	/**

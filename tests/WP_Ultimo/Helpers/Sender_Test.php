@@ -1,6 +1,8 @@
 <?php
 /**
  * Tests for the Sender helper class.
+ *
+ * @package WP_Ultimo\Tests\Helpers
  */
 
 namespace WP_Ultimo\Helpers;
@@ -8,6 +10,8 @@ namespace WP_Ultimo\Helpers;
 use WP_UnitTestCase;
 
 /**
+ * Tests for the Sender helper class.
+ *
  * @group sender
  */
 class Sender_Test extends WP_UnitTestCase {
@@ -16,11 +20,17 @@ class Sender_Test extends WP_UnitTestCase {
 	// parse_args
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test parse_args returns an array.
+	 */
 	public function test_parse_args_returns_array() {
 		$result = Sender::parse_args();
 		$this->assertIsArray($result);
 	}
 
+	/**
+	 * Test parse_args has default keys.
+	 */
 	public function test_parse_args_has_default_keys() {
 		$result = Sender::parse_args();
 
@@ -33,6 +43,9 @@ class Sender_Test extends WP_UnitTestCase {
 		$this->assertArrayHasKey('style', $result);
 	}
 
+	/**
+	 * Test parse_args from has name and email.
+	 */
 	public function test_parse_args_from_has_name_and_email() {
 		$result = Sender::parse_args();
 
@@ -40,20 +53,30 @@ class Sender_Test extends WP_UnitTestCase {
 		$this->assertArrayHasKey('email', $result['from']);
 	}
 
+	/**
+	 * Test parse_args merges custom values.
+	 */
 	public function test_parse_args_merges_custom_values() {
-		$result = Sender::parse_args([
-			'subject' => 'Custom Subject',
-			'content' => 'Custom Content',
-		]);
+		$result = Sender::parse_args(
+			[
+				'subject' => 'Custom Subject',
+				'content' => 'Custom Content',
+			]
+		);
 
 		$this->assertEquals('Custom Subject', $result['subject']);
 		$this->assertEquals('Custom Content', $result['content']);
 	}
 
+	/**
+	 * Test parse_args preserves defaults for missing keys.
+	 */
 	public function test_parse_args_preserves_defaults_for_missing_keys() {
-		$result = Sender::parse_args([
-			'subject' => 'Only Subject',
-		]);
+		$result = Sender::parse_args(
+			[
+				'subject' => 'Only Subject',
+			]
+		);
 
 		$this->assertEquals('Only Subject', $result['subject']);
 		$this->assertEquals('', $result['content']);
@@ -64,6 +87,9 @@ class Sender_Test extends WP_UnitTestCase {
 	// process_shortcodes
 	// ------------------------------------------------------------------
 
+	/**
+	 * Test process_shortcodes replaces placeholders.
+	 */
 	public function test_process_shortcodes_replaces_placeholders() {
 		$content = 'Hello {{name}}, welcome to {{site}}!';
 		$payload = [
@@ -75,13 +101,19 @@ class Sender_Test extends WP_UnitTestCase {
 		$this->assertEquals('Hello John, welcome to My Site!', $result);
 	}
 
+	/**
+	 * Test process_shortcodes returns original with empty payload.
+	 */
 	public function test_process_shortcodes_returns_original_with_empty_payload() {
 		$content = 'Hello {{name}}!';
-		$result = Sender::process_shortcodes($content, []);
+		$result  = Sender::process_shortcodes($content, []);
 
 		$this->assertEquals($content, $result);
 	}
 
+	/**
+	 * Test process_shortcodes handles missing placeholders.
+	 */
 	public function test_process_shortcodes_handles_missing_placeholders() {
 		$content = 'Hello {{name}}, your email is {{email}}';
 		$payload = [
@@ -92,25 +124,34 @@ class Sender_Test extends WP_UnitTestCase {
 		$this->assertStringContainsString('Jane', $result);
 	}
 
+	/**
+	 * Test process_shortcodes handles no placeholders.
+	 */
 	public function test_process_shortcodes_handles_no_placeholders() {
 		$content = 'No placeholders here';
-		$payload = ['key' => 'value'];
+		$payload = [ 'key' => 'value' ];
 
 		$result = Sender::process_shortcodes($content, $payload);
 		$this->assertEquals('No placeholders here', $result);
 	}
 
+	/**
+	 * Test process_shortcodes handles multiple same placeholder.
+	 */
 	public function test_process_shortcodes_handles_multiple_same_placeholder() {
 		$content = '{{name}} is {{name}}';
-		$payload = ['name' => 'Bob'];
+		$payload = [ 'name' => 'Bob' ];
 
 		$result = Sender::process_shortcodes($content, $payload);
 		$this->assertEquals('Bob is Bob', $result);
 	}
 
+	/**
+	 * Test process_shortcodes handles numeric values.
+	 */
 	public function test_process_shortcodes_handles_numeric_values() {
 		$content = 'Amount: {{amount}}';
-		$payload = ['amount' => 42];
+		$payload = [ 'amount' => 42 ];
 
 		$result = Sender::process_shortcodes($content, $payload);
 		$this->assertStringContainsString('42', $result);

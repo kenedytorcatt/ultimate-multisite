@@ -7,6 +7,9 @@
 
 namespace WP_Ultimo;
 
+/**
+ * Unit tests for Orphaned_Tables_Manager.
+ */
 class Orphaned_Tables_Manager_Test extends \WP_UnitTestCase {
 
 	/**

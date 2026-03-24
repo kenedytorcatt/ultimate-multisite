@@ -7,6 +7,9 @@
 
 namespace WP_Ultimo;
 
+/**
+ * Unit tests for the main WP_Ultimo class.
+ */
 class WP_Ultimo_Main_Test extends \WP_UnitTestCase {
 
 	/**

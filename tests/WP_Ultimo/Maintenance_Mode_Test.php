@@ -7,6 +7,9 @@
 
 namespace WP_Ultimo;
 
+/**
+ * Unit tests for Maintenance_Mode.
+ */
 class Maintenance_Mode_Test extends \WP_UnitTestCase {
 
 	/**

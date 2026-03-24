@@ -9,18 +9,36 @@ namespace WP_Ultimo\Tests\Managers;
 
 use WP_Ultimo\Managers\Notes_Manager;
 
+/**
+ * Unit tests for Notes_Manager.
+ */
 class Notes_Manager_Test extends \WP_UnitTestCase {
 
 	use Manager_Test_Trait;
 
+	/**
+	 * Get the manager class name.
+	 *
+	 * @return string
+	 */
 	protected function get_manager_class(): string {
 		return Notes_Manager::class;
 	}
 
+	/**
+	 * Get the expected slug.
+	 *
+	 * @return string|null
+	 */
 	protected function get_expected_slug(): ?string {
 		return 'notes';
 	}
 
+	/**
+	 * Get the expected model class.
+	 *
+	 * @return string|null
+	 */
 	protected function get_expected_model_class(): ?string {
 		return '\\WP_Ultimo\\Models\\Notes';
 	}

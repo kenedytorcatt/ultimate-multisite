@@ -22,7 +22,7 @@ class Debug_Test extends \WP_UnitTestCase {
 		parent::set_up();
 
 		// Define WP_ULTIMO_DEBUG for tests
-		if (!defined('WP_ULTIMO_DEBUG')) {
+		if ( ! defined('WP_ULTIMO_DEBUG')) {
 			define('WP_ULTIMO_DEBUG', true);
 		}
 	}
