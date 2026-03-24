@@ -122,7 +122,7 @@ class CPanel_Integration extends Integration {
 			],
 			'WU_CPANEL_HOST'      => [
 				'title'       => __('cPanel Host', 'ultimate-multisite'),
-				'desc'        => __('Your server hostname, typically your domain or a server address like server123.hostingprovider.com.', 'ultimate-multisite'),
+				'desc'        => __('Your domain or server hostname — without the port number or trailing characters. Example: yourdomain.com or server123.hostingprovider.com', 'ultimate-multisite'),
 				'placeholder' => __('e.g. yourdomain.com', 'ultimate-multisite'),
 			],
 			'WU_CPANEL_PORT'      => [
@@ -166,10 +166,20 @@ class CPanel_Integration extends Integration {
 			$host      = $this->get_credential('WU_CPANEL_HOST');
 			$port      = (int) ($this->get_credential('WU_CPANEL_PORT') ?: 2083);
 
+			/*
+			 * Sanitize the host value to handle common user input errors:
+			 * - Strip protocol prefix (https://, http://)
+			 * - Strip trailing semicolons, slashes, and whitespace
+			 * - Strip port number if accidentally included (e.g. yourdomain.com:2083)
+			 */
+			$clean_host = preg_replace('#^https?://#', '', (string) $host);
+			$clean_host = rtrim($clean_host, "; \t\n\r\0\x0B/");
+			$clean_host = preg_replace('#:\d+$#', '', $clean_host);
+
 			$this->api = new CPanel_API(
 				$username,
 				$password ?: null,
-				preg_replace('#^https?://#', '', (string) $host),
+				$clean_host,
 				$port,
 				false,
 				$api_token ?: null

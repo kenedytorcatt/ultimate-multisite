@@ -466,7 +466,25 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 				'next_label'   => Default_Content_Installer::get_instance()->all_done() ? __('Go to the Next Step &rarr;', 'ultimate-multisite') : __('Install', 'ultimate-multisite'),
 				'disable_next' => true,
 				'fields'       => [
-					'terms' => [
+					'hosting_tip' => [
+						'type' => 'note',
+						'desc' => sprintf(
+							'<div class="wu-bg-yellow-50 wu-border wu-border-yellow-200 wu-rounded-lg wu-p-4 wu-mb-4">
+								<div class="wu-flex">
+									<div class="wu-flex-shrink-0">
+										<span class="dashicons dashicons-warning wu-text-yellow-500"></span>
+									</div>
+									<div class="wu-ml-3">
+										<h4 class="wu-text-sm wu-font-medium wu-text-yellow-800">%s</h4>
+										<p class="wu-text-sm wu-text-yellow-700 wu-mt-1">%s</p>
+									</div>
+								</div>
+							</div>',
+							esc_html__('Using cPanel or another hosting integration?', 'ultimate-multisite'),
+							esc_html__('If your host uses cPanel (or another supported integration), configure it before creating template sites. This ensures subdomains are automatically created when template sites are added. You can set up hosting integrations after this wizard completes, under Settings → Integrations.', 'ultimate-multisite')
+						),
+					],
+					'terms'       => [
 						'type' => 'note',
 						'desc' => fn() => $this->render_installation_steps(Default_Content_Installer::get_instance()->get_steps()),
 					],
