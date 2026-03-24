@@ -77,6 +77,47 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	protected $access_token = '';
 
 	/**
+	 * Partner client ID (set when using OAuth/proxy mode).
+	 *
+	 * @since 2.0.0
+	 * @var string
+	 */
+	protected $partner_client_id = '';
+
+	/**
+	 * Currencies supported by the PayPal REST API.
+	 *
+	 * @since 2.0.0
+	 * @link https://developer.paypal.com/docs/reports/reference/paypal-supported-currencies/
+	 */
+	protected const SUPPORTED_CURRENCIES = [
+		'AUD',
+		'BRL',
+		'CAD',
+		'CNY',
+		'CZK',
+		'DKK',
+		'EUR',
+		'HKD',
+		'HUF',
+		'ILS',
+		'JPY',
+		'MYR',
+		'MXN',
+		'TWD',
+		'NZD',
+		'NOK',
+		'PHP',
+		'PLN',
+		'GBP',
+		'SGD',
+		'SEK',
+		'CHF',
+		'THB',
+		'USD',
+	];
+
+	/**
 	 * Initialization code.
 	 *
 	 * @since 2.0.0
@@ -117,8 +158,9 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	 */
 	public function set_test_mode(bool $test_mode): void {
 
-		$this->test_mode    = $test_mode;
-		$this->access_token = ''; // Clear cached token
+		$this->test_mode         = $test_mode;
+		$this->access_token      = ''; // Clear cached token
+		$this->partner_client_id = '';
 
 		$this->load_credentials();
 	}
@@ -144,6 +186,15 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 
 		// Display OAuth notices
 		add_action('admin_notices', [PayPal_OAuth_Handler::get_instance(), 'display_oauth_notices']);
+
+		// Hide PayPal from checkout when currency is not supported
+		add_filter('wu_get_active_gateways', [$this, 'maybe_remove_for_unsupported_currency']);
+
+		// Register PayPal checkout scripts (button branding)
+		add_action('wu_checkout_scripts', [$this, 'register_scripts']);
+
+		// Display PayPal logo with equal prominence on checkout
+		add_filter('wu_gateway_paypal-rest_as_option_title', [$this, 'get_checkout_label_html']);
 	}
 
 	/**
@@ -159,6 +210,55 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 		$has_manual = ! empty($this->client_id) && ! empty($this->client_secret);
 
 		return $has_oauth || $has_manual;
+	}
+
+	/**
+	 * Checks if the current store currency is supported by PayPal.
+	 *
+	 * @since 2.0.0
+	 * @return bool
+	 */
+	public static function is_currency_supported(): bool {
+
+		$currency = strtoupper((string) wu_get_setting('currency', 'USD'));
+
+		return in_array($currency, self::SUPPORTED_CURRENCIES, true);
+	}
+
+	/**
+	 * Removes PayPal from the active gateways list when the store currency is not supported.
+	 *
+	 * Hooked to 'wu_get_active_gateways'.
+	 *
+	 * @since 2.0.0
+	 * @param array $gateways The registered active gateways.
+	 * @return array
+	 */
+	public function maybe_remove_for_unsupported_currency(array $gateways): array {
+
+		if (! self::is_currency_supported()) {
+			unset($gateways['paypal-rest']);
+		}
+
+		return $gateways;
+	}
+
+	/**
+	 * Returns a branded HTML label for the PayPal option in the checkout gateway selector.
+	 *
+	 * Hooked to 'wu_gateway_paypal-rest_as_option_title'.
+	 *
+	 * @since 2.0.0
+	 * @param string $title The default title string.
+	 * @return string HTML label with the PayPal logo.
+	 */
+	public function get_checkout_label_html(string $title): string {
+
+		return sprintf(
+			'<span class="wu-inline-flex wu-items-center" style="gap:6px"><img src="%s" alt="" aria-hidden="true" height="20" style="vertical-align:middle;max-height:20px" loading="lazy"><span>%s</span></span>',
+			esc_url('https://www.paypalobjects.com/webstatic/mktg/Logo/pp-logo-100px.png'),
+			esc_html__('PayPal', 'ultimate-multisite')
+		);
 	}
 
 	/**
@@ -422,8 +522,36 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 			return $this->access_token;
 		}
 
-		// Check for cached token
-		$cache_key    = 'wu_paypal_rest_access_token_' . ($this->test_mode ? 'sandbox' : 'live');
+		$mode_suffix = $this->test_mode ? 'sandbox' : 'live';
+
+		// OAuth mode: use partner token from proxy (cached as array to preserve partner_client_id)
+		if (! empty($this->merchant_id) && (empty($this->client_id) || empty($this->client_secret))) {
+			$oauth_cache_key = 'wu_paypal_rest_partner_data_' . $mode_suffix;
+			$cached_partner  = get_site_transient($oauth_cache_key);
+
+			if ($cached_partner && ! empty($cached_partner['access_token'])) {
+				$this->partner_client_id = $cached_partner['partner_client_id'];
+				$this->access_token      = $cached_partner['access_token'];
+
+				return $this->access_token;
+			}
+
+			$partner_data = $this->get_partner_data();
+
+			if (is_wp_error($partner_data)) {
+				return $partner_data;
+			}
+
+			$this->partner_client_id = $partner_data['partner_client_id'];
+			$this->access_token      = $partner_data['access_token'];
+
+			set_site_transient($oauth_cache_key, $partner_data, 3300);
+
+			return $this->access_token;
+		}
+
+		// Manual credentials mode
+		$cache_key    = 'wu_paypal_rest_access_token_' . $mode_suffix;
 		$cached_token = get_site_transient($cache_key);
 
 		if ($cached_token) {
@@ -498,6 +626,12 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 		];
 
 		$headers = $this->add_partner_attribution_header($headers);
+
+		// In OAuth mode, add PayPal-Auth-Assertion so calls act on behalf of the connected merchant
+		if (! empty($this->merchant_id) && ! empty($this->partner_client_id)) {
+			$headers['PayPal-Auth-Assertion'] = $this->build_auth_assertion($this->partner_client_id, $this->merchant_id);
+		}
+
 		$headers = array_merge($headers, $extra_headers);
 
 		$args = [
@@ -578,7 +712,7 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	 */
 	protected function create_subscription($payment, $membership, $customer, $cart, $type): void {
 
-		$currency    = strtoupper($payment->get_currency());
+		$currency    = $this->get_payment_currency_code($payment);
 		$description = $this->get_subscription_description($cart);
 
 		// First, create or get the billing plan
@@ -698,6 +832,44 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	}
 
 	/**
+	 * Get the ISO 4217 currency code from a payment object.
+	 *
+	 * Some legacy payments store the currency symbol (e.g. "$") instead of
+	 * the ISO code. Normalise it by falling back to the store setting.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param \WP_Ultimo\Models\Payment $payment The payment object.
+	 * @return string 3-letter uppercase ISO currency code.
+	 */
+	protected function get_payment_currency_code($payment): string {
+
+		$currency = strtoupper($payment->get_currency());
+
+		// Validate it looks like an ISO 4217 code (3 uppercase ASCII letters).
+		if (preg_match('/^[A-Z]{3}$/', $currency)) {
+			return $currency;
+		}
+
+		// The stored value might be a symbol (e.g. "$") rather than a code.
+		// Look up the store currency setting — wu_get_currencies() is keyed by ISO code.
+		$store_currency = strtoupper(wu_get_setting('currency_symbol', 'USD'));
+
+		if (preg_match('/^[A-Z]{3}$/', $store_currency) && array_key_exists($store_currency, wu_get_currencies())) {
+			return $store_currency;
+		}
+
+		// Absolute fallback: find the first supported currency in the store currencies list.
+		foreach (array_keys(wu_get_currencies()) as $iso) {
+			if (in_array($iso, self::SUPPORTED_CURRENCIES, true)) {
+				return $iso;
+			}
+		}
+
+		return 'USD';
+	}
+
+	/**
 	 * Get or create a billing plan for the subscription.
 	 *
 	 * @since 2.0.0
@@ -812,12 +984,25 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	 */
 	protected function create_order($payment, $membership, $customer, $cart, $type): void {
 
-		$currency    = strtoupper($payment->get_currency());
+		$currency    = $this->get_payment_currency_code($payment);
 		$description = $this->get_subscription_description($cart);
 
 		$order_data = [
-			'intent'              => 'CAPTURE',
-			'purchase_units'      => [
+			'intent'         => 'CAPTURE',
+			'payment_source' => [
+				'paypal' => [
+					'experience_context' => [
+						'brand_name'          => wu_get_setting('company_name', get_network_option(null, 'site_name')),
+						'locale'              => str_replace('_', '-', get_locale()),
+						'shipping_preference' => 'NO_SHIPPING',
+						'user_action'         => 'PAY_NOW',
+						'return_url'          => $this->get_confirm_url(),
+						'cancel_url'          => $this->get_cancel_url(),
+					],
+					'email_address'      => $customer->get_email_address(),
+				],
+			],
+			'purchase_units' => [
 				[
 					'reference_id' => $payment->get_hash(),
 					'description'  => substr($description, 0, 127),
@@ -838,14 +1023,6 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 					],
 					'items'        => $this->build_order_items($cart, $currency),
 				],
-			],
-			'application_context' => [
-				'brand_name'          => wu_get_setting('company_name', get_network_option(null, 'site_name')),
-				'locale'              => str_replace('_', '-', get_locale()),
-				'shipping_preference' => 'NO_SHIPPING',
-				'user_action'         => 'PAY_NOW',
-				'return_url'          => $this->get_confirm_url(),
-				'cancel_url'          => $this->get_cancel_url(),
 			],
 		];
 
@@ -1227,6 +1404,25 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	}
 
 	/**
+	 * Registers and enqueues the PayPal checkout scripts for button branding.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	public function register_scripts(): void {
+
+		wp_register_script(
+			'wu-paypal-rest',
+			wu_get_asset('gateways/paypal-rest.js', 'js'),
+			['wu-checkout'],
+			wu_get_version(),
+			true
+		);
+
+		wp_enqueue_script('wu-paypal-rest');
+	}
+
+	/**
 	 * Adds the PayPal REST Gateway settings to the settings screen.
 	 *
 	 * @since 2.0.0
@@ -1265,6 +1461,22 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				],
 			]
 		);
+
+		// Currency support warning — shown when the store currency is not supported by PayPal
+		if (! self::is_currency_supported()) {
+			wu_register_settings_field(
+				'payment-gateways',
+				'paypal_rest_currency_notice',
+				[
+					'title'   => '',
+					'type'    => 'html',
+					'content' => [$this, 'render_currency_warning'],
+					'require' => [
+						'active_gateways' => 'paypal-rest',
+					],
+				]
+			);
+		}
 
 		$oauth_enabled = PayPal_OAuth_Handler::get_instance()->is_oauth_feature_enabled();
 
@@ -1490,6 +1702,33 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				esc_html__('No application fee — thank you for your support!', 'ultimate-multisite')
 			);
 		}
+	}
+
+	/**
+	 * Renders an admin notice when the store currency is not supported by PayPal.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	public function render_currency_warning(): void {
+
+		$currency = strtoupper((string) wu_get_setting('currency', 'USD'));
+		$docs_url = 'https://developer.paypal.com/docs/reports/reference/paypal-supported-currencies/';
+
+		printf(
+			'<div class="wu-p-3 wu-bg-yellow-50 wu-border wu-border-yellow-300 wu-rounded wu-text-sm wu-mb-4">
+				<p class="wu-font-semibold wu-text-yellow-800 wu-mb-1">&#9888; %s</p>
+				<p class="wu-text-yellow-700 wu-m-0">%s <a href="%s" target="_blank" rel="noopener noreferrer">%s</a></p>
+			</div>',
+			esc_html__('Unsupported Currency', 'ultimate-multisite'),
+			sprintf(
+				/* translators: %s: currency code such as "NGN" */
+				esc_html__('Your store currency (%s) is not supported by PayPal. PayPal will be hidden from the checkout until the currency is changed to a supported one.', 'ultimate-multisite'),
+				esc_html($currency)
+			),
+			esc_url($docs_url),
+			esc_html__('View supported currencies', 'ultimate-multisite')
+		);
 	}
 
 	/**

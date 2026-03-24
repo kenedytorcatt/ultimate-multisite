@@ -1998,6 +1998,21 @@ class Base_Stripe_Gateway extends Base_Gateway {
 
 			$amount = $product->get_amount();
 
+			/**
+			 * Filters the recurring product amount used to create a Stripe plan.
+			 *
+			 * Allows addons (e.g. multi-currency) to convert the product
+			 * price before the Stripe plan/price is created.
+			 *
+			 * @since 2.5.0
+			 *
+			 * @param float                       $amount  The product amount.
+			 * @param \WP_Ultimo\Models\Product   $product The product.
+			 * @param \WP_Ultimo\Checkout\Cart    $cart    The cart instance.
+			 * @return float
+			 */
+			$amount = apply_filters('wu_stripe_cart_product_amount', $amount, $product, $cart);
+
 			$discount_code = $cart->get_discount_code();
 
 			if ($discount_code) {
@@ -2017,6 +2032,7 @@ class Base_Stripe_Gateway extends Base_Gateway {
 						'price'          => $amount,
 						'interval'       => $product->get_duration_unit(),
 						'interval_count' => $product->get_duration(),
+						'currency'       => strtolower($cart->get_currency()),
 					]
 				);
 

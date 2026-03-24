@@ -969,7 +969,10 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 */
 	public function get_currency() {
 
-		// return $this->currency; For now, multi-currency is not yet supported.
+		if (! empty($this->currency)) {
+			return $this->currency;
+		}
+
 		return wu_get_setting('currency_symbol', 'USD');
 	}
 
