@@ -351,12 +351,10 @@ class Stripe_Checkout_Gateway extends Base_Stripe_Gateway {
 
 					$subscription_data['subscription_data']['trial_end'] = $next_charge;
 				}
-			}
-
-			/*
-			 * Handle trial periods.
-			 */
-			elseif ($this->order->has_trial()) {
+			} elseif ($this->order->has_trial()) {
+				/*
+				 * Handle trial periods.
+				 */
 				$subscription_data['subscription_data']['trial_end'] = $this->order->get_billing_start_date();
 			}
 		} else {
@@ -398,7 +396,7 @@ class Stripe_Checkout_Gateway extends Base_Stripe_Gateway {
 
 		// Return the session URL for direct redirect (preferred) and the session ID as fallback.
 		return [
-			'stripe_session_id'  => sanitize_text_field($session->id),
+			'stripe_session_id'   => sanitize_text_field($session->id),
 			'stripe_checkout_url' => esc_url_raw($session->url),
 		];
 	}
