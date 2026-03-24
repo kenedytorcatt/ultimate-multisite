@@ -35,6 +35,7 @@ jobs:
         run: |
           echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
           vendor/bin/phpcs --report=checkstyle --report-file=phpcs-report.xml ${{ steps.changed-files.outputs.all_changed_files }} || true
+          [ -s phpcs-report.xml ] || echo '<?xml version="1.0" encoding="UTF-8"?><checkstyle></checkstyle>' > phpcs-report.xml
 
       - name: Run PHPStan
         if: steps.changed-files.outputs.any_changed == 'true'

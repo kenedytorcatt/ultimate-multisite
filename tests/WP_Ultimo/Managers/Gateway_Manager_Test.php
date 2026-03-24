@@ -186,6 +186,147 @@ class Gateway_Manager_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test registered gateway has expected keys.
+	 */
+	public function test_registered_gateway_has_expected_keys() {
+
+		$gateway_id = 'keys-test-gw';
+		$this->manager->register_gateway($gateway_id, 'Keys Test', 'A description', Manual_Gateway::class);
+
+		$gateway = $this->manager->get_gateway($gateway_id);
+
+		$this->assertArrayHasKey('id', $gateway);
+		$this->assertArrayHasKey('title', $gateway);
+		$this->assertArrayHasKey('desc', $gateway);
+		$this->assertArrayHasKey('class_name', $gateway);
+		$this->assertArrayHasKey('active', $gateway);
+		$this->assertArrayHasKey('hidden', $gateway);
+		$this->assertArrayHasKey('gateway', $gateway);
+
+		$this->assertEquals($gateway_id, $gateway['id']);
+		$this->assertEquals('Keys Test', $gateway['title']);
+		$this->assertEquals('A description', $gateway['desc']);
+	}
+
+	/**
+	 * Test hidden gateway registration.
+	 */
+	public function test_hidden_gateway_registration() {
+
+		$gateway_id = 'hidden-gw-test';
+		$this->manager->register_gateway($gateway_id, 'Hidden', '', Manual_Gateway::class, true);
+
+		$gateway = $this->manager->get_gateway($gateway_id);
+
+		$this->assertTrue($gateway['hidden']);
+	}
+
+	/**
+	 * Test non-hidden gateway registration.
+	 */
+	public function test_non_hidden_gateway_registration() {
+
+		$gateway_id = 'visible-gw-test';
+		$this->manager->register_gateway($gateway_id, 'Visible', '', Manual_Gateway::class, false);
+
+		$gateway = $this->manager->get_gateway($gateway_id);
+
+		$this->assertFalse($gateway['hidden']);
+	}
+
+	/**
+	 * Test get_gateways_as_options filters hidden gateways.
+	 */
+	public function test_get_gateways_as_options_filters_hidden() {
+
+		$options = $this->manager->get_gateways_as_options();
+
+		$this->assertIsArray($options);
+
+		// Hidden gateways (like 'free') should be filtered out
+		foreach ($options as $option) {
+			$this->assertFalse($option['hidden']);
+		}
+	}
+
+	/**
+	 * Test on_load registers hooks.
+	 */
+	public function test_on_load_registers_hooks() {
+
+		$this->manager->on_load();
+
+		$this->assertNotFalse(has_action('wu_register_gateways', [$this->manager, 'add_default_gateways']));
+	}
+
+	/**
+	 * Test init registers plugins_loaded hook.
+	 */
+	public function test_init_registers_plugins_loaded_hook() {
+
+		$this->manager->init();
+
+		$this->assertNotFalse(has_action('plugins_loaded', [$this->manager, 'on_load']));
+	}
+
+	/**
+	 * Test handle_scheduled_payment_verification with empty payment_id.
+	 */
+	public function test_handle_scheduled_payment_verification_empty_id() {
+
+		// Should return early without error
+		$this->manager->handle_scheduled_payment_verification(0);
+
+		$this->assertTrue(true);
+	}
+
+	/**
+	 * Test handle_scheduled_payment_verification with array format.
+	 */
+	public function test_handle_scheduled_payment_verification_array_format() {
+
+		// Should handle array format without error
+		$this->manager->handle_scheduled_payment_verification([
+			'payment_id' => 0,
+			'gateway_id' => 'stripe',
+		]);
+
+		$this->assertTrue(true);
+	}
+
+	/**
+	 * Test handle_scheduled_payment_verification with nonexistent payment.
+	 */
+	public function test_handle_scheduled_payment_verification_nonexistent_payment() {
+
+		// Should return early without error for nonexistent payment
+		$this->manager->handle_scheduled_payment_verification(999999);
+
+		$this->assertTrue(true);
+	}
+
+	/**
+	 * Test maybe_schedule_payment_verification with null payment.
+	 */
+	public function test_maybe_schedule_payment_verification_null_payment() {
+
+		// Should return early without error
+		$this->manager->maybe_schedule_payment_verification(null, null, null, null, 'new');
+
+		$this->assertTrue(true);
+	}
+
+	/**
+	 * Test add_gateway_selector_field runs without error.
+	 */
+	public function test_add_gateway_selector_field() {
+
+		$this->manager->add_gateway_selector_field();
+
+		$this->assertTrue(true);
+	}
+
+	/**
 	 * Test legacy PayPal is hidden when no credentials or active gateway.
 	 */
 	public function test_legacy_paypal_hidden_without_config(): void {

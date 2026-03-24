@@ -7,6 +7,14 @@
 
 $_tests_dir = getenv('WP_TESTS_DIR');
 require 'vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
+
+// WordPress ms-functions.php accesses $_SERVER['REMOTE_ADDR'] without isset() check.
+// PHP 8.5 treats undefined array key access as an error in strict mode.
+// Set a default value to prevent "Undefined array key" errors during blog creation.
+if ( ! isset( $_SERVER['REMOTE_ADDR'] ) ) {
+	$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+}
+
 if ( ! $_tests_dir ) {
 	$_tests_dir = rtrim(sys_get_temp_dir(), '/\\') . '/wordpress-tests-lib';
 }
