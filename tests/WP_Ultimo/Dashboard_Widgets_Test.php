@@ -90,6 +90,9 @@ class Dashboard_Widgets_Test extends \WP_UnitTestCase {
 		$original = $pagenow;
 		$pagenow  = 'options.php';
 
+		// Dequeue wu-vue in case it was enqueued by a previous test
+		wp_dequeue_script('wu-vue');
+
 		$instance = $this->get_instance();
 		$instance->enqueue_scripts();
 

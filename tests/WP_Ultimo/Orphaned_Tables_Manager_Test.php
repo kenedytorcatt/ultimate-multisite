@@ -79,22 +79,32 @@ class Orphaned_Tables_Manager_Test extends \WP_UnitTestCase {
 		$orphaned = $this->get_instance()->find_orphaned_tables();
 
 		// Get active site IDs
-		$site_ids = get_sites([
-			'fields' => 'ids',
-			'number' => 0,
-		]);
+		$site_ids = get_sites(
+			[
+				'fields' => 'ids',
+				'number' => 0,
+			]
+		);
 
 		global $wpdb;
 
-		foreach ($orphaned as $table) {
+		$checked = 0;
+
+		foreach ( $orphaned as $table ) {
 			$pattern = '/^' . preg_quote($wpdb->prefix, '/') . '([0-9]+)_/';
 
-			if (preg_match($pattern, $table, $matches)) {
+			if ( preg_match($pattern, $table, $matches) ) {
 				$site_id = (int) $matches[1];
 
 				// Orphaned tables should NOT belong to active sites
 				$this->assertNotContains($site_id, $site_ids, "Table {$table} belongs to active site {$site_id}");
+				$checked++;
 			}
+		}
+
+		// If no orphaned tables exist, the test passes trivially — mark it as such
+		if ( 0 === $checked ) {
+			$this->assertTrue(true, 'No orphaned tables found — nothing to check.');
 		}
 	}
 
