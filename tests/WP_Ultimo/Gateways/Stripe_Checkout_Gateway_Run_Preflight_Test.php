@@ -174,12 +174,24 @@ class Stripe_Checkout_Gateway_Run_Preflight_Test extends \WP_UnitTestCase {
 
 		// Checkout service mock (wraps sessions)
 		$checkout_mock = new class($checkout_sessions_mock) {
+			/** @var mixed */
 			private $sessions;
 
+			/**
+			 * Constructor.
+			 *
+			 * @param mixed $sessions The sessions service mock.
+			 */
 			public function __construct($sessions) {
 				$this->sessions = $sessions;
 			}
 
+			/**
+			 * Magic getter for service properties.
+			 *
+			 * @param string $name Property name.
+			 * @return mixed
+			 */
 			public function __get($name) {
 				if ('sessions' === $name) {
 					return $this->sessions;
@@ -464,7 +476,7 @@ class Stripe_Checkout_Gateway_Run_Preflight_Test extends \WP_UnitTestCase {
 			);
 
 			// Each item must use either price (ID) or price_data
-			$has_price    = array_key_exists('price', $item);
+			$has_price      = array_key_exists('price', $item);
 			$has_price_data = array_key_exists('price_data', $item);
 
 			$this->assertTrue(
