@@ -1,10 +1,20 @@
 <?php
+/**
+ * Unit tests for the Limitations object.
+ *
+ * @package WP_Ultimo\Tests\Objects
+ */
 
 namespace WP_Ultimo\Objects;
 
 use WP_UnitTestCase;
 use WP_Ultimo\Objects\Limitations;
 
+/**
+ * Test case for WP_Ultimo\Objects\Limitations.
+ *
+ * @package WP_Ultimo\Tests\Objects
+ */
 class Limitations_Test extends WP_UnitTestCase {
 
 	/**
@@ -75,6 +85,8 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test constructor with various module data.
 	 *
 	 * @dataProvider constructorDataProvider
+	 * @param array $modules_data           Input module data.
+	 * @param int   $expected_modules_count Expected number of modules.
 	 */
 	public function test_constructor(array $modules_data, int $expected_modules_count): void {
 		$limitations = new Limitations($modules_data);
@@ -125,6 +137,8 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test magic getter method.
 	 *
 	 * @dataProvider magicGetterDataProvider
+	 * @param string $module_name  Name of the module to access.
+	 * @param bool   $should_exist Whether the module should exist.
 	 */
 	public function test_magic_getter(string $module_name, bool $should_exist): void {
 		$limitations = new Limitations();
@@ -200,6 +214,8 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test build_modules method.
 	 *
 	 * @dataProvider buildModulesDataProvider
+	 * @param array $modules_data   Input module data.
+	 * @param int   $expected_count Expected number of built modules.
 	 */
 	public function test_build_modules(array $modules_data, int $expected_count): void {
 		$limitations = new Limitations();
@@ -261,6 +277,9 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test static build method.
 	 *
 	 * @dataProvider buildMethodDataProvider
+	 * @param mixed  $data           Module data (array or JSON string).
+	 * @param string $module_name    Name of the module to build.
+	 * @param bool   $should_succeed Whether the build should succeed.
 	 */
 	public function test_build_method($data, string $module_name, bool $should_succeed): void {
 		$result = Limitations::build($data, $module_name);
@@ -302,6 +321,9 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test exists method.
 	 *
 	 * @dataProvider existsMethodDataProvider
+	 * @param array  $modules_data Input module data.
+	 * @param string $module_name  Name of the module to check.
+	 * @param bool   $should_exist Whether the module should exist.
 	 */
 	public function test_exists_method(array $modules_data, string $module_name, bool $should_exist): void {
 		$limitations = new Limitations($modules_data);
@@ -355,6 +377,8 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test has_limitations method.
 	 *
 	 * @dataProvider hasLimitationsDataProvider
+	 * @param array $modules_data Input module data.
+	 * @param bool  $expected     Expected return value.
 	 */
 	public function test_has_limitations(array $modules_data, bool $expected): void {
 		$limitations = new Limitations($modules_data);
@@ -397,6 +421,9 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test is_module_enabled method.
 	 *
 	 * @dataProvider isModuleEnabledDataProvider
+	 * @param array  $modules_data Input module data.
+	 * @param string $module_name  Name of the module to check.
+	 * @param bool   $expected     Expected return value.
 	 */
 	public function test_is_module_enabled(array $modules_data, string $module_name, bool $expected): void {
 		$limitations = new Limitations($modules_data);
@@ -515,6 +542,10 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test merge method.
 	 *
 	 * @dataProvider mergeMethodDataProvider
+	 * @param array $base_data      Base limitations data.
+	 * @param array $merge_data     Array of limitations data to merge in.
+	 * @param bool  $override       Whether to use override mode.
+	 * @param mixed $expected_value Expected value after merge.
 	 */
 	public function test_merge_method(array $base_data, array $merge_data, bool $override, $expected_value): void {
 		$limitations = new Limitations($base_data);
@@ -789,17 +820,19 @@ class Limitations_Test extends WP_UnitTestCase {
 	public function test_plugin_hidden_on_product_is_hidden_on_site(): void {
 
 		// Product limitation: plugin is explicitly hidden.
-		$product_limitations = new Limitations([
-			'plugins' => [
-				'enabled' => true,
-				'limit'   => [
-					'woocommerce/woocommerce.php' => [
-						'visibility' => 'hidden',
-						'behavior'   => 'default',
+		$product_limitations = new Limitations(
+			[
+				'plugins' => [
+					'enabled' => true,
+					'limit'   => [
+						'woocommerce/woocommerce.php' => [
+							'visibility' => 'hidden',
+							'behavior'   => 'default',
+						],
 					],
 				],
-			],
-		]);
+			]
+		);
 
 		// Site starts with empty limitations (no site-level overrides).
 		$site_limitations = new Limitations([]);
@@ -832,17 +865,19 @@ class Limitations_Test extends WP_UnitTestCase {
 	public function test_theme_hidden_on_membership_is_hidden_on_site(): void {
 
 		// Membership limitation: theme is explicitly hidden.
-		$membership_limitations = new Limitations([
-			'themes' => [
-				'enabled' => true,
-				'limit'   => [
-					'twentytwentyfour' => [
-						'visibility' => 'hidden',
-						'behavior'   => 'available',
+		$membership_limitations = new Limitations(
+			[
+				'themes' => [
+					'enabled' => true,
+					'limit'   => [
+						'twentytwentyfour' => [
+							'visibility' => 'hidden',
+							'behavior'   => 'available',
+						],
 					],
 				],
-			],
-		]);
+			]
+		);
 
 		// Site starts with empty limitations.
 		$site_limitations = new Limitations([]);
@@ -910,24 +945,28 @@ class Limitations_Test extends WP_UnitTestCase {
 	 */
 	public function test_merge_null_limit_does_not_overwrite_template_list(): void {
 
-		$plan_limitations = new Limitations([
-			'site_templates' => [
-				'enabled' => true,
-				'mode'    => 'default',
-				'limit'   => [
-					'2' => ['behavior' => 'available'],
-					'3' => ['behavior' => 'pre_selected'],
+		$plan_limitations = new Limitations(
+			[
+				'site_templates' => [
+					'enabled' => true,
+					'mode'    => 'default',
+					'limit'   => [
+						'2' => ['behavior' => 'available'],
+						'3' => ['behavior' => 'pre_selected'],
+					],
 				],
-			],
-		]);
+			]
+		);
 
-		$addon_limitations = new Limitations([
-			'site_templates' => [
-				'enabled' => true,
-				'mode'    => 'default',
-				'limit'   => null,
-			],
-		]);
+		$addon_limitations = new Limitations(
+			[
+				'site_templates' => [
+					'enabled' => true,
+					'mode'    => 'default',
+					'limit'   => null,
+				],
+			]
+		);
 
 		$merged = $plan_limitations->merge($addon_limitations);
 
@@ -942,19 +981,23 @@ class Limitations_Test extends WP_UnitTestCase {
 	 */
 	public function test_merge_null_limit_overwrites_in_override_mode(): void {
 
-		$base = new Limitations([
-			'users' => [
-				'enabled' => true,
-				'limit'   => 5,
-			],
-		]);
+		$base = new Limitations(
+			[
+				'users' => [
+					'enabled' => true,
+					'limit'   => 5,
+				],
+			]
+		);
 
-		$override = new Limitations([
-			'users' => [
-				'enabled' => true,
-				'limit'   => null,
-			],
-		]);
+		$override = new Limitations(
+			[
+				'users' => [
+					'enabled' => true,
+					'limit'   => null,
+				],
+			]
+		);
 
 		$merged = $base->merge(true, $override);
 
@@ -985,34 +1028,38 @@ class Limitations_Test extends WP_UnitTestCase {
 	public function test_checkout_plan_plus_addon_preserves_templates(): void {
 
 		// Plan with specific templates configured
-		$plan_data = new Limitations([
-			'site_templates' => [
-				'enabled' => true,
-				'mode'    => 'choose_available_templates',
-				'limit'   => [
-					'5' => ['behavior' => 'available'],
-					'7' => ['behavior' => 'available'],
-					'9' => ['behavior' => 'not_available'],
+		$plan_data = new Limitations(
+			[
+				'site_templates' => [
+					'enabled' => true,
+					'mode'    => 'choose_available_templates',
+					'limit'   => [
+						'5' => ['behavior' => 'available'],
+						'7' => ['behavior' => 'available'],
+						'9' => ['behavior' => 'not_available'],
+					],
 				],
-			],
-			'disk_space'     => [
-				'enabled' => true,
-				'limit'   => 500,
-			],
-		]);
+				'disk_space'     => [
+					'enabled' => true,
+					'limit'   => 500,
+				],
+			]
+		);
 
 		// Addon product with no template restrictions but some disk space
-		$addon_data = new Limitations([
-			'site_templates' => [
-				'enabled' => true,
-				'mode'    => 'default',
-				'limit'   => null,
-			],
-			'disk_space'     => [
-				'enabled' => true,
-				'limit'   => 100,
-			],
-		]);
+		$addon_data = new Limitations(
+			[
+				'site_templates' => [
+					'enabled' => true,
+					'mode'    => 'default',
+					'limit'   => null,
+				],
+				'disk_space'     => [
+					'enabled' => true,
+					'limit'   => 100,
+				],
+			]
+		);
 
 		// Simulate the validation rule merge
 		$limits = new Limitations([]);
@@ -1037,17 +1084,19 @@ class Limitations_Test extends WP_UnitTestCase {
 	 */
 	public function test_available_site_templates_returns_integers(): void {
 
-		$limitations = new Limitations([
-			'site_templates' => [
-				'enabled' => true,
-				'mode'    => 'choose_available_templates',
-				'limit'   => [
-					'123' => ['behavior' => 'available'],
-					'456' => ['behavior' => 'pre_selected'],
-					'789' => ['behavior' => 'not_available'],
+		$limitations = new Limitations(
+			[
+				'site_templates' => [
+					'enabled' => true,
+					'mode'    => 'choose_available_templates',
+					'limit'   => [
+						'123' => ['behavior' => 'available'],
+						'456' => ['behavior' => 'pre_selected'],
+						'789' => ['behavior' => 'not_available'],
+					],
 				],
-			],
-		]);
+			]
+		);
 
 		$available = $limitations->site_templates->get_available_site_templates();
 
