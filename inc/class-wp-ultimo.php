@@ -662,6 +662,13 @@ final class WP_Ultimo {
 		\WP_Ultimo\Compat\Honeypot_Compat::get_instance();
 
 		/*
+		 * AnsPress compatibility — prevents AnsPress from intercepting
+		 * wu-ajax requests and causing a fatal error in the membership
+		 * product-selection modal.
+		 */
+		\WP_Ultimo\Compat\AnsPress_Compat::get_instance();
+
+		/*
 		 * WooCommerce Subscriptions compatibility
 		 */
 		\WP_Ultimo\Compat\WooCommerce_Subscriptions_Compat::get_instance();

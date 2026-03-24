@@ -21,3 +21,5 @@ Here is a list of them and what you should do in these cases:
   * Anti-Splog: Although less powerful, this is also _built into Ultimate Multisite._
 
 **Note** : All other WPMU Dev plugins can be used normally alongside Ultimate Multisite. Examples include _Smush_ , _Forminator_ , _Defender,_ etc.
+
+**AnsPress – Question and Answer** AnsPress registers an AJAX dispatcher on the WordPress `init` hook that intercepts requests and calls `die()` after processing. This conflicts with Ultimate Multisite's Light Ajax system (which also fires on `init`) and causes a fatal error when selecting a product to add to a membership. As of Ultimate Multisite 2.4.3, a compatibility fix is included that automatically removes AnsPress's conflicting hook during Ultimate Multisite AJAX requests. No manual action is required — both plugins can be used together.
