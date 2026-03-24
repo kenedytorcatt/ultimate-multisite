@@ -83,12 +83,16 @@ class Stripe_Webhook_Process_Test extends \WP_UnitTestCase {
 		// Create a membership for the customer.
 		$product = wu_create_product(
 			[
-				'name'          => 'Webhook Test Plan',
-				'slug'          => 'webhook-test-plan-' . uniqid(),
-				'amount'        => 29.00,
-				'duration'      => 1,
-				'duration_unit' => 'month',
-				'type'          => 'plan',
+				'name'                => 'Webhook Test Plan',
+				'slug'                => 'webhook-test-plan-' . uniqid(),
+				'amount'              => 29.00,
+				'duration'            => 1,
+				'duration_unit'       => 'month',
+				'trial_duration'      => 0,
+				'trial_duration_unit' => 'day',
+				'type'                => 'plan',
+				'pricing_type'        => 'paid',
+				'active'              => true,
 			]
 		);
 
