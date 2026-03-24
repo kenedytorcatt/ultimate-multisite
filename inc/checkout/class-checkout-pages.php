@@ -54,7 +54,14 @@ class Checkout_Pages {
 		if ($use_custom_login) {
 			add_filter('login_url', [$this, 'filter_login_url'], 10, 3);
 
-			add_filter('lostpassword_url', [$this, 'filter_login_url'], 10, 3);
+			/*
+			 * Use a dedicated filter for lostpassword_url so that subsites
+			 * keep users on their own domain instead of redirecting to the
+			 * main network site's login page.
+			 *
+			 * @see https://github.com/Ultimate-Multisite/ultimate-multisite/issues/291
+			 */
+			add_filter('lostpassword_url', [$this, 'filter_lostpassword_url'], 10, 2);
 		}
 
 		if (is_main_site()) {
@@ -617,6 +624,61 @@ class Checkout_Pages {
 		}
 
 		return $new_login_url;
+	}
+
+	/**
+	 * Filters the lost password URL to keep users on their subsite domain.
+	 *
+	 * On the main site, this delegates to filter_login_url() so the custom
+	 * login page is used. On subsites, we return the subsite's own login
+	 * page URL (the current page) with ?action=lostpassword appended, so
+	 * users are never redirected to the main network site's wp-login.php.
+	 *
+	 * @since 2.3.2
+	 * @see https://github.com/Ultimate-Multisite/ultimate-multisite/issues/291
+	 *
+	 * @param string $lostpassword_url The default lost password URL.
+	 * @param string $redirect         URL to redirect to after password reset.
+	 * @return string
+	 */
+	public function filter_lostpassword_url($lostpassword_url, $redirect = '') {
+
+		if ( ! did_action('wp_loaded')) {
+			return $lostpassword_url;
+		}
+
+		/*
+		 * On the main site, use the custom login page (same as filter_login_url).
+		 * Pass an empty string for $force_reauth since it's not relevant here.
+		 */
+		if (is_main_site()) {
+			return $this->filter_login_url($lostpassword_url, $redirect, false);
+		}
+
+		/*
+		 * On subsites, keep the user on their own domain.
+		 *
+		 * wp_lostpassword_url() generates a URL pointing to the main site's
+		 * wp-login.php. Instead, we build the URL from the current page so
+		 * the user stays on the subsite throughout the password reset flow.
+		 *
+		 * wu_get_current_url() returns the current page URL. We strip any
+		 * existing action/error params and add action=lostpassword so the
+		 * custom login form element renders the lost-password view.
+		 */
+		$current_url = wu_get_current_url();
+
+		if ( ! $current_url) {
+			return $lostpassword_url;
+		}
+
+		$subsite_lostpassword_url = add_query_arg(
+			'action',
+			'lostpassword',
+			remove_query_arg(['action', 'error', 'checkemail'], $current_url)
+		);
+
+		return $subsite_lostpassword_url;
 	}
 
 	/**
