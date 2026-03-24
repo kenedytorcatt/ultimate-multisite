@@ -672,10 +672,20 @@ class Checkout_Pages {
 			return $lostpassword_url;
 		}
 
+		$query_args = ['action' => 'lostpassword'];
+
+		/*
+		 * Preserve the redirect_to parameter when provided by the caller,
+		 * so callers that supply a $redirect receive it on the subsite URL
+		 * just as they would on the main site via filter_login_url().
+		 */
+		if ( ! empty($redirect)) {
+			$query_args['redirect_to'] = $redirect;
+		}
+
 		$subsite_lostpassword_url = add_query_arg(
-			'action',
-			'lostpassword',
-			remove_query_arg(['action', 'error', 'checkemail'], $current_url)
+			$query_args,
+			remove_query_arg(['action', 'error', 'checkemail', 'redirect_to'], $current_url)
 		);
 
 		return $subsite_lostpassword_url;
