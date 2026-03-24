@@ -2297,7 +2297,7 @@ class Product_Test extends \WP_UnitTestCase {
 	 * Test json serialize returns same as to_array.
 	 */
 	public function test_json_serialize(): void {
-		$array = $this->product->to_array();
+		$array     = $this->product->to_array();
 		$json_data = $this->product->jsonSerialize();
 
 		$this->assertEquals($array, $json_data);
