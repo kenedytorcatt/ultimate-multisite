@@ -164,7 +164,7 @@ class Addon_Repository {
 	 * @param array                 $hook_extra Extra arguments passed to hooked filters.
 	 */
 	public function upgrader_pre_download($reply, $package, \WP_Upgrader $upgrader, $hook_extra) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
-		if (!is_bool($reply)) {
+		if (! is_bool($reply)) {
 			return $reply; // Pass through non-bool values (e.g. WP_Error or string) set by other filters.
 		}
 		if (str_starts_with($package, MULTISITE_ULTIMATE_UPDATE_URL)) {
