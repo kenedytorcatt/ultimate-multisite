@@ -218,7 +218,7 @@ abstract class Base_Host_Provider {
 
 		wu_register_settings_field(
 			'integrations',
-			"integration_{$slug}",
+			'integration_' . str_replace('-', '_', $slug),
 			[
 				'type'  => 'note',
 				'title' => $title,
