@@ -1446,11 +1446,32 @@ class Product extends Base_Model implements Limitable {
 			return $this;
 		}
 
-		if ($this->get_duration() !== $duration || $this->get_duration_unit() !== $duration_unit) {
+		/*
+		 * Use absint() for duration comparison to avoid strict type mismatches
+		 * when $duration arrives as a string from AJAX POST data (e.g. "1" vs 1).
+		 */
+		$duration_matches_base = (
+			absint($duration) === $this->get_duration() && $this->get_duration_unit() === $duration_unit
+		);
+
+		/*
+		 * Treat "1 year" and "12 months" as equivalent durations so that a product
+		 * configured with duration=12/unit=month is visible when the period selector
+		 * is set to duration=1/unit=year, and vice-versa.
+		 */
+		$duration_matches_base = $duration_matches_base || (
+			absint($duration) === 1 && 'year' === $duration_unit &&
+			$this->get_duration() === 12 && 'month' === $this->get_duration_unit()
+		) || (
+			absint($duration) === 12 && 'month' === $duration_unit &&
+			$this->get_duration() === 1 && 'year' === $this->get_duration_unit()
+		);
+
+		if ( ! $duration_matches_base) {
 			$price_variation = $this->get_price_variation($duration, $duration_unit);
 		}
 
-		if (absint($duration) === $this->get_duration() && $this->get_duration_unit() === $duration_unit) {
+		if ($duration_matches_base) {
 			$price_variation = [
 				'amount' => $this->get_amount(),
 			];
@@ -1533,6 +1554,11 @@ class Product extends Base_Model implements Limitable {
 		$price_variations = $this->get_price_variations();
 
 		if ( ! empty($price_variations)) {
+			/*
+			 * Normalise equivalent yearly representations before searching.
+			 * "12 months" and "1 year" represent the same billing cycle, so
+			 * convert both to the canonical "1 year" form for comparison.
+			 */
 			if (absint($duration) === 12 && 'month' === $duration_unit) {
 				$duration = 1;
 
@@ -1540,8 +1566,21 @@ class Product extends Base_Model implements Limitable {
 			}
 
 			foreach ($price_variations as $pv) {
-				if (absint($pv['duration']) === absint($duration) && $pv['duration_unit'] === $duration_unit) {
-					$pv['monthly_amount'] = $pv['amount'] / (wu_convert_duration_unit_to_month($duration_unit) * $pv['duration']);
+				$pv_duration      = absint($pv['duration']);
+				$pv_duration_unit = $pv['duration_unit'];
+
+				/*
+				 * Normalise the stored variation to the same canonical form so
+				 * that a variation saved as "12 months" matches a request for
+				 * "1 year" (and vice-versa).
+				 */
+				if ($pv_duration === 12 && 'month' === $pv_duration_unit) {
+					$pv_duration      = 1;
+					$pv_duration_unit = 'year';
+				}
+
+				if ($pv_duration === absint($duration) && $pv_duration_unit === $duration_unit) {
+					$pv['monthly_amount'] = $pv['amount'] / (wu_convert_duration_unit_to_month($duration_unit) * absint($duration));
 
 					$price_variation = $pv;
 

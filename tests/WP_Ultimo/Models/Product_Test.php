@@ -2125,6 +2125,122 @@ class Product_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test get_as_variation handles string duration from AJAX POST data (issue #328).
+	 *
+	 * When duration arrives as a string "1" from AJAX, the strict !== comparison
+	 * with the integer 1 returned by get_duration() must not cause a false mismatch.
+	 */
+	public function test_get_as_variation_string_duration_matches_base(): void {
+		$this->product->set_amount(19.99);
+		$this->product->set_duration(1);
+		$this->product->set_duration_unit('month');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations([]);
+
+		// Simulate AJAX POST: duration arrives as string "1", not integer 1.
+		$result = $this->product->get_as_variation('1', 'month');
+		$this->assertInstanceOf(Product::class, $result);
+		$this->assertEquals(19.99, $result->get_amount());
+	}
+
+	/**
+	 * Test get_as_variation treats a yearly product as matching "1 year" request (issue #328).
+	 *
+	 * A product configured with duration=1/unit=year must be visible when the period
+	 * selector requests duration=1/unit=year, even when no price variations are stored.
+	 */
+	public function test_get_as_variation_yearly_product_matches_year_request(): void {
+		$this->product->set_amount(199.99);
+		$this->product->set_duration(1);
+		$this->product->set_duration_unit('year');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations([]);
+
+		$result = $this->product->get_as_variation(1, 'year');
+		$this->assertInstanceOf(Product::class, $result);
+		$this->assertEquals(199.99, $result->get_amount());
+	}
+
+	/**
+	 * Test get_as_variation treats "12 months" and "1 year" as equivalent (issue #328).
+	 *
+	 * A product configured with duration=12/unit=month must be visible when the period
+	 * selector requests duration=1/unit=year (and vice-versa).
+	 */
+	public function test_get_as_variation_12months_equals_1year(): void {
+		$this->product->set_amount(199.99);
+		$this->product->set_duration(12);
+		$this->product->set_duration_unit('month');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations([]);
+
+		// Request "1 year" — should match a product configured as "12 months".
+		$result = $this->product->get_as_variation(1, 'year');
+		$this->assertInstanceOf(Product::class, $result);
+		$this->assertEquals(199.99, $result->get_amount());
+	}
+
+	/**
+	 * Test get_as_variation treats "1 year" product as matching "12 months" request (issue #328).
+	 */
+	public function test_get_as_variation_1year_equals_12months(): void {
+		$this->product->set_amount(199.99);
+		$this->product->set_duration(1);
+		$this->product->set_duration_unit('year');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations([]);
+
+		// Request "12 months" — should match a product configured as "1 year".
+		$result = $this->product->get_as_variation(12, 'month');
+		$this->assertInstanceOf(Product::class, $result);
+		$this->assertEquals(199.99, $result->get_amount());
+	}
+
+	/**
+	 * Test get_price_variation finds a "12 month" variation when requesting "1 year" (issue #328).
+	 */
+	public function test_get_price_variation_12months_variation_found_for_1year_request(): void {
+		$this->product->set_amount(19.99);
+		$this->product->set_duration(1);
+		$this->product->set_duration_unit('month');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations([
+			[
+				'duration'      => 12,
+				'duration_unit' => 'month',
+				'amount'        => 199.99,
+			],
+		]);
+
+		// Requesting "1 year" should find the "12 months" variation.
+		$variation = $this->product->get_price_variation(1, 'year');
+		$this->assertNotFalse($variation);
+		$this->assertEquals(199.99, $variation['amount']);
+	}
+
+	/**
+	 * Test get_price_variation finds a "1 year" variation when requesting "12 months" (issue #328).
+	 */
+	public function test_get_price_variation_1year_variation_found_for_12months_request(): void {
+		$this->product->set_amount(19.99);
+		$this->product->set_duration(1);
+		$this->product->set_duration_unit('month');
+		$this->product->set_pricing_type('paid');
+		$this->product->set_price_variations([
+			[
+				'duration'      => 1,
+				'duration_unit' => 'year',
+				'amount'        => 199.99,
+			],
+		]);
+
+		// Requesting "12 months" should find the "1 year" variation.
+		$variation = $this->product->get_price_variation(12, 'month');
+		$this->assertNotFalse($variation);
+		$this->assertEquals(199.99, $variation['amount']);
+	}
+
+	/**
 	 * Test shareable link returns a string.
 	 */
 	public function test_get_shareable_link(): void {
