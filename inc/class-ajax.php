@@ -261,21 +261,23 @@ class Ajax implements \WP_Ultimo\Interfaces\Singleton {
 		foreach ($data_sources as $function) {
 			$results = call_user_func($function, $query);
 
-			array_map(
+			$results = array_map(
 				function ($item) {
 
-					$url = str_replace('_', '-', (string) $item->model);
+					$row = $item->to_array();
 
-					$item->value = wu_network_admin_url(
+					$url = str_replace('_', '-', (string) $row['model']);
+
+					$row['value'] = wu_network_admin_url(
 						"wp-ultimo-edit-{$url}",
 						[
 							'id' => $item->get_id(),
 						]
 					);
 
-					$item->group = ucwords((string) $item->model) . 's';
+					$row['group'] = ucwords((string) $row['model']) . 's';
 
-					return $item;
+					return $row;
 				},
 				$results
 			);
