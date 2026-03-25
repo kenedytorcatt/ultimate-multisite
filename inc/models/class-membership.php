@@ -2046,6 +2046,23 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 
 		$pending_site->set_type('customer_owned');
 
+		/*
+		 * Ensure the template ID is set when the product uses
+		 * "Assign Site Template" mode. During checkout the
+		 * wu_checkout_template_id filter sets this on the pending
+		 * site data, but if the checkout form has no template
+		 * selection field the value may still be empty. Re-apply
+		 * the filter here as a safety net so the assigned template
+		 * is always honoured.
+		 *
+		 * @since 2.5.0
+		 */
+		$template_id = apply_filters('wu_checkout_template_id', (int) $pending_site->get_template_id(), $this, null);
+
+		if ($template_id && $template_id !== (int) $pending_site->get_template_id()) {
+			$pending_site->set_template_id($template_id);
+		}
+
 		try {
 			$saved = $pending_site->save();
 		} catch (\Throwable $e) {
