@@ -26,11 +26,13 @@ defined('ABSPATH') || exit;
  */
 class Site_Manager extends Base_Manager {
 
-	use \WP_Ultimo\Apis\Rest_Api;
 	use \WP_Ultimo\Apis\WP_CLI;
 	use \WP_Ultimo\Apis\MCP_Abilities;
 	use \WP_Ultimo\Apis\Command_Palette;
 	use \WP_Ultimo\Traits\Singleton;
+	use \WP_Ultimo\Apis\Rest_Api {
+		\WP_Ultimo\Apis\Rest_Api::get_collection_params as trait_get_collection_params;
+	}
 
 	/**
 	 * The manager slug.
@@ -134,7 +136,7 @@ class Site_Manager extends Base_Manager {
 	 */
 	public function get_collection_params() {
 
-		$params = parent::get_collection_params();
+		$params = $this->trait_get_collection_params();
 
 		$params['type'] = [
 			'description'       => __('Filter sites by type (e.g. customer_owned, site_template, pending, external).', 'ultimate-multisite'),
