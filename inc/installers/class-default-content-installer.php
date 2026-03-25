@@ -356,11 +356,25 @@ class Default_Content_Installer extends Base_Installer {
 			$status->save();
 		}
 
-		$post_content = '
-			<!-- wp:shortcode -->
-				[wu_checkout slug="%s"]
-			<!-- /wp:shortcode -->
-		';
+		/*
+		 * Build a Gutenberg block layout: three columns (25/50/25) with the
+		 * Ultimate Multisite checkout block centred in the middle column.
+		 * This gives site owners a clean starting point that is easy to
+		 * customise in the block editor without touching shortcode syntax.
+		 */
+		$post_content = '<!-- wp:columns {"align":"wide"} -->
+<div class="wp-block-columns alignwide"><!-- wp:column {"width":"25%"} -->
+<div class="wp-block-column" style="flex-basis:25%"></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"width":"50%"} -->
+<div class="wp-block-column" style="flex-basis:50%"><!-- wp:wp-ultimo/checkout {"slug":"%s"} /--></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"width":"25%"} -->
+<div class="wp-block-column" style="flex-basis:25%"></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns -->';
 
 		/*
 		 * Create the page on the main site.
