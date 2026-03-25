@@ -143,6 +143,7 @@ class Domain_List_Admin_Page extends List_Admin_Page {
 				'type'            => 'toggle',
 				'title'           => __('Main WP Multisite WaaS Domain', 'ultimate-multisite'),
 				'desc'            => __('Set this as the main WaaS website domain.', 'ultimate-multisite'),
+				'tooltip'         => __('Warning: Changing the main WaaS domain will affect all URLs across your entire WP Multisite WaaS network. This is different from host-level "Primary Domain" settings (e.g. www vs non-www). Only change this if you intend to move your entire WaaS network to a new domain.', 'ultimate-multisite'),
 				'wrapper_classes' => 'wu-primary-domain-field',
 				'html_attr'       => [
 					'v-model'                       => 'primary_domain',

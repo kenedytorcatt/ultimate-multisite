@@ -1,4 +1,4 @@
-/* global wu_on_load */
+/* global wu_on_load, wp */
 (function($) {
 
   // eslint-disable-next-line no-undef
@@ -28,14 +28,15 @@
       // eslint-disable-next-line no-alert
       var confirmed = window.confirm(
         // translators: Confirmation dialog shown before setting a domain as the main WaaS domain.
-        'Are you sure you want to change the main domain used for this WP Multisite WaaS website?\n\n' +
-        'This will affect all URLs across your entire network and may cause a temporary disruption. ' +
-        'Ensure your DNS is correctly configured before proceeding.'
+        wp.i18n.__(
+          'Are you sure you want to change the main domain used for this WP Multisite WaaS website?\n\nThis will affect all URLs across your entire network and may cause a temporary disruption. Ensure your DNS is correctly configured before proceeding.',
+          'ultimate-multisite'
+        )
       );
 
       if ( ! confirmed) {
-        // Revert the checkbox state and update the Vue model.
-        $toggle.prop('checked', false).trigger('input');
+        // Revert the checkbox state and trigger 'change' so Vue v-model stays in sync.
+        $toggle.prop('checked', false).trigger('change');
       }
     });
 
