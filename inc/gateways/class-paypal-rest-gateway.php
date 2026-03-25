@@ -255,9 +255,9 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 	public function get_checkout_label_html(string $title): string {
 
 		return sprintf(
-			'<span class="wu-inline-flex wu-items-center" style="gap:6px"><img src="%s" alt="" aria-hidden="true" height="20" style="vertical-align:middle;max-height:20px" loading="lazy"><span>%s</span></span>',
-			esc_url('https://www.paypalobjects.com/webstatic/mktg/Logo/pp-logo-100px.png'),
-			esc_html__('PayPal', 'ultimate-multisite')
+			'<span style="display:flex;align-items:center;flex:1;min-width:0"><span>%s</span><img src="%s" alt="PayPal" height="20" style="margin-left:auto;max-height:20px;display:block" loading="lazy"></span>',
+			esc_html__('PayPal', 'ultimate-multisite'),
+			esc_url('https://www.paypalobjects.com/webstatic/mktg/Logo/pp-logo-100px.png')
 		);
 	}
 
@@ -1603,10 +1603,11 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				'tooltip'         => __('This is the URL PayPal should send webhook calls to.', 'ultimate-multisite'),
 				'type'            => 'text-display',
 				'copy'            => true,
-				'default'         => $this->get_webhook_listener_url(),
+				'display_value'   => $this->get_webhook_listener_url(),
 				'wrapper_classes' => '',
 				'require'         => [
-					'active_gateways' => 'paypal-rest',
+					'active_gateways'              => 'paypal-rest',
+					'paypal_rest_show_manual_keys' => 1,
 				],
 			]
 		);

@@ -529,6 +529,7 @@ class Scripts {
 
 		// Map setting to zxcvbn score.
 		$strength_map = [
+			'weak'         => 2,
 			'medium'       => 3,
 			'strong'       => 4,
 			'super_strong' => 4,

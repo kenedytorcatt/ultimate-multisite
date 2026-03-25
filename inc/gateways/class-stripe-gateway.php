@@ -287,10 +287,11 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 				'tooltip'         => __('This is the URL Stripe should send webhook calls to.', 'ultimate-multisite'),
 				'type'            => 'text-display',
 				'copy'            => true,
-				'default'         => $this->get_webhook_listener_url(),
+				'display_value'   => $this->get_webhook_listener_url(),
 				'wrapper_classes' => '',
 				'require'         => [
 					'active_gateways' => 'stripe',
+					'stripe_show_direct_keys' => 1,
 				],
 			]
 		);

@@ -266,33 +266,36 @@ class Signup_Field_Billing_Address extends Base_Signup_Field {
 			}
 		}
 
+		/*
+		 * Gateways that collect billing address (country, zip) natively on their
+		 * own checkout surface, so we do not need to ask for it here.
+		 *
+		 * - Stripe / Stripe Checkout  – Payment Element collects address.
+		 * - PayPal (legacy + REST)    – PayPal collects address on its own page.
+		 */
+		$self_billing_gateways = "gateway && (gateway.startsWith('stripe') || gateway === 'paypal' || gateway === 'paypal-rest')";
+
 		foreach ($fields as $field_key => &$field) {
 			$field['wrapper_classes']              = trim(wu_get_isset($field, 'wrapper_classes', '') . ' ' . $attributes['element_classes']);
 			$field['wrapper_html_attr']['v-cloak'] = 1;
 
 			/*
-			 * billing_country uses v-if so the input is removed from the DOM
-			 * when payment is not required. This prevents the server-side
-			 * required_with:billing_country rule from firing on a field
-			 * the user cannot see or edit.
+			 * billing_country uses v-if (not v-show) so the input is removed
+			 * from the DOM when payment is not required. This prevents the
+			 * server-side required_with:billing_country rule from firing on a
+			 * field the user cannot see or edit.
+			 *
+			 * For gateways that handle their own address collection (Stripe,
+			 * PayPal) we also remove the field from the DOM so that it is never
+			 * submitted and server-side validation cannot fire.
 			 */
-			if ('billing_country' === $field_key) {
-				$field['wrapper_html_attr']['v-if'] = 'order === false || order.should_collect_payment';
+			if ('billing_country' === $field_key || 'billing_zip_code' === $field_key) {
+				$field['wrapper_html_attr']['v-if'] = "(order === false || order.should_collect_payment) && !($self_billing_gateways)";
+			} elseif ($zip_only) {
+				// Other fields in zip_only mode share the same gateway exclusion.
+				$field['wrapper_html_attr']['v-if'] = "!($self_billing_gateways)";
 			} else {
 				$field['wrapper_html_attr']['v-show'] = 'order === false || order.should_collect_payment';
-			}
-
-			/*
-			 * When zip_and_country is enabled, remove the billing address fields
-			 * from the DOM when any Stripe gateway is selected. Stripe's Payment
-			 * Element and Stripe Checkout both collect Country and ZIP natively.
-			 *
-			 * Uses v-if (not v-show) so the inputs are removed from the DOM
-			 * entirely, preventing them from being submitted with the form
-			 * and triggering server-side required validation.
-			 */
-			if ($zip_only) {
-				$field['wrapper_html_attr']['v-if'] = "!(gateway && gateway.startsWith('stripe'))";
 			}
 		}
 

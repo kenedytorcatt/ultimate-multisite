@@ -193,13 +193,13 @@ class MCP_Adapter implements \WP_Ultimo\Interfaces\Singleton {
 			'api',
 			'mcp_serveer_urel',
 			[
-				'title'   => __('MCP Server URL', 'ultimate-multisite'),
-				'desc'    => '',
-				'tooltip' => __('This is the URL where the MCP server is accessible via HTTP.', 'ultimate-multisite'),
-				'copy'    => true,
-				'type'    => 'text-display',
-				'default' => rest_url('mcp/mcp-adapter-default-server'),
-				'require' => [
+				'title'         => __('MCP Server URL', 'ultimate-multisite'),
+				'desc'          => '',
+				'tooltip'       => __('This is the URL where the MCP server is accessible via HTTP.', 'ultimate-multisite'),
+				'copy'          => true,
+				'type'          => 'text-display',
+				'display_value' => rest_url('mcp/mcp-adapter-default-server'),
+				'require'       => [
 					'enable_mcp' => 1,
 				],
 			]
@@ -208,13 +208,13 @@ class MCP_Adapter implements \WP_Ultimo\Interfaces\Singleton {
 			'api',
 			'mcp_stdio_commande',
 			[
-				'title'   => __('STDIO Command', 'ultimate-multisite'),
-				'desc'    => '',
-				'tooltip' => __('This is the WP-CLI command to run the MCP server via STDIO transport.', 'ultimate-multisite'),
-				'copy'    => true,
-				'type'    => 'text-display',
-				'default' => '<code>wp mcp-adapter serve --server=mcp-adapter-default-server --user=admin</code>',
-				'require' => [
+				'title'         => __('STDIO Command', 'ultimate-multisite'),
+				'desc'          => '',
+				'tooltip'       => __('This is the WP-CLI command to run the MCP server via STDIO transport.', 'ultimate-multisite'),
+				'copy'          => true,
+				'type'          => 'text-display',
+				'display_value' => '<code>wp mcp-adapter serve --server=mcp-adapter-default-server --user=admin</code>',
+				'require'       => [
 					'enable_mcp' => 1,
 				],
 			]

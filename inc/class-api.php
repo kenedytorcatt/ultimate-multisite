@@ -180,13 +180,13 @@ class API implements \WP_Ultimo\Interfaces\Singleton {
 			'api',
 			'api_url',
 			[
-				'title'   => __('API URL', 'ultimate-multisite'),
-				'desc'    => '',
-				'tooltip' => '',
-				'copy'    => true,
-				'type'    => 'text-display',
-				'default' => network_site_url('wp-json'),
-				'require' => [
+				'title'         => __('API URL', 'ultimate-multisite'),
+				'desc'          => '',
+				'tooltip'       => '',
+				'copy'          => true,
+				'type'          => 'text-display',
+				'display_value' => network_site_url('wp-json'),
+				'require'       => [
 					'enable_api' => true,
 				],
 			]
@@ -201,7 +201,7 @@ class API implements \WP_Ultimo\Interfaces\Singleton {
 				'tooltip'         => '',
 				'type'            => 'text-display',
 				'copy'            => true,
-				'default'         => wp_generate_password(24, false),
+				'display_value'   => wp_generate_password(24, false),
 				'wrapper_classes' => 'sm:wu-w-1/2 wu-float-left',
 				'require'         => [
 					'enable_api' => true,
@@ -217,7 +217,7 @@ class API implements \WP_Ultimo\Interfaces\Singleton {
 				'tooltip'         => '',
 				'type'            => 'text-display',
 				'copy'            => true,
-				'default'         => wp_generate_password(24, false),
+				'display_value'   => wp_generate_password(24, false),
 				'wrapper_classes' => 'sm:wu-border-l-0 sm:wu-w-1/2 wu-float-left',
 				'require'         => [
 					'enable_api' => 1,
