@@ -22,6 +22,18 @@ class Performance_Comparator {
         'memory_usage_mb' => 40,   // 40% increase for critical
         'database_queries' => 25,  // 25% increase for critical
     ];
+
+    /**
+     * Minimum absolute change required before a percentage threshold is applied.
+     * Prevents false positives on sub-millisecond measurements where CI runner
+     * noise (scheduler jitter, CPU load) dominates over real regressions.
+     * A 42% change on 0.26ms is only 0.11ms — well within normal system noise.
+     */
+    private $minimum_absolute_change = [
+        'execution_time_ms' => 1.0, // Ignore changes smaller than 1ms
+        'memory_usage_mb' => 0.5,   // Ignore changes smaller than 0.5MB
+        'database_queries' => 1,    // Ignore changes smaller than 1 query
+    ];
     
     public function __construct($baseline_file, $current_file) {
         $this->baseline_results = $this->load_results($baseline_file);
@@ -118,13 +130,24 @@ class Performance_Comparator {
             
             $change_percent = (($current_value - $baseline_value) / $baseline_value) * 100;
             
+            $absolute_change = $current_value - $baseline_value;
+
             $result['changes'][$metric] = [
                 'baseline' => $baseline_value,
                 'current' => $current_value,
                 'change_percent' => round($change_percent, 2),
-                'change_absolute' => $current_value - $baseline_value
+                'change_absolute' => $absolute_change
             ];
-            
+
+            // Skip threshold checks when the absolute change is below the noise floor.
+            // Sub-millisecond timing differences are dominated by CI runner jitter and
+            // do not represent real regressions.
+            $min_absolute = $this->minimum_absolute_change[$metric] ?? 0;
+            if (abs($absolute_change) < $min_absolute) {
+                // Treat as no_change — noise floor not exceeded
+                continue;
+            }
+
             // Check for critical regression
             if ($change_percent > $this->critical_thresholds[$metric]) {
                 $result['status'] = 'critical_regression';

@@ -103,6 +103,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+
+      - name: Install PHP Dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
       - name: Run WP Performance Tests
         uses: swissspidy/wp-performance-action@v2
         with:
@@ -113,3 +121,4 @@ jobs:
           create-comment: ${{ github.event_name == 'pull_request' }}
           print-results: true
           upload-artifacts: true
+          debug: ${{ runner.debug == '1' }}
