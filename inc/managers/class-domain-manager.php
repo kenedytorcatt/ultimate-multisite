@@ -1112,11 +1112,6 @@ class Domain_Manager extends Base_Manager {
 	 */
 	public function load_integrations(): void {
 
-		/*
-		* Loads our Laravel Forge integration.
-		*/
-		\WP_Ultimo\Integrations\Host_Providers\Laravel_Forge_Host_Provider::get_instance();
-
 		/**
 		 * Allow developers to add their own host provider integrations via wp plugins.
 		 *
