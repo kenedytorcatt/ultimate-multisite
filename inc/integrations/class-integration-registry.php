@@ -132,6 +132,8 @@ class Integration_Registry {
 		$this->register(new Providers\Rocket\Rocket_Integration());
 		$this->register(new Providers\WPEngine\WPEngine_Integration());
 		$this->register(new Providers\WPMUDEV\WPMUDEV_Integration());
+		$this->register(new Providers\BunnyNet\BunnyNet_Integration());
+		$this->register(new Providers\LaravelForge\LaravelForge_Integration());
 	}
 
 	/**
@@ -178,6 +180,8 @@ class Integration_Registry {
 		$this->add_capability('rocket', new Providers\Rocket\Rocket_Domain_Mapping());
 		$this->add_capability('wpengine', new Providers\WPEngine\WPEngine_Domain_Mapping());
 		$this->add_capability('wpmudev', new Providers\WPMUDEV\WPMUDEV_Domain_Mapping());
+		$this->add_capability('bunnynet', new Providers\BunnyNet\BunnyNet_Domain_Mapping());
+		$this->add_capability('laravel-forge', new Providers\LaravelForge\LaravelForge_Domain_Mapping());
 	}
 
 	/**
