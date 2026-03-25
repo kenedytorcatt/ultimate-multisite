@@ -3,6 +3,10 @@
 	"steps": [
 		{
 			"step": "enableMultisite"
+		},
+		{
+			"step": "activatePlugin",
+			"pluginPath": "ultimate-multisite/ultimate-multisite.php"
 		}
 	]
 }
