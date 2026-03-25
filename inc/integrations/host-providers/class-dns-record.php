@@ -142,6 +142,18 @@ class DNS_Record {
 	}
 
 	/**
+	 * Get the record ID.
+	 *
+	 * @since 2.3.0
+	 *
+	 * @return string
+	 */
+	public function get_id(): string {
+
+		return $this->id;
+	}
+
+	/**
 	 * Get the record type.
 	 *
 	 * @since 2.3.0

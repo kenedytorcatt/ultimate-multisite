@@ -112,7 +112,7 @@
 									self.error = response.data.message;
 								}
 							} else {
-								self.error = response.data?.message || 'Failed to load DNS records.';
+								self.error = (response.data && response.data.message) || 'Failed to load DNS records.';
 							}
 						},
 						error: function(xhr, status, errorMsg) {
@@ -294,7 +294,7 @@
 								self.selectedRecords = [];
 								self.loadRecords();
 							} else {
-								alert('Error: ' + (response.data?.message || 'Failed to delete records.'));
+								alert('Error: ' + ((response.data && response.data.message) || 'Failed to delete records.'));
 							}
 						},
 						error: function() {
