@@ -189,14 +189,28 @@ jobs:
         run: npm run stop-server
         working-directory: .wp-performance-action/env
 
-      - name: Print performance results
+      - name: Generate performance results report
+        id: prepare-results
         if: always()
         run: |
+          WP_ARTIFACTS_PATH="$GITHUB_WORKSPACE/.wp-performance-action/env/artifacts"
+          RESULTS_JSON="$WP_ARTIFACTS_PATH/performance-results.json"
+          if [ -f "$RESULTS_JSON" ]; then
+            UUID=$(uuidgen)
+            cp "$RESULTS_JSON" "$RUNNER_TEMP/performance-results-$UUID.json"
+            echo "results=$RUNNER_TEMP/performance-results-$UUID.json" >> "$GITHUB_OUTPUT"
+            REPOSITORY_URL="${{ github.server_url }}/${{ github.repository }}" \
+              npm run test:performance:results "$RUNNER_TEMP/performance-results-$UUID.json"
+          fi
+        working-directory: .wp-performance-action/env
+
+      - name: Add workflow summary
+        if: always()
+        run: |
+          WP_ARTIFACTS_PATH="$GITHUB_WORKSPACE/.wp-performance-action/env/artifacts"
           if [ -f "$WP_ARTIFACTS_PATH/performance-results.md" ]; then
             cat "$WP_ARTIFACTS_PATH/performance-results.md" >> "$GITHUB_STEP_SUMMARY"
           fi
-        env:
-          WP_ARTIFACTS_PATH: ${{ github.workspace }}/.wp-performance-action/env/artifacts
 
       - name: Upload performance results
         if: always()
@@ -215,7 +229,7 @@ jobs:
           body-includes: Performance test results for
 
       - name: Comment on PR with performance results
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && hashFiles('.wp-performance-action/env/artifacts/performance-results.md') != ''
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9
         with:
           issue-number: ${{ github.event.pull_request.number }}
