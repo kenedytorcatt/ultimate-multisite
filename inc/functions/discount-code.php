@@ -95,7 +95,7 @@ function wu_create_discount_code($discount_code_data) {
 			'name'            => false,
 			'code'            => false,
 			'value'           => false,
-			'setup_fee_value' => false,
+			'setup_fee_value' => 0,
 			'start_date'      => false,
 			'active'          => true,
 			'expiration_date' => false,

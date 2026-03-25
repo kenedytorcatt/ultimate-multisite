@@ -755,7 +755,11 @@
 
 								case 'same': {
 
-									if (fieldVal !== val(param)) {
+									// Only validate if the field is present in the form values.
+									// If the field is absent (e.g. email_address_confirmation when
+									// the checkout form does not include a confirmation field), skip
+									// the check so the form can still be submitted.
+									if ((field in values) && fieldVal !== val(param)) {
 
 										addError(field, (i18n.field_same || '%s must match %s.').replace('%s', label(field)).replace('%s', label(param)));
 

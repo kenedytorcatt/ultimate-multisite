@@ -908,14 +908,14 @@ class Cart implements \JsonSerializable {
 			}
 
 			/*
-			 * Set the type to addon.
-			 */
+			* Set the type to addon.
+			*/
 			$this->cart_type = 'addon';
 
 			/*
-			 * Sets the durations to avoid problems
-			 * with addon purchases.
-			 */
+			* Sets the durations to avoid problems
+			* with addon purchases.
+			*/
 			$plan_product = $membership->get_plan();
 
 			if ($plan_product && ! $membership->is_free()) {
@@ -924,35 +924,65 @@ class Cart implements \JsonSerializable {
 			}
 
 			/*
-			 * Checks the membership to see if we need to add back the
-			 * setup fee.
-			 *
-			 * If the membership was already successfully charged once,
-			 * it probably means that the setup fee was already paid, so we can skip it.
-			 */
-			add_filter('wu_apply_signup_fee', fn() => $membership->get_times_billed() <= 0);
+			* Apply existing discount code from membership to the cart.
+			* This ensures that discount codes with 'apply_to_renewals' setting
+			* are properly applied to addon purchases.
+			*
+			* Note: get_discount_code() returns a Discount_Code object or false.
+			* In rare cases with legacy data, it could be a string code that needs
+			* to be resolved to an object.
+			*
+			* @since 2.0.12
+			*/
+			$membership_discount_code = $membership->get_discount_code();
+
+			// Resolve string discount codes to objects (legacy data compatibility)
+			if (is_string($membership_discount_code) && ! empty($membership_discount_code)) {
+				$membership_discount_code = wu_get_discount_code_by_code($membership_discount_code);
+			}
+
+			if (
+			$membership_discount_code instanceof \WP_Ultimo\Models\Discount_Code
+			&& $membership_discount_code->should_apply_to_renewals()
+			) {
+				$this->add_discount_code($membership_discount_code);
+				$this->reapply_discounts_to_existing_line_items();
+			}
 
 			/*
-			 * Adds the membership plan back in, for completeness.
-			 * This is also useful to make sure we present
-			 * the totals correctly for the customer.
-			 *
-			 * Allows filtering for addons like domain registration where
-			 * only the addon product should appear (not the existing plan).
-			 *
-			 * @since 2.4.12
-			 * @param bool $should_include Whether to include the existing plan.
-			 * @param self $cart The cart object.
-			 * @param \WP_Ultimo\Models\Membership $membership The existing membership.
-			 */
+			* For addon-only purchases, we should NOT add the existing plan back
+			* at full price and then calculate pro-rata credits. This was causing
+			* the customer to be charged for the next billing period in advance.
+			*
+			* Instead, we only charge for the new addon products being added.
+			*
+			* The existing plan will continue to be billed on its regular schedule
+			* via the subscription at the gateway level.
+			*
+			* Allows filtering for special cases where the old behavior is needed.
+			*
+			* @since 2.0.12
+			* @param bool $should_include Whether to include the existing plan.
+			* @param self $cart The cart object.
+			* @param \WP_Ultimo\Models\Membership $membership The existing membership.
+			*/
 			$should_include_existing_plan = apply_filters(
 				'wu_cart_addon_include_existing_plan',
-				true,
+				false, // Changed from true to false - only charge for addons
 				$this,
 				$membership
 			);
 
 			if ($should_include_existing_plan) {
+				/*
+				 * Checks the membership to see if we need to add back the
+				 * setup fee.
+				 *
+				 * If the membership was already successfully charged once,
+				 * it probably means that the setup fee was already paid, so we can skip it.
+				 */
+				add_filter('wu_apply_signup_fee', fn() => $membership->get_times_billed() <= 0);
+
 				$this->add_product($membership->get_plan_id());
 
 				/*
@@ -966,7 +996,7 @@ class Cart implements \JsonSerializable {
 		}
 
 		/*
-		 * With products added, let's check if the plan is changing.
+		* With products added, let's check if the plan is changing.
 		 *
 		 * A plan change implies a upgrade or a downgrade, which we will determine
 		 * below.
@@ -994,10 +1024,10 @@ class Cart implements \JsonSerializable {
 		}
 
 		/*
-		 * If there is no plan change, but the product count is > 1
-		 * We know that there is another product in this cart other than the
-		 * plan, so this is again an addon cart.
-		 */
+		* If there is no plan change, but the product count is > 1
+		* We know that there is another product in this cart other than the
+		* plan, so this is again an addon cart.
+		*/
 		if (count($this->products) > 1 && false === $is_plan_change) {
 			/*
 			 * Set the type to addon.
@@ -1016,20 +1046,72 @@ class Cart implements \JsonSerializable {
 			}
 
 			/*
-			 * Checks the membership to see if we need to add back the
-			 * setup fee.
+			 * Apply existing discount code from membership to the cart.
+			 * This ensures that discount codes with 'apply_to_renewals' setting
+			 * are properly applied to addon purchases.
 			 *
-			 * If the membership was already successfully charged once,
-			 * it probably means that the setup fee was already paid, so we can skip it.
+			 * Note: get_discount_code() returns a Discount_Code object or false.
+			 * In rare cases with legacy data, it could be a string code that needs
+			 * to be resolved to an object.
+			 *
+			 * @since 2.0.12
 			 */
-			add_filter('wu_apply_signup_fee', fn() => $membership->get_times_billed() <= 0);
+			$membership_discount_code = $membership->get_discount_code();
+
+			// Resolve string discount codes to objects (legacy data compatibility)
+			if (is_string($membership_discount_code) && ! empty($membership_discount_code)) {
+				$membership_discount_code = wu_get_discount_code_by_code($membership_discount_code);
+			}
+
+			if (
+			$membership_discount_code instanceof \WP_Ultimo\Models\Discount_Code
+			&& $membership_discount_code->should_apply_to_renewals()
+			) {
+				$this->add_discount_code($membership_discount_code);
+				$this->reapply_discounts_to_existing_line_items();
+			}
 
 			/*
-			 * Adds the credit line, after
-			 * calculating pro-rate.
+			 * Remove the existing plan from the cart to prevent charging
+			 * for the next billing period in advance.
+			 *
+			 * For addon purchases, we only want to charge for the new addon
+			 * products, not the existing plan subscription.
+			 *
+			 * @since 2.0.12
 			 */
-			$this->calculate_prorate_credits();
+			foreach ($this->products as $key => $product) {
+				if (wu_is_plan_type($product->get_type()) && $product->get_id() === $membership->get_plan_id()) {
+					unset($this->products[ $key ]);
 
+					// Also remove line items tied to the old plan (product + fee)
+					foreach ($this->line_items as $line_key => $line_item) {
+						if (
+						$line_item->get_product_id() === $product->get_id()
+						&& in_array($line_item->get_type(), ['product', 'fee'], true)
+						) {
+							unset($this->line_items[ $line_key ]);
+						}
+					}
+
+					// Reset the plan_id since we're not changing plans
+					$this->plan_id = 0;
+					break;
+				}
+			}
+
+			/*
+			 * Do NOT calculate pro-rata credits for addon-only purchases.
+			 * Pro-rata only makes sense when changing plans.
+			 *
+			 * Previously, this was incorrectly charging customers for the next
+			 * billing period in advance when adding addons.
+			 *
+			 * Note: Setup fees for addon products are handled naturally by the cart -
+			 * they are only applied to new products being added, not to existing ones.
+			 *
+			 * @since 2.0.12
+			 */
 			return true;
 		}
 
@@ -2648,6 +2730,33 @@ class Cart implements \JsonSerializable {
 		$line_item->recalculate_totals();
 
 		return $line_item;
+	}
+
+	/**
+	 * Reapply discounts to all existing line items in the cart.
+	 *
+	 * This helper method is used when a discount code is set after products
+	 * have already been added to the cart (e.g., when applying membership
+	 * discount codes to addon purchases). It iterates through all line items,
+	 * reapplies discounts, and recalculates taxes if applicable.
+	 *
+	 * @since 2.0.12
+	 * @return void
+	 */
+	private function reapply_discounts_to_existing_line_items() {
+		foreach ($this->line_items as $id => $line_item) {
+			if (! $line_item->is_discountable()) {
+				continue;
+			}
+
+			$line_item = $this->apply_discounts_to_item($line_item);
+
+			if ($line_item->is_taxable()) {
+				$line_item = $this->apply_taxes_to_item($line_item);
+			}
+
+			$this->line_items[ $id ] = $line_item;
+		}
 	}
 
 	/**
