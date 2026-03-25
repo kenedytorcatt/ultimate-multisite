@@ -9,11 +9,22 @@
 		},
 		{
 			"step": "runPHP",
-			"code": "<?php $path = '/wordpress/wp-config.php'; $c = file_get_contents($path); if (strpos($c, 'HTTP_HOST') === false) { $c = str_replace('<?php', \"<?php\\n\\$_SERVER['HTTP_HOST'] = '127.0.0.1';\", $c); file_put_contents($path, $c); } echo 'HTTP_HOST set';"
+			"code": "<?php $p='/wordpress/wp-config.php'; $c=file_get_contents($p); if(strpos($c,'HTTP_HOST')===false){$c=str_replace('<?php',\"<?php\\n\\$_SERVER['HTTP_HOST']='127.0.0.1';\n\",$c);file_put_contents($p,$c);} echo 'wp-config.php updated';"
 		},
 		{
-			"step": "wp-cli",
-			"command": "wp core multisite-convert --base=/"
+			"step": "runPHP",
+			"code": "<?php $_SERVER['HTTP_HOST']='127.0.0.1'; require_once '/wordpress/wp-load.php'; require_once ABSPATH.'wp-admin/includes/upgrade.php'; install_network(); $r=populate_network(1,'127.0.0.1',get_option('admin_email'),get_option('blogname'),'/',false); echo is_wp_error($r)?'Error: '.$r->get_error_message():'Multisite network created';"
+		},
+		{
+			"step": "defineWpConfigConsts",
+			"consts": {
+				"MULTISITE": true,
+				"SUBDOMAIN_INSTALL": false,
+				"DOMAIN_CURRENT_SITE": "127.0.0.1",
+				"PATH_CURRENT_SITE": "/",
+				"SITE_ID_CURRENT_SITE": 1,
+				"BLOG_ID_CURRENT_SITE": 1
+			}
 		},
 		{
 			"step": "wp-cli",
