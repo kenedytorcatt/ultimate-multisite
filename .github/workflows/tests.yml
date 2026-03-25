@@ -94,3 +94,21 @@ jobs:
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  wp-performance:
+    name: WP Performance Metrics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run WP Performance Tests
+        uses: swissspidy/wp-performance-action@v2
+        with:
+          plugins: |
+            ./
+          urls: |
+            /
+          create-comment: ${{ github.event_name == 'pull_request' }}
+          print-results: true
+          upload-artifacts: true
