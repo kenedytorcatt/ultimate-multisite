@@ -2046,7 +2046,21 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 
 		$pending_site->set_type('customer_owned');
 
-		$saved = $pending_site->save();
+		try {
+			$saved = $pending_site->save();
+		} catch (\Throwable $e) {
+			/*
+			 * Reset is_publishing when Site::save() or a downstream hook throws,
+			 * so the cron/manual retry path is not stuck in "Creating" state.
+			 *
+			 * @since 2.4.13
+			 */
+			$pending_site->set_publishing(false);
+
+			$this->update_pending_site($pending_site);
+
+			return new \WP_Error('pending_site_publish_failed', $e->getMessage());
+		}
 
 		if (is_wp_error($saved)) {
 			if ($saved->get_error_code() === 'site_taken') {
