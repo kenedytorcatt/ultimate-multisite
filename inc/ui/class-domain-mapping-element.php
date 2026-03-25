@@ -796,6 +796,13 @@ class Domain_Mapping_Element extends Base_Element {
 			'proxied'  => ! empty($record['proxied']),
 		];
 
+		// Enforce allowed record types server-side.
+		$allowed_types = $dns_manager->get_allowed_record_types(get_current_user_id());
+		if (! in_array($record['type'], $allowed_types, true)) {
+			wp_send_json_error(new \WP_Error('type-not-allowed', __('You are not allowed to create this type of DNS record.', 'ultimate-multisite')));
+			return;
+		}
+
 		$result = $provider->create_dns_record($domain->get_domain(), $record);
 
 		if (is_wp_error($result)) {
@@ -828,7 +835,13 @@ class Domain_Mapping_Element extends Base_Element {
 		}
 
 		$dns_manager = \WP_Ultimo\Managers\DNS_Record_Manager::get_instance();
-		$provider    = $dns_manager->get_dns_provider();
+
+		if (! $dns_manager->customer_can_manage_dns(get_current_user_id(), $domain->get_domain())) {
+			wp_send_json_error(new \WP_Error('permission-denied', __('You do not have permission to manage DNS for this domain.', 'ultimate-multisite')));
+			return;
+		}
+
+		$provider = $dns_manager->get_dns_provider();
 
 		if (! $provider) {
 			wp_send_json_error(new \WP_Error('no-provider', __('No DNS provider configured.', 'ultimate-multisite')));
@@ -891,6 +904,23 @@ class Domain_Mapping_Element extends Base_Element {
 
 		if (! $provider) {
 			wp_send_json_error(new \WP_Error('no-provider', __('No DNS provider configured.', 'ultimate-multisite')));
+			return;
+		}
+
+		// Sanitize record data before passing to provider.
+		$record = [
+			'type'     => strtoupper(sanitize_text_field($record['type'] ?? 'A')),
+			'name'     => sanitize_text_field($record['name'] ?? ''),
+			'content'  => sanitize_text_field($record['content'] ?? ''),
+			'ttl'      => absint($record['ttl'] ?? 3600),
+			'priority' => isset($record['priority']) ? absint($record['priority']) : null,
+			'proxied'  => ! empty($record['proxied']),
+		];
+
+		// Enforce allowed record types server-side.
+		$allowed_types = $dns_manager->get_allowed_record_types(get_current_user_id());
+		if (! in_array($record['type'], $allowed_types, true)) {
+			wp_send_json_error(new \WP_Error('type-not-allowed', __('You are not allowed to modify this type of DNS record.', 'ultimate-multisite')));
 			return;
 		}
 

@@ -391,11 +391,13 @@ class Cloudflare_Host_Provider extends Base_Host_Provider {
 			);
 		}
 
-		$supported_types = implode(',', $this->get_supported_record_types());
+		$supported_types = $this->get_supported_record_types();
 		$records         = [];
 		$page            = 1;
 
 		// Paginate through all results — Cloudflare returns up to 100 per page.
+		// The 'type' parameter only accepts a single value, so we fetch all records
+		// and filter locally by supported types.
 		do {
 			$response = $this->cloudflare_api_call(
 				"client/v4/zones/{$zone_id}/dns_records",
@@ -403,7 +405,6 @@ class Cloudflare_Host_Provider extends Base_Host_Provider {
 				[
 					'per_page' => 100,
 					'page'     => $page,
-					'type'     => $supported_types,
 				]
 			);
 
@@ -419,6 +420,11 @@ class Cloudflare_Host_Provider extends Base_Host_Provider {
 			}
 
 			foreach ($response->result as $record) {
+				// Filter to only supported record types.
+				if (! in_array(strtoupper($record->type ?? ''), $supported_types, true)) {
+					continue;
+				}
+
 				$records[] = DNS_Record::from_provider(
 					[
 						'id'        => $record->id,
@@ -516,10 +522,9 @@ class Cloudflare_Host_Provider extends Base_Host_Provider {
 		wu_log_add(
 			'integration-cloudflare',
 			sprintf(
-				'Created DNS record: %s %s -> %s (ID: %s)',
+				'Created DNS record: %s %s (ID: %s)',
 				$created->type,
 				$created->name,
-				$created->content,
 				$created->id
 			)
 		);
@@ -615,10 +620,9 @@ class Cloudflare_Host_Provider extends Base_Host_Provider {
 		wu_log_add(
 			'integration-cloudflare',
 			sprintf(
-				'Updated DNS record: %s %s -> %s (ID: %s)',
+				'Updated DNS record: %s %s (ID: %s)',
 				$updated->type,
 				$updated->name,
-				$updated->content,
 				$updated->id
 			)
 		);
@@ -707,55 +711,32 @@ class Cloudflare_Host_Provider extends Base_Host_Provider {
 		// Try configured zone first
 		$default_zone = defined('WU_CLOUDFLARE_ZONE_ID') && WU_CLOUDFLARE_ZONE_ID ? WU_CLOUDFLARE_ZONE_ID : null;
 
-		// Extract root domain for zone lookup
-		$root_domain = $this->extract_root_domain($domain);
+		// Iteratively try progressively shorter domain labels to find the matching
+		// Cloudflare zone. This handles multi-part TLDs (co.uk, com.au, etc.) and
+		// delegated sub-zones without relying on a hardcoded suffix list.
+		$parts     = explode('.', $domain);
+		$num_parts = count($parts);
 
-		// Try to find zone by domain name
-		$response = $this->cloudflare_api_call(
-			'client/v4/zones',
-			'GET',
-			[
-				'name'   => $root_domain,
-				'status' => 'active',
-			]
-		);
+		// Need at least 2 labels to form a valid zone name.
+		for ($i = 0; $i < $num_parts - 1; $i++) {
+			$candidate = implode('.', array_slice($parts, $i));
 
-		if (! is_wp_error($response) && ! empty($response->result)) {
-			return $response->result[0]->id;
+			$response = $this->cloudflare_api_call(
+				'client/v4/zones',
+				'GET',
+				[
+					'name'   => $candidate,
+					'status' => 'active',
+				]
+			);
+
+			if (! is_wp_error($response) && ! empty($response->result)) {
+				return $response->result[0]->id;
+			}
 		}
 
 		// Fall back to configured zone
 		return $default_zone;
-	}
-
-	/**
-	 * Extract the root domain from a full domain name.
-	 *
-	 * @since 2.3.0
-	 *
-	 * @param string $domain The full domain name.
-	 * @return string The root domain.
-	 */
-	protected function extract_root_domain(string $domain): string {
-
-		$parts = explode('.', $domain);
-
-		// Known multi-part TLDs
-		$multi_tlds = ['.co.uk', '.com.au', '.co.nz', '.com.br', '.co.in', '.org.uk', '.net.au'];
-
-		foreach ($multi_tlds as $tld) {
-			if (str_ends_with($domain, $tld)) {
-				// Return last 3 parts for multi-part TLD
-				return implode('.', array_slice($parts, -3));
-			}
-		}
-
-		// Return last 2 parts for standard TLD
-		if (count($parts) >= 2) {
-			return implode('.', array_slice($parts, -2));
-		}
-
-		return $domain;
 	}
 
 	/**
