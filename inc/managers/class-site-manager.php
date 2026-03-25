@@ -189,11 +189,25 @@ class Site_Manager extends Base_Manager {
 				if ($errors->has_errors() === false) {
 					$d = wu_get_site_domain_and_path(wu_request('site_url', ''), $checkout->request_or_session('site_domain'));
 
+					/*
+					 * Apply the wu_checkout_template_id filter so that
+					 * "Assign Site Template" mode is honoured when adding
+					 * a new site to an existing membership.
+					 *
+					 * @since 2.5.0
+					 */
+					$template_id = apply_filters(
+						'wu_checkout_template_id',
+						(int) $checkout->request_or_session('template_id'),
+						$membership,
+						$checkout
+					);
+
 					$pending_site = $membership->create_pending_site(
 						[
 							'domain'        => $d->domain,
 							'path'          => $d->path,
-							'template_id'   => $checkout->request_or_session('template_id'),
+							'template_id'   => $template_id,
 							'title'         => $checkout->request_or_session('site_title'),
 							'customer_id'   => $customer->get_id(),
 							'membership_id' => $membership->get_id(),
