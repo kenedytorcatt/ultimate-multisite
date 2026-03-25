@@ -1637,9 +1637,13 @@ class Checkout_Form extends Base_Model {
 	 */
 	public function to_array() {
 
-		// Trigger lazy-loading for all meta-backed properties.
-		$this->get_thank_you_page_id();
-		$this->get_conversion_snippets();
+		// Only trigger lazy-loading when the model has been persisted (has an ID).
+		// For unsaved models (during validate/save), meta is not available and the
+		// getters return default values that can fail validation rules.
+		if ($this->get_id()) {
+			$this->get_thank_you_page_id();
+			$this->get_conversion_snippets();
+		}
 
 		return parent::to_array();
 	}

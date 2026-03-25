@@ -1709,14 +1709,19 @@ class Site extends Base_Model implements Limitable, Notable {
 	 */
 	public function to_array() {
 
-		// Trigger lazy-loading for all meta-backed properties.
-		$this->get_customer_id();
-		$this->get_membership_id();
-		$this->get_template_id();
-		$this->get_featured_image_id();
-		$this->get_categories();
-		$this->get_type();
-		$this->is_active();
+		// Only trigger lazy-loading when the model has been persisted (has an ID).
+		// For unsaved models (during validate/save), meta is not available and the
+		// getters return default values (e.g. false) that can fail validation rules
+		// like 'integer', preventing the model from being saved at all.
+		if ($this->get_id()) {
+			$this->get_customer_id();
+			$this->get_membership_id();
+			$this->get_template_id();
+			$this->get_featured_image_id();
+			$this->get_categories();
+			$this->get_type();
+			$this->is_active();
+		}
 
 		$array = parent::to_array();
 

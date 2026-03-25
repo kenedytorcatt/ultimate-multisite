@@ -1170,9 +1170,13 @@ class Payment extends Base_Model implements Notable {
 	 */
 	public function to_array() {
 
-		// Trigger lazy-loading for all meta-backed properties.
-		$this->get_line_items();
-		$this->get_invoice_number();
+		// Only trigger lazy-loading when the model has been persisted (has an ID).
+		// For unsaved models (during validate/save), meta is not available and the
+		// getters return default values that can fail validation rules.
+		if ($this->get_id()) {
+			$this->get_line_items();
+			$this->get_invoice_number();
+		}
 
 		return parent::to_array();
 	}

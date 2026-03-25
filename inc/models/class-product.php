@@ -1597,17 +1597,22 @@ class Product extends Base_Model implements Limitable {
 	 */
 	public function to_array() {
 
-		// Trigger lazy-loading for all meta-backed properties.
-		$this->get_featured_image_id();
-		$this->get_tax_category();
-		$this->get_contact_us_label();
-		$this->get_contact_us_link();
-		$this->get_feature_list();
-		$this->get_available_addons();
-		$this->get_legacy_options();
-		$this->get_pwyw_minimum_amount();
-		$this->get_pwyw_suggested_amount();
-		$this->get_pwyw_recurring_mode();
+		// Only trigger lazy-loading when the model has been persisted (has an ID).
+		// For unsaved models (during validate/save), meta is not available and the
+		// getters return default values (e.g. false) that can fail validation rules
+		// like 'integer', preventing the model from being saved at all.
+		if ($this->get_id()) {
+			$this->get_featured_image_id();
+			$this->get_tax_category();
+			$this->get_contact_us_label();
+			$this->get_contact_us_link();
+			$this->get_feature_list();
+			$this->get_available_addons();
+			$this->get_legacy_options();
+			$this->get_pwyw_minimum_amount();
+			$this->get_pwyw_suggested_amount();
+			$this->get_pwyw_recurring_mode();
+		}
 
 		return parent::to_array();
 	}

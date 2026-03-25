@@ -297,9 +297,13 @@ class Broadcast extends Post_Base_Model {
 	 */
 	public function to_array() {
 
-		// Trigger lazy-loading for all meta-backed properties.
-		$this->get_migrated_from_id();
-		$this->get_notice_type();
+		// Only trigger lazy-loading when the model has been persisted (has an ID).
+		// For unsaved models (during validate/save), meta is not available and the
+		// getters return default values that can fail validation rules.
+		if ($this->get_id()) {
+			$this->get_migrated_from_id();
+			$this->get_notice_type();
+		}
 
 		return parent::to_array();
 	}
