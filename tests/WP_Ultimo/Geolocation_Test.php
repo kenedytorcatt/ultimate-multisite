@@ -245,6 +245,35 @@ class Geolocation_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test supports_geolite2 returns false when MaxMind reader class is unavailable.
+	 *
+	 * Runs in a separate process so the MaxMind autoloader cannot satisfy the
+	 * class_exists() check inside supports_geolite2().
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_supports_geolite2_returns_false_when_class_missing() {
+		// Bootstrap WordPress/plugin in the child process so Geolocation is defined,
+		// but do NOT load the MaxMind autoloader — the class should be absent.
+		$reflection = new \ReflectionClass(Geolocation::class);
+		$method     = $reflection->getMethod('supports_geolite2');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		if (class_exists('MaxMind\Db\Reader')) {
+			// MaxMind is already loaded in this process — skip rather than give a
+			// false-positive failure. The positive test covers the loaded case.
+			$this->markTestSkipped('MaxMind\Db\Reader is already loaded; cannot test the missing-class path in this process.');
+			return;
+		}
+
+		$result = $method->invoke(null);
+		$this->assertFalse($result, 'supports_geolite2() should return false when MaxMind\Db\Reader is not available');
+	}
+
+	/**
 	 * Test is_geolocation_enabled with enabled values.
 	 */
 	public function test_is_geolocation_enabled_enabled_values() {
@@ -434,6 +463,15 @@ class Geolocation_Test extends WP_UnitTestCase {
 
 		// First call
 		$result1 = Geolocation::geolocate_ip($ip);
+
+		// Verify cache was populated after first call
+		$reflection   = new \ReflectionClass(Geolocation::class);
+		$memory_cache = $reflection->getProperty('memory_cache');
+		if (PHP_VERSION_ID < 80100) {
+			$memory_cache->setAccessible(true);
+		}
+		$cache_value = $memory_cache->getValue();
+		$this->assertArrayHasKey($ip, $cache_value, 'Memory cache should contain the IP after first call');
 
 		// Second call should return from cache
 		$result2 = Geolocation::geolocate_ip($ip);
