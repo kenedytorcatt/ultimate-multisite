@@ -286,8 +286,8 @@ class External_Cron_Admin_Page extends Base_Admin_Page {
 		return add_query_arg(
 			[
 				'action'     => 'external_cron_connect',
-				'site_url'   => rawurlencode(network_site_url()),
-				'return_url' => rawurlencode($return_url),
+				'site_url'   => network_site_url(),
+				'return_url' => $return_url,
 			],
 			self::SERVICE_URL . '/wp-json/cron-service/v1/oauth/authorize'
 		);
@@ -399,7 +399,7 @@ class External_Cron_Admin_Page extends Base_Admin_Page {
 			wp_send_json_error(['message' => __('Permission denied.', 'ultimate-multisite')]);
 		}
 
-		$enabled = (bool) wu_request('enabled', false);
+		$enabled = filter_var(wu_request('enabled', false), FILTER_VALIDATE_BOOLEAN);
 
 		wu_save_setting('external_cron_enabled', $enabled);
 
