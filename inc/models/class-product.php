@@ -1587,6 +1587,32 @@ class Product extends Base_Model implements Limitable {
 	}
 
 	/**
+	 * Transform the object into an assoc array.
+	 *
+	 * Overrides Base_Model::to_array() to ensure lazy-loaded meta properties
+	 * are populated before serialization so REST API responses include all fields.
+	 *
+	 * @since 2.0.11
+	 * @return array
+	 */
+	public function to_array() {
+
+		// Trigger lazy-loading for all meta-backed properties.
+		$this->get_featured_image_id();
+		$this->get_tax_category();
+		$this->get_contact_us_label();
+		$this->get_contact_us_link();
+		$this->get_feature_list();
+		$this->get_available_addons();
+		$this->get_legacy_options();
+		$this->get_pwyw_minimum_amount();
+		$this->get_pwyw_suggested_amount();
+		$this->get_pwyw_recurring_mode();
+
+		return parent::to_array();
+	}
+
+	/**
 	 * Save (create or update) the model on the database.
 	 *
 	 * @since 2.0.0

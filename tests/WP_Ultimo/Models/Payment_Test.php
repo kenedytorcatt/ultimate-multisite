@@ -1577,4 +1577,27 @@ class Payment_Test extends WP_UnitTestCase {
 		$wpdb->query("TRUNCATE TABLE {$wpdb->prefix}wu_payments");
 		parent::tear_down_after_class();
 	}
+
+	/**
+	 * Test that to_array() populates lazy-loaded meta properties (issue #469).
+	 *
+	 * line_items and invoice_number are only loaded from meta when their
+	 * getter is first called. Without the to_array() override they remain null.
+	 */
+	public function test_to_array_includes_lazy_loaded_meta_properties(): void {
+		$payment = new \WP_Ultimo\Models\Payment();
+		$payment->set_status('pending');
+		$payment->set_currency('USD');
+		$payment->set_subtotal(100);
+		$payment->set_total(100);
+		$payment->set_invoice_number('INV-001');
+
+		$array = $payment->to_array();
+
+		$this->assertIsArray($array, 'to_array() should return an array.');
+		$this->assertArrayHasKey('line_items', $array, 'to_array() must include line_items.');
+		$this->assertArrayHasKey('invoice_number', $array, 'to_array() must include invoice_number.');
+		$this->assertNotNull($array['invoice_number'], 'invoice_number must not be null in to_array() output.');
+		$this->assertEquals('INV-001', $array['invoice_number'], 'invoice_number must match the set value.');
+	}
 }

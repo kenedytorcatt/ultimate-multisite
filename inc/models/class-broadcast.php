@@ -285,4 +285,22 @@ class Broadcast extends Post_Base_Model {
 
 		$this->status = $status;
 	}
+
+	/**
+	 * Transform the object into an assoc array.
+	 *
+	 * Overrides Base_Model::to_array() to ensure lazy-loaded meta properties
+	 * are populated before serialization so REST API responses include all fields.
+	 *
+	 * @since 2.0.11
+	 * @return array
+	 */
+	public function to_array() {
+
+		// Trigger lazy-loading for all meta-backed properties.
+		$this->get_migrated_from_id();
+		$this->get_notice_type();
+
+		return parent::to_array();
+	}
 }

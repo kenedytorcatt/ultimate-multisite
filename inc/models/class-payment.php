@@ -1158,4 +1158,22 @@ class Payment extends Base_Model implements Notable {
 
 		return $new_payment;
 	}
+
+	/**
+	 * Transform the object into an assoc array.
+	 *
+	 * Overrides Base_Model::to_array() to ensure lazy-loaded meta properties
+	 * are populated before serialization so REST API responses include all fields.
+	 *
+	 * @since 2.0.11
+	 * @return array
+	 */
+	public function to_array() {
+
+		// Trigger lazy-loading for all meta-backed properties.
+		$this->get_line_items();
+		$this->get_invoice_number();
+
+		return parent::to_array();
+	}
 }

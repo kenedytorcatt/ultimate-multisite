@@ -1697,6 +1697,36 @@ class Site extends Base_Model implements Limitable, Notable {
 	}
 
 	/**
+	 * Transform the object into an assoc array.
+	 *
+	 * Overrides Base_Model::to_array() to ensure lazy-loaded meta properties
+	 * are populated before serialization. Without this, properties such as
+	 * customer_id, membership_id, type, active, etc. remain null in REST API
+	 * responses because get_object_vars() captures the raw (unloaded) values.
+	 *
+	 * @since 2.0.11
+	 * @return array
+	 */
+	public function to_array() {
+
+		// Trigger lazy-loading for all meta-backed properties.
+		$this->get_customer_id();
+		$this->get_membership_id();
+		$this->get_template_id();
+		$this->get_featured_image_id();
+		$this->get_categories();
+		$this->get_type();
+		$this->is_active();
+
+		$array = parent::to_array();
+
+		// Expose blog_id as id so callers get the correct non-zero value.
+		$array['id'] = $this->get_id();
+
+		return $array;
+	}
+
+	/**
 	 * Save (create or update) the model on the database.
 	 *
 	 * @since 2.0.0
