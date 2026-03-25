@@ -58,8 +58,8 @@ class Signup_Metrics {
 		// Track successful checkout completion.
 		add_action('wu_checkout_done', [$this, 'track_checkout_completed'], 10, 6);
 
-		// Track checkout failures.
-		add_filter('wu_checkout_errors', [$this, 'track_checkout_failed'], 10, 2);
+		// Track checkout failures (wu_checkout_errors is an action, not a filter).
+		add_action('wu_checkout_errors', [$this, 'track_checkout_failed'], 10, 1);
 
 		// Register event types for webhooks/emails.
 		add_action('wu_register_all_events', [$this, 'register_event_types']);
@@ -178,26 +178,31 @@ class Signup_Metrics {
 	/**
 	 * Fires when the checkout returns errors (checkout failed).
 	 *
-	 * Passes errors through unchanged — this is a filter so we can observe
-	 * the error without blocking the normal error-handling flow.
+	 * Observes checkout errors without modifying the action flow.
+	 *
+	 * wu_checkout_errors is an action (not a filter). It fires with the
+	 * checkout form name as the first argument. We only record an event
+	 * when the current request has checkout validation errors.
 	 *
 	 * @since 2.5.0
 	 *
-	 * @param \WP_Error                    $errors   The checkout errors.
-	 * @param \WP_Ultimo\Checkout\Checkout $checkout The checkout instance.
-	 * @return \WP_Error
+	 * @param string $checkout_form_name The checkout form slug/name.
+	 * @return void
 	 */
-	public function track_checkout_failed($errors, $checkout): \WP_Error {
+	public function track_checkout_failed($checkout_form_name): void {
 
-		if ( ! is_wp_error($errors) || ! $errors->has_errors()) {
-			return $errors;
+		// Only record if there are actual checkout errors in the current request.
+		$checkout = \WP_Ultimo\Checkout\Checkout::get_instance();
+
+		if ( ! $checkout || ! $checkout->errors || ! $checkout->errors->has_errors()) {
+			return;
 		}
 
-		$error_codes    = $errors->get_error_codes();
+		$error_codes    = $checkout->errors->get_error_codes();
 		$error_messages = [];
 
 		foreach ($error_codes as $code) {
-			$error_messages[ $code ] = $errors->get_error_message($code);
+			$error_messages[ $code ] = $checkout->errors->get_error_message($code);
 		}
 
 		wu_create_event(
@@ -208,14 +213,13 @@ class Signup_Metrics {
 				'object_id'   => 0,
 				'initiator'   => 'system',
 				'payload'     => [
+					'checkout_form'  => sanitize_key((string) $checkout_form_name),
 					'error_codes'    => $error_codes,
 					'error_messages' => $error_messages,
 					'user_id'        => get_current_user_id(),
 				],
 			]
 		);
-
-		return $errors;
 	}
 
 	/**

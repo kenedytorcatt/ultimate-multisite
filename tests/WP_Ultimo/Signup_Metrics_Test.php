@@ -89,34 +89,20 @@ class Signup_Metrics_Test extends WP_UnitTestCase {
 	// ------------------------------------------------------------------
 
 	/**
-	 * Test that track_checkout_failed passes errors through unchanged.
+	 * Test that track_checkout_failed accepts a string form name without error.
+	 *
+	 * wu_checkout_errors is an action that fires with the form name as a string.
+	 * The method must not throw a TypeError when called with a string argument.
 	 */
-	public function test_track_checkout_failed_passes_errors_through(): void {
+	public function test_track_checkout_failed_accepts_string_form_name(): void {
 
 		$metrics = Signup_Metrics::get_instance();
 
-		$error = new \WP_Error('test_error', 'Test error message');
+		// Should not throw — wu_checkout_errors fires with a string, not a WP_Error.
+		$metrics->track_checkout_failed('main-form');
 
-		$result = $metrics->track_checkout_failed($error, null);
-
-		$this->assertInstanceOf(\WP_Error::class, $result);
-		$this->assertTrue($result->has_errors());
-		$this->assertEquals('test_error', $result->get_error_code());
-	}
-
-	/**
-	 * Test that track_checkout_failed returns non-error input unchanged.
-	 */
-	public function test_track_checkout_failed_returns_non_error_unchanged(): void {
-
-		$metrics = Signup_Metrics::get_instance();
-
-		$non_error = new \WP_Error();
-
-		$result = $metrics->track_checkout_failed($non_error, null);
-
-		$this->assertInstanceOf(\WP_Error::class, $result);
-		$this->assertFalse($result->has_errors());
+		// If we get here without a fatal error, the test passes.
+		$this->assertTrue(true);
 	}
 
 	// ------------------------------------------------------------------
