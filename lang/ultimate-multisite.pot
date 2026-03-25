@@ -22513,8 +22513,12 @@ msgstr ""
 msgid "Loading Tax Rates..."
 msgstr ""
 
-#: views/taxes/list.php:266
-#: views/taxes/list.php:281
+#: views/taxes/list.php:243
+msgid "Apply to all countries"
+msgstr ""
+
+#: views/taxes/list.php:270
+#: views/taxes/list.php:285
 msgid "Leave blank to apply to all"
 msgstr ""
 

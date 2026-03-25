@@ -239,6 +239,10 @@ $taxes_enabled = wu_get_setting('enable_taxes', false);
 
 			<select v-cloak v-model="item.<?php echo esc_attr($key); ?>" style="width: 100%;">
 
+						<option value="*">
+							<?php esc_html_e('Apply to all countries', 'ultimate-multisite'); ?>
+						</option>
+
 						<?php foreach (wu_get_countries_as_options() as $country_code => $country_name) : ?>
 
 				<option value="<?php echo esc_attr($country_code); ?>">
