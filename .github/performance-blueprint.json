@@ -1,12 +1,7 @@
 {
-	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
 	"steps": [
 		{
 			"step": "enableMultisite"
-		},
-		{
-			"step": "activatePlugin",
-			"pluginPath": "ultimate-multisite/ultimate-multisite.php"
 		}
 	]
 }
