@@ -33,9 +33,9 @@ class Scripts {
 
 		add_action('init', [$this, 'register_default_styles']);
 
-		add_action('admin_init', [$this, 'enqueue_default_admin_styles']);
+		add_action('admin_enqueue_scripts', [$this, 'enqueue_default_admin_styles']);
 
-		add_action('admin_init', [$this, 'enqueue_default_admin_scripts']);
+		add_action('admin_enqueue_scripts', [$this, 'enqueue_default_admin_scripts']);
 
 		add_action('wp_ajax_wu_toggle_container', [$this, 'update_use_container']);
 
@@ -427,10 +427,19 @@ class Scripts {
 	/**
 	 * Loads the default admin styles.
 	 *
+	 * Only enqueued on WP Ultimo admin pages to avoid loading 150KB+ of CSS
+	 * on unrelated admin pages (e.g., Posts, Plugins, Settings).
+	 *
 	 * @since 2.0.0
+	 *
+	 * @param string $hook_suffix The current admin page hook suffix.
 	 * @return void
 	 */
-	public function enqueue_default_admin_styles(): void {
+	public function enqueue_default_admin_styles(string $hook_suffix): void {
+
+		if ( ! wu_is_wu_page($hook_suffix)) {
+			return;
+		}
 
 		wp_enqueue_style('wu-admin');
 
@@ -441,10 +450,19 @@ class Scripts {
 	/**
 	 * Loads the default admin scripts.
 	 *
+	 * Only enqueued on WP Ultimo admin pages to avoid loading scripts
+	 * on unrelated admin pages (e.g., Posts, Plugins, Settings).
+	 *
 	 * @since 2.0.0
+	 *
+	 * @param string $hook_suffix The current admin page hook suffix.
 	 * @return void
 	 */
-	public function enqueue_default_admin_scripts(): void {
+	public function enqueue_default_admin_scripts(string $hook_suffix): void {
+
+		if ( ! wu_is_wu_page($hook_suffix)) {
+			return;
+		}
 
 		wp_enqueue_script('wu-admin');
 
