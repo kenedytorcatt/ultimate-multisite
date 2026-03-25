@@ -64,6 +64,19 @@ class External_Cron_Registration {
 			return $result;
 		}
 
+		// Validate required fields in response.
+		if (
+			! is_array($result) ||
+			empty($result['site_id']) ||
+			empty($result['api_key']) ||
+			empty($result['api_secret'])
+		) {
+			return new \WP_Error(
+				'invalid_response',
+				__('Invalid registration response from service.', 'ultimate-multisite')
+			);
+		}
+
 		// Save credentials.
 		wu_save_setting('external_cron_site_id', $result['site_id']);
 		wu_save_setting('external_cron_api_key', $result['api_key']);
@@ -110,6 +123,14 @@ class External_Cron_Registration {
 
 		if (is_wp_error($result)) {
 			return $result;
+		}
+
+		// Validate required field in response.
+		if (! is_array($result) || empty($result['site_id'])) {
+			return new \WP_Error(
+				'invalid_response',
+				__('Invalid registration response from service.', 'ultimate-multisite')
+			);
 		}
 
 		// Save site ID for this blog.
