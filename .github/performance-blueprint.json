@@ -8,6 +8,10 @@
 			}
 		},
 		{
+			"step": "runPHP",
+			"code": "<?php $path = '/wordpress/wp-config.php'; $c = file_get_contents($path); if (strpos($c, 'HTTP_HOST') === false) { $c = str_replace('<?php', \"<?php\\n\\$_SERVER['HTTP_HOST'] = '127.0.0.1';\", $c); file_put_contents($path, $c); } echo 'HTTP_HOST set';"
+		},
+		{
 			"step": "wp-cli",
 			"command": "wp core multisite-convert --base=/"
 		},
