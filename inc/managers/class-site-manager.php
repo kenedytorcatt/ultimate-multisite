@@ -1119,13 +1119,21 @@ class Site_Manager extends Base_Manager {
 		// Fire pre-deletion hook for extensibility.
 		do_action('wu_before_demo_site_deleted', $site, $membership, $customer);
 
-		// Delete the WordPress blog if it exists.
-		if ($blog_id) {
-			wpmu_delete_blog($blog_id, true);
-		}
-
-		// Delete the WP Ultimo site record.
+		// Delete the site record (wp_delete_site handles the underlying blog removal).
 		$result = $site->delete();
+
+		if (true !== $result) {
+			wu_log_add(
+				'demo-cleanup',
+				sprintf(
+					// translators: %d is the site ID.
+					__('Failed to delete demo site #%d; skipping related cleanup.', 'ultimate-multisite'),
+					$site_id
+				)
+			);
+
+			return;
+		}
 
 		// Optionally delete the membership if it only has this demo site.
 		$delete_membership = apply_filters('wu_demo_site_delete_membership', true, $membership, $site);
