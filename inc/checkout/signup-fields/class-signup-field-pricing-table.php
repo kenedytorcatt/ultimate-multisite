@@ -106,8 +106,22 @@ class Signup_Field_Pricing_Table extends Base_Signup_Field {
 	 */
 	public function defaults() {
 
+		$all_products = wu_get_products(
+			[
+				'order'   => 'ASC',
+				'orderby' => 'list_order',
+			]
+		);
+
+		$product_ids = array_map(
+			function ($product) {
+				return $product->get_id();
+			},
+			$all_products
+		);
+
 		return [
-			'pricing_table_products'               => implode(',', array_keys(wu_get_plans_as_options())),
+			'pricing_table_products'               => implode(',', $product_ids),
 			'pricing_table_template'               => 'list',
 			'force_different_durations'            => false,
 			'hide_pricing_table_when_pre_selected' => false,
@@ -177,7 +191,6 @@ class Signup_Field_Pricing_Table extends Base_Signup_Field {
 				'data-value-field'  => 'id',
 				'data-label-field'  => 'name',
 				'data-search-field' => 'name',
-				'data-include'      => implode(',', array_keys(wu_get_plans_as_options())),
 				'data-max-items'    => 999,
 			],
 		];
