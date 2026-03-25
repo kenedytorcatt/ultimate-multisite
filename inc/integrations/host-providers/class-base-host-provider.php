@@ -827,4 +827,37 @@ abstract class Base_Host_Provider implements DNS_Provider_Interface {
 
 		return update_network_option(null, 'wu_dns_integrations_enabled', $dns_enabled);
 	}
+
+	/**
+	 * Extract the zone name (root domain) from a domain.
+	 *
+	 * Handles common multi-part TLDs (e.g. .co.uk, .com.au). For providers that
+	 * need a more precise zone lookup (e.g. Cloudflare's iterative API search),
+	 * override this method in the concrete provider class.
+	 *
+	 * @since 2.3.0
+	 *
+	 * @param string $domain The domain name.
+	 * @return string The zone name (root domain).
+	 */
+	protected function extract_zone_name(string $domain): string {
+
+		$parts = explode('.', $domain);
+
+		// Known multi-part TLDs
+		$multi_tlds = ['.co.uk', '.com.au', '.co.nz', '.com.br', '.co.in', '.org.uk', '.net.au'];
+
+		foreach ($multi_tlds as $tld) {
+			if (str_ends_with($domain, $tld)) {
+				return implode('.', array_slice($parts, -3));
+			}
+		}
+
+		// Return last 2 parts for standard TLD
+		if (count($parts) >= 2) {
+			return implode('.', array_slice($parts, -2));
+		}
+
+		return $domain;
+	}
 }

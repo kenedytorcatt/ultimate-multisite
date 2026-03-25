@@ -327,8 +327,8 @@ class CPanel_Host_Provider extends Base_Host_Provider {
 			['zone' => $zone]
 		);
 
-		if (! $result || isset($result->errors) || ! isset($result->result->data)) {
-			$error_message = isset($result->errors) && is_array($result->errors)
+		if (! $result || ! empty($result->errors) || ! isset($result->result->data)) {
+			$error_message = ! empty($result->errors) && is_array($result->errors)
 				? implode(', ', $result->errors)
 				: __('Failed to fetch DNS records from cPanel.', 'ultimate-multisite');
 
@@ -432,8 +432,8 @@ class CPanel_Host_Provider extends Base_Host_Provider {
 
 		$result = $this->load_api()->uapi('DNS', 'add_zone_record', $params);
 
-		if (! $result || isset($result->errors)) {
-			$error_message = isset($result->errors) && is_array($result->errors)
+		if (! $result || ! empty($result->errors)) {
+			$error_message = ! empty($result->errors) && is_array($result->errors)
 				? implode(', ', $result->errors)
 				: __('Failed to create DNS record.', 'ultimate-multisite');
 
@@ -501,12 +501,18 @@ class CPanel_Host_Provider extends Base_Host_Provider {
 			case 'TXT':
 				$params['txtdata'] = $record['content'];
 				break;
+			default:
+				return new \WP_Error(
+					'unsupported-type',
+					/* translators: %s: record type */
+					sprintf(__('Unsupported record type: %s', 'ultimate-multisite'), $record['type'])
+				);
 		}
 
 		$result = $this->load_api()->uapi('DNS', 'edit_zone_record', $params);
 
-		if (! $result || isset($result->errors)) {
-			$error_message = isset($result->errors) && is_array($result->errors)
+		if (! $result || ! empty($result->errors)) {
+			$error_message = ! empty($result->errors) && is_array($result->errors)
 				? implode(', ', $result->errors)
 				: __('Failed to update DNS record.', 'ultimate-multisite');
 
@@ -558,8 +564,8 @@ class CPanel_Host_Provider extends Base_Host_Provider {
 			]
 		);
 
-		if (! $result || isset($result->errors)) {
-			$error_message = isset($result->errors) && is_array($result->errors)
+		if (! $result || ! empty($result->errors)) {
+			$error_message = ! empty($result->errors) && is_array($result->errors)
 				? implode(', ', $result->errors)
 				: __('Failed to delete DNS record.', 'ultimate-multisite');
 
@@ -578,35 +584,6 @@ class CPanel_Host_Provider extends Base_Host_Provider {
 		);
 
 		return true;
-	}
-
-	/**
-	 * Extract the zone name (root domain) from a domain.
-	 *
-	 * @since 2.3.0
-	 *
-	 * @param string $domain The domain name.
-	 * @return string The zone name.
-	 */
-	protected function extract_zone_name(string $domain): string {
-
-		$parts = explode('.', $domain);
-
-		// Known multi-part TLDs
-		$multi_tlds = ['.co.uk', '.com.au', '.co.nz', '.com.br', '.co.in', '.org.uk', '.net.au'];
-
-		foreach ($multi_tlds as $tld) {
-			if (str_ends_with($domain, $tld)) {
-				return implode('.', array_slice($parts, -3));
-			}
-		}
-
-		// Return last 2 parts for standard TLD
-		if (count($parts) >= 2) {
-			return implode('.', array_slice($parts, -2));
-		}
-
-		return $domain;
 	}
 
 	/**
