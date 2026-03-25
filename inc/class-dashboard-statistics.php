@@ -192,4 +192,104 @@ class Dashboard_Statistics {
 
 		return $payments_per_month;
 	}
+
+	/**
+	 * Get signup funnel conversion counts for the current date range.
+	 *
+	 * Returns an associative array with counts for each funnel stage:
+	 * - checkout_started
+	 * - checkout_step_completed
+	 * - checkout_completed
+	 * - checkout_failed
+	 *
+	 * @since 2.5.0
+	 * @return array
+	 */
+	public function get_data_signup_funnel(): array {
+
+		global $wpdb;
+
+		$table = $wpdb->base_prefix . 'wu_events';
+
+		$slugs = [
+			'checkout_started',
+			'checkout_step_completed',
+			'checkout_completed',
+			'checkout_failed',
+		];
+
+		$counts = array_fill_keys($slugs, 0);
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Note: table name comes from $wpdb->base_prefix which is safe.
+		foreach ($slugs as $slug) {
+			$counts[ $slug ] = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$table} WHERE slug = %s AND date_created BETWEEN %s AND %s",
+					$slug,
+					$this->start_date,
+					$this->end_date
+				)
+			);
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// Compute conversion rate: completed / started (avoid division by zero).
+		$started   = $counts['checkout_started'];
+		$completed = $counts['checkout_completed'];
+
+		$counts['conversion_rate'] = $started > 0
+			? round(($completed / $started) * 100, 1)
+			: 0.0;
+
+		return $counts;
+	}
+
+	/**
+	 * Get post-signup activity counts for the current date range.
+	 *
+	 * Queries the event slugs produced by Post_Signup_Activity_Manager:
+	 * - subsite_post_created
+	 * - subsite_cpt_created
+	 * - subsite_user_registered
+	 * - subsite_woocommerce_order
+	 *
+	 * @since 2.5.0
+	 * @return array Associative array keyed by activity slug with integer counts.
+	 */
+	public function get_data_site_activity(): array {
+
+		global $wpdb;
+
+		$table = $wpdb->base_prefix . 'wu_events';
+
+		$slugs = [
+			'subsite_post_created',
+			'subsite_cpt_created',
+			'subsite_user_registered',
+			'subsite_woocommerce_order',
+		];
+
+		$counts = array_fill_keys($slugs, 0);
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Note: table name comes from $wpdb->base_prefix which is safe.
+		foreach ($slugs as $slug) {
+			$counts[ $slug ] = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$table} WHERE slug = %s AND date_created BETWEEN %s AND %s",
+					$slug,
+					$this->start_date,
+					$this->end_date
+				)
+			);
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return $counts;
+	}
 }
