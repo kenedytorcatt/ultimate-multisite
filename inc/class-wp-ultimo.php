@@ -913,6 +913,14 @@ final class WP_Ultimo {
 		WP_Ultimo\Managers\Site_Manager::get_instance();
 
 		/*
+		 * Loads the Post-Signup Activity manager.
+		 *
+		 * Tracks post creation, CPT creation, user registration, and
+		 * WooCommerce orders on managed subsites (issue #399).
+		 */
+		WP_Ultimo\Managers\Post_Signup_Activity_Manager::get_instance();
+
+		/*
 		 * Loads the Checkout Form manager.
 		 */
 		WP_Ultimo\Managers\Checkout_Form_Manager::get_instance();
