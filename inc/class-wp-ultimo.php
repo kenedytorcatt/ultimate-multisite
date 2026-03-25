@@ -491,9 +491,14 @@ final class WP_Ultimo {
 		}
 
 		/*
-		 * Loads the Jumper UI
+		 * Loads the Command Palette (replaces legacy Jumper UI)
 		 */
-		WP_Ultimo\UI\Jumper::get_instance();
+		WP_Ultimo\UI\Command_Palette_Manager::get_instance();
+
+		/*
+		 * Loads the Command Palette REST controller
+		 */
+		WP_Ultimo\Apis\Command_Palette_Rest_Controller::get_instance();
 
 		/*
 		 * Loads the Template Previewer
