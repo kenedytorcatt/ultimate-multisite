@@ -714,6 +714,16 @@ final class WP_Ultimo {
 		 */
 		\WP_Ultimo\Tracker::get_instance();
 
+		/*
+		 * Signup Flow Metrics — tracks checkout funnel events.
+		 */
+		\WP_Ultimo\Signup_Metrics::get_instance();
+
+		/*
+		 * Activity Tracker — tracks post-signup actions on sub-sites.
+		 */
+		\WP_Ultimo\Activity_Tracker::get_instance();
+
 		\WP_Ultimo\MCP_Adapter::get_instance();
 	}
 
