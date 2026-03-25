@@ -12,22 +12,26 @@
 
 					$this.html('...').attr('disabled', 'disabled');
 
-					$.ajax(
-						{
-							url: action_url,
-							dataType: 'json',
-							success: function (response) {
-								$this.html(response.message);
+				$.ajax(
+					{
+						url: action_url,
+						dataType: 'json',
+						success: function (response) {
+							$this.html(response.message);
 
-								setTimeout(
-									function () {
-										$this.html(default_label).removeAttr('disabled');
-									},
-									4000
-								);
-							}
-						}
-					);
+							setTimeout(
+								function () {
+									$this.html(default_label).removeAttr('disabled');
+								},
+								4000
+							);
+						},
+						error: function (jqXHR) {
+							$this.html(default_label).removeAttr('disabled');
+							wu_ajax_error(jqXHR);
+						},
+					}
+				);
 				}
 			);
 		}

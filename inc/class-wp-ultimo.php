@@ -491,9 +491,14 @@ final class WP_Ultimo {
 		}
 
 		/*
-		 * Loads the Jumper UI
+		 * Loads the Command Palette (replaces legacy Jumper UI)
 		 */
-		WP_Ultimo\UI\Jumper::get_instance();
+		WP_Ultimo\UI\Command_Palette_Manager::get_instance();
+
+		/*
+		 * Loads the Command Palette REST controller
+		 */
+		WP_Ultimo\Apis\Command_Palette_Rest_Controller::get_instance();
 
 		/*
 		 * Loads the Template Previewer
@@ -662,6 +667,13 @@ final class WP_Ultimo {
 		\WP_Ultimo\Compat\Honeypot_Compat::get_instance();
 
 		/*
+		 * AnsPress compatibility — prevents AnsPress from intercepting
+		 * wu-ajax requests and causing a fatal error in the membership
+		 * product-selection modal.
+		 */
+		\WP_Ultimo\Compat\AnsPress_Compat::get_instance();
+
+		/*
 		 * WooCommerce Subscriptions compatibility
 		 */
 		\WP_Ultimo\Compat\WooCommerce_Subscriptions_Compat::get_instance();
@@ -706,6 +718,11 @@ final class WP_Ultimo {
 		 * Usage Tracker (opt-in telemetry)
 		 */
 		\WP_Ultimo\Tracker::get_instance();
+
+		/*
+		 * Signup Flow Metrics — tracks checkout funnel events.
+		 */
+		\WP_Ultimo\Signup_Metrics::get_instance();
 
 		\WP_Ultimo\MCP_Adapter::get_instance();
 	}
@@ -904,6 +921,14 @@ final class WP_Ultimo {
 		 * Loads the Site manager.
 		 */
 		WP_Ultimo\Managers\Site_Manager::get_instance();
+
+		/*
+		 * Loads the Post-Signup Activity manager.
+		 *
+		 * Tracks post creation, CPT creation, user registration, and
+		 * WooCommerce orders on managed subsites (issue #399).
+		 */
+		WP_Ultimo\Managers\Post_Signup_Activity_Manager::get_instance();
 
 		/*
 		 * Loads the Checkout Form manager.

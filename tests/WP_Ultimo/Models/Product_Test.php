@@ -292,6 +292,50 @@ class Product_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test that to_array() populates lazy-loaded meta properties (issue #469).
+	 *
+	 * featured_image_id, tax_category, contact_us_label, contact_us_link,
+	 * feature_list, available_addons, legacy_options, and pwyw fields are only
+	 * loaded from meta when their getter is first called. Without the to_array()
+	 * override they remain null in REST API responses.
+	 */
+	public function test_to_array_includes_lazy_loaded_meta_properties(): void {
+		$product = new \WP_Ultimo\Models\Product();
+		$product->set_name('Test Product');
+		$product->set_slug('test-product');
+		$product->set_amount(50);
+		$product->set_tax_category('standard');
+		$product->set_contact_us_label('Contact Us');
+		$product->set_contact_us_link('https://example.com/contact');
+		$product->set_pwyw_minimum_amount(10.0);
+		$product->set_pwyw_suggested_amount(25.0);
+		$product->set_pwyw_recurring_mode('customer_choice');
+
+		$array = $product->to_array();
+
+		$this->assertIsArray($array, 'to_array() should return an array.');
+
+		$this->assertArrayHasKey('tax_category', $array, 'to_array() must include tax_category.');
+		$this->assertNotNull($array['tax_category'], 'tax_category must not be null in to_array() output.');
+		$this->assertEquals('standard', $array['tax_category'], 'tax_category must match the set value.');
+
+		$this->assertArrayHasKey('contact_us_label', $array, 'to_array() must include contact_us_label.');
+		$this->assertNotNull($array['contact_us_label'], 'contact_us_label must not be null in to_array() output.');
+
+		$this->assertArrayHasKey('contact_us_link', $array, 'to_array() must include contact_us_link.');
+		$this->assertNotNull($array['contact_us_link'], 'contact_us_link must not be null in to_array() output.');
+
+		$this->assertArrayHasKey('pwyw_minimum_amount', $array, 'to_array() must include pwyw_minimum_amount.');
+		$this->assertEquals(10.0, $array['pwyw_minimum_amount'], 'pwyw_minimum_amount must match the set value.');
+
+		$this->assertArrayHasKey('pwyw_suggested_amount', $array, 'to_array() must include pwyw_suggested_amount.');
+		$this->assertEquals(25.0, $array['pwyw_suggested_amount'], 'pwyw_suggested_amount must match the set value.');
+
+		$this->assertArrayHasKey('pwyw_recurring_mode', $array, 'to_array() must include pwyw_recurring_mode.');
+		$this->assertEquals('customer_choice', $array['pwyw_recurring_mode'], 'pwyw_recurring_mode must match the set value.');
+	}
+
+	/**
 	 * Test hash generation.
 	 */
 	public function test_hash_generation(): void {

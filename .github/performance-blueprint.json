@@ -1,0 +1,19 @@
+{
+	"extraLibraries": ["wp-cli"],
+	"steps": [
+		{
+			"step": "defineWpConfigConsts",
+			"consts": {
+				"WP_ALLOW_MULTISITE": 1
+			}
+		},
+		{
+			"step": "wp-cli",
+			"command": "wp core multisite-convert --base=/ --skip-plugins --skip-themes"
+		},
+		{
+			"step": "wp-cli",
+			"command": "wp plugin activate ultimate-multisite --network --skip-plugins --skip-themes"
+		}
+	]
+}

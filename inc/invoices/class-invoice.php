@@ -82,6 +82,52 @@ class Invoice {
 	}
 
 	/**
+	 * Returns the path to the bundled RTL fonts directory.
+	 *
+	 * @since 2.0.0
+	 * @return string
+	 */
+	private function get_rtl_font_dir(): string {
+
+		return WP_ULTIMO_PLUGIN_DIR . 'assets/fonts/amiri/';
+	}
+
+	/**
+	 * Returns the mPDF fontdata configuration for bundled RTL fonts.
+	 *
+	 * Amiri is an Arabic Naskh-style font with full OpenType Layout (OTL)
+	 * support. The useOTL flag enables Arabic letter-joining (shaping) and
+	 * the useKashida flag enables kashida-based text justification.
+	 * Without these flags Arabic letters render as isolated glyphs with
+	 * spaces between them instead of connected words.
+	 *
+	 * The font is registered under both 'amiri' (for explicit use) and
+	 * 'xbriyaz' (to satisfy mPDF's built-in Arabic language-to-font mapping,
+	 * which maps 'ar', 'fa', 'ur' etc. to 'xbriyaz'). The XB Riyaz font
+	 * files are removed by the composer post-install script to reduce package
+	 * size; Amiri serves as a drop-in replacement with superior Arabic shaping.
+	 *
+	 * @since 2.0.0
+	 * @return array
+	 */
+	private function get_rtl_fontdata(): array {
+
+		$amiri = [
+			'R'          => 'Amiri-Regular.ttf',
+			'B'          => 'Amiri-Bold.ttf',
+			'I'          => 'Amiri-Italic.ttf',
+			'BI'         => 'Amiri-BoldItalic.ttf',
+			'useOTL'     => 0xFF,
+			'useKashida' => 75,
+		];
+
+		return [
+			'amiri'   => $amiri,
+			'xbriyaz' => $amiri,
+		];
+	}
+
+	/**
 	 * Setups the printer object. Uses mPdf.
 	 *
 	 * @since 2.0.0
@@ -94,9 +140,46 @@ class Invoice {
 				'mode'             => '+aCJK',
 				'autoScriptToLang' => true,
 				'autoLangToFont'   => true,
+				'autoArabic'       => true,
 				'tempDir'          => get_temp_dir(),
 			]
 		);
+
+		/*
+		 * Register the bundled Amiri font for Arabic/RTL support.
+		 *
+		 * AddFontDirectory() appends to the existing font search path so the
+		 * default mPDF fonts (DejaVu, etc.) remain available. The fontdata
+		 * entry is merged into $this->fontdata so mPDF can locate Amiri by
+		 * name when autoLangToFont selects it for Arabic script.
+		 *
+		 * useOTL => 0xFF enables OpenType Layout features (required for Arabic
+		 * letter-joining/shaping). Without it, Arabic letters render as
+		 * isolated glyphs with spaces between them instead of connected words.
+		 * useKashida => 75 enables kashida-based text justification.
+		 */
+		$this->printer->AddFontDirectory($this->get_rtl_font_dir());
+
+		foreach ($this->get_rtl_fontdata() as $font_name => $font_config) {
+			$this->printer->fontdata[ $font_name ] = $font_config;
+
+			if ( ! empty($font_config['R'])) {
+				$this->printer->available_unifonts[] = $font_name;
+			}
+
+			if ( ! empty($font_config['B'])) {
+				$this->printer->available_unifonts[] = $font_name . 'B';
+			}
+
+			if ( ! empty($font_config['I'])) {
+				$this->printer->available_unifonts[] = $font_name . 'I';
+			}
+
+			if ( ! empty($font_config['BI'])) {
+				$this->printer->available_unifonts[] = $font_name . 'BI';
+			}
+		}
+
 		$this->printer->curlFollowLocation = true;
 
 		$this->printer->setDefaultFont($this->font);

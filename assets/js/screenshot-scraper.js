@@ -1,4 +1,4 @@
-/* global wu_block_ui */
+/* global wu_block_ui, wu_ajax_error */
 (function($) {
 
   $(document).ready(function() {
@@ -19,9 +19,11 @@
           action: 'wu_get_screenshot',
           site_id: $('#id').val(),
         },
-        error() {
+        error(jqXHR) {
 
           block.unblock();
+
+          wu_ajax_error(jqXHR);
 
         },
         success(res) {

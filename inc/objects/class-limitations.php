@@ -327,9 +327,17 @@ class Limitations {
 				} elseif (isset($array1[ $key ]) && is_numeric($array1[ $key ]) && is_numeric($value) && $should_sum && ! $is_unlimited) {
 					$array1[ $key ] = ((int) $array1[ $key ]) + $value;
 				} elseif ('visibility' === $key && isset($array1[ $key ]) && $should_sum) {
+					/*
+					 * Hidden takes priority over visible: if any source restricts
+					 * visibility to 'hidden', the item must be hidden. A product or
+					 * membership that marks a plugin/theme as hidden should always
+					 * override a default of 'visible'.
+					 *
+					 * Priority: hidden (1) > visible (0)
+					 */
 					$key_priority = [
-						'hidden'  => 0,
-						'visible' => 1,
+						'visible' => 0,
+						'hidden'  => 1,
 					];
 
 					$array1[ $key ] = $key_priority[ $value ] > $key_priority[ $array1[ $key ] ] ? $value : $array1[ $key ];

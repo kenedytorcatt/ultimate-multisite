@@ -371,6 +371,15 @@ class Site_Actions_Element extends Base_Element {
 				'capability' => 'exist',
 			]
 		);
+
+		wu_register_form(
+			'resubscribe_membership',
+			[
+				'render'     => [$this, 'render_resubscribe_membership'],
+				'handler'    => [$this, 'handle_resubscribe_membership'],
+				'capability' => 'exist',
+			]
+		);
 	}
 
 	/**
@@ -499,6 +508,26 @@ class Site_Actions_Element extends Base_Element {
 						'classes'      => 'wubox wu-text-red-500',
 						'href'         => wu_get_form_url(
 							'cancel_membership',
+							[
+								'membership'   => $this->membership->get_hash(),
+								'redirect_url' => wu_get_current_url(),
+							]
+						),
+					],
+				],
+				$actions
+			);
+		}
+
+		if ($this->membership && $this->membership->get_status() === Membership_Status::CANCELLED) {
+			$actions = array_merge(
+				[
+					'resubscribe_membership' => [
+						'label'        => __('Resubscribe', 'ultimate-multisite'),
+						'icon_classes' => 'dashicons-wu-refresh wu-align-middle',
+						'classes'      => 'wubox wu-text-green-600',
+						'href'         => wu_get_form_url(
+							'resubscribe_membership',
 							[
 								'membership'   => $this->membership->get_hash(),
 								'redirect_url' => wu_get_current_url(),
@@ -1342,6 +1371,172 @@ class Site_Actions_Element extends Base_Element {
 		wp_send_json_success(
 			[
 				'redirect_url' => $redirect_url,
+			]
+		);
+	}
+
+	/**
+	 * Renders the resubscribe membership modal.
+	 *
+	 * Shown when a customer's membership is cancelled and they want to rejoin.
+	 * Displays the previous plan details and a confirmation button that redirects
+	 * to the registration/checkout page pre-filled with the same plan.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	public function render_resubscribe_membership(): void {
+
+		$membership = wu_get_membership_by_hash(wu_request('membership'));
+
+		$error = '';
+
+		if ( ! $membership) {
+			$error = __('Membership not selected.', 'ultimate-multisite');
+		}
+
+		$customer = wu_get_current_customer();
+
+		if ( ! is_super_admin() && ( ! $customer || $customer->get_id() !== $membership->get_customer_id())) {
+			$error = __('You are not allowed to do this.', 'ultimate-multisite');
+		}
+
+		if ( ! empty($error)) {
+			$error_field = [
+				'error_message' => [
+					'type' => 'note',
+					'desc' => $error,
+				],
+			];
+
+			$form = new \WP_Ultimo\UI\Form(
+				'resubscribe_membership',
+				$error_field,
+				[
+					'views'                 => 'admin-pages/fields',
+					'classes'               => 'wu-modal-form wu-widget-list wu-striped wu-m-0 wu-mt-0',
+					'field_wrapper_classes' => 'wu-w-full wu-box-border wu-items-center wu-flex wu-justify-between wu-p-4 wu-m-0 wu-border-t wu-border-l-0 wu-border-r-0 wu-border-b-0 wu-border-gray-300 wu-border-solid',
+				]
+			);
+
+			$form->render();
+
+			return;
+		}
+
+		$plan      = wu_get_product($membership->get_plan_id());
+		$plan_name = $plan ? $plan->get_name() : __('your previous plan', 'ultimate-multisite');
+
+		$fields = [
+			'membership'   => [
+				'type'  => 'hidden',
+				'value' => wu_request('membership'),
+			],
+			'redirect_url' => [
+				'type'  => 'hidden',
+				'value' => wu_request('redirect_url'),
+			],
+			'plan_info'    => [
+				'type' => 'note',
+				// translators: %s: Plan name.
+				'desc' => sprintf(__('You are about to resubscribe to <strong>%s</strong>. You will be taken to the checkout page to complete your subscription.', 'ultimate-multisite'), esc_html($plan_name)),
+			],
+		];
+
+		$fields['submit_button'] = [
+			'type'            => 'submit',
+			'title'           => __('Resubscribe', 'ultimate-multisite'),
+			'placeholder'     => __('Resubscribe', 'ultimate-multisite'),
+			'value'           => 'save',
+			'classes'         => 'button button-primary wu-w-full',
+			'wrapper_classes' => 'wu-items-end',
+		];
+
+		$form = new \WP_Ultimo\UI\Form(
+			'resubscribe_membership',
+			$fields,
+			[
+				'views'                 => 'admin-pages/fields',
+				'classes'               => 'wu-modal-form wu-widget-list wu-striped wu-m-0 wu-mt-0',
+				'field_wrapper_classes' => 'wu-w-full wu-box-border wu-items-center wu-flex wu-justify-between wu-p-4 wu-m-0 wu-border-t wu-border-l-0 wu-border-r-0 wu-border-b-0 wu-border-gray-300 wu-border-solid',
+			]
+		);
+
+		$form->render();
+	}
+
+	/**
+	 * Handles the resubscribe membership form submission.
+	 *
+	 * Redirects the customer to the registration/checkout page pre-filled with
+	 * their previous plan so they can complete a new subscription.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	public function handle_resubscribe_membership(): void {
+
+		$membership = wu_get_membership_by_hash(wu_request('membership'));
+
+		if ( ! $membership) {
+			$error = new \WP_Error('error', __('An unexpected error happened.', 'ultimate-multisite'));
+
+			wp_send_json_error($error);
+
+			return;
+		}
+
+		$customer = wu_get_current_customer();
+
+		if ( ! is_super_admin() && ( ! $customer || $customer->get_id() !== $membership->get_customer_id())) {
+			$error = new \WP_Error('error', __('You are not allowed to do this.', 'ultimate-multisite'));
+
+			wp_send_json_error($error);
+
+			return;
+		}
+
+		$plan = wu_get_product($membership->get_plan_id());
+
+		if ( ! $plan) {
+			$error = new \WP_Error('error', __('The plan associated with this membership could not be found.', 'ultimate-multisite'));
+
+			wp_send_json_error($error);
+
+			return;
+		}
+
+		/*
+		 * Build the checkout URL pre-filled with the customer's previous plan.
+		 * The products[] query parameter pre-selects the plan on the checkout form.
+		 */
+		$checkout_url = wu_get_registration_url();
+
+		$checkout_url = add_query_arg(
+			[
+				'products[]'    => $plan->get_slug(),
+				'wu_resubscribe' => $membership->get_hash(),
+			],
+			$checkout_url
+		);
+
+		/**
+		 * Filters the resubscription checkout URL.
+		 *
+		 * Allows third-party code to modify the URL the customer is redirected to
+		 * when resubscribing after a cancellation.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param string                       $checkout_url The checkout URL.
+		 * @param \WP_Ultimo\Models\Membership $membership   The cancelled membership.
+		 * @param \WP_Ultimo\Models\Product    $plan         The plan to resubscribe to.
+		 */
+		$checkout_url = apply_filters('wu_resubscribe_checkout_url', $checkout_url, $membership, $plan);
+
+		wp_send_json_success(
+			[
+				'redirect_url' => $checkout_url,
 			]
 		);
 	}

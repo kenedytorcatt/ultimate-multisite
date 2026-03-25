@@ -492,6 +492,14 @@
             // table.init();
 
           },
+          error(jqXHR) {
+
+            $content.animate({ opacity: 1 }, 300);
+
+            // eslint-disable-next-line no-undef
+            wu_ajax_error(jqXHR);
+
+          },
         });
 
       },

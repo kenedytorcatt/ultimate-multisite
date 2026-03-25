@@ -1,10 +1,20 @@
 <?php
+/**
+ * Unit tests for the Limitations object.
+ *
+ * @package WP_Ultimo\Tests\Objects
+ */
 
 namespace WP_Ultimo\Objects;
 
 use WP_UnitTestCase;
 use WP_Ultimo\Objects\Limitations;
 
+/**
+ * Test case for WP_Ultimo\Objects\Limitations.
+ *
+ * @package WP_Ultimo\Tests\Objects
+ */
 class Limitations_Test extends WP_UnitTestCase {
 
 	/**
@@ -75,6 +85,8 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test constructor with various module data.
 	 *
 	 * @dataProvider constructorDataProvider
+	 * @param array $modules_data           Input module data.
+	 * @param int   $expected_modules_count Expected number of modules.
 	 */
 	public function test_constructor(array $modules_data, int $expected_modules_count): void {
 		$limitations = new Limitations($modules_data);
@@ -125,6 +137,8 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test magic getter method.
 	 *
 	 * @dataProvider magicGetterDataProvider
+	 * @param string $module_name  Name of the module to access.
+	 * @param bool   $should_exist Whether the module should exist.
 	 */
 	public function test_magic_getter(string $module_name, bool $should_exist): void {
 		$limitations = new Limitations();
@@ -200,6 +214,8 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test build_modules method.
 	 *
 	 * @dataProvider buildModulesDataProvider
+	 * @param array $modules_data   Input module data.
+	 * @param int   $expected_count Expected number of built modules.
 	 */
 	public function test_build_modules(array $modules_data, int $expected_count): void {
 		$limitations = new Limitations();
@@ -261,6 +277,9 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test static build method.
 	 *
 	 * @dataProvider buildMethodDataProvider
+	 * @param mixed  $data           Module data (array or JSON string).
+	 * @param string $module_name    Name of the module to build.
+	 * @param bool   $should_succeed Whether the build should succeed.
 	 */
 	public function test_build_method($data, string $module_name, bool $should_succeed): void {
 		$result = Limitations::build($data, $module_name);
@@ -302,6 +321,9 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test exists method.
 	 *
 	 * @dataProvider existsMethodDataProvider
+	 * @param array  $modules_data Input module data.
+	 * @param string $module_name  Name of the module to check.
+	 * @param bool   $should_exist Whether the module should exist.
 	 */
 	public function test_exists_method(array $modules_data, string $module_name, bool $should_exist): void {
 		$limitations = new Limitations($modules_data);
@@ -355,6 +377,8 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test has_limitations method.
 	 *
 	 * @dataProvider hasLimitationsDataProvider
+	 * @param array $modules_data Input module data.
+	 * @param bool  $expected     Expected return value.
 	 */
 	public function test_has_limitations(array $modules_data, bool $expected): void {
 		$limitations = new Limitations($modules_data);
@@ -397,6 +421,9 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test is_module_enabled method.
 	 *
 	 * @dataProvider isModuleEnabledDataProvider
+	 * @param array  $modules_data Input module data.
+	 * @param string $module_name  Name of the module to check.
+	 * @param bool   $expected     Expected return value.
 	 */
 	public function test_is_module_enabled(array $modules_data, string $module_name, bool $expected): void {
 		$limitations = new Limitations($modules_data);
@@ -515,6 +542,10 @@ class Limitations_Test extends WP_UnitTestCase {
 	 * Test merge method.
 	 *
 	 * @dataProvider mergeMethodDataProvider
+	 * @param array $base_data      Base limitations data.
+	 * @param array $merge_data     Array of limitations data to merge in.
+	 * @param bool  $override       Whether to use override mode.
+	 * @param mixed $expected_value Expected value after merge.
 	 */
 	public function test_merge_method(array $base_data, array $merge_data, bool $override, $expected_value): void {
 		$limitations = new Limitations($base_data);
@@ -720,6 +751,10 @@ class Limitations_Test extends WP_UnitTestCase {
 
 	/**
 	 * Test merge_recursive with visibility priority.
+	 *
+	 * Hidden must win over visible: if any source restricts visibility to 'hidden',
+	 * the item must remain hidden. This is the fix for issue #234 where plugins/themes
+	 * set as hidden on a product or membership were not being hidden.
 	 */
 	public function test_merge_recursive_visibility_priority(): void {
 		$limitations = new Limitations();
@@ -732,6 +767,7 @@ class Limitations_Test extends WP_UnitTestCase {
 			$method->setAccessible(true);
 		}
 
+		// Case 1: base is 'hidden', incoming is 'visible' — hidden must win.
 		$array1 = [
 			'enabled'    => true,
 			'visibility' => 'hidden',
@@ -743,7 +779,123 @@ class Limitations_Test extends WP_UnitTestCase {
 
 		$method->invokeArgs($limitations, [&$array1, &$array2, true]);
 
-		$this->assertEquals('visible', $array1['visibility']);
+		$this->assertEquals('hidden', $array1['visibility'], 'hidden should win over visible (restriction takes priority)');
+
+		// Case 2: base is 'visible', incoming is 'hidden' — hidden must win.
+		$array3 = [
+			'enabled'    => true,
+			'visibility' => 'visible',
+		];
+		$array4 = [
+			'enabled'    => true,
+			'visibility' => 'hidden',
+		];
+
+		$method->invokeArgs($limitations, [&$array3, &$array4, true]);
+
+		$this->assertEquals('hidden', $array3['visibility'], 'hidden incoming should override visible base');
+
+		// Case 3: both visible — stays visible.
+		$array5 = [
+			'enabled'    => true,
+			'visibility' => 'visible',
+		];
+		$array6 = [
+			'enabled'    => true,
+			'visibility' => 'visible',
+		];
+
+		$method->invokeArgs($limitations, [&$array5, &$array6, true]);
+
+		$this->assertEquals('visible', $array5['visibility'], 'visible + visible should remain visible');
+	}
+
+	/**
+	 * Regression test for issue #234: plugins hidden on a product/membership must be hidden on the site.
+	 *
+	 * When a plugin is set to 'hidden' visibility on a product limitation, merging that product's
+	 * limitations into the site's composite limitations must result in the plugin being hidden.
+	 * Previously the merge kept 'visible' because the priority was inverted.
+	 */
+	public function test_plugin_hidden_on_product_is_hidden_on_site(): void {
+
+		// Product limitation: plugin is explicitly hidden.
+		$product_limitations = new Limitations(
+			[
+				'plugins' => [
+					'enabled' => true,
+					'limit'   => [
+						'woocommerce/woocommerce.php' => [
+							'visibility' => 'hidden',
+							'behavior'   => 'default',
+						],
+					],
+				],
+			]
+		);
+
+		// Site starts with empty limitations (no site-level overrides).
+		$site_limitations = new Limitations([]);
+
+		// Simulate the waterfall: merge product limitations first, then site overrides.
+		$composite = $site_limitations->merge($product_limitations);
+
+		$plugin_limit = $composite->plugins->{'woocommerce/woocommerce.php'};
+
+		$this->assertEquals(
+			'hidden',
+			$plugin_limit->visibility,
+			'Plugin set as hidden on product must be hidden in composite limitations (issue #234)'
+		);
+
+		$this->assertTrue(
+			$composite->plugins->allowed('woocommerce/woocommerce.php', 'hidden'),
+			'allowed() with type "hidden" must return true for a hidden plugin'
+		);
+
+		$this->assertFalse(
+			$composite->plugins->allowed('woocommerce/woocommerce.php', 'visible'),
+			'allowed() with type "visible" must return false for a hidden plugin'
+		);
+	}
+
+	/**
+	 * Regression test for issue #234: themes hidden on a membership must be hidden on the site.
+	 */
+	public function test_theme_hidden_on_membership_is_hidden_on_site(): void {
+
+		// Membership limitation: theme is explicitly hidden.
+		$membership_limitations = new Limitations(
+			[
+				'themes' => [
+					'enabled' => true,
+					'limit'   => [
+						'twentytwentyfour' => [
+							'visibility' => 'hidden',
+							'behavior'   => 'available',
+						],
+					],
+				],
+			]
+		);
+
+		// Site starts with empty limitations.
+		$site_limitations = new Limitations([]);
+
+		$composite = $site_limitations->merge($membership_limitations);
+
+		$theme_limit = $composite->themes->{'twentytwentyfour'};
+
+		$this->assertEquals(
+			'hidden',
+			$theme_limit->visibility,
+			'Theme set as hidden on membership must be hidden in composite limitations (issue #234)'
+		);
+
+		$this->assertTrue(
+			$composite->themes->allowed('twentytwentyfour', 'hidden'),
+			'allowed() with type "hidden" must return true for a hidden theme'
+		);
 	}
 
 	/**
@@ -793,24 +945,28 @@ class Limitations_Test extends WP_UnitTestCase {
 	 */
 	public function test_merge_null_limit_does_not_overwrite_template_list(): void {
 
-		$plan_limitations = new Limitations([
-			'site_templates' => [
-				'enabled' => true,
-				'mode'    => 'default',
-				'limit'   => [
-					'2' => ['behavior' => 'available'],
-					'3' => ['behavior' => 'pre_selected'],
+		$plan_limitations = new Limitations(
+			[
+				'site_templates' => [
+					'enabled' => true,
+					'mode'    => 'default',
+					'limit'   => [
+						'2' => ['behavior' => 'available'],
+						'3' => ['behavior' => 'pre_selected'],
+					],
 				],
-			],
-		]);
+			]
+		);
 
-		$addon_limitations = new Limitations([
-			'site_templates' => [
-				'enabled' => true,
-				'mode'    => 'default',
-				'limit'   => null,
-			],
-		]);
+		$addon_limitations = new Limitations(
+			[
+				'site_templates' => [
+					'enabled' => true,
+					'mode'    => 'default',
+					'limit'   => null,
+				],
+			]
+		);
 
 		$merged = $plan_limitations->merge($addon_limitations);
 
@@ -825,19 +981,23 @@ class Limitations_Test extends WP_UnitTestCase {
 	 */
 	public function test_merge_null_limit_overwrites_in_override_mode(): void {
 
-		$base = new Limitations([
-			'users' => [
-				'enabled' => true,
-				'limit'   => 5,
-			],
-		]);
+		$base = new Limitations(
+			[
+				'users' => [
+					'enabled' => true,
+					'limit'   => 5,
+				],
+			]
+		);
 
-		$override = new Limitations([
-			'users' => [
-				'enabled' => true,
-				'limit'   => null,
-			],
-		]);
+		$override = new Limitations(
+			[
+				'users' => [
+					'enabled' => true,
+					'limit'   => null,
+				],
+			]
+		);
 
 		$merged = $base->merge(true, $override);
 
@@ -868,34 +1028,38 @@ class Limitations_Test extends WP_UnitTestCase {
 	public function test_checkout_plan_plus_addon_preserves_templates(): void {
 
 		// Plan with specific templates configured
-		$plan_data = new Limitations([
-			'site_templates' => [
-				'enabled' => true,
-				'mode'    => 'choose_available_templates',
-				'limit'   => [
-					'5' => ['behavior' => 'available'],
-					'7' => ['behavior' => 'available'],
-					'9' => ['behavior' => 'not_available'],
+		$plan_data = new Limitations(
+			[
+				'site_templates' => [
+					'enabled' => true,
+					'mode'    => 'choose_available_templates',
+					'limit'   => [
+						'5' => ['behavior' => 'available'],
+						'7' => ['behavior' => 'available'],
+						'9' => ['behavior' => 'not_available'],
+					],
 				],
-			],
-			'disk_space'     => [
-				'enabled' => true,
-				'limit'   => 500,
-			],
-		]);
+				'disk_space'     => [
+					'enabled' => true,
+					'limit'   => 500,
+				],
+			]
+		);
 
 		// Addon product with no template restrictions but some disk space
-		$addon_data = new Limitations([
-			'site_templates' => [
-				'enabled' => true,
-				'mode'    => 'default',
-				'limit'   => null,
-			],
-			'disk_space'     => [
-				'enabled' => true,
-				'limit'   => 100,
-			],
-		]);
+		$addon_data = new Limitations(
+			[
+				'site_templates' => [
+					'enabled' => true,
+					'mode'    => 'default',
+					'limit'   => null,
+				],
+				'disk_space'     => [
+					'enabled' => true,
+					'limit'   => 100,
+				],
+			]
+		);
 
 		// Simulate the validation rule merge
 		$limits = new Limitations([]);
@@ -920,17 +1084,19 @@ class Limitations_Test extends WP_UnitTestCase {
 	 */
 	public function test_available_site_templates_returns_integers(): void {
 
-		$limitations = new Limitations([
-			'site_templates' => [
-				'enabled' => true,
-				'mode'    => 'choose_available_templates',
-				'limit'   => [
-					'123' => ['behavior' => 'available'],
-					'456' => ['behavior' => 'pre_selected'],
-					'789' => ['behavior' => 'not_available'],
+		$limitations = new Limitations(
+			[
+				'site_templates' => [
+					'enabled' => true,
+					'mode'    => 'choose_available_templates',
+					'limit'   => [
+						'123' => ['behavior' => 'available'],
+						'456' => ['behavior' => 'pre_selected'],
+						'789' => ['behavior' => 'not_available'],
+					],
 				],
-			],
-		]);
+			]
+		);
 
 		$available = $limitations->site_templates->get_available_site_templates();
 

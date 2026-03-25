@@ -1912,6 +1912,25 @@ class Checkout {
 			'forgot_password'      => __('Forgot password?', 'ultimate-multisite'),
 			'cancel'               => __('Cancel', 'ultimate-multisite'),
 			'email_exists'         => __('A customer with the same email address or username already exists.', 'ultimate-multisite'),
+			// Client-side validation messages (%s = field label, %d = numeric limit).
+			/* translators: %s: field label */
+			'field_required'       => __('%s is required.', 'ultimate-multisite'),
+			/* translators: %s: field label */
+			'field_invalid_email'  => __('%s must be a valid email address.', 'ultimate-multisite'),
+			/* translators: 1: field label, 2: minimum character count */
+			'field_min_length'     => __('%s must be at least %d characters.', 'ultimate-multisite'),
+			/* translators: 1: field label, 2: maximum character count */
+			'field_max_length'     => __('%s must not exceed %d characters.', 'ultimate-multisite'),
+			/* translators: %s: field label */
+			'field_alpha_dash'     => __('%s may only contain letters, numbers, dashes, and underscores.', 'ultimate-multisite'),
+			/* translators: %s: field label */
+			'field_lowercase'      => __('%s must be lowercase.', 'ultimate-multisite'),
+			/* translators: 1: field label, 2: other field label */
+			'field_same'           => __('%s must match %s.', 'ultimate-multisite'),
+			/* translators: %s: field label */
+			'field_integer'        => __('%s must be a whole number.', 'ultimate-multisite'),
+			/* translators: %s: field label */
+			'field_accepted'       => __('%s must be accepted.', 'ultimate-multisite'),
 		];
 
 		/*
@@ -2037,6 +2056,41 @@ class Checkout {
 			$variables['discount_code'] = $variables['order']->discount_code->get_code();
 		}
 
+		/*
+		 * Expose validation rules and field labels to JS so client-side
+		 * validation stays in sync with the server-side rules without
+		 * duplicating logic.
+		 */
+		$variables['validation_rules'] = $this->get_js_validation_rules();
+
+		/*
+		 * Build a field_labels map (field_id => human-readable label) from the
+		 * checkout form fields so the JS validator can show friendly names.
+		 */
+		$field_labels = [
+			'email_address'              => __('Email address', 'ultimate-multisite'),
+			'email_address_confirmation' => __('Email address confirmation', 'ultimate-multisite'),
+			'username'                   => __('Username', 'ultimate-multisite'),
+			'password'                   => __('Password', 'ultimate-multisite'),
+			'password_conf'              => __('Password confirmation', 'ultimate-multisite'),
+			'site_title'                 => __('Site title', 'ultimate-multisite'),
+			'site_url'                   => __('Site URL', 'ultimate-multisite'),
+			'billing_country'            => __('Country', 'ultimate-multisite'),
+			'billing_zip_code'           => __('ZIP / Postal code', 'ultimate-multisite'),
+			'billing_state'              => __('State / Province', 'ultimate-multisite'),
+			'billing_city'               => __('City', 'ultimate-multisite'),
+		];
+
+		if ($this->checkout_form) {
+			foreach ($this->checkout_form->get_all_fields() as $field) {
+				if ( ! empty($field['id']) && ! empty($field['name'])) {
+					$field_labels[ $field['id'] ] = $field['name'];
+				}
+			}
+		}
+
+		$variables['field_labels'] = $field_labels;
+
 		/**
 		 * Allow plugin developers to filter the pre-sets of a checkout page.
 		 *
@@ -2049,6 +2103,94 @@ class Checkout {
 		 * @return array The new variables array.
 		 */
 		return apply_filters('wu_get_checkout_variables', $variables, $this);
+	}
+
+	/**
+	 * Converts the PHP validation rules into a JS-friendly structure.
+	 *
+	 * Each rule string (e.g. "required|min:4|email") is parsed into an array of
+	 * rule objects so the client-side validator can process them without
+	 * duplicating the rule definitions.
+	 *
+	 * Only rules that can be meaningfully evaluated client-side are included.
+	 * Server-only rules (unique_site, unique:\WP_User, products, country, state,
+	 * city, site_template) are intentionally omitted — the AJAX call still
+	 * validates those server-side.
+	 *
+	 * @since 2.1.0
+	 * @return array<string, array<array{rule: string, param: string|null}>>
+	 */
+	public function get_js_validation_rules(): array {
+
+		$raw_rules = $this->validation_rules();
+
+		/*
+		 * Rules that require a database lookup or complex server-side logic.
+		 * These are skipped for client-side validation.
+		 */
+		$server_only = [
+			'unique_site',
+			'site_template',
+			'products',
+			'country',
+			'state',
+			'city',
+		];
+
+		$js_rules = [];
+
+		foreach ($raw_rules as $field => $rule_string) {
+			if (empty($rule_string)) {
+				continue;
+			}
+
+			$parsed = [];
+
+			foreach (explode('|', $rule_string) as $rule_part) {
+				$rule_part = trim($rule_part);
+
+				if (empty($rule_part)) {
+					continue;
+				}
+
+				// Split "rule:param" into rule name and optional parameter.
+				if (strpos($rule_part, ':') !== false) {
+					[$rule_name, $rule_param] = explode(':', $rule_part, 2);
+				} else {
+					$rule_name  = $rule_part;
+					$rule_param = null;
+				}
+
+				// Skip rules that start with "unique:" (DB lookups).
+				if (strpos($rule_name, 'unique') === 0) {
+					continue;
+				}
+
+				// Skip server-only rules.
+				if (in_array($rule_name, $server_only, true)) {
+					continue;
+				}
+
+				$parsed[] = [
+					'rule'  => $rule_name,
+					'param' => $rule_param,
+				];
+			}
+
+			if ( ! empty($parsed)) {
+				$js_rules[ $field ] = $parsed;
+			}
+		}
+
+		/**
+		 * Allow plugin developers to modify the JS validation rules.
+		 *
+		 * @since 2.1.0
+		 * @param array    $js_rules  Field => parsed rule array.
+		 * @param Checkout $checkout  The checkout instance.
+		 * @return array
+		 */
+		return apply_filters('wu_checkout_js_validation_rules', $js_rules, $this);
 	}
 
 	/**

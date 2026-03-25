@@ -1,4 +1,4 @@
-/* global wu_template_switching_params, Vue, wu_create_cookie, wu_listen_to_cookie_change */
+/* global wu_template_switching_params, Vue, wu_create_cookie, wu_listen_to_cookie_change, wu_ajax_error */
 (function($, hooks) {
 
 	/*
@@ -173,10 +173,9 @@
 
 							}
 
-							// eslint-disable-next-line no-alert
-							alert(errorMessage);
+						wu_ajax_error(errorMessage);
 
-							return;
+						return;
 
 						}
 
@@ -200,8 +199,7 @@
 
 						that.ready = false;
 
-						// eslint-disable-next-line no-alert
-						alert('A network error occurred. Please try again.');
+					wu_ajax_error(null);
 
 					});
 

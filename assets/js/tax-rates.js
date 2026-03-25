@@ -1,5 +1,5 @@
 /* eslint-disable no-lonely-if */
-/* global _, vuedraggable, Vue, wu_block_ui, ajaxurl, wu_tax_ratesl10n */
+/* global _, vuedraggable, Vue, wu_block_ui, ajaxurl, wu_tax_ratesl10n, wu_ajax_error */
 (function($) {
 
   $(document).ready(function() {
@@ -230,13 +230,15 @@
               that.data = response.data;
 
             })
-              .fail(function(error) {
+              .fail(function(jqXHR) {
 
                 that.loading = false;
 
                 that.error = true;
 
-                that.errorMessage = error.statusText;
+                that.errorMessage = jqXHR.statusText;
+
+                wu_ajax_error(jqXHR);
 
               });
 
@@ -371,6 +373,12 @@
                 that.saveMessage = '';
 
               }, 6000);
+
+            }).fail(function(jqXHR) {
+
+              that.saving = false;
+
+              wu_ajax_error(jqXHR);
 
             });
 

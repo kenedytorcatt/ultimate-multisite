@@ -20,6 +20,47 @@
 		<exclude-pattern>/tests/</exclude-pattern>
 	</rule>
 
+	<!-- Test files follow PHPUnit conventions, not WordPress doc comment requirements. -->
+	<rule ref="Squiz.Commenting.FunctionComment">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting.ClassComment">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting.FileComment">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+
+	<!-- Test files may use non-Yoda conditions for readability. -->
+	<rule ref="WordPress.PHP.YodaConditions">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+
+	<!-- Test files may use inline arrays in function calls for conciseness. -->
+	<rule ref="PEAR.Functions.FunctionCallSignature.ContentAfterOpenBracket">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+	<rule ref="PEAR.Functions.FunctionCallSignature.CloseBracketLine">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+	<rule ref="PEAR.Functions.FunctionCallSignature.MultipleArguments">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+
+	<!-- Test files may use inline arrays for readability. -->
+	<rule ref="WordPress.Arrays.ArrayDeclaration.MultiLineNotAllowed">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.Arrays.ArrayDeclaration.CloseBraceNewLine">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.Arrays.ArrayDeclaration.AssociativeKeyFound">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.Arrays.ArrayKeySpacingRestrictions">
+		<exclude-pattern>/tests/</exclude-pattern>
+	</rule>
+
 	<!-- How to scan -->
 	<!-- Usage instructions: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Usage -->
 	<!-- Annotated ruleset: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Annotated-ruleset.xml -->

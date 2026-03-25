@@ -29,6 +29,7 @@ class Site_Manager extends Base_Manager {
 	use \WP_Ultimo\Apis\Rest_Api;
 	use \WP_Ultimo\Apis\WP_CLI;
 	use \WP_Ultimo\Apis\MCP_Abilities;
+	use \WP_Ultimo\Apis\Command_Palette;
 	use \WP_Ultimo\Traits\Singleton;
 
 	/**
@@ -60,6 +61,8 @@ class Site_Manager extends Base_Manager {
 		$this->enable_wp_cli();
 
 		$this->enable_mcp_abilities();
+
+		$this->enable_command_palette();
 
 		add_action('after_setup_theme', [$this, 'additional_thumbnail_sizes']);
 
@@ -189,11 +192,25 @@ class Site_Manager extends Base_Manager {
 				if ($errors->has_errors() === false) {
 					$d = wu_get_site_domain_and_path(wu_request('site_url', ''), $checkout->request_or_session('site_domain'));
 
+					/*
+					 * Apply the wu_checkout_template_id filter so that
+					 * "Assign Site Template" mode is honoured when adding
+					 * a new site to an existing membership.
+					 *
+					 * @since 2.5.0
+					 */
+					$template_id = apply_filters(
+						'wu_checkout_template_id',
+						(int) $checkout->request_or_session('template_id'),
+						$membership,
+						$checkout
+					);
+
 					$pending_site = $membership->create_pending_site(
 						[
 							'domain'        => $d->domain,
 							'path'          => $d->path,
-							'template_id'   => $checkout->request_or_session('template_id'),
+							'template_id'   => $template_id,
 							'title'         => $checkout->request_or_session('site_title'),
 							'customer_id'   => $customer->get_id(),
 							'membership_id' => $membership->get_id(),
@@ -1119,13 +1136,21 @@ class Site_Manager extends Base_Manager {
 		// Fire pre-deletion hook for extensibility.
 		do_action('wu_before_demo_site_deleted', $site, $membership, $customer);
 
-		// Delete the WordPress blog if it exists.
-		if ($blog_id) {
-			wpmu_delete_blog($blog_id, true);
-		}
-
-		// Delete the WP Ultimo site record.
+		// Delete the site record (wp_delete_site handles the underlying blog removal).
 		$result = $site->delete();
+
+		if (true !== $result) {
+			wu_log_add(
+				'demo-cleanup',
+				sprintf(
+					// translators: %d is the site ID.
+					__('Failed to delete demo site #%d; skipping related cleanup.', 'ultimate-multisite'),
+					$site_id
+				)
+			);
+
+			return;
+		}
 
 		// Optionally delete the membership if it only has this demo site.
 		$delete_membership = apply_filters('wu_demo_site_delete_membership', true, $membership, $site);

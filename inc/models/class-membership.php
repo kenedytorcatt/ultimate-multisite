@@ -713,8 +713,18 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			return new \WP_Error('invalid-date', __('Swap Cart is invalid.', 'ultimate-multisite'));
 		}
 
-		// clear the current addons.
-		$this->addon_products = [];
+		/*
+		 * For addon-only carts, we merge new addons with existing ones.
+		 * For plan changes (upgrade/downgrade), we replace all products.
+		 *
+		 * @since 2.0.12
+		 */
+		$is_addon_cart = 'addon' === $order->get_cart_type();
+
+		if ( ! $is_addon_cart) {
+			// Clear the current addons for plan changes.
+			$this->addon_products = [];
+		}
 
 		/*
 		 * We'll do that based on the line items,
@@ -752,14 +762,19 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		}
 
 		/*
-		 * Finally, we have a couple of other parameters to set.
+		 * For addon carts, don't update the recurring amount/duration
+		 * since we're not changing the plan, just adding products.
+		 *
+		 * @since 2.0.12
 		 */
-		$this->set_amount($order->get_recurring_total());
-		$this->set_initial_amount($order->get_total());
-		$this->set_recurring($order->has_recurring());
+		if ( ! $is_addon_cart) {
+			$this->set_amount($order->get_recurring_total());
+			$this->set_initial_amount($order->get_total());
+			$this->set_recurring($order->has_recurring());
 
-		$this->set_duration($order->get_duration());
-		$this->set_duration_unit($order->get_duration_unit());
+			$this->set_duration($order->get_duration());
+			$this->set_duration_unit($order->get_duration_unit());
+		}
 
 		/*
 		 * Returns self for chaining.
@@ -2031,7 +2046,38 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 
 		$pending_site->set_type('customer_owned');
 
-		$saved = $pending_site->save();
+		/*
+		 * Ensure the template ID is set when the product uses
+		 * "Assign Site Template" mode. During checkout the
+		 * wu_checkout_template_id filter sets this on the pending
+		 * site data, but if the checkout form has no template
+		 * selection field the value may still be empty. Re-apply
+		 * the filter here as a safety net so the assigned template
+		 * is always honoured.
+		 *
+		 * @since 2.5.0
+		 */
+		$template_id = apply_filters('wu_checkout_template_id', (int) $pending_site->get_template_id(), $this, null);
+
+		if ($template_id && $template_id !== (int) $pending_site->get_template_id()) {
+			$pending_site->set_template_id($template_id);
+		}
+
+		try {
+			$saved = $pending_site->save();
+		} catch (\Throwable $e) {
+			/*
+			 * Reset is_publishing when Site::save() or a downstream hook throws,
+			 * so the cron/manual retry path is not stuck in "Creating" state.
+			 *
+			 * @since 2.4.13
+			 */
+			$pending_site->set_publishing(false);
+
+			$this->update_pending_site($pending_site);
+
+			return new \WP_Error('pending_site_publish_failed', $e->getMessage());
+		}
 
 		if (is_wp_error($saved)) {
 			if ($saved->get_error_code() === 'site_taken') {

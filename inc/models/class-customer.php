@@ -962,4 +962,26 @@ class Customer extends Base_Model implements Billable, Notable {
 
 		$this->network_id = $network_id ? absint($network_id) : null;
 	}
+
+	/**
+	 * Transform the object into an assoc array.
+	 *
+	 * Overrides Base_Model::to_array() to ensure lazy-loaded meta properties
+	 * are populated before serialization so REST API responses include all fields.
+	 *
+	 * @since 2.0.11
+	 * @return array
+	 */
+	public function to_array() {
+
+		// Only trigger lazy-loading when the model has been persisted (has an ID).
+		// For unsaved models (during validate/save), meta is not available and the
+		// getters return default values that can fail validation rules.
+		if ($this->get_id()) {
+			$this->has_trialed();
+			$this->get_extra_information();
+		}
+
+		return parent::to_array();
+	}
 }

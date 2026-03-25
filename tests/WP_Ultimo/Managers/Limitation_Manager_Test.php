@@ -1791,8 +1791,8 @@ class Limitation_Manager_Test extends \WP_UnitTestCase {
 		$merged = $base->merge($override_data);
 
 		$plugin = $merged->plugins->{'akismet/akismet.php'};
-		// visible has higher priority than hidden
-		$this->assertEquals('visible', $plugin->visibility);
+		// hidden has higher priority than visible — restrictions take precedence (fix for issue #234)
+		$this->assertEquals('hidden', $plugin->visibility);
 	}
 
 	// ---------------------------------------------------------------

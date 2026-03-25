@@ -1,4 +1,4 @@
-/* global vuedraggable, Vue, wu_checkout_forms_editor_app, wu_checkout_form, _, ajaxurl, wu_initialize_tooltip */
+/* global vuedraggable, Vue, wu_checkout_forms_editor_app, wu_checkout_form, _, ajaxurl, wu_initialize_tooltip, wu_ajax_error */
 (function($) {
 
   $(document).ready(function() {
@@ -271,6 +271,11 @@
               form_id: that.form_id,
             },
             success() { },
+            error(jqXHR) {
+
+              wu_ajax_error(jqXHR);
+
+            },
           });
 
         },

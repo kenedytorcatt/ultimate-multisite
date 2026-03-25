@@ -1740,4 +1740,26 @@ class Email_Test extends \WP_UnitTestCase {
 		parent::tearDown();
 	}
 
+	/**
+	 * Test that to_array() populates lazy-loaded meta properties (issue #469).
+	 *
+	 * event and schedule are only loaded from meta when their getter is first
+	 * called. Without the to_array() override they remain null.
+	 */
+	public function test_to_array_includes_lazy_loaded_meta_properties(): void {
+		$email = new \WP_Ultimo\Models\Email();
+		$email->set_slug('test-email');
+		$email->set_event('user_registration');
+		$email->set_schedule(true);
+
+		$array = $email->to_array();
+
+		$this->assertIsArray($array, 'to_array() should return an array.');
+		$this->assertArrayHasKey('event', $array, 'to_array() must include event.');
+		$this->assertNotNull($array['event'], 'event must not be null in to_array() output.');
+		$this->assertEquals('user_registration', $array['event'], 'event must match the set value.');
+		$this->assertArrayHasKey('schedule', $array, 'to_array() must include schedule.');
+		$this->assertNotNull($array['schedule'], 'schedule must not be null in to_array() output.');
+	}
+
 }

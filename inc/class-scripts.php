@@ -33,9 +33,9 @@ class Scripts {
 
 		add_action('init', [$this, 'register_default_styles']);
 
-		add_action('admin_init', [$this, 'enqueue_default_admin_styles']);
+		add_action('admin_enqueue_scripts', [$this, 'enqueue_default_admin_styles']);
 
-		add_action('admin_init', [$this, 'enqueue_default_admin_scripts']);
+		add_action('admin_enqueue_scripts', [$this, 'enqueue_default_admin_scripts']);
 
 		add_action('wp_ajax_wu_toggle_container', [$this, 'update_use_container']);
 
@@ -204,6 +204,22 @@ class Scripts {
 				'precision'          => wu_get_setting('precision', 2),
 				'use_container'      => get_user_setting('wu_use_container', false),
 				'disable_image_zoom' => wu_get_setting('disable_image_zoom', false),
+			]
+		);
+
+		/*
+		 * Localize AJAX error strings used by window.wu_ajax_error().
+		 */
+		wp_localize_script(
+			'wu-functions',
+			'wu_ajax_errors',
+			[
+				'error_title'   => __('Request Failed', 'ultimate-multisite'),
+				'error_message' => __('An unexpected error occurred. Please try again or contact support if the problem persists.', 'ultimate-multisite'),
+				'error_403'     => __('You do not have permission to perform this action.', 'ultimate-multisite'),
+				'error_404'     => __('The requested resource was not found.', 'ultimate-multisite'),
+				'error_network' => __('A network error occurred. Please check your connection and try again.', 'ultimate-multisite'),
+				'while_prefix'  => __('while', 'ultimate-multisite'),
 			]
 		);
 
@@ -411,10 +427,19 @@ class Scripts {
 	/**
 	 * Loads the default admin styles.
 	 *
+	 * Only enqueued on WP Ultimo admin pages to avoid loading 150KB+ of CSS
+	 * on unrelated admin pages (e.g., Posts, Plugins, Settings).
+	 *
 	 * @since 2.0.0
+	 *
+	 * @param string $hook_suffix The current admin page hook suffix.
 	 * @return void
 	 */
-	public function enqueue_default_admin_styles(): void {
+	public function enqueue_default_admin_styles(string $hook_suffix): void {
+
+		if ( ! wu_is_wu_page($hook_suffix)) {
+			return;
+		}
 
 		wp_enqueue_style('wu-admin');
 
@@ -425,10 +450,19 @@ class Scripts {
 	/**
 	 * Loads the default admin scripts.
 	 *
+	 * Only enqueued on WP Ultimo admin pages to avoid loading scripts
+	 * on unrelated admin pages (e.g., Posts, Plugins, Settings).
+	 *
 	 * @since 2.0.0
+	 *
+	 * @param string $hook_suffix The current admin page hook suffix.
 	 * @return void
 	 */
-	public function enqueue_default_admin_scripts(): void {
+	public function enqueue_default_admin_scripts(string $hook_suffix): void {
+
+		if ( ! wu_is_wu_page($hook_suffix)) {
+			return;
+		}
 
 		wp_enqueue_script('wu-admin');
 

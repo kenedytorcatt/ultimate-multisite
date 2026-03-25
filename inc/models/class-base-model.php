@@ -490,7 +490,13 @@ abstract class Base_Model implements \JsonSerializable {
 		}
 
 		foreach ($validator->get_validation()->getValidData() as $key => $value) {
-			$this->{$key} = $value;
+			// Skip null values to avoid overwriting existing property values with null.
+			// The rakit/validation library may return null for fields on PHP 8.4+ due to
+			// implicit nullable parameter deprecations in Attribute::getValue(), which would
+			// incorrectly reset boolean/integer fields (e.g. apply_to_renewals) to null.
+			if (null !== $value) {
+				$this->{$key} = $value;
+			}
 		}
 
 		return true;
