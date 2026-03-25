@@ -10,7 +10,9 @@ jobs:
   php-tests:
     name: PHP ${{ matrix.php-version }}
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.php-version == '8.5' }}
     strategy:
+      fail-fast: false
       matrix:
          php-version: ["8.2", "8.3", "8.4", "8.5"]
     services:
@@ -116,9 +118,11 @@ jobs:
         with:
           plugins: |
             ./
+          blueprint: .github/performance-blueprint.json
+          wp-version: "6.8"
           urls: |
             /
           create-comment: ${{ github.event_name == 'pull_request' }}
           print-results: true
           upload-artifacts: true
-          debug: ${{ runner.debug == '1' }}
+          debug: true

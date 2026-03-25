@@ -131,7 +131,8 @@ install_test_suite() {
 recreate_db() {
 	shopt -s nocasematch
 	if [[ $1 =~ ^(y|yes)$ ]]; then
-		mysqladmin drop "$DB_NAME" -f --user="$DB_USER" --password="$DB_PASS""$EXTRA"
+		# shellcheck disable=SC2086  # $EXTRA must be unquoted for word-splitting
+		mysqladmin drop "$DB_NAME" -f --user="$DB_USER" --password="$DB_PASS" $EXTRA
 		create_db
 		echo "Recreated the database ($DB_NAME)."
 	else
@@ -141,7 +142,8 @@ recreate_db() {
 }
 
 create_db() {
-	mysqladmin create "$DB_NAME" --user="$DB_USER" --password="$DB_PASS""$EXTRA"
+	# shellcheck disable=SC2086  # $EXTRA must be unquoted for word-splitting
+	mysqladmin create "$DB_NAME" --user="$DB_USER" --password="$DB_PASS" $EXTRA
 }
 
 install_db() {
@@ -157,16 +159,17 @@ install_db() {
 
 	if [ -n "$DB_HOSTNAME" ]; then
 		if echo "$DB_SOCK_OR_PORT" | grep -qe '^[0-9]\{1,\}$'; then
-			EXTRA=" --host=$DB_HOSTNAME --port=$DB_SOCK_OR_PORT --protocol=tcp"
+			EXTRA="--host=$DB_HOSTNAME --port=$DB_SOCK_OR_PORT --protocol=tcp"
 		elif [ -n "$DB_SOCK_OR_PORT" ]; then
-			EXTRA=" --socket=$DB_SOCK_OR_PORT"
+			EXTRA="--socket=$DB_SOCK_OR_PORT"
 		elif [ -n "$DB_HOSTNAME" ]; then
-			EXTRA=" --host=$DB_HOSTNAME --protocol=tcp"
+			EXTRA="--host=$DB_HOSTNAME --protocol=tcp"
 		fi
 	fi
 
 	# create database
-	if mysql --user="$DB_USER" --password="$DB_PASS""$EXTRA" --execute='show databases;' | grep -q "^${DB_NAME}$"; then
+	# shellcheck disable=SC2086  # $EXTRA must be unquoted for word-splitting
+	if mysql --user="$DB_USER" --password="$DB_PASS" $EXTRA --execute='show databases;' | grep -q "^${DB_NAME}$"; then
 		echo "Reinstalling will delete the existing test database ($DB_NAME)"
 		read -r -p 'Are you sure you want to proceed? [y/N]: ' DELETE_EXISTING_DB
 		recreate_db "$DELETE_EXISTING_DB"
