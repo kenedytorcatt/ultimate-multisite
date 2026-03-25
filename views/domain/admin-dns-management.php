@@ -174,13 +174,13 @@ defined('ABSPATH') || exit;
 					</tr>
 				</tbody>
 
-				<tbody v-if="!loading && error">
-					<tr>
-						<td colspan="4">
-							<div class="wu-mt-0 wu-p-4 wu-bg-red-100 wu-border wu-border-solid wu-border-red-200 wu-rounded-sm wu-text-red-500" v-html="error[0].message"></div>
-						</td>
-					</tr>
-				</tbody>
+			<tbody v-if="!loading && error">
+				<tr>
+					<td colspan="4">
+						<div class="wu-mt-0 wu-p-4 wu-bg-red-100 wu-border wu-border-solid wu-border-red-200 wu-rounded-sm wu-text-red-500" v-if="error && error[0]">{{ error[0].message }}</div>
+					</td>
+				</tr>
+			</tbody>
 
 				<tbody v-if="!loading && !error">
 					<tr v-for="dns in results.entries">

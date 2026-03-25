@@ -786,6 +786,16 @@ class Domain_Mapping_Element extends Base_Element {
 			return;
 		}
 
+		// Sanitize record data before passing to provider (mirrors DNS_Record_Manager::sanitize_record_data()).
+		$record = [
+			'type'     => strtoupper(sanitize_text_field($record['type'] ?? 'A')),
+			'name'     => sanitize_text_field($record['name'] ?? ''),
+			'content'  => sanitize_text_field($record['content'] ?? ''),
+			'ttl'      => absint($record['ttl'] ?? 3600),
+			'priority' => isset($record['priority']) ? absint($record['priority']) : null,
+			'proxied'  => ! empty($record['proxied']),
+		];
+
 		$result = $provider->create_dns_record($domain->get_domain(), $record);
 
 		if (is_wp_error($result)) {

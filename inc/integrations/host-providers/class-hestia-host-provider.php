@@ -470,8 +470,29 @@ class Hestia_Host_Provider extends Base_Host_Provider {
 			)
 		);
 
+		// Re-fetch records to find the real ID assigned by Hestia.
+		$all_records = $this->get_dns_records($domain);
+		$new_id      = null;
+
+		if (is_array($all_records)) {
+			foreach ($all_records as $fetched) {
+				$fetched_arr = $fetched instanceof \WP_Ultimo\Integrations\Host_Providers\DNS_Record
+					? $fetched->to_array()
+					: (array) $fetched;
+
+				if (
+					strtoupper($fetched_arr['type'] ?? '') === $type &&
+					($fetched_arr['name'] ?? '') === $name &&
+					($fetched_arr['content'] ?? '') === $value
+				) {
+					$new_id = $fetched_arr['id'] ?? null;
+					break;
+				}
+			}
+		}
+
 		return [
-			'id'       => time(), // Hestia doesn't return the new ID
+			'id'       => $new_id, // null when Hestia ID cannot be determined; UI treats null-ID records as non-editable.
 			'type'     => $type,
 			'name'     => $name,
 			'content'  => $value,

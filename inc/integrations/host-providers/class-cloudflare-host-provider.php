@@ -392,45 +392,52 @@ class Cloudflare_Host_Provider extends Base_Host_Provider {
 		}
 
 		$supported_types = implode(',', $this->get_supported_record_types());
+		$records         = [];
+		$page            = 1;
 
-		$response = $this->cloudflare_api_call(
-			"client/v4/zones/{$zone_id}/dns_records",
-			'GET',
-			[
-				'per_page' => 100,
-				'type'     => $supported_types,
-			]
-		);
-
-		if (is_wp_error($response)) {
-			return $response;
-		}
-
-		if (! isset($response->result) || ! is_array($response->result)) {
-			return new \WP_Error(
-				'invalid-response',
-				__('Invalid response from Cloudflare API.', 'ultimate-multisite')
-			);
-		}
-
-		$records = [];
-
-		foreach ($response->result as $record) {
-			$records[] = DNS_Record::from_provider(
+		// Paginate through all results — Cloudflare returns up to 100 per page.
+		do {
+			$response = $this->cloudflare_api_call(
+				"client/v4/zones/{$zone_id}/dns_records",
+				'GET',
 				[
-					'id'        => $record->id,
-					'type'      => $record->type,
-					'name'      => $record->name,
-					'content'   => $record->content,
-					'ttl'       => $record->ttl,
-					'priority'  => $record->priority ?? null,
-					'proxied'   => $record->proxied ?? false,
-					'zone_id'   => $record->zone_id ?? $zone_id,
-					'zone_name' => $record->zone_name ?? '',
-				],
-				'cloudflare'
+					'per_page' => 100,
+					'page'     => $page,
+					'type'     => $supported_types,
+				]
 			);
-		}
+
+			if (is_wp_error($response)) {
+				return $response;
+			}
+
+			if (! isset($response->result) || ! is_array($response->result)) {
+				return new \WP_Error(
+					'invalid-response',
+					__('Invalid response from Cloudflare API.', 'ultimate-multisite')
+				);
+			}
+
+			foreach ($response->result as $record) {
+				$records[] = DNS_Record::from_provider(
+					[
+						'id'        => $record->id,
+						'type'      => $record->type,
+						'name'      => $record->name,
+						'content'   => $record->content,
+						'ttl'       => $record->ttl,
+						'priority'  => $record->priority ?? null,
+						'proxied'   => $record->proxied ?? false,
+						'zone_id'   => $record->zone_id ?? $zone_id,
+						'zone_name' => $record->zone_name ?? '',
+					],
+					'cloudflare'
+				);
+			}
+
+			$total_pages = isset($response->result_info->total_pages) ? (int) $response->result_info->total_pages : 1;
+			++$page;
+		} while ($page <= $total_pages);
 
 		return $records;
 	}

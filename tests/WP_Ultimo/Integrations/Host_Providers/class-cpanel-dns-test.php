@@ -154,7 +154,7 @@ class CPanel_DNS_Test extends WP_UnitTestCase {
 	public function test_delete_dns_record_not_configured() {
 		$result = $this->provider->delete_dns_record('example.com', '42');
 
-		$this->assertTrue(is_wp_error($result) || $result === true);
+		$this->assertTrue(is_wp_error($result) || true === $result);
 	}
 
 	/**
