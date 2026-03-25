@@ -140,11 +140,13 @@ class Domain_List_Admin_Page extends List_Admin_Page {
 				'value'       => Domain_Stage::CHECKING_DNS,
 			],
 			'primary_domain'         => [
-				'type'      => 'toggle',
-				'title'     => __('Primary Domain', 'ultimate-multisite'),
-				'desc'      => __('Check to set this domain as the primary', 'ultimate-multisite'),
-				'html_attr' => [
-					'v-model' => 'primary_domain',
+				'type'            => 'toggle',
+				'title'           => __('Main WP Multisite WaaS Domain', 'ultimate-multisite'),
+				'desc'            => __('Set this as the main WaaS website domain.', 'ultimate-multisite'),
+				'wrapper_classes' => 'wu-primary-domain-field',
+				'html_attr'       => [
+					'v-model'                       => 'primary_domain',
+					'data-wu-primary-domain-toggle' => 'true',
 				],
 			],
 			'primary_note'           => [
