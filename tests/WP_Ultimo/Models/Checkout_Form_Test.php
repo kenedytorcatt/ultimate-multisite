@@ -2195,4 +2195,27 @@ class Checkout_Form_Test extends WP_UnitTestCase {
 		$this->assertEquals('you@example.com', $field['placeholder']);
 		$this->assertEquals('Enter your email', $field['tooltip']);
 	}
+
+	/**
+	 * Test that to_array() populates lazy-loaded meta properties (issue #469).
+	 *
+	 * thank_you_page_id and conversion_snippets are only loaded from meta when
+	 * their getter is first called. Without the to_array() override they remain null.
+	 */
+	public function test_to_array_includes_lazy_loaded_meta_properties(): void {
+		$form = new \WP_Ultimo\Models\Checkout_Form();
+		$form->set_name('Test Form');
+		$form->set_slug('test-form');
+		$form->set_thank_you_page_id(42);
+		$form->set_conversion_snippets('<script>ga("send","event")</script>');
+
+		$array = $form->to_array();
+
+		$this->assertIsArray($array, 'to_array() should return an array.');
+		$this->assertArrayHasKey('thank_you_page_id', $array, 'to_array() must include thank_you_page_id.');
+		$this->assertNotNull($array['thank_you_page_id'], 'thank_you_page_id must not be null in to_array() output.');
+		$this->assertEquals(42, $array['thank_you_page_id'], 'thank_you_page_id must match the set value.');
+		$this->assertArrayHasKey('conversion_snippets', $array, 'to_array() must include conversion_snippets.');
+		$this->assertNotNull($array['conversion_snippets'], 'conversion_snippets must not be null in to_array() output.');
+	}
 }

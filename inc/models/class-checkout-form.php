@@ -1625,4 +1625,26 @@ class Checkout_Form extends Base_Model {
 
 		return apply_filters('wu_checkout_form_add_new_site_form_fields', $steps);
 	}
+
+	/**
+	 * Transform the object into an assoc array.
+	 *
+	 * Overrides Base_Model::to_array() to ensure lazy-loaded meta properties
+	 * are populated before serialization so REST API responses include all fields.
+	 *
+	 * @since 2.0.11
+	 * @return array
+	 */
+	public function to_array() {
+
+		// Only trigger lazy-loading when the model has been persisted (has an ID).
+		// For unsaved models (during validate/save), meta is not available and the
+		// getters return default values that can fail validation rules.
+		if ($this->get_id()) {
+			$this->get_thank_you_page_id();
+			$this->get_conversion_snippets();
+		}
+
+		return parent::to_array();
+	}
 }

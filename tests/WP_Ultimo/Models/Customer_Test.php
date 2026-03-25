@@ -403,4 +403,30 @@ class Customer_Test extends WP_UnitTestCase {
 		
 		parent::tearDown();
 	}
+
+	/**
+	 * Test that to_array() populates lazy-loaded meta properties (issue #469).
+	 *
+	 * has_trialed and extra_information are only loaded from meta when their
+	 * getter is first called. Without the to_array() override they remain null.
+	 */
+	public function test_to_array_includes_lazy_loaded_meta_properties(): void {
+		$user_id = self::factory()->user->create(['user_email' => 'lazy@example.com']);
+
+		$customer = new Customer();
+		$customer->set_user_id($user_id);
+		$customer->set_type('customer');
+		$customer->set_email_verification('none');
+		$customer->set_date_registered('2023-01-01 00:00:00');
+		$customer->set_has_trialed(false);
+		$customer->set_extra_information(['key' => 'value']);
+
+		$array = $customer->to_array();
+
+		$this->assertIsArray($array, 'to_array() should return an array.');
+		$this->assertArrayHasKey('has_trialed', $array, 'to_array() must include has_trialed.');
+		$this->assertNotNull($array['has_trialed'], 'has_trialed must not be null in to_array() output.');
+		$this->assertArrayHasKey('extra_information', $array, 'to_array() must include extra_information.');
+		$this->assertNotNull($array['extra_information'], 'extra_information must not be null in to_array() output.');
+	}
 }

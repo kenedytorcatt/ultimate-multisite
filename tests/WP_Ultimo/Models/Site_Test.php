@@ -441,6 +441,36 @@ class Site_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test that to_array() populates lazy-loaded meta properties (issue #469).
+	 *
+	 * Before the fix, get_object_vars() captured null for properties that are
+	 * only loaded from meta when their getter is first called. This caused the
+	 * REST API to return null for customer_id, membership_id, type, etc.
+	 */
+	public function test_to_array_includes_lazy_loaded_meta_properties(): void {
+		$customer_id = $this->customer->get_id();
+
+		$this->site->set_customer_id($customer_id);
+		$this->site->set_type('customer_owned');
+
+		$array = $this->site->to_array();
+
+		// id must equal blog_id (non-zero).
+		$this->assertNotEquals(0, $array['id'], 'to_array() id must equal blog_id, not 0.');
+
+		// Lazy-loaded fields must not be null.
+		$this->assertArrayHasKey('customer_id', $array, 'to_array() must include customer_id.');
+		$this->assertNotNull($array['customer_id'], 'customer_id must not be null in to_array() output.');
+
+		$this->assertArrayHasKey('type', $array, 'to_array() must include type.');
+		$this->assertNotNull($array['type'], 'type must not be null in to_array() output.');
+
+		$this->assertArrayHasKey('active', $array, 'to_array() must include active.');
+		// active defaults to true when not explicitly set.
+		$this->assertNotNull($array['active'], 'active must not be null in to_array() output.');
+	}
+
+	/**
 	 * Test hash generation.
 	 */
 	public function test_hash_generation(): void {

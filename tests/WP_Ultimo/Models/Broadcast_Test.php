@@ -301,4 +301,27 @@ class Broadcast_Test extends WP_UnitTestCase {
 
 		$this->assertEquals(\WP_Ultimo\Database\Broadcasts\Broadcast_Query::class, $query_class);
 	}
+
+	/**
+	 * Test that to_array() populates lazy-loaded meta properties (issue #469).
+	 *
+	 * migrated_from_id and notice_type are only loaded from meta when their
+	 * getter is first called. Without the to_array() override they remain null.
+	 */
+	public function test_to_array_includes_lazy_loaded_meta_properties(): void {
+		$broadcast = new \WP_Ultimo\Models\Broadcast();
+		$broadcast->set_type('broadcast_notice');
+		$broadcast->set_notice_type('warning');
+		$broadcast->set_migrated_from_id(99);
+
+		$array = $broadcast->to_array();
+
+		$this->assertIsArray($array, 'to_array() should return an array.');
+		$this->assertArrayHasKey('notice_type', $array, 'to_array() must include notice_type.');
+		$this->assertNotNull($array['notice_type'], 'notice_type must not be null in to_array() output.');
+		$this->assertEquals('warning', $array['notice_type'], 'notice_type must match the set value.');
+		$this->assertArrayHasKey('migrated_from_id', $array, 'to_array() must include migrated_from_id.');
+		$this->assertNotNull($array['migrated_from_id'], 'migrated_from_id must not be null in to_array() output.');
+		$this->assertEquals(99, $array['migrated_from_id'], 'migrated_from_id must match the set value.');
+	}
 }
