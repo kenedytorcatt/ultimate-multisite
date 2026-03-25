@@ -103,7 +103,8 @@ class Laravel_Forge_Host_Provider extends Base_Host_Provider {
 	 */
 	public function detect(): bool {
 
-		return str_contains(ABSPATH, 'forge');
+		return str_contains(ABSPATH, '/home/forge/') ||
+		       ( defined('LARAVEL_FORGE') && LARAVEL_FORGE );
 	}
 
 	/**
@@ -168,7 +169,7 @@ class Laravel_Forge_Host_Provider extends Base_Host_Provider {
 	 * @param int    $site_id ID of the site that is receiving that mapping.
 	 * @return void
 	 */
-	public function on_add_domain($domain, $site_id): void {
+	public function on_add_domain($domain, $_site_id): void {
 
 		$servers = $this->get_server_list();
 
@@ -183,7 +184,7 @@ class Laravel_Forge_Host_Provider extends Base_Host_Provider {
 		$created_sites           = [];
 
 		foreach ($servers as $server_id) {
-			$is_load_balancer = $load_balancer_server_id && (string) $server_id === (string) $load_balancer_server_id;
+			$is_load_balancer = $load_balancer_server_id && (int) $server_id === (int) $load_balancer_server_id;
 
 			$result = $this->create_site_on_server($server_id, $domain);
 
@@ -244,7 +245,7 @@ class Laravel_Forge_Host_Provider extends Base_Host_Provider {
 	 * @param int    $site_id ID of the site that is receiving that mapping.
 	 * @return void
 	 */
-	public function on_remove_domain($domain, $site_id): void {
+	public function on_remove_domain($domain, $_site_id): void {
 
 		$servers = $this->get_server_list();
 
@@ -290,7 +291,7 @@ class Laravel_Forge_Host_Provider extends Base_Host_Provider {
 	 * @param int    $site_id ID of the site that is receiving that mapping.
 	 * @return void
 	 */
-	public function on_add_subdomain($subdomain, $site_id): void {
+	public function on_add_subdomain($_subdomain, $_site_id): void {
 		// Subdomains are typically handled by wildcard DNS/SSL in Forge.
 		// No action needed unless specific subdomain handling is required.
 	}
@@ -304,7 +305,7 @@ class Laravel_Forge_Host_Provider extends Base_Host_Provider {
 	 * @param int    $site_id ID of the site that is receiving that mapping.
 	 * @return void
 	 */
-	public function on_remove_subdomain($subdomain, $site_id): void {
+	public function on_remove_subdomain($_subdomain, $_site_id): void {
 		// Subdomains are typically handled by wildcard DNS/SSL in Forge.
 		// No action needed unless specific subdomain handling is required.
 	}
@@ -574,14 +575,31 @@ class Laravel_Forge_Host_Provider extends Base_Host_Provider {
 
 		$response = wp_remote_request($url, $args);
 
-		// Log the request for debugging.
-		$log_message = sprintf(
-			"Request: %s %s\nStatus: %s\nResponse: %s",
+		// Log the request for debugging — omit response body and query string to avoid
+		// leaking API tokens, SSL certificate data, or other sensitive values.
+		$endpoint_path = preg_replace('/\?.*$/', '', wp_parse_url($url, PHP_URL_PATH));
+		$status        = is_wp_error($response) ? 'ERROR' : wp_remote_retrieve_response_code($response);
+		$log_message   = sprintf(
+			'Request: %s %s | Status: %s',
 			$method,
-			$url,
-			is_wp_error($response) ? 'ERROR' : wp_remote_retrieve_response_code($response),
-			is_wp_error($response) ? $response->get_error_message() : wp_remote_retrieve_body($response)
+			$endpoint_path,
+			$status
 		);
+
+		if ( defined('FORGE_PROVIDER_DEBUG') && FORGE_PROVIDER_DEBUG && ! is_wp_error($response) ) {
+			$raw_body     = wp_remote_retrieve_body($response);
+			$decoded_body = json_decode($raw_body, true);
+
+			if ( is_array($decoded_body) ) {
+				// Strip any credential-like keys before logging.
+				foreach ( ['token', 'api_token', 'secret', 'password', 'authorization'] as $sensitive_key ) {
+					unset($decoded_body[ $sensitive_key ]);
+				}
+
+				$log_message .= "\nResponse (debug): " . wp_json_encode($decoded_body);
+			}
+		}
+
 		wu_log_add('integration-forge', $log_message);
 
 		return $response;
@@ -733,12 +751,23 @@ class Laravel_Forge_Host_Provider extends Base_Host_Provider {
 			$command = WU_FORGE_DEPLOY_COMMAND;
 		} elseif (defined('WU_FORGE_SYMLINK_TARGET') && WU_FORGE_SYMLINK_TARGET) {
 			// Build symlink command if target is specified.
+			// Validate domain to prevent shell command injection via metacharacters.
+			if ( ! preg_match('/^[a-z0-9][a-z0-9\-\.]*[a-z0-9]$/i', $domain) ) {
+				wu_log_add(
+					'integration-forge',
+					sprintf('Invalid domain format rejected for shell command: %s', $domain),
+					LogLevel::ERROR
+				);
+
+				return '';
+			}
+
 			$target  = str_replace('{domain}', $domain, WU_FORGE_SYMLINK_TARGET);
 			$command = sprintf(
-				'rm -rf /home/forge/%s/* && ln -s %s /home/forge/%s/public',
-				$domain,
-				$target,
-				$domain
+				'rm -rf %s && ln -s %s %s',
+				escapeshellarg('/home/forge/' . $domain . '/*'),
+				escapeshellarg($target),
+				escapeshellarg('/home/forge/' . $domain . '/public')
 			);
 		}
 
