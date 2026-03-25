@@ -46,7 +46,7 @@ jobs:
 
       - name: Annotate PR with PHPCS results
         uses: staabm/annotate-pull-request-from-checkstyle-action@v1
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.changed-files.outputs.any_changed == 'true'
         with:
           files: phpcs-report.xml
           graceful-warnings: true
@@ -54,7 +54,7 @@ jobs:
 
       - name: Annotate PR with PHPStan results
         uses: staabm/annotate-pull-request-from-checkstyle-action@v1
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.changed-files.outputs.any_changed == 'true'
         with:
           files: phpstan-report.xml
           graceful-warnings: true
