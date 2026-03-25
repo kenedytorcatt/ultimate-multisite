@@ -165,6 +165,8 @@ class Signup_Metrics_Test extends WP_UnitTestCase {
 
 	/**
 	 * Test that get_data_site_activity returns expected keys.
+	 *
+	 * Keys match the slugs produced by Post_Signup_Activity_Manager.
 	 */
 	public function test_dashboard_statistics_site_activity_keys(): void {
 
@@ -178,8 +180,9 @@ class Signup_Metrics_Test extends WP_UnitTestCase {
 
 		$data = $stats->get_data_site_activity();
 
-		$this->assertArrayHasKey('site_post_published', $data);
-		$this->assertArrayHasKey('site_user_registered', $data);
-		$this->assertArrayHasKey('site_woocommerce_order', $data);
+		$this->assertArrayHasKey('subsite_post_created', $data);
+		$this->assertArrayHasKey('subsite_cpt_created', $data);
+		$this->assertArrayHasKey('subsite_user_registered', $data);
+		$this->assertArrayHasKey('subsite_woocommerce_order', $data);
 	}
 }

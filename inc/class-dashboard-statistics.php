@@ -250,13 +250,14 @@ class Dashboard_Statistics {
 	/**
 	 * Get post-signup activity counts for the current date range.
 	 *
-	 * Returns counts for:
-	 * - site_post_published
-	 * - site_user_registered
-	 * - site_woocommerce_order
+	 * Queries the event slugs produced by Post_Signup_Activity_Manager:
+	 * - subsite_post_created
+	 * - subsite_cpt_created
+	 * - subsite_user_registered
+	 * - subsite_woocommerce_order
 	 *
 	 * @since 2.5.0
-	 * @return array
+	 * @return array Associative array keyed by activity slug with integer counts.
 	 */
 	public function get_data_site_activity(): array {
 
@@ -265,15 +266,17 @@ class Dashboard_Statistics {
 		$table = $wpdb->base_prefix . 'wu_events';
 
 		$slugs = [
-			'site_post_published',
-			'site_user_registered',
-			'site_woocommerce_order',
+			'subsite_post_created',
+			'subsite_cpt_created',
+			'subsite_user_registered',
+			'subsite_woocommerce_order',
 		];
 
 		$counts = array_fill_keys($slugs, 0);
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Note: table name comes from $wpdb->base_prefix which is safe.
 		foreach ($slugs as $slug) {
 			$counts[ $slug ] = (int) $wpdb->get_var(
 				$wpdb->prepare(
