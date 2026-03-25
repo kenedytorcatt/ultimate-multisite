@@ -123,6 +123,54 @@ class Site_Manager extends Base_Manager {
 	}
 
 	/**
+	 * Returns the query params for the site collection endpoint.
+	 *
+	 * Extends the base pagination params with site-specific filters for
+	 * meta-stored fields (type, customer_id, membership_id, template_id).
+	 * These params are converted to meta_query clauses by Site_Query::query().
+	 *
+	 * @since 2.5.0
+	 * @return array
+	 */
+	public function get_collection_params() {
+
+		$params = parent::get_collection_params();
+
+		$params['type'] = [
+			'description'       => __('Filter sites by type (e.g. customer_owned, site_template, pending, external).', 'ultimate-multisite'),
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'validate_callback' => 'rest_validate_request_arg',
+		];
+
+		$params['customer_id'] = [
+			'description'       => __('Filter sites by the ID of the owning customer.', 'ultimate-multisite'),
+			'type'              => 'integer',
+			'sanitize_callback' => 'absint',
+			'validate_callback' => 'rest_validate_request_arg',
+			'minimum'           => 1,
+		];
+
+		$params['membership_id'] = [
+			'description'       => __('Filter sites by the ID of the associated membership.', 'ultimate-multisite'),
+			'type'              => 'integer',
+			'sanitize_callback' => 'absint',
+			'validate_callback' => 'rest_validate_request_arg',
+			'minimum'           => 1,
+		];
+
+		$params['template_id'] = [
+			'description'       => __('Filter sites by the ID of the template used to create them.', 'ultimate-multisite'),
+			'type'              => 'integer',
+			'sanitize_callback' => 'absint',
+			'validate_callback' => 'rest_validate_request_arg',
+			'minimum'           => 1,
+		];
+
+		return $params;
+	}
+
+	/**
 	 * Allows for hyphens to be used, since WordPress supports it.
 	 *
 	 * @since 2.1.3

@@ -1977,4 +1977,208 @@ class Site_Manager_Test extends \WP_UnitTestCase {
 
 		$this->assertStringStartsWith('site', $slug);
 	}
+
+	// ========================================================================
+	// Site_Query meta-filter support (issue #479)
+	// ========================================================================
+
+	/**
+	 * Test querying sites by type via meta_query conversion.
+	 */
+	public function test_site_query_filter_by_type(): void {
+
+		$site_a = wu_create_site([
+			'domain' => 'filter-type-a.example.com',
+			'path'   => '/filter-type-a/',
+			'type'   => \WP_Ultimo\Database\Sites\Site_Type::CUSTOMER_OWNED,
+		]);
+
+		$site_b = wu_create_site([
+			'domain' => 'filter-type-b.example.com',
+			'path'   => '/filter-type-b/',
+			'type'   => \WP_Ultimo\Database\Sites\Site_Type::SITE_TEMPLATE,
+		]);
+
+		$this->assertNotWPError($site_a, 'site_a creation should succeed');
+		$this->assertNotWPError($site_b, 'site_b creation should succeed');
+
+		$results = \WP_Ultimo\Models\Site::query([
+			'type'   => \WP_Ultimo\Database\Sites\Site_Type::CUSTOMER_OWNED,
+			'fields' => 'ids',
+		]);
+
+		$ids = is_array($results) ? $results : [];
+
+		$this->assertContains(
+			$site_a->get_id(),
+			$ids,
+			'customer_owned site should appear in type=customer_owned query'
+		);
+
+		$this->assertNotContains(
+			$site_b->get_id(),
+			$ids,
+			'site_template site should NOT appear in type=customer_owned query'
+		);
+	}
+
+	/**
+	 * Test querying sites by customer_id via meta_query conversion.
+	 */
+	public function test_site_query_filter_by_customer_id(): void {
+
+		$site_a = wu_create_site([
+			'domain'      => 'filter-cust-a.example.com',
+			'path'        => '/filter-cust-a/',
+			'type'        => \WP_Ultimo\Database\Sites\Site_Type::CUSTOMER_OWNED,
+			'customer_id' => 101,
+		]);
+
+		$site_b = wu_create_site([
+			'domain'      => 'filter-cust-b.example.com',
+			'path'        => '/filter-cust-b/',
+			'type'        => \WP_Ultimo\Database\Sites\Site_Type::CUSTOMER_OWNED,
+			'customer_id' => 202,
+		]);
+
+		$this->assertNotWPError($site_a, 'site_a creation should succeed');
+		$this->assertNotWPError($site_b, 'site_b creation should succeed');
+
+		$results = \WP_Ultimo\Models\Site::query([
+			'customer_id' => 101,
+			'fields'      => 'ids',
+		]);
+
+		$ids = is_array($results) ? $results : [];
+
+		$this->assertContains(
+			$site_a->get_id(),
+			$ids,
+			'Site with customer_id=101 should appear in results'
+		);
+
+		$this->assertNotContains(
+			$site_b->get_id(),
+			$ids,
+			'Site with customer_id=202 should NOT appear in customer_id=101 results'
+		);
+	}
+
+	/**
+	 * Test querying sites by membership_id via meta_query conversion.
+	 */
+	public function test_site_query_filter_by_membership_id(): void {
+
+		$site_a = wu_create_site([
+			'domain'        => 'filter-mem-a.example.com',
+			'path'          => '/filter-mem-a/',
+			'type'          => \WP_Ultimo\Database\Sites\Site_Type::CUSTOMER_OWNED,
+			'membership_id' => 55,
+		]);
+
+		$site_b = wu_create_site([
+			'domain'        => 'filter-mem-b.example.com',
+			'path'          => '/filter-mem-b/',
+			'type'          => \WP_Ultimo\Database\Sites\Site_Type::CUSTOMER_OWNED,
+			'membership_id' => 66,
+		]);
+
+		$this->assertNotWPError($site_a, 'site_a creation should succeed');
+		$this->assertNotWPError($site_b, 'site_b creation should succeed');
+
+		$results = \WP_Ultimo\Models\Site::query([
+			'membership_id' => 55,
+			'fields'        => 'ids',
+		]);
+
+		$ids = is_array($results) ? $results : [];
+
+		$this->assertContains(
+			$site_a->get_id(),
+			$ids,
+			'Site with membership_id=55 should appear in results'
+		);
+
+		$this->assertNotContains(
+			$site_b->get_id(),
+			$ids,
+			'Site with membership_id=66 should NOT appear in membership_id=55 results'
+		);
+	}
+
+	/**
+	 * Test combining type and customer_id filters (AND logic).
+	 */
+	public function test_site_query_filter_by_type_and_customer_id(): void {
+
+		$site_match = wu_create_site([
+			'domain'      => 'filter-combo-match.example.com',
+			'path'        => '/filter-combo-match/',
+			'type'        => \WP_Ultimo\Database\Sites\Site_Type::CUSTOMER_OWNED,
+			'customer_id' => 77,
+		]);
+
+		$site_wrong_type = wu_create_site([
+			'domain'      => 'filter-combo-wrongtype.example.com',
+			'path'        => '/filter-combo-wrongtype/',
+			'type'        => \WP_Ultimo\Database\Sites\Site_Type::SITE_TEMPLATE,
+			'customer_id' => 77,
+		]);
+
+		$site_wrong_customer = wu_create_site([
+			'domain'      => 'filter-combo-wrongcust.example.com',
+			'path'        => '/filter-combo-wrongcust/',
+			'type'        => \WP_Ultimo\Database\Sites\Site_Type::CUSTOMER_OWNED,
+			'customer_id' => 88,
+		]);
+
+		$this->assertNotWPError($site_match, 'site_match creation should succeed');
+		$this->assertNotWPError($site_wrong_type, 'site_wrong_type creation should succeed');
+		$this->assertNotWPError($site_wrong_customer, 'site_wrong_customer creation should succeed');
+
+		$results = \WP_Ultimo\Models\Site::query([
+			'type'        => \WP_Ultimo\Database\Sites\Site_Type::CUSTOMER_OWNED,
+			'customer_id' => 77,
+			'fields'      => 'ids',
+		]);
+
+		$ids = is_array($results) ? $results : [];
+
+		$this->assertContains(
+			$site_match->get_id(),
+			$ids,
+			'Site matching both type and customer_id should appear'
+		);
+
+		$this->assertNotContains(
+			$site_wrong_type->get_id(),
+			$ids,
+			'Site with wrong type should NOT appear'
+		);
+
+		$this->assertNotContains(
+			$site_wrong_customer->get_id(),
+			$ids,
+			'Site with wrong customer_id should NOT appear'
+		);
+	}
+
+	/**
+	 * Test that get_collection_params() includes meta-filter params.
+	 */
+	public function test_get_collection_params_includes_meta_filters(): void {
+
+		$manager = $this->get_manager_instance();
+
+		$params = $manager->get_collection_params();
+
+		$this->assertArrayHasKey('type', $params, 'type param should be registered');
+		$this->assertArrayHasKey('customer_id', $params, 'customer_id param should be registered');
+		$this->assertArrayHasKey('membership_id', $params, 'membership_id param should be registered');
+		$this->assertArrayHasKey('template_id', $params, 'template_id param should be registered');
+
+		// Pagination params should still be present.
+		$this->assertArrayHasKey('page', $params, 'page param should still be registered');
+		$this->assertArrayHasKey('per_page', $params, 'per_page param should still be registered');
+	}
 }
