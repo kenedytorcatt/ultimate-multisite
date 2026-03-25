@@ -138,11 +138,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (response.publish_status === "completed") {
           this.creating = false;
           this.site_ready = true;
-          // Reload with cache buster so CDN/cache plugins don't serve stale page
-          setTimeout(() => {
-            var sep = window.location.href.indexOf("?") > -1 ? "&" : "?";
-            window.location.href = window.location.href.split("#")[0] + sep + "_t=" + Date.now();
-          }, 1500);
+          // Only reload to bust cache if we actually watched the site transition
+          // through "running" during this page load. Without this guard, PayPal
+          // (and any other gateway that completes before the thank-you page loads)
+          // would trigger a reload on every poll, causing an infinite refresh loop.
+          if (this.running_count > 0) {
+            setTimeout(() => {
+              var sep = window.location.href.indexOf("?") > -1 ? "&" : "?";
+              window.location.href = window.location.href.split("#")[0] + sep + "_t=" + Date.now();
+            }, 1500);
+          }
         } else if (response.publish_status === "running") {
           this.creating = true;
           this.stopped_count = 0;
