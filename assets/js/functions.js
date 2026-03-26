@@ -615,13 +615,20 @@ window.wu_initialize_code_editors = function() {
 }; // end wu_initialize_code_editors;
 
 /**
- * Get a timezone-d moment instance.
+ * Get a moment instance, optionally timezone-aware.
+ *
+ * WordPress bundles moment.js but not moment-timezone, so moment.tz may not
+ * be available. Fall back to plain moment() when moment-timezone is absent.
  *
  * @param {*} a The date.
  * @return {Object} moment instance
  */
 window.wu_moment = function(a) {
 
-	return moment.tz(a, 'Etc/UTC');
+	if (typeof moment.tz === 'function') {
+		return moment.tz(a, 'Etc/UTC');
+	}
+
+	return moment.utc(a);
 
 }; // end wu_moment;
