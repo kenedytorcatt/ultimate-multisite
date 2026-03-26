@@ -66,14 +66,14 @@ jobs:
       options: --user root
     steps:
       - name: Checkout core plugin
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: Ultimate-Multisite/ultimate-multisite
           ref: ${{ inputs.core-ref }}
           path: core
 
       - name: Checkout addon
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ inputs.addon-ref || github.ref }}
           path: addon
@@ -145,25 +145,25 @@ jobs:
           --health-retries=10
     steps:
       - name: Checkout core plugin
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: Ultimate-Multisite/ultimate-multisite
           ref: ${{ inputs.core-ref }}
           path: core
 
       - name: Checkout addon
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ inputs.addon-ref || github.ref }}
           path: addon
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 18
 
       - name: Cache NPM dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-e2e
@@ -251,7 +251,7 @@ jobs:
       - name: Upload Cypress screenshots
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: cypress-screenshots-${{ inputs.addon-slug }}
           path: |
@@ -261,7 +261,7 @@ jobs:
       - name: Upload Cypress videos
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: cypress-videos-${{ inputs.addon-slug }}
           path: |
