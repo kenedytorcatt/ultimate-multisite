@@ -629,6 +629,6 @@ window.wu_moment = function(a) {
 		return moment.tz(a, 'Etc/UTC');
 	}
 
-	return moment(a);
+	return moment.utc(a);
 
 }; // end wu_moment;
