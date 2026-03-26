@@ -466,13 +466,19 @@ function wu_format_money(value) {
 
 	value = parseFloat(value.toString().replace(/[^0-9\.]/g, ''));
 
+	// Guard against empty-string or NaN precision (e.g. when the wizard saves
+	// the setting before the user fills in the currency options, the DB value
+	// can be '' which makes parseFloat('') === NaN and breaks accounting.js).
+	const rawPrecision = parseInt(wu_settings.precision, 10);
+	const safePrecision = isNaN(rawPrecision) ? 2 : Math.max(0, rawPrecision);
+
 	const settings = wp.hooks.applyFilters('wu_format_money', {
 		currency: {
 			symbol: wu_settings.currency_symbol, // default currency symbol is '$'
 			format: wu_settings.currency_position, // controls output: %s = symbol, %v = value/number (can be object: see below)
 			decimal: wu_settings.decimal_separator, // decimal point separator
 			thousand: wu_settings.thousand_separator, // thousands separator
-			precision: wu_settings.precision, // decimal places
+			precision: safePrecision, // decimal places
 		},
 		number: {
 			precision: 0, // default precision on numbers is 0
