@@ -106,6 +106,21 @@ class Limitations implements \JsonSerializable {
 	}
 
 	/**
+	 * Specify data which should be serialized to JSON.
+	 *
+	 * Ensures Limitations objects are properly serialized in REST API
+	 * responses instead of appearing as empty arrays.
+	 *
+	 * @since 2.0.0
+	 * @return array
+	 */
+	#[\ReturnTypeWillChange]
+	public function jsonSerialize() {
+
+		return $this->to_array();
+	}
+
+	/**
 	 * Prepare to serialization.
 	 *
 	 * @see requires php 7.3
