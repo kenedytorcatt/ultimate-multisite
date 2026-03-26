@@ -145,21 +145,6 @@ class Note implements \JsonSerializable {
 	}
 
 	/**
-	 * Specify data which should be serialized to JSON.
-	 *
-	 * Ensures Note objects are properly serialized in REST API responses
-	 * instead of appearing as empty arrays.
-	 *
-	 * @since 2.0.0
-	 * @return array
-	 */
-	#[\ReturnTypeWillChange]
-	public function jsonSerialize() {
-
-		return $this->to_array();
-	}
-
-	/**
 	 * Returns a key => value representation of the notes fields.
 	 *
 	 * @since 2.0.0
