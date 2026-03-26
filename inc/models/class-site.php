@@ -1721,6 +1721,9 @@ class Site extends Base_Model implements Limitable, Notable {
 			$this->get_categories();
 			$this->get_type();
 			$this->is_active();
+			// Lazy-load description from blogdescription option so it is not null
+			// in REST API responses (get_description() calls get_blog_option()).
+			$this->description = $this->get_description();
 		}
 
 		$array = parent::to_array();
