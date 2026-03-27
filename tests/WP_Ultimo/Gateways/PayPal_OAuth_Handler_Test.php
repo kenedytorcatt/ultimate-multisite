@@ -1123,6 +1123,42 @@ class PayPal_OAuth_Handler_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test ajax_initiate_oauth without nonce fails.
+	 */
+	public function test_ajax_initiate_oauth_without_nonce_fails(): void {
+
+		$user_id = $this->factory->user->create(['role' => 'administrator']);
+		wp_set_current_user($user_id);
+		grant_super_admin($user_id);
+
+		// No nonce set
+		$_POST = [];
+		$_REQUEST = [];
+
+		$this->expectException(\WPDieException::class);
+
+		$this->handler->ajax_initiate_oauth();
+	}
+
+	/**
+	 * Test ajax_disconnect without nonce fails.
+	 */
+	public function test_ajax_disconnect_without_nonce_fails(): void {
+
+		$user_id = $this->factory->user->create(['role' => 'administrator']);
+		wp_set_current_user($user_id);
+		grant_super_admin($user_id);
+
+		// No nonce set
+		$_POST = [];
+		$_REQUEST = [];
+
+		$this->expectException(\WPDieException::class);
+
+		$this->handler->ajax_disconnect();
+	}
+
+	/**
 	 * Test ajax_initiate_oauth sends error when proxy returns non-200.
 	 */
 	public function test_ajax_initiate_oauth_proxy_non_200(): void {
@@ -1443,5 +1479,543 @@ class PayPal_OAuth_Handler_Test extends WP_UnitTestCase {
 
 		$this->assertEmpty(wu_get_setting('paypal_rest_sandbox_webhook_id'));
 		$this->assertEmpty(wu_get_setting('paypal_rest_live_webhook_id'));
+	}
+
+	// =========================================================================
+	// Additional tests for webhook methods (indirect coverage)
+	// =========================================================================
+
+	/**
+	 * Test handle_oauth_return calls install_webhook_after_oauth on success.
+	 *
+	 * This test mocks the gateway to verify webhook installation is attempted.
+	 */
+	public function test_handle_oauth_return_installs_webhook_on_success(): void {
+
+		$tracking_id = 'WEBHOOK_TRACKING_' . uniqid();
+
+		set_site_transient(
+			'wu_paypal_onboarding_' . $tracking_id,
+			[
+				'started'   => time(),
+				'test_mode' => true,
+			],
+			DAY_IN_SECONDS
+		);
+
+		$_GET = [
+			'wu_paypal_onboarding' => 'complete',
+			'page'                 => 'wp-ultimo-settings',
+			'tracking_id'          => $tracking_id,
+			'permissionsGranted'   => 'true',
+			'merchantIdInPayPal'   => 'WEBHOOK_TEST_MERCHANT',
+			'merchantId'           => 'webhook@merchant.com',
+		];
+
+		// Mock successful merchant verification
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args, $url ) {
+				if (strpos($url, '/oauth/verify') !== false) {
+					return [
+						'response' => ['code' => 200, 'message' => 'OK'],
+						'body'     => wp_json_encode(['paymentsReceivable' => true]),
+						'headers'  => [],
+						'cookies'  => [],
+						'filename' => '',
+					];
+				}
+				return $preempt;
+			},
+			10,
+			3
+		);
+
+		// Track if wu_get_gateway was called
+		$gateway_called = false;
+		add_filter(
+			'wu_get_gateway',
+			function ( $gateway ) use ( &$gateway_called ) {
+				$gateway_called = true;
+				// Return null to simulate gateway not found (webhook install will fail gracefully)
+				return null;
+			}
+		);
+
+		// Intercept redirect
+		add_filter(
+			'wp_redirect',
+			function ( $location ) {
+				throw new \WPDieException('redirect:' . $location);
+			}
+		);
+
+		try {
+			$this->handler->handle_oauth_return();
+		} catch (\WPDieException $e) {
+			// Expected
+		}
+
+		// Verify gateway was attempted to be retrieved for webhook installation
+		$this->assertTrue($gateway_called, 'Gateway should be retrieved for webhook installation');
+	}
+
+	/**
+	 * Test ajax_disconnect calls delete_webhooks_on_disconnect.
+	 *
+	 * This test verifies webhook deletion is attempted during disconnect.
+	 */
+	public function test_ajax_disconnect_attempts_webhook_deletion(): void {
+
+		$user_id = $this->factory->user->create(['role' => 'administrator']);
+		wp_set_current_user($user_id);
+		grant_super_admin($user_id);
+
+		// Set up some webhook IDs to be cleared
+		wu_save_setting('paypal_rest_sandbox_webhook_id', 'WH-SANDBOX-DELETE');
+		wu_save_setting('paypal_rest_live_webhook_id', 'WH-LIVE-DELETE');
+
+		$_POST['nonce'] = wp_create_nonce('wu_paypal_oauth');
+		$_REQUEST['nonce'] = $_POST['nonce'];
+
+		// Track if gateway was called for webhook deletion
+		$gateway_calls = 0;
+		add_filter(
+			'wu_get_gateway',
+			function ( $gateway ) use ( &$gateway_calls ) {
+				$gateway_calls++;
+				// Return null to simulate gateway not found
+				return null;
+			}
+		);
+
+		// Mock deauthorize request
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args, $url ) {
+				if (strpos($url, '/deauthorize') !== false) {
+					return [
+						'response' => ['code' => 200, 'message' => 'OK'],
+						'body'     => '',
+						'headers'  => [],
+						'cookies'  => [],
+						'filename' => '',
+					];
+				}
+				return $preempt;
+			},
+			10,
+			3
+		);
+
+		ob_start();
+		try {
+			$this->handler->ajax_disconnect();
+		} catch (\WPDieException $e) {
+			// Expected
+		}
+		ob_get_clean();
+
+		// Verify gateway was called (for webhook deletion attempt)
+		$this->assertGreaterThan(0, $gateway_calls, 'Gateway should be called for webhook deletion');
+
+		// Verify webhook IDs were cleared
+		$this->assertEmpty(wu_get_setting('paypal_rest_sandbox_webhook_id'));
+		$this->assertEmpty(wu_get_setting('paypal_rest_live_webhook_id'));
+	}
+
+	/**
+	 * Test handle_oauth_return with missing merchant email.
+	 */
+	public function test_handle_oauth_return_with_missing_merchant_email(): void {
+
+		$tracking_id = 'NO_EMAIL_' . uniqid();
+
+		set_site_transient(
+			'wu_paypal_onboarding_' . $tracking_id,
+			[
+				'started'   => time(),
+				'test_mode' => false, // Live mode
+			],
+			DAY_IN_SECONDS
+		);
+
+		$_GET = [
+			'wu_paypal_onboarding' => 'complete',
+			'page'                 => 'wp-ultimo-settings',
+			'tracking_id'          => $tracking_id,
+			'permissionsGranted'   => 'true',
+			'merchantIdInPayPal'   => 'MERCHANT_NO_EMAIL',
+			// merchantId (email) is missing
+		];
+
+		// Mock successful verification
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args, $url ) {
+				if (strpos($url, '/oauth/verify') !== false) {
+					return [
+						'response' => ['code' => 200, 'message' => 'OK'],
+						'body'     => wp_json_encode(['paymentsReceivable' => true]),
+						'headers'  => [],
+						'cookies'  => [],
+						'filename' => '',
+					];
+				}
+				return $preempt;
+			},
+			10,
+			3
+		);
+
+		add_filter(
+			'wp_redirect',
+			function ( $location ) {
+				throw new \WPDieException('redirect:' . $location);
+			}
+		);
+
+		try {
+			$this->handler->handle_oauth_return();
+		} catch (\WPDieException $e) {
+			// Expected
+		}
+
+		// Verify merchant ID was saved but email is empty
+		$this->assertEquals('MERCHANT_NO_EMAIL', wu_get_setting('paypal_rest_live_merchant_id'));
+		$this->assertEmpty(wu_get_setting('paypal_rest_live_merchant_email'));
+	}
+
+	/**
+	 * Test ajax_initiate_oauth with empty tracking ID in response.
+	 */
+	public function test_ajax_initiate_oauth_empty_tracking_id(): void {
+
+		$user_id = $this->factory->user->create(['role' => 'administrator']);
+		wp_set_current_user($user_id);
+		grant_super_admin($user_id);
+
+		$_POST['nonce'] = wp_create_nonce('wu_paypal_oauth');
+		$_REQUEST['nonce'] = $_POST['nonce'];
+
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args, $url ) {
+				if (strpos($url, '/oauth/init') !== false) {
+					return [
+						'response' => ['code' => 200, 'message' => 'OK'],
+						'body'     => wp_json_encode(
+							[
+								'actionUrl'  => 'https://paypal.com/connect',
+								// trackingId is missing/empty
+							]
+						),
+						'headers'  => [],
+						'cookies'  => [],
+						'filename' => '',
+					];
+				}
+				return $preempt;
+			},
+			10,
+			3
+		);
+
+		ob_start();
+		try {
+			$this->handler->ajax_initiate_oauth();
+		} catch (\WPDieException $e) {
+			// Expected
+		}
+		$output = ob_get_clean();
+
+		if (! empty($output)) {
+			$data = json_decode($output, true);
+			if (is_array($data) && isset($data['success'])) {
+				$this->assertTrue($data['success']);
+				// Tracking ID should be empty but request should still succeed
+				$this->assertEmpty($data['data']['tracking_id'] ?? '');
+			}
+		}
+	}
+
+	/**
+	 * Test handle_oauth_return with empty paymentsReceivable and emailConfirmed.
+	 */
+	public function test_handle_oauth_return_without_optional_status_fields(): void {
+
+		$tracking_id = 'NO_STATUS_' . uniqid();
+
+		set_site_transient(
+			'wu_paypal_onboarding_' . $tracking_id,
+			[
+				'started'   => time(),
+				'test_mode' => true,
+			],
+			DAY_IN_SECONDS
+		);
+
+		$_GET = [
+			'wu_paypal_onboarding' => 'complete',
+			'page'                 => 'wp-ultimo-settings',
+			'tracking_id'          => $tracking_id,
+			'permissionsGranted'   => 'true',
+			'merchantIdInPayPal'   => 'MERCHANT_MIN_STATUS',
+			'merchantId'           => 'minimal@merchant.com',
+		];
+
+		// Mock verification with minimal response (no status fields)
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args, $url ) {
+				if (strpos($url, '/oauth/verify') !== false) {
+					return [
+						'response' => ['code' => 200, 'message' => 'OK'],
+						'body'     => wp_json_encode([]), // Empty response
+						'headers'  => [],
+						'cookies'  => [],
+						'filename' => '',
+					];
+				}
+				return $preempt;
+			},
+			10,
+			3
+		);
+
+		add_filter(
+			'wp_redirect',
+			function ( $location ) {
+				throw new \WPDieException('redirect:' . $location);
+			}
+		);
+
+		try {
+			$this->handler->handle_oauth_return();
+		} catch (\WPDieException $e) {
+			// Expected
+		}
+
+		// Verify basic fields were saved but optional status fields were not
+		$this->assertEquals('MERCHANT_MIN_STATUS', wu_get_setting('paypal_rest_sandbox_merchant_id'));
+		$this->assertEmpty(wu_get_setting('paypal_rest_sandbox_payments_receivable'));
+		$this->assertEmpty(wu_get_setting('paypal_rest_sandbox_email_confirmed'));
+	}
+
+	/**
+	 * Test is_oauth_feature_enabled with empty proxy response body.
+	 */
+	public function test_oauth_feature_with_empty_proxy_response(): void {
+
+		delete_site_transient('wu_paypal_oauth_enabled');
+
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args, $url ) {
+				if (strpos($url, '/status') !== false) {
+					return [
+						'response' => ['code' => 200, 'message' => 'OK'],
+						'body'     => '', // Empty body
+						'headers'  => [],
+						'cookies'  => [],
+						'filename' => '',
+					];
+				}
+				return $preempt;
+			},
+			10,
+			3
+		);
+
+		$result = $this->handler->is_oauth_feature_enabled();
+
+		$this->assertFalse($result);
+		$this->assertEquals('no', get_site_transient('wu_paypal_oauth_enabled'));
+	}
+
+	/**
+	 * Test is_oauth_feature_enabled with malformed JSON response.
+	 */
+	public function test_oauth_feature_with_malformed_json_response(): void {
+
+		delete_site_transient('wu_paypal_oauth_enabled');
+
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args, $url ) {
+				if (strpos($url, '/status') !== false) {
+					return [
+						'response' => ['code' => 200, 'message' => 'OK'],
+						'body'     => '{invalid json', // Malformed JSON
+						'headers'  => [],
+						'cookies'  => [],
+						'filename' => '',
+					];
+				}
+				return $preempt;
+			},
+			10,
+			3
+		);
+
+		$result = $this->handler->is_oauth_feature_enabled();
+
+		$this->assertFalse($result);
+		$this->assertEquals('no', get_site_transient('wu_paypal_oauth_enabled'));
+	}
+
+	/**
+	 * Test verify_merchant_via_proxy sends correct test mode parameter.
+	 */
+	public function test_verify_merchant_via_proxy_test_mode_parameter(): void {
+
+		$captured_body = null;
+
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args, $url ) use ( &$captured_body ) {
+				if (strpos($url, '/oauth/verify') !== false) {
+					$captured_body = json_decode($args['body'], true);
+					return [
+						'response' => ['code' => 200, 'message' => 'OK'],
+						'body'     => wp_json_encode(['paymentsReceivable' => true]),
+						'headers'  => [],
+						'cookies'  => [],
+						'filename' => '',
+					];
+				}
+				return $preempt;
+			},
+			10,
+			3
+		);
+
+		$reflection = new \ReflectionClass($this->handler);
+		$method = $reflection->getMethod('verify_merchant_via_proxy');
+
+		// Test with test_mode = true (default)
+		$method->invoke($this->handler, 'MERCHANT123', 'TRACKING456');
+
+		$this->assertIsArray($captured_body);
+		$this->assertTrue($captured_body['testMode']);
+
+		// Test with test_mode = false
+		$test_mode_prop = $reflection->getProperty('test_mode');
+		$test_mode_prop->setValue($this->handler, false);
+
+		$method->invoke($this->handler, 'MERCHANT789', 'TRACKING789');
+
+		$this->assertFalse($captured_body['testMode']);
+
+		// Restore
+		$test_mode_prop->setValue($this->handler, true);
+	}
+
+	/**
+	 * Test ajax_initiate_oauth sends correct request body to proxy.
+	 */
+	public function test_ajax_initiate_oauth_request_body(): void {
+
+		$user_id = $this->factory->user->create(['role' => 'administrator']);
+		wp_set_current_user($user_id);
+		grant_super_admin($user_id);
+
+		$_POST['nonce'] = wp_create_nonce('wu_paypal_oauth');
+		$_REQUEST['nonce'] = $_POST['nonce'];
+		$_POST['sandbox_mode'] = '0'; // Live mode
+
+		$captured_body = null;
+
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args, $url ) use ( &$captured_body ) {
+				if (strpos($url, '/oauth/init') !== false) {
+					$captured_body = json_decode($args['body'], true);
+					return [
+						'response' => ['code' => 200, 'message' => 'OK'],
+						'body'     => wp_json_encode(
+							[
+								'actionUrl'  => 'https://paypal.com/connect',
+								'trackingId' => 'TRACK123',
+							]
+						),
+						'headers'  => [],
+						'cookies'  => [],
+						'filename' => '',
+					];
+				}
+				return $preempt;
+			},
+			10,
+			3
+		);
+
+		ob_start();
+		try {
+			$this->handler->ajax_initiate_oauth();
+		} catch (\WPDieException $e) {
+			// Expected
+		}
+		ob_get_clean();
+
+		// Verify request body
+		$this->assertIsArray($captured_body);
+		$this->assertArrayHasKey('returnUrl', $captured_body);
+		$this->assertArrayHasKey('testMode', $captured_body);
+		$this->assertFalse($captured_body['testMode']); // Live mode
+		$this->assertStringContainsString('wu_paypal_onboarding=complete', $captured_body['returnUrl']);
+	}
+
+	/**
+	 * Test ajax_disconnect sends deauthorize request with correct parameters.
+	 */
+	public function test_ajax_disconnect_deauthorize_request(): void {
+
+		$user_id = $this->factory->user->create(['role' => 'administrator']);
+		wp_set_current_user($user_id);
+		grant_super_admin($user_id);
+
+		$_POST['nonce'] = wp_create_nonce('wu_paypal_oauth');
+		$_REQUEST['nonce'] = $_POST['nonce'];
+
+		$captured_body = null;
+		$deauthorize_called = false;
+
+		add_filter(
+			'pre_http_request',
+			function ( $preempt, $args, $url ) use ( &$captured_body, &$deauthorize_called ) {
+				if (strpos($url, '/deauthorize') !== false) {
+					$deauthorize_called = true;
+					$captured_body = json_decode($args['body'], true);
+					// Verify it's non-blocking
+					$this->assertFalse($args['blocking']);
+					return [
+						'response' => ['code' => 200, 'message' => 'OK'],
+						'body'     => '',
+						'headers'  => [],
+						'cookies'  => [],
+						'filename' => '',
+					];
+				}
+				return $preempt;
+			},
+			10,
+			3
+		);
+
+		ob_start();
+		try {
+			$this->handler->ajax_disconnect();
+		} catch (\WPDieException $e) {
+			// Expected
+		}
+		ob_get_clean();
+
+		// Verify deauthorize was called
+		$this->assertTrue($deauthorize_called);
+		$this->assertIsArray($captured_body);
+		$this->assertArrayHasKey('siteUrl', $captured_body);
+		$this->assertArrayHasKey('testMode', $captured_body);
+		$this->assertTrue($captured_body['testMode']); // Default is sandbox
 	}
 }
