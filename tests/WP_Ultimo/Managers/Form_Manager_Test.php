@@ -99,6 +99,15 @@ class Form_Manager_Test extends \WP_UnitTestCase {
 	/**
 	 * Test that handle_model_delete_form aborts when confirm is not set.
 	 *
+	 * handle_model_delete_form() calls wp_send_json_error() which internally
+	 * calls wp_die(). In AJAX context, wp_die() uses wp_die_ajax_handler
+	 * (not wp_die_handler), so we must install both filters to prevent the
+	 * bare die() call from killing the PHPUnit process (GitHub issue #527).
+	 *
+	 * wp_send_json_error() outputs JSON before calling wp_die(), so the AJAX
+	 * die handler throws WPAjaxDieContinueException (output present). We
+	 * capture the output with ob_start() and verify the JSON error payload.
+	 *
 	 * @since 2.0.0
 	 */
 	public function test_handle_model_delete_form_requires_confirmation(): void {
@@ -110,8 +119,56 @@ class Form_Manager_Test extends \WP_UnitTestCase {
 		$_REQUEST['model'] = 'membership';
 		$_REQUEST['id']    = '1';
 
-		$this->expectException(\WPDieException::class);
+		/*
+		 * wp_send_json() triggers a _doing_it_wrong notice when REST_REQUEST is
+		 * defined (CI environment). Declare it as expected so the test framework
+		 * does not treat it as a failure. Skip when REST_REQUEST is not defined
+		 * (local environment) to avoid "Failed to assert that wp_send_json
+		 * triggered an incorrect usage notice" errors.
+		 */
+		if (defined('REST_REQUEST') && REST_REQUEST) {
+			$this->setExpectedIncorrectUsage('wp_send_json');
+		}
 
-		$manager->handle_model_delete_form();
+		/*
+		 * Simulate AJAX context so wp_send_json_error() routes through
+		 * wp_die() instead of a bare `die` statement.
+		 *
+		 * wp_die() in AJAX context uses wp_die_ajax_handler (not wp_die_handler).
+		 * We install a handler that throws WPAjaxDieContinueException so PHPUnit
+		 * can catch it instead of the process terminating.
+		 */
+		add_filter('wp_doing_ajax', '__return_true');
+		$ajax_die_handler = function() {
+			return function( $message ) {
+				throw new \WPAjaxDieContinueException( (string) $message );
+			};
+		};
+		add_filter('wp_die_ajax_handler', $ajax_die_handler, 1);
+
+		$json_output    = '';
+		$exception_caught = false;
+
+		ob_start();
+
+		try {
+			$manager->handle_model_delete_form();
+		} catch (\WPAjaxDieContinueException $e) {
+			$exception_caught = true;
+		}
+
+		$json_output = ob_get_clean();
+
+		remove_filter('wp_doing_ajax', '__return_true');
+		remove_filter('wp_die_ajax_handler', $ajax_die_handler, 1);
+		unset($_REQUEST['model'], $_REQUEST['id']);
+
+		$this->assertTrue($exception_caught, 'handle_model_delete_form() should have terminated via wp_die()');
+
+		$response = json_decode($json_output, true);
+
+		$this->assertIsArray($response, 'Response should be a JSON object');
+		$this->assertFalse($response['success'], 'Response should indicate failure');
+		$this->assertSame('not-confirmed', $response['data'][0]['code'], 'Error code should be not-confirmed');
 	}
 }
