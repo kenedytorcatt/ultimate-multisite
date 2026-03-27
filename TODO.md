@@ -13,7 +13,7 @@ Overall coverage: **35%** (20,720 / 59,212 statements). 90 files at 0% coverage.
 
 ### Priority 1 — Business-Critical Code (low coverage, high risk)
 
-- [ ] t453 test(checkout): write unit tests for Checkout class (inc/checkout/class-checkout.php — 7.9% coverage, 960 uncovered stmts) #testing #auto-dispatch ~6h ref:GH#555
+- [x] t453 test(checkout): write unit tests for Checkout class (inc/checkout/class-checkout.php — 7.9% coverage, 960 uncovered stmts) #testing #auto-dispatch ~6h ref:GH#555 pr:#569 completed:2026-03-27
 - [ ] t454 test(cart): improve Cart test coverage (inc/checkout/class-cart.php — 61.1% coverage, 382 uncovered stmts) #testing #auto-dispatch ~4h ref:GH#556
 - [ ] t455 test(stripe): write unit tests for Base_Stripe_Gateway (inc/gateways/class-base-stripe-gateway.php — 28.6% coverage, 1093 uncovered stmts) #testing ~8h
 - [ ] t456 test(stripe): improve Stripe_Gateway test coverage (inc/gateways/class-stripe-gateway.php — 55% coverage, 200 uncovered stmts) #testing ~4h
@@ -25,17 +25,17 @@ Overall coverage: **35%** (20,720 / 59,212 statements). 90 files at 0% coverage.
 
 ### Priority 2 — Core Domain Logic (moderate coverage gaps)
 
-- [ ] t462 test(site-manager): improve Site_Manager test coverage (inc/managers/class-site-manager.php — 23.5% coverage, 433 uncovered stmts) #testing #auto-dispatch ~4h ref:GH#557
-- [ ] t463 test(domain-manager): improve DNS_Record_Manager test coverage (inc/managers/class-dns-record-manager.php — 14.4% coverage, 393 uncovered stmts) #testing #auto-dispatch ~4h ref:GH#558
-- [ ] t464 test(event-manager): improve Event_Manager test coverage (inc/managers/class-event-manager.php — 33% coverage, 240 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#559
-- [ ] t465 test(form-manager): improve Form_Manager test coverage (inc/managers/class-form-manager.php — 9.7% coverage, 251 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#560
-- [ ] t466 test(notes-manager): improve Notes_Manager test coverage (inc/managers/class-notes-manager.php — 9.9% coverage, 283 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#561
-- [ ] t467 test(sso): improve SSO test coverage (inc/sso/class-sso.php — 36.7% coverage, 210 uncovered stmts) #testing #auto-dispatch ~4h
-- [ ] t468 test(domain-mapping): write tests for Domain_Mapping (inc/class-domain-mapping.php — 13.8% coverage, 168 uncovered stmts) #testing #auto-dispatch ~3h
-- [ ] t469 test(membership-functions): improve membership function tests (inc/functions/membership.php — 28.3% coverage, 152 uncovered stmts) #testing #auto-dispatch ~2h
-- [ ] t470 test(checkout-form-model): improve Checkout_Form model tests (inc/models/class-checkout-form.php — 65.7% coverage, 286 uncovered stmts) #testing #auto-dispatch ~3h
-- [ ] t471 test(mcp-abilities): improve MCP abilities trait tests (inc/apis/trait-mcp-abilities.php — 69.3% coverage, 162 uncovered stmts) #testing #auto-dispatch ~2h
-- [ ] t472 test(rest-api): improve REST API trait tests (inc/apis/trait-rest-api.php — 31.6% coverage, 160 uncovered stmts) #testing #auto-dispatch ~3h
+- [x] t462 test(site-manager): improve Site_Manager test coverage (inc/managers/class-site-manager.php — 23.5% coverage, 433 uncovered stmts) #testing #auto-dispatch ~4h ref:GH#557 pr:#568 completed:2026-03-27
+- [x] t463 test(domain-manager): improve DNS_Record_Manager test coverage (inc/managers/class-dns-record-manager.php — 14.4% coverage, 393 uncovered stmts) #testing #auto-dispatch ~4h ref:GH#558 pr:#361 completed:2026-03-27
+- [x] t464 test(event-manager): improve Event_Manager test coverage (inc/managers/class-event-manager.php — 33% coverage, 240 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#559 pr:#566 completed:2026-03-27
+- [x] t465 test(form-manager): improve Form_Manager test coverage (inc/managers/class-form-manager.php — 9.7% coverage, 251 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#560 pr:#362 completed:2026-03-27
+- [x] t466 test(notes-manager): improve Notes_Manager test coverage (inc/managers/class-notes-manager.php — 9.9% coverage, 283 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#561 pr:#287 completed:2026-03-27
+- [ ] t467 test(sso): improve SSO test coverage (inc/sso/class-sso.php — 36.7% coverage, 210 uncovered stmts) #testing #auto-dispatch ~4h ref:GH#570
+- [ ] t468 test(domain-mapping): write tests for Domain_Mapping (inc/class-domain-mapping.php — 13.8% coverage, 168 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#571
+- [ ] t469 test(membership-functions): improve membership function tests (inc/functions/membership.php — 28.3% coverage, 152 uncovered stmts) #testing #auto-dispatch ~2h ref:GH#572
+- [ ] t470 test(checkout-form-model): improve Checkout_Form model tests (inc/models/class-checkout-form.php — 65.7% coverage, 286 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#573
+- [ ] t471 test(mcp-abilities): improve MCP abilities trait tests (inc/apis/trait-mcp-abilities.php — 69.3% coverage, 162 uncovered stmts) #testing #auto-dispatch ~2h ref:GH#574
+- [ ] t472 test(rest-api): improve REST API trait tests (inc/apis/trait-rest-api.php — 31.6% coverage, 160 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#575
 
 ### Priority 3 — Admin Pages (0% coverage, UI-heavy but testable logic)
 
@@ -73,4 +73,4 @@ Overall coverage: **35%** (20,720 / 59,212 statements). 90 files at 0% coverage.
 
 ### Fix: Test suite exits early at 56%
 
-- [ ] t495 fix(tests): Form_Manager_Test::test_handle_model_delete_form_requires_confirmation calls exit() killing test runner at test 2533/4411 #bug #auto-dispatch ~1h ref:GH#562
+- [x] t495 fix(tests): Form_Manager_Test::test_handle_model_delete_form_requires_confirmation calls exit() killing test runner at test 2533/4411 #bug #auto-dispatch ~1h ref:GH#562 pr:#563 completed:2026-03-27
