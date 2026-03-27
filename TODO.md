@@ -45,7 +45,7 @@ Overall coverage: **35%** (20,720 / 59,212 statements). 90 files at 0% coverage.
 - [ ] t476 test(admin): write unit tests for Product_Edit_Admin_Page (inc/admin-pages/class-product-edit-admin-page.php — 0% coverage, 869 uncovered stmts) #testing ~5h
 - [ ] t477 test(admin): write unit tests for Customer_Edit_Admin_Page (inc/admin-pages/class-customer-edit-admin-page.php — 0% coverage, 784 uncovered stmts) #testing ~5h
 - [ ] t478 test(admin): write unit tests for Discount_Code_Edit_Admin_Page (inc/admin-pages/class-discount-code-edit-admin-page.php — 1.5% coverage, 526 uncovered stmts) #testing ~4h
-- [ ] t479 test(admin): write unit tests for Edit_Admin_Page base class (inc/admin-pages/class-edit-admin-page.php — 2.8% coverage, 375 uncovered stmts) #testing #auto-dispatch ~4h
+- [ ] t479 test(admin): write unit tests for Edit_Admin_Page base class (inc/admin-pages/class-edit-admin-page.php — 2.8% coverage, 375 uncovered stmts) #testing #auto-dispatch ~4h ref:GH#576
 
 ### Priority 4 — Infrastructure & Integration Code
 
