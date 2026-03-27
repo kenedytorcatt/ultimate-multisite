@@ -19,9 +19,9 @@ Overall coverage: **35%** (20,720 / 59,212 statements). 90 files at 0% coverage.
 - [ ] t456 test(stripe): improve Stripe_Gateway test coverage (inc/gateways/class-stripe-gateway.php — 55% coverage, 200 uncovered stmts) #testing ~4h
 - [ ] t457 test(paypal): write unit tests for PayPal_Gateway (inc/gateways/class-paypal-gateway.php — 1.1% coverage, 783 uncovered stmts) #testing ~6h
 - [ ] t458 test(paypal): improve PayPal_REST_Gateway test coverage (inc/gateways/class-paypal-rest-gateway.php — 29.8% coverage, 683 uncovered stmts) #testing ~5h
-- [ ] t459 test(paypal): write tests for PayPal_OAuth_Handler (inc/gateways/class-paypal-oauth-handler.php — 15% coverage, 238 uncovered stmts) #testing #auto-dispatch ~3h
-- [ ] t460 test(gateway): improve Gateway_Manager test coverage (inc/managers/class-gateway-manager.php — 34.7% coverage, 177 uncovered stmts) #testing #auto-dispatch ~3h
-- [ ] t461 test(checkout-pages): improve Checkout_Pages test coverage (inc/checkout/class-checkout-pages.php — 33.7% coverage, 203 uncovered stmts) #testing #auto-dispatch ~3h
+- [ ] t459 test(paypal): write tests for PayPal_OAuth_Handler (inc/gateways/class-paypal-oauth-handler.php — 15% coverage, 238 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#549
+- [ ] t460 test(gateway): improve Gateway_Manager test coverage (inc/managers/class-gateway-manager.php — 34.7% coverage, 177 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#550
+- [ ] t461 test(checkout-pages): improve Checkout_Pages test coverage (inc/checkout/class-checkout-pages.php — 33.7% coverage, 203 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#551
 
 ### Priority 2 — Core Domain Logic (moderate coverage gaps)
 
