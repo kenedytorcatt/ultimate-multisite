@@ -50,15 +50,15 @@ Overall coverage: **35%** (20,720 / 59,212 statements). 90 files at 0% coverage.
 ### Priority 4 — Infrastructure & Integration Code
 
 - [ ] t480 test(migrator): write unit tests for Migrator (inc/installers/class-migrator.php — 0% coverage, 1057 uncovered stmts) #testing ~6h
-- [ ] t481 test(debug): improve Debug test coverage (inc/debug/class-debug.php — 24.3% coverage, 383 uncovered stmts) #testing #auto-dispatch ~3h
-- [ ] t482 test(wp-ultimo): improve WP_Ultimo main class tests (inc/class-wp-ultimo.php — 5.7% coverage, 394 uncovered stmts) #testing #auto-dispatch ~4h
-- [ ] t483 test(ajax): write unit tests for Ajax class (inc/class-ajax.php — 1.8% coverage, 213 uncovered stmts) #testing #auto-dispatch ~3h
-- [ ] t484 test(api): improve API class test coverage (inc/class-api.php — 6.6% coverage, 199 uncovered stmts) #testing #auto-dispatch ~3h
+- [ ] t481 test(debug): improve Debug test coverage (inc/debug/class-debug.php — 24.3% coverage, 383 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#585
+- [ ] t482 test(wp-ultimo): improve WP_Ultimo main class tests (inc/class-wp-ultimo.php — 5.7% coverage, 394 uncovered stmts) #testing #auto-dispatch ~4h ref:GH#586
+- [ ] t483 test(ajax): write unit tests for Ajax class (inc/class-ajax.php — 1.8% coverage, 213 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#587
+- [ ] t484 test(api): improve API class test coverage (inc/class-api.php — 6.6% coverage, 199 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#588
 - [ ] t485 test(host-providers): write tests for Cloudflare host provider (inc/integrations/host-providers/class-cloudflare-host-provider.php — 19.2% coverage, 307 uncovered stmts) #testing ~4h
 - [ ] t486 test(host-providers): write tests for cPanel host provider (inc/integrations/host-providers/class-cpanel-host-provider.php — 0% coverage, 279 uncovered stmts) #testing ~3h
 - [ ] t487 test(host-providers): write tests for Hestia host provider (inc/integrations/host-providers/class-hestia-host-provider.php — 5.2% coverage, 254 uncovered stmts) #testing ~3h
-- [ ] t488 test(host-providers): write tests for Base_Host_Provider (inc/integrations/host-providers/class-base-host-provider.php — 16.9% coverage, 148 uncovered stmts) #testing #auto-dispatch ~2h
-- [ ] t489 test(default-content): write tests for Default_Content_Installer (inc/installers/class-default-content-installer.php — 0.5% coverage, 206 uncovered stmts) #testing #auto-dispatch ~3h
+- [ ] t488 test(host-providers): write tests for Base_Host_Provider (inc/integrations/host-providers/class-base-host-provider.php — 16.9% coverage, 148 uncovered stmts) #testing #auto-dispatch ~2h ref:GH#589
+- [ ] t489 test(default-content): write tests for Default_Content_Installer (inc/installers/class-default-content-installer.php — 0.5% coverage, 206 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#590
 
 ### Priority 5 — List Tables & Signup Fields
 
