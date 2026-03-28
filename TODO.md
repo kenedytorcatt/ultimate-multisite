@@ -62,14 +62,14 @@ Overall coverage: **35%** (20,720 / 59,212 statements). 90 files at 0% coverage.
 
 ### Priority 5 — List Tables & Signup Fields
 
-- [ ] t490 test(list-tables): write unit tests for Base_List_Table (inc/list-tables/class-base-list-table.php — 4.4% coverage, 461 uncovered stmts) #testing #auto-dispatch ~4h
-- [ ] t491 test(signup-fields): write tests for Base_Signup_Field (inc/checkout/signup-fields/class-base-signup-field.php — 16% coverage, 199 uncovered stmts) #testing #auto-dispatch ~3h
-- [ ] t492 test(signup-fields): write tests for Template_Selection field (inc/checkout/signup-fields/class-signup-field-template-selection.php — 1.1% coverage, 174 uncovered stmts) #testing #auto-dispatch ~2h
-- [ ] t493 test(signup-fields): write tests for Period_Selection field (inc/checkout/signup-fields/class-signup-field-period-selection.php — 1.3% coverage, 156 uncovered stmts) #testing #auto-dispatch ~2h
+- [ ] t490 test(list-tables): write unit tests for Base_List_Table (inc/list-tables/class-base-list-table.php — 4.4% coverage, 461 uncovered stmts) #testing #auto-dispatch ~4h ref:GH#600
+- [ ] t491 test(signup-fields): write tests for Base_Signup_Field (inc/checkout/signup-fields/class-base-signup-field.php — 16% coverage, 199 uncovered stmts) #testing #auto-dispatch ~3h ref:GH#601
+- [ ] t492 test(signup-fields): write tests for Template_Selection field (inc/checkout/signup-fields/class-signup-field-template-selection.php — 1.1% coverage, 174 uncovered stmts) #testing #auto-dispatch ~2h ref:GH#602
+- [ ] t493 test(signup-fields): write tests for Period_Selection field (inc/checkout/signup-fields/class-signup-field-period-selection.php — 1.3% coverage, 156 uncovered stmts) #testing #auto-dispatch ~2h ref:GH#603
 
 ### Priority 6 — API Schemas (0% coverage, data-validation code)
 
-- [ ] t494 test(api-schemas): write tests for API schema validation files (inc/apis/schemas/ — 0% coverage across 24 files, 2436 uncovered stmts) #testing #auto-dispatch ~6h
+- [ ] t494 test(api-schemas): write tests for API schema validation files (inc/apis/schemas/ — 0% coverage across 24 files, 2436 uncovered stmts) #testing #auto-dispatch ~6h ref:GH#604
 
 ### Fix: Test suite exits early at 56%
 
