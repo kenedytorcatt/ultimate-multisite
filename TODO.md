@@ -84,6 +84,14 @@ Overall coverage: **35%** (20,720 / 59,212 statements). 90 files at 0% coverage.
 - [x] t504 test(admin): write unit tests for Domain_List_Admin_Page (inc/admin-pages/class-domain-list-admin-page.php — 0% coverage) #testing #auto-dispatch ~3h ref:GH#646 pr:#654 completed:2026-03-28
 - [x] t505 test(admin): write unit tests for Email_List_Admin_Page (inc/admin-pages/class-email-list-admin-page.php — 0% coverage) #testing #auto-dispatch ~3h ref:GH#647 pr:#656 completed:2026-03-28
 
+### Priority 8 — Remaining Admin Pages (0% coverage)
+
+- [ ] t506 test(admin): write unit tests for Settings_Admin_Page (inc/admin-pages/class-settings-admin-page.php — 0% coverage, ~980 lines) #testing #auto-dispatch ~6h ref:GH#658
+- [ ] t507 test(admin): write unit tests for Setup_Wizard_Admin_Page (inc/admin-pages/class-setup-wizard-admin-page.php — 0% coverage, ~947 lines) #testing #auto-dispatch ~6h ref:GH#659
+- [ ] t508 test(admin): write unit tests for System_Info_Admin_Page (inc/admin-pages/class-system-info-admin-page.php — 0% coverage, ~778 lines) #testing #auto-dispatch ~5h ref:GH#660
+- [ ] t509 test(admin): write unit tests for Email_Template_Customize_Admin_Page (inc/admin-pages/class-email-template-customize-admin-page.php — 0% coverage, ~692 lines) #testing #auto-dispatch ~4h ref:GH#661
+- [ ] t510 test(admin): write unit tests for Template_Library_Admin_Page (inc/admin-pages/class-template-library-admin-page.php — 0% coverage, ~673 lines) #testing #auto-dispatch ~4h ref:GH#662
+
 ### Fix: Test suite exits early at 56%
 
 - [x] t495 fix(tests): Form_Manager_Test::test_handle_model_delete_form_requires_confirmation calls exit() killing test runner at test 2533/4411 #bug #auto-dispatch ~1h ref:GH#562 pr:#563 completed:2026-03-27
