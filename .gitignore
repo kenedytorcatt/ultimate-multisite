@@ -35,3 +35,6 @@ tests/simple-performance-results-*.json
 
 # Generated wp-env override (addon-specific, not committed)
 .wp-env.override.json
+
+# OpenCode AI local config
+opencode.json
