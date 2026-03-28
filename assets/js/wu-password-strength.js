@@ -283,6 +283,15 @@
 					colorClass = 'wu-bg-green-300 wu-border-green-400';
 					label = this.getStrengthLabel('super_strong');
 				}
+			} else if (strength === 4 && strength !== 5) {
+				// Even when enforce_rules is off, show Super Strong if the password
+				// voluntarily meets all the super-strong criteria.
+				const password = this.options.pass1.val();
+
+				if (this.checkSuperStrongRules(password)) {
+					colorClass = 'wu-bg-green-300 wu-border-green-400';
+					label = this.getStrengthLabel('super_strong');
+				}
 			}
 
 			this.options.result.addClass(colorClass).html(label);
@@ -392,6 +401,23 @@
 				valid: failedRules.length === 0,
 				failedRules
 			};
+		},
+
+		/**
+		 * Check if a password meets all super-strong criteria unconditionally.
+		 *
+		 * Used to display "Super Strong" even when the site minimum is set below
+		 * super_strong — a reward for users who go above and beyond.
+		 *
+		 * @param {string} password
+		 * @return {boolean}
+		 */
+		checkSuperStrongRules(password) {
+			return password.length >= 12
+				&& /[A-Z]/.test(password)
+				&& /[a-z]/.test(password)
+				&& /[0-9]/.test(password)
+				&& /[!@#$%^&*()_+\-={};:'",.<>?~\[\]\/|`\\]/.test(password);
 		},
 
 		/**

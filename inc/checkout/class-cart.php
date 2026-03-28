@@ -3000,6 +3000,7 @@ class Cart implements \JsonSerializable {
 		// Creates the pending payment
 		$payment_data = [
 			'status'        => 'pending',
+			'currency'      => $this->get_currency(),
 			'tax_total'     => $this->get_total_taxes(),
 			'fees'          => $this->get_total_fees(),
 			'discounts'     => $this->get_total_discounts(),

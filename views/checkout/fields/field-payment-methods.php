@@ -48,7 +48,7 @@ $active_gateways = wu_get_active_gateway_as_options();
 
 		<?php else : ?>
 
-			<label class="wu-block" for="field-<?php echo esc_attr($field->id); ?>-<?php echo esc_attr($option_value); ?>">
+			<label class="wu-radio-option" for="field-<?php echo esc_attr($field->id); ?>-<?php echo esc_attr($option_value); ?>">
 
 				<input
 						id="field-<?php echo esc_attr($field->id); ?>-<?php echo esc_attr($option_value); ?>"
@@ -56,7 +56,7 @@ $active_gateways = wu_get_active_gateway_as_options();
 						name="gateway"
 						value="<?php echo esc_attr($option_value); ?>"
 						v-model="gateway"
-						class="<?php echo esc_attr(trim($field->classes)); ?>"
+						class="wu-radio-input <?php echo esc_attr(trim($field->classes)); ?>"
 					<?php $field->print_html_attributes(); ?>
 					<?php checked((string) $field->value === (string) $option_value, true); ?>
 				>

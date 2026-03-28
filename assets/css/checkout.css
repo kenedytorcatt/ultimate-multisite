@@ -260,3 +260,86 @@
 	outline: 2px solid var(--wu-accent-color);
 	outline-offset: 2px;
 }
+
+/**
+ * Radio option card styling.
+ *
+ * Provides a consistent, visually polished radio button appearance for
+ * payment method and other radio fields. Works across classic, block,
+ * and page-builder themes by relying on the CSS custom properties
+ * defined at the top of this file.
+ *
+ * The custom radio dot is drawn via box-shadow so no extra markup or
+ * pseudo-elements are needed.
+ *
+ * @since 2.4.0
+ */
+
+/* Card wrapper for each radio option */
+.wu-styling .wu-radio-option {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 14px;
+	border: 1.5px solid var(--wu-input-border-color);
+	border-radius: var(--wu-input-border-radius);
+	cursor: pointer;
+	margin-bottom: 6px;
+	background: var(--wu-input-bg);
+	color: var(--wu-input-color);
+	font-weight: normal;
+	font-size: inherit;
+	line-height: 1.4;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.wu-styling .wu-radio-option:last-child {
+	margin-bottom: 0;
+}
+
+.wu-styling .wu-radio-option:hover {
+	border-color: var(--wu-accent-color);
+}
+
+/* Highlight the selected card — :has() is widely supported (Chrome 105+, Firefox 121+, Safari 15.4+) */
+.wu-styling .wu-radio-option:has(.wu-radio-input:checked) {
+	border-color: var(--wu-accent-color);
+	background-color: color-mix(in srgb, var(--wu-accent-color) 6%, var(--wu-input-bg));
+}
+
+/* Custom radio circle — replaces the native browser control */
+.wu-styling .wu-radio-input {
+	appearance: none;
+	-webkit-appearance: none;
+	flex-shrink: 0;
+	width: 18px;
+	height: 18px;
+	border: 2px solid var(--wu-input-border-color);
+	border-radius: 50%;
+	margin: 0;
+	cursor: pointer;
+	background-color: var(--wu-input-bg);
+	box-sizing: border-box;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wu-styling .wu-radio-input:focus-visible {
+	outline: 2px solid var(--wu-accent-color);
+	outline-offset: 2px;
+}
+
+/* Filled dot drawn via layered box-shadow — no pseudo-elements needed */
+.wu-styling .wu-radio-input:checked {
+	border-color: var(--wu-accent-color);
+	box-shadow:
+		inset 0 0 0 3px var(--wu-input-bg),
+		inset 0 0 0 10px var(--wu-accent-color);
+}
+
+/* Ensure images (e.g. PayPal logo) inside a radio option align neatly */
+.wu-styling .wu-radio-option img {
+	vertical-align: middle;
+	max-height: 20px;
+}
