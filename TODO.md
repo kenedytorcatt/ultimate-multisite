@@ -112,3 +112,4 @@ Overall coverage: **35%** (20,720 / 59,212 statements). 90 files at 0% coverage.
 - [x] t519 fix(security): replace wp_redirect with wp_safe_redirect in class-primary-domain.php #bug #auto-dispatch ~1h ref:GH#689 pr:#694 completed:2026-03-29
 - [x] t520 feat(addon): create multisite-ultimate-fluentaffiliate addon for recurring commission tracking #enhancement #auto-dispatch ~12h ref:GH#690 completed:2026-03-29
 - [x] t521 chore: remove stale @todo comments for already-implemented methods #enhancement #auto-dispatch ~1h ref:GH#691 pr:#693 completed:2026-03-29
+- [ ] t522 test(integrations): write unit tests for integration provider classes (bunnynet, cloudways, enhance, laravel-forge, plesk, rocket, serverpilot, wpengine, wpmudev) #testing #auto-dispatch ~4h ref:GH#697
