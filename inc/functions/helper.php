@@ -269,7 +269,7 @@ function wu_get_function_caller(int $depth = 1): ?string {
  */
 function wu_cli_is_plugin_skipped($plugin = null): bool {
 
-	if ( ! class_exists(\WP_CLI::class)) {
+	if ( ! defined('WP_CLI') || ! WP_CLI) {
 		return false;
 	}
 
