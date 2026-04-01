@@ -269,7 +269,16 @@ class PayPal_OAuth_Handler {
 		// Clean up the tracking transient
 		delete_site_transient('wu_paypal_onboarding_' . $tracking_id);
 
-		wu_log_add('paypal', sprintf('PayPal OAuth completed. Merchant ID: %s, Mode: %s, payments_receivable: %s, email_confirmed: %s', $merchant_id, $mode_prefix, $payments_receivable ? 'true' : 'false', $email_confirmed ? 'true' : 'false'));
+		wu_log_add(
+			'paypal',
+			sprintf(
+				'PayPal OAuth completed. Merchant ID: %s, Mode: %s, payments_receivable: %s, email_confirmed: %s',
+				$merchant_id,
+				$mode_prefix,
+				$payments_receivable ? 'true' : 'false',
+				$email_confirmed ? 'true' : 'false'
+			)
+		);
 
 		// Automatically install webhooks for the connected account
 		$this->install_webhook_after_oauth($mode_prefix);
