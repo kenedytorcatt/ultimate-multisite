@@ -113,4 +113,4 @@ Overall coverage: **35%** (20,720 / 59,212 statements). 90 files at 0% coverage.
 - [x] t520 feat(addon): create multisite-ultimate-fluentaffiliate addon for recurring commission tracking #enhancement #auto-dispatch ~12h ref:GH#690 completed:2026-03-29
 - [x] t521 chore: remove stale @todo comments for already-implemented methods #enhancement #auto-dispatch ~1h ref:GH#691 pr:#693 completed:2026-03-29
 - [x] t522 test(integrations): write unit tests for integration provider classes (bunnynet, cloudways, enhance, laravel-forge, plesk, rocket, serverpilot, wpengine, wpmudev) #testing #auto-dispatch ~4h ref:GH#697 pr:#698 completed:2026-03-29
-- [ ] t523 feat(paypal): PayPal PPCP integration review compliance — disconnect disclaimer, onboarding failure UI, merchant status validation, payee field, debug ID logging @superdav42 #paypal #compliance ~8h ref:GH#725
+- [x] t523 feat(paypal): PayPal PPCP integration review compliance — disconnect disclaimer, onboarding failure UI, merchant status validation, payee field, debug ID logging @superdav42 #paypal #compliance ~8h ref:GH#725 pr:#726 completed:2026-04-01
