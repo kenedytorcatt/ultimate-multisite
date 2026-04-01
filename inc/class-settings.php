@@ -1605,6 +1605,30 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 
 		do_action('wu_settings_emails');
 
+		$this->add_field(
+			'emails',
+			'transactional_email_header',
+			[
+				'title'           => __('Transactional Email Delivery', 'ultimate-multisite'),
+				'desc'            => __('Configure how WordPress sends transactional email (password resets, notifications, admin alerts) on a per-site basis. When a provider is configured, outbound email is routed through the provider using each site\'s own domain as the from-address.', 'ultimate-multisite'),
+				'type'            => 'header',
+				'show_as_submenu' => true,
+			]
+		);
+
+		$this->add_field(
+			'emails',
+			'transactional_email_provider_note',
+			[
+				'type' => 'note',
+				'desc' => sprintf(
+					/* translators: %s is a link to the Integrations settings page. */
+					__('To configure a transactional email provider (e.g. Amazon SES), go to the <a href="%s">Integrations settings</a> and set up the provider there.', 'ultimate-multisite'),
+					esc_url(wu_network_admin_url('wp-ultimo-settings', ['tab' => 'integrations']))
+				),
+			]
+		);
+
 		/*
 		 * Domain Mapping
 		 * This section holds the Domain Mapping settings of the Ultimate Multisite Plugin.
