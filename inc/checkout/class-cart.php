@@ -488,24 +488,18 @@ class Cart implements \JsonSerializable {
 		 * The next step is to deal with membership changes.
 		 * These include downgrades/upgrades and addons.
 		 */
-
-		/*
-		 * Ignore pending membership_id from session/request.
-		 *
-		 * An abandoned checkout leaves a 'pending' membership whose ID gets
-		 * sent as membership_id + cart_type='upgrade', causing the new plan to
-		 * be treated as an upgrade (full price, no trial).
-		 *
-		 * @since 2.4.13
-		 */
+		// FIX v2.4.13: Ignore pending membership_id from session/request.
+		// An abandoned checkout leaves a 'pending' membership whose ID gets
+		// sent as membership_id + cart_type='upgrade', causing new plan to
+		// be treated as upgrade (full price, no trial).
 		$membership_id = $this->attributes->membership_id;
 
 		if ($membership_id) {
 			$maybe_pending = wu_get_membership($membership_id);
 
 			if ($maybe_pending && $maybe_pending->get_status() === 'pending') {
-				$membership_id   = false;
-				$this->cart_type = 'new';
+				$membership_id    = false;
+				$this->cart_type  = 'new';
 			}
 		}
 
@@ -725,15 +719,10 @@ class Cart implements \JsonSerializable {
 			return false;
 		}
 
-		/*
-		 * Treat cancelled payments same as completed -- ignore silently.
-		 *
-		 * When a user abandons checkout, cleanup cancels the WU payment.
-		 * If they return to the same URL, the payment is now 'cancelled'.
-		 * Instead of showing "invalid status" error, just build a fresh cart.
-		 *
-		 * @since 2.4.13
-		 */
+		// FIX v2.4.13: Treat cancelled payments same as completed — ignore silently.
+		// When a user abandons checkout, cleanup cancels the WU payment.
+		// If they return to the same URL, the payment is now 'cancelled'.
+		// Instead of showing "invalid status" error, just build a fresh cart.
 		if ($payment->get_status() === 'cancelled') {
 			return false;
 		}
@@ -795,17 +784,6 @@ class Cart implements \JsonSerializable {
 		}
 
 		/*
-		 * We got here, that means
-		 * the intend behind this cart was to actually
-		 * change a membership.
-		 *
-		 * We can set the cart type provisionally.
-		 * This assignment might change in the future, as we make
-		 * additional assertions about the contents of the cart.
-		 */
-		$this->cart_type = 'upgrade';
-
-		/*
 		 * Now, let's try to fetch the membership in question.
 		 */
 		$membership = wu_get_membership($membership_id);
@@ -815,6 +793,73 @@ class Cart implements \JsonSerializable {
 
 			return true;
 		}
+
+		/*
+		 * Check if this is a reactivation of a cancelled membership.
+		 *
+		 * If the membership is cancelled and the cart contains the same plan,
+		 * we treat this as a reactivation rather than an upgrade/downgrade.
+		 *
+		 * @since 2.4.14
+		 */
+		if ($membership->is_cancelled()) {
+			$plan_matches = ! empty($this->attributes->products)
+				&& in_array($membership->get_plan_id(), (array) $this->attributes->products, false);
+
+			if ($plan_matches || empty($this->attributes->products)) {
+				$this->cart_type  = 'reactivation';
+				$this->membership = $membership;
+
+				/*
+				 * Adds the country to calculate taxes.
+				 */
+				$this->country = $this->country ?: ($this->customer ? $this->customer->get_country() : '');
+
+				/*
+				 * Set the currency in cart.
+				 */
+				$this->set_currency($membership->get_currency());
+
+				/*
+				 * Add the existing plan product back.
+				 */
+				if (empty($this->attributes->products)) {
+					$this->add_product($membership->get_plan_id());
+				} else {
+					foreach ($this->attributes->products as $product_id) {
+						$this->add_product($product_id);
+					}
+				}
+
+				/*
+				 * Sets the durations from the plan to keep pricing correct.
+				 */
+				$plan_product = $membership->get_plan();
+
+				if ($plan_product) {
+					$this->duration      = $plan_product->get_duration();
+					$this->duration_unit = $plan_product->get_duration_unit();
+				}
+
+				/*
+				 * Skip signup fee for reactivations — they already paid it.
+				 */
+				add_filter('wu_apply_signup_fee', '__return_false');
+
+				return true;
+			}
+		}
+
+		/*
+		 * We got here, that means
+		 * the intend behind this cart was to actually
+		 * change a membership.
+		 *
+		 * We can set the cart type provisionally.
+		 * This assignment might change in the future, as we make
+		 * additional assertions about the contents of the cart.
+		 */
+		$this->cart_type = 'upgrade';
 
 		/*
 		 * The membership exists, set it globally.
@@ -908,14 +953,14 @@ class Cart implements \JsonSerializable {
 			}
 
 			/*
-			* Set the type to addon.
-			*/
+			 * Set the type to addon.
+			 */
 			$this->cart_type = 'addon';
 
 			/*
-			* Sets the durations to avoid problems
-			* with addon purchases.
-			*/
+			 * Sets the durations to avoid problems
+			 * with addon purchases.
+			 */
 			$plan_product = $membership->get_plan();
 
 			if ($plan_product && ! $membership->is_free()) {
@@ -924,65 +969,35 @@ class Cart implements \JsonSerializable {
 			}
 
 			/*
-			* Apply existing discount code from membership to the cart.
-			* This ensures that discount codes with 'apply_to_renewals' setting
-			* are properly applied to addon purchases.
-			*
-			* Note: get_discount_code() returns a Discount_Code object or false.
-			* In rare cases with legacy data, it could be a string code that needs
-			* to be resolved to an object.
-			*
-			* @since 2.0.12
-			*/
-			$membership_discount_code = $membership->get_discount_code();
-
-			// Resolve string discount codes to objects (legacy data compatibility)
-			if (is_string($membership_discount_code) && ! empty($membership_discount_code)) {
-				$membership_discount_code = wu_get_discount_code_by_code($membership_discount_code);
-			}
-
-			if (
-			$membership_discount_code instanceof \WP_Ultimo\Models\Discount_Code
-			&& $membership_discount_code->should_apply_to_renewals()
-			) {
-				$this->add_discount_code($membership_discount_code);
-				$this->reapply_discounts_to_existing_line_items();
-			}
+			 * Checks the membership to see if we need to add back the
+			 * setup fee.
+			 *
+			 * If the membership was already successfully charged once,
+			 * it probably means that the setup fee was already paid, so we can skip it.
+			 */
+			add_filter('wu_apply_signup_fee', fn() => $membership->get_times_billed() <= 0);
 
 			/*
-			* For addon-only purchases, we should NOT add the existing plan back
-			* at full price and then calculate pro-rata credits. This was causing
-			* the customer to be charged for the next billing period in advance.
-			*
-			* Instead, we only charge for the new addon products being added.
-			*
-			* The existing plan will continue to be billed on its regular schedule
-			* via the subscription at the gateway level.
-			*
-			* Allows filtering for special cases where the old behavior is needed.
-			*
-			* @since 2.0.12
-			* @param bool $should_include Whether to include the existing plan.
-			* @param self $cart The cart object.
-			* @param \WP_Ultimo\Models\Membership $membership The existing membership.
-			*/
+			 * Adds the membership plan back in, for completeness.
+			 * This is also useful to make sure we present
+			 * the totals correctly for the customer.
+			 *
+			 * Allows filtering for addons like domain registration where
+			 * only the addon product should appear (not the existing plan).
+			 *
+			 * @since 2.4.12
+			 * @param bool $should_include Whether to include the existing plan.
+			 * @param self $cart The cart object.
+			 * @param \WP_Ultimo\Models\Membership $membership The existing membership.
+			 */
 			$should_include_existing_plan = apply_filters(
 				'wu_cart_addon_include_existing_plan',
-				false, // Changed from true to false - only charge for addons
+				true,
 				$this,
 				$membership
 			);
 
 			if ($should_include_existing_plan) {
-				/*
-				 * Checks the membership to see if we need to add back the
-				 * setup fee.
-				 *
-				 * If the membership was already successfully charged once,
-				 * it probably means that the setup fee was already paid, so we can skip it.
-				 */
-				add_filter('wu_apply_signup_fee', fn() => $membership->get_times_billed() <= 0);
-
 				$this->add_product($membership->get_plan_id());
 
 				/*
@@ -996,7 +1011,7 @@ class Cart implements \JsonSerializable {
 		}
 
 		/*
-		* With products added, let's check if the plan is changing.
+		 * With products added, let's check if the plan is changing.
 		 *
 		 * A plan change implies a upgrade or a downgrade, which we will determine
 		 * below.
@@ -1024,10 +1039,10 @@ class Cart implements \JsonSerializable {
 		}
 
 		/*
-		* If there is no plan change, but the product count is > 1
-		* We know that there is another product in this cart other than the
-		* plan, so this is again an addon cart.
-		*/
+		 * If there is no plan change, but the product count is > 1
+		 * We know that there is another product in this cart other than the
+		 * plan, so this is again an addon cart.
+		 */
 		if (count($this->products) > 1 && false === $is_plan_change) {
 			/*
 			 * Set the type to addon.
@@ -1046,72 +1061,20 @@ class Cart implements \JsonSerializable {
 			}
 
 			/*
-			 * Apply existing discount code from membership to the cart.
-			 * This ensures that discount codes with 'apply_to_renewals' setting
-			 * are properly applied to addon purchases.
+			 * Checks the membership to see if we need to add back the
+			 * setup fee.
 			 *
-			 * Note: get_discount_code() returns a Discount_Code object or false.
-			 * In rare cases with legacy data, it could be a string code that needs
-			 * to be resolved to an object.
-			 *
-			 * @since 2.0.12
+			 * If the membership was already successfully charged once,
+			 * it probably means that the setup fee was already paid, so we can skip it.
 			 */
-			$membership_discount_code = $membership->get_discount_code();
-
-			// Resolve string discount codes to objects (legacy data compatibility)
-			if (is_string($membership_discount_code) && ! empty($membership_discount_code)) {
-				$membership_discount_code = wu_get_discount_code_by_code($membership_discount_code);
-			}
-
-			if (
-			$membership_discount_code instanceof \WP_Ultimo\Models\Discount_Code
-			&& $membership_discount_code->should_apply_to_renewals()
-			) {
-				$this->add_discount_code($membership_discount_code);
-				$this->reapply_discounts_to_existing_line_items();
-			}
+			add_filter('wu_apply_signup_fee', fn() => $membership->get_times_billed() <= 0);
 
 			/*
-			 * Remove the existing plan from the cart to prevent charging
-			 * for the next billing period in advance.
-			 *
-			 * For addon purchases, we only want to charge for the new addon
-			 * products, not the existing plan subscription.
-			 *
-			 * @since 2.0.12
+			 * Adds the credit line, after
+			 * calculating pro-rate.
 			 */
-			foreach ($this->products as $key => $product) {
-				if (wu_is_plan_type($product->get_type()) && $product->get_id() === $membership->get_plan_id()) {
-					unset($this->products[ $key ]);
+			$this->calculate_prorate_credits();
 
-					// Also remove line items tied to the old plan (product + fee)
-					foreach ($this->line_items as $line_key => $line_item) {
-						if (
-						$line_item->get_product_id() === $product->get_id()
-						&& in_array($line_item->get_type(), ['product', 'fee'], true)
-						) {
-							unset($this->line_items[ $line_key ]);
-						}
-					}
-
-					// Reset the plan_id since we're not changing plans
-					$this->plan_id = 0;
-					break;
-				}
-			}
-
-			/*
-			 * Do NOT calculate pro-rata credits for addon-only purchases.
-			 * Pro-rata only makes sense when changing plans.
-			 *
-			 * Previously, this was incorrectly charging customers for the next
-			 * billing period in advance when adding addons.
-			 *
-			 * Note: Setup fees for addon products are handled naturally by the cart -
-			 * they are only applied to new products being added, not to existing ones.
-			 *
-			 * @since 2.0.12
-			 */
 			return true;
 		}
 
@@ -1866,21 +1829,6 @@ class Cart implements \JsonSerializable {
 		$duration      = $product->get_duration();
 		$duration_unit = $product->get_duration_unit();
 
-		/**
-		 * Filters the product amount when it is added to the cart.
-		 *
-		 * Allows addons (e.g. multi-currency) to convert the product
-		 * price to a different currency before line items are created.
-		 *
-		 * @since 2.3.0
-		 *
-		 * @param float                       $amount  The product amount.
-		 * @param \WP_Ultimo\Models\Product   $product The product being added.
-		 * @param \WP_Ultimo\Checkout\Cart    $cart    The cart instance.
-		 * @return float
-		 */
-		$amount = apply_filters('wu_cart_product_amount', $amount, $product, $this);
-
 		/*
 		 * Deal with price variations.
 		 *
@@ -2031,24 +1979,7 @@ class Cart implements \JsonSerializable {
 		/**
 		 * Signup Fees
 		 */
-		$setup_fee = $product->get_setup_fee();
-
-		/**
-		 * Filters the product setup fee when it is added to the cart.
-		 *
-		 * Allows addons (e.g. multi-currency) to convert the setup fee
-		 * to a different currency before the line item is created.
-		 *
-		 * @since 2.3.0
-		 *
-		 * @param float                       $setup_fee The product setup fee.
-		 * @param \WP_Ultimo\Models\Product   $product   The product being added.
-		 * @param \WP_Ultimo\Checkout\Cart    $cart      The cart instance.
-		 * @return float
-		 */
-		$setup_fee = apply_filters('wu_cart_product_setup_fee', $setup_fee, $product, $this);
-
-		if (empty($setup_fee)) {
+		if (empty($product->get_setup_fee())) {
 			return true;
 		}
 
@@ -2070,7 +2001,7 @@ class Cart implements \JsonSerializable {
 		}
 
 		// translators: placeholder is the product name.
-		$description = ($setup_fee > 0) ? __('Signup Fee for %s', 'ultimate-multisite') : __('Signup Credit for %s', 'ultimate-multisite');
+		$description = ($product->get_setup_fee() > 0) ? __('Signup Fee for %s', 'ultimate-multisite') : __('Signup Credit for %s', 'ultimate-multisite');
 
 		$description = sprintf($description, $product->get_name());
 
@@ -2093,7 +2024,7 @@ class Cart implements \JsonSerializable {
 				'title'       => $description,
 				'taxable'     => $product->is_taxable(),
 				'recurring'   => false,
-				'unit_price'  => $setup_fee,
+				'unit_price'  => $product->get_setup_fee(),
 				'quantity'    => $quantity,
 			],
 			$product,
@@ -2169,45 +2100,33 @@ class Cart implements \JsonSerializable {
 			return empty($this->payment->get_total());
 		}
 
-		/*
-		 * Use WooCommerce Subscriptions as source of truth for trial eligibility
-		 * when WCS is active.
-		 *
-		 * The original has_trialed() only checks WU memberships. A declined card
-		 * creates a cancelled membership with a trial date, permanently blocking
-		 * future trials. With WCS, only subscriptions that reached 'active' count
-		 * as real subscription history.
-		 *
-		 * @since 2.4.13
-		 */
+		// FIX v2.4.13: Use WooCommerce Subscriptions as source of truth
+		// for trial eligibility when WCS is active.
+		// A user "has trialed" only when they have a WCS subscription
+		// that went active (completed trial and payment processed).
 		if (function_exists('wcs_get_users_subscriptions')) {
 			$user_id = $customer->get_user_id();
 
 			$wcs_subscriptions = wcs_get_users_subscriptions($user_id);
 
 			foreach ($wcs_subscriptions as $subscription) {
-				/*
-				 * Skip cancelled subscriptions whose parent order was never
-				 * completed. A declined card creates a WCS subscription that gets
-				 * auto-cancelled before any payment processes -- this is NOT real
-				 * subscription history and should not block the trial.
-				 *
-				 * @since 2.4.14
-				 */
+				// FIX v2.4.14: Skip cancelled subscriptions whose parent order was never
+				// completed. A declined card creates a WCS subscription that gets
+				// auto-cancelled before any payment processes — this is NOT real
+				// subscription history and should not block the trial.
 				if ($subscription->has_status(['cancelled'])) {
 					$parent_order = $subscription->get_parent();
-
 					if ( ! $parent_order || ! $parent_order->has_status(['completed', 'processing', 'refunded'])) {
-						continue;
+						continue; // Never paid — not real subscription history.
 					}
 				}
 
 				if ($subscription->has_status(['active', 'on-hold', 'cancelled', 'expired'])) {
-					return false;
+					return false; // Has real subscription history — no trial.
 				}
 			}
 
-			return true;
+			return true; // No real WCS subscription ever activated — eligible.
 		}
 
 		return ! $customer->has_trialed();
@@ -2733,33 +2652,6 @@ class Cart implements \JsonSerializable {
 	}
 
 	/**
-	 * Reapply discounts to all existing line items in the cart.
-	 *
-	 * This helper method is used when a discount code is set after products
-	 * have already been added to the cart (e.g., when applying membership
-	 * discount codes to addon purchases). It iterates through all line items,
-	 * reapplies discounts, and recalculates taxes if applicable.
-	 *
-	 * @since 2.0.12
-	 * @return void
-	 */
-	private function reapply_discounts_to_existing_line_items() {
-		foreach ($this->line_items as $id => $line_item) {
-			if (! $line_item->is_discountable()) {
-				continue;
-			}
-
-			$line_item = $this->apply_discounts_to_item($line_item);
-
-			if ($line_item->is_taxable()) {
-				$line_item = $this->apply_taxes_to_item($line_item);
-			}
-
-			$this->line_items[ $id ] = $line_item;
-		}
-	}
-
-	/**
 	 * Apply taxes to a line item.
 	 *
 	 * @since 2.0.0
@@ -3025,19 +2917,7 @@ class Cart implements \JsonSerializable {
 	 */
 	public function get_currency() {
 
-		/**
-		 * Filters the cart currency.
-		 *
-		 * Allows addons (e.g. multi-currency) to override the currency
-		 * used for the current cart/checkout session.
-		 *
-		 * @since 2.3.0
-		 *
-		 * @param string                     $currency The current currency code.
-		 * @param \WP_Ultimo\Checkout\Cart   $cart     The cart instance.
-		 * @return string
-		 */
-		return apply_filters('wu_cart_get_currency', $this->currency, $this);
+		return $this->currency;
 	}
 
 	/**

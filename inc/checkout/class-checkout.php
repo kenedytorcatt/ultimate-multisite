@@ -467,6 +467,27 @@ class Checkout {
 
 			$this->step['fields'] ??= [];
 
+			/*
+			 * For reactivation carts, skip site-creation fields.
+			 *
+			 * Users reactivating a cancelled membership already have a site,
+			 * so we remove fields related to site URL, title, and template selection.
+			 *
+			 * @since 2.4.14
+			 */
+			$cart_type = $this->request_or_session('cart_type', 'new');
+
+			if ('reactivation' === $cart_type || (isset($this->order) && $this->order && $this->order->get_cart_type() === 'reactivation')) {
+				$site_field_types = ['site_url', 'template_selection', 'site_title'];
+
+				$this->step['fields'] = array_filter(
+					$this->step['fields'],
+					function ($field) use ($site_field_types) {
+						return ! in_array(wu_get_isset($field, 'type', ''), $site_field_types, true);
+					}
+				);
+			}
+
 			$this->auto_submittable_field = $this->contains_auto_submittable_field($this->step['fields']);
 
 			$this->step['fields'] = wu_create_checkout_fields($this->step['fields']);
@@ -942,7 +963,7 @@ class Checkout {
 				$this->membership->set_date_trial_end(gmdate('Y-m-d 23:59:59', $this->order->get_billing_start_date()));
 				$this->membership->set_date_expiration(gmdate('Y-m-d 23:59:59', $this->order->get_billing_start_date()));
 
-				if (wu_get_setting('allow_trial_without_payment_method', false) && $this->customer->get_email_verification() !== 'pending') {
+				if (wu_get_setting('allow_trial_without_payment_method') && $this->customer->get_email_verification() !== 'pending') {
 					/*
 					 * In this particular case, we need to set the status to trialing here as we will not update the membership after and then, publish the site.
 					 */
@@ -1304,6 +1325,18 @@ class Checkout {
 	 */
 	protected function maybe_create_site() {
 		/*
+		 * Reactivation carts should not create a new site.
+		 * The user already has an existing site attached to the membership.
+		 *
+		 * @since 2.4.14
+		 */
+		if ($this->order && $this->order->get_cart_type() === 'reactivation') {
+			$sites = $this->membership->get_sites();
+
+			return ! empty($sites) ? current($sites) : false;
+		}
+
+		/*
 		 * Let's get a list of membership sites.
 		 * This list includes pending sites as well.
 		 */
@@ -1343,13 +1376,7 @@ class Checkout {
 		}
 
 		if ('autogenerate' === $site_url && $site_title) {
-			/*
-			 * Check if the base URL from user-provided title is already taken
-			 * BEFORE auto-appending a number. Users should be told "that name
-			 * is taken" instead of silently getting e.g. "honeys1".
-			 *
-			 * @since 2.4.13
-			 */
+			// FIX v2.4.13: Check if the base URL from user-provided title is taken
 			$base_url = wu_generate_site_url_from_title($site_title);
 			$d_check  = wu_get_site_domain_and_path($base_url, $this->request_or_session('site_domain'));
 
@@ -1360,7 +1387,7 @@ class Checkout {
 				);
 			}
 
-			$site_url = wu_generate_unique_site_url($site_title, $this->request_or_session('site_domain'));
+			$site_url = $base_url;
 		} elseif ('autogenerate' === $site_url && $this->customer) {
 			$site_url = wu_generate_unique_site_url($this->customer->get_username(), $this->request_or_session('site_domain'));
 		}
@@ -1387,12 +1414,9 @@ class Checkout {
 				$site_url   = $this->customer->get_username();
 				$site_title = $site_title ?: $site_url;
 			} elseif ('site_title' === $auto_generate_url && $site_title) {
-				/*
-				 * When generating URL from user-provided title, check if the
-				 * base URL is already taken BEFORE auto-appending a number.
-				 *
-				 * @since 2.4.13
-				 */
+				// FIX v2.4.13: When generating URL from user-provided title,
+				// check if the base URL is already taken BEFORE auto-appending a number.
+				// Users should be told "that name is taken" instead of silently getting "honeys1".
 				$base_url = wu_generate_site_url_from_title($site_title);
 				$d_check  = wu_get_site_domain_and_path($base_url, $this->request_or_session('site_domain'));
 
@@ -1403,7 +1427,7 @@ class Checkout {
 					);
 				}
 
-				$site_url = wu_generate_unique_site_url($site_title, $this->request_or_session('site_domain'));
+				$site_url = $base_url;
 			} else {
 				// Fallback to legacy behavior - generate from site title if available
 				$site_url = wu_generate_site_url_from_title($site_title);
@@ -1469,17 +1493,6 @@ class Checkout {
 		 */
 		$template_id = apply_filters('wu_checkout_template_id', (int) $this->request_or_session('template_id'), $this->membership, $this);
 
-		/*
-		 * Determine the site type based on the product type.
-		 * Demo products create demo sites that auto-expire.
-		 */
-		$site_type = Site_Type::CUSTOMER_OWNED;
-		$plan      = $this->order->get_plan();
-
-		if ($plan && $plan->get_type() === \WP_Ultimo\Database\Products\Product_Type::DEMO) {
-			$site_type = Site_Type::DEMO;
-		}
-
 		$site_data = [
 			'domain'         => $d->domain,
 			'path'           => $d->path,
@@ -1490,7 +1503,7 @@ class Checkout {
 			'transient'      => $transient,
 			'signup_options' => $this->get_site_meta_fields($form_slug, 'site_option'),
 			'signup_meta'    => $this->get_site_meta_fields($form_slug, 'site_meta'),
-			'type'           => $site_type,
+			'type'           => Site_Type::CUSTOMER_OWNED,
 		];
 
 		return $this->membership->create_pending_site($site_data);
@@ -1818,27 +1831,22 @@ class Checkout {
 			$username = $username_or_email;
 		}
 
-		/**
-		 * Filters inline login before authentication.
-		 *
-		 * Allows plugins (e.g. captcha) to validate additional fields
-		 * before wp_authenticate() is called. Return a WP_Error to block login.
-		 *
-		 * @since 2.5.0
-		 *
-		 * @param null|\WP_Error $result  Null to proceed, WP_Error to block.
-		 * @param string         $username The username being authenticated.
-		 */
-		$pre_auth = apply_filters('wu_before_inline_login', null, $username);
-
-		if (is_wp_error($pre_auth)) {
-			set_transient($transient_key, ($attempt_count ? $attempt_count + 1 : 1), 5 * MINUTE_IN_SECONDS);
-
-			wp_send_json_error(
-				[
-					'message' => $pre_auth->get_error_message(),
-				]
-			);
+		// Remove captcha plugins from authenticate filter during inline login
+		// because the captcha field is never rendered in the inline login form.
+		// Without this, plugins like ultimate-multisite-captcha block login
+		// since they expect a captcha token that was never presented to the user.
+		global $wp_filter;
+		if (isset($wp_filter['authenticate'])) {
+			foreach ($wp_filter['authenticate']->callbacks as $priority => $callbacks) {
+				foreach ($callbacks as $key => $callback) {
+					if (is_array($callback['function']) && is_object($callback['function'][0])) {
+						$class_name = get_class($callback['function'][0]);
+						if (stripos($class_name, 'captcha') !== false) {
+							remove_filter('authenticate', $callback['function'], $priority);
+						}
+					}
+				}
+			}
 		}
 
 		// Attempt authentication using WordPress core
@@ -1849,19 +1857,9 @@ class Checkout {
 			// Increment failed attempt counter
 			set_transient($transient_key, ($attempt_count ? $attempt_count + 1 : 1), 5 * MINUTE_IN_SECONDS);
 
-			$error_message = $user->get_error_message();
-
-			// Strip HTML tags but keep the text content for JSON response.
-			$error_message = wp_strip_all_tags($error_message);
-
-			// Fallback if the error message is empty.
-			if (empty($error_message)) {
-				$error_message = __('Invalid username or password.', 'ultimate-multisite');
-			}
-
 			wp_send_json_error(
 				[
-					'message' => $error_message,
+					'message' => __('Invalid username or password.', 'ultimate-multisite'),
 				]
 			);
 		}
@@ -1912,25 +1910,6 @@ class Checkout {
 			'forgot_password'      => __('Forgot password?', 'ultimate-multisite'),
 			'cancel'               => __('Cancel', 'ultimate-multisite'),
 			'email_exists'         => __('A customer with the same email address or username already exists.', 'ultimate-multisite'),
-			// Client-side validation messages (%s = field label, %d = numeric limit).
-			/* translators: %s: field label */
-			'field_required'       => __('%s is required.', 'ultimate-multisite'),
-			/* translators: %s: field label */
-			'field_invalid_email'  => __('%s must be a valid email address.', 'ultimate-multisite'),
-			/* translators: 1: field label, 2: minimum character count */
-			'field_min_length'     => __('%s must be at least %d characters.', 'ultimate-multisite'),
-			/* translators: 1: field label, 2: maximum character count */
-			'field_max_length'     => __('%s must not exceed %d characters.', 'ultimate-multisite'),
-			/* translators: %s: field label */
-			'field_alpha_dash'     => __('%s may only contain letters, numbers, dashes, and underscores.', 'ultimate-multisite'),
-			/* translators: %s: field label */
-			'field_lowercase'      => __('%s must be lowercase.', 'ultimate-multisite'),
-			/* translators: 1: field label, 2: other field label */
-			'field_same'           => __('%s must match %s.', 'ultimate-multisite'),
-			/* translators: %s: field label */
-			'field_integer'        => __('%s must be a whole number.', 'ultimate-multisite'),
-			/* translators: %s: field label */
-			'field_accepted'       => __('%s must be accepted.', 'ultimate-multisite'),
 		];
 
 		/*
@@ -2052,52 +2031,9 @@ class Checkout {
 		 */
 		$variables['order'] = (new Cart($variables))->done();
 
-		/*
-		 * Always expose discount_code as a string so wu_checkout.discount_code
-		 * is never undefined in JS. An undefined value causes the Vue watcher
-		 * to fire a spurious create_order() call on page load when v-init sets
-		 * the field to an empty string.
-		 */
-		$variables['discount_code'] = '';
-
 		if ( ! empty($variables['order']->discount_code)) {
 			$variables['discount_code'] = $variables['order']->discount_code->get_code();
 		}
-
-		/*
-		 * Expose validation rules and field labels to JS so client-side
-		 * validation stays in sync with the server-side rules without
-		 * duplicating logic.
-		 */
-		$variables['validation_rules'] = $this->get_js_validation_rules();
-
-		/*
-		 * Build a field_labels map (field_id => human-readable label) from the
-		 * checkout form fields so the JS validator can show friendly names.
-		 */
-		$field_labels = [
-			'email_address'              => __('Email address', 'ultimate-multisite'),
-			'email_address_confirmation' => __('Email address confirmation', 'ultimate-multisite'),
-			'username'                   => __('Username', 'ultimate-multisite'),
-			'password'                   => __('Password', 'ultimate-multisite'),
-			'password_conf'              => __('Password confirmation', 'ultimate-multisite'),
-			'site_title'                 => __('Site title', 'ultimate-multisite'),
-			'site_url'                   => __('Site URL', 'ultimate-multisite'),
-			'billing_country'            => __('Country', 'ultimate-multisite'),
-			'billing_zip_code'           => __('ZIP / Postal code', 'ultimate-multisite'),
-			'billing_state'              => __('State / Province', 'ultimate-multisite'),
-			'billing_city'               => __('City', 'ultimate-multisite'),
-		];
-
-		if ($this->checkout_form) {
-			foreach ($this->checkout_form->get_all_fields() as $field) {
-				if ( ! empty($field['id']) && ! empty($field['name'])) {
-					$field_labels[ $field['id'] ] = $field['name'];
-				}
-			}
-		}
-
-		$variables['field_labels'] = $field_labels;
 
 		/**
 		 * Allow plugin developers to filter the pre-sets of a checkout page.
@@ -2111,94 +2047,6 @@ class Checkout {
 		 * @return array The new variables array.
 		 */
 		return apply_filters('wu_get_checkout_variables', $variables, $this);
-	}
-
-	/**
-	 * Converts the PHP validation rules into a JS-friendly structure.
-	 *
-	 * Each rule string (e.g. "required|min:4|email") is parsed into an array of
-	 * rule objects so the client-side validator can process them without
-	 * duplicating the rule definitions.
-	 *
-	 * Only rules that can be meaningfully evaluated client-side are included.
-	 * Server-only rules (unique_site, unique:\WP_User, products, country, state,
-	 * city, site_template) are intentionally omitted — the AJAX call still
-	 * validates those server-side.
-	 *
-	 * @since 2.1.0
-	 * @return array<string, array<array{rule: string, param: string|null}>>
-	 */
-	public function get_js_validation_rules(): array {
-
-		$raw_rules = $this->validation_rules();
-
-		/*
-		 * Rules that require a database lookup or complex server-side logic.
-		 * These are skipped for client-side validation.
-		 */
-		$server_only = [
-			'unique_site',
-			'site_template',
-			'products',
-			'country',
-			'state',
-			'city',
-		];
-
-		$js_rules = [];
-
-		foreach ($raw_rules as $field => $rule_string) {
-			if (empty($rule_string)) {
-				continue;
-			}
-
-			$parsed = [];
-
-			foreach (explode('|', $rule_string) as $rule_part) {
-				$rule_part = trim($rule_part);
-
-				if (empty($rule_part)) {
-					continue;
-				}
-
-				// Split "rule:param" into rule name and optional parameter.
-				if (strpos($rule_part, ':') !== false) {
-					[$rule_name, $rule_param] = explode(':', $rule_part, 2);
-				} else {
-					$rule_name  = $rule_part;
-					$rule_param = null;
-				}
-
-				// Skip rules that start with "unique:" (DB lookups).
-				if (strpos($rule_name, 'unique') === 0) {
-					continue;
-				}
-
-				// Skip server-only rules.
-				if (in_array($rule_name, $server_only, true)) {
-					continue;
-				}
-
-				$parsed[] = [
-					'rule'  => $rule_name,
-					'param' => $rule_param,
-				];
-			}
-
-			if ( ! empty($parsed)) {
-				$js_rules[ $field ] = $parsed;
-			}
-		}
-
-		/**
-		 * Allow plugin developers to modify the JS validation rules.
-		 *
-		 * @since 2.1.0
-		 * @param array    $js_rules  Field => parsed rule array.
-		 * @param Checkout $checkout  The checkout instance.
-		 * @return array
-		 */
-		return apply_filters('wu_checkout_js_validation_rules', $js_rules, $this);
 	}
 
 	/**
@@ -2692,6 +2540,36 @@ class Checkout {
 			 * @since 2.0.4
 			 */
 			do_action('wu_checkout_done', $payment, $membership, $customer, $this->order, $type, $this);
+
+			/*
+			 * Handle reactivation of cancelled memberships.
+			 *
+			 * After successful payment on a reactivation cart,
+			 * reactivate the membership and redirect to the user's site.
+			 *
+			 * @since 2.4.14
+			 */
+			if ('reactivation' === $type && $membership && $membership->is_cancelled()) {
+				$reactivated = $membership->reactivate();
+
+				if ($reactivated) {
+					wu_log_add('checkout', sprintf('Membership #%d reactivated via checkout.', $membership->get_id()));
+
+					$sites = $membership->get_sites();
+
+					if ( ! empty($sites)) {
+						$site = current($sites);
+
+						$site_url = $site->get_active_site_url();
+
+						if ($site_url) {
+							wp_safe_redirect($site_url);
+
+							exit;
+						}
+					}
+				}
+			}
 
 			/*
 			 * Deprecated hook for registration.

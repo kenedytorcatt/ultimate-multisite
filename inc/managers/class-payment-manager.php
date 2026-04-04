@@ -31,7 +31,6 @@ class Payment_Manager extends Base_Manager {
 	use \WP_Ultimo\Apis\Rest_Api;
 	use \WP_Ultimo\Apis\WP_CLI;
 	use \WP_Ultimo\Apis\MCP_Abilities;
-	use \WP_Ultimo\Apis\Command_Palette;
 	use \WP_Ultimo\Traits\Singleton;
 
 	const LOG_FILE_NAME = 'payments';
@@ -65,8 +64,6 @@ class Payment_Manager extends Base_Manager {
 
 		$this->enable_mcp_abilities();
 
-		$this->enable_command_palette();
-
 		$this->register_forms();
 
 		add_action(
@@ -80,6 +77,8 @@ class Payment_Manager extends Base_Manager {
 			}
 		);
 		add_action('wp_login', [$this, 'check_pending_payments'], 10);
+
+		add_action('wp_login', [$this, 'maybe_redirect_cancelled_membership'], 20, 2);
 
 		add_action('wp_enqueue_scripts', [$this, 'show_pending_payments'], 10);
 
@@ -156,15 +155,10 @@ class Payment_Manager extends Base_Manager {
 			return;
 		}
 
-		/*
-		 * Skip pending memberships for payment popup.
-		 *
-		 * A membership is created in 'pending' before payment is collected.
-		 * Without this, an abandoned checkout triggers the "pending payment"
-		 * popup on every login.
-		 *
-		 * @since 2.4.13
-		 */
+		// FIX v2.4.13: Skip pending memberships for payment popup.
+		// A membership is created in 'pending' before payment is collected.
+		// Without this, an abandoned checkout triggers the "pending payment"
+		// popup on every login.
 		$skip_statuses = ['pending'];
 
 		foreach ($customer->get_memberships() as $membership) {
@@ -180,6 +174,98 @@ class Payment_Manager extends Base_Manager {
 				break;
 			}
 		}
+	}
+
+	/**
+	 * Redirects users with cancelled memberships to the checkout page for reactivation.
+	 *
+	 * If a user logs in on the main site and has no active membership but does
+	 * have a cancelled one, redirect them to the checkout with reactivation params.
+	 *
+	 * @since 2.4.14
+	 *
+	 * @param string   $user_login The user login name.
+	 * @param \WP_User $user       The WP_User object.
+	 * @return void
+	 */
+	public function maybe_redirect_cancelled_membership($user_login, $user): void {
+
+		if ( ! is_main_site()) {
+			return;
+		}
+
+		if ( ! $user instanceof \WP_User) {
+			return;
+		}
+
+		$customer = wu_get_customer_by_user_id($user->ID);
+
+		if ( ! $customer) {
+			return;
+		}
+
+		$memberships = $customer->get_memberships();
+
+		if (empty($memberships)) {
+			return;
+		}
+
+		/*
+		 * Check if the customer has any active membership.
+		 * If they do, no redirect is needed.
+		 */
+		foreach ($memberships as $membership) {
+			if ($membership->is_active()) {
+				return;
+			}
+		}
+
+		/*
+		 * No active membership found. Look for a cancelled one.
+		 */
+		$cancelled_membership = null;
+
+		foreach ($memberships as $membership) {
+			if ($membership->is_cancelled()) {
+				$cancelled_membership = $membership;
+
+				break;
+			}
+		}
+
+		if ( ! $cancelled_membership) {
+			return;
+		}
+
+		$checkout_pages = \WP_Ultimo\Checkout\Checkout_Pages::get_instance();
+		$checkout_url   = $checkout_pages->get_page_url('register');
+
+		if ( ! $checkout_url) {
+			return;
+		}
+
+		$redirect_url = add_query_arg(
+			[
+				'plan_id'       => $cancelled_membership->get_plan_id(),
+				'membership_id' => $cancelled_membership->get_id(),
+			],
+			$checkout_url
+		);
+
+		/**
+		 * Filters the redirect URL for users with cancelled memberships on login.
+		 *
+		 * @param string                           $redirect_url The reactivation checkout URL.
+		 * @param \WP_Ultimo\Models\Membership     $membership   The cancelled membership.
+		 * @param \WP_User                         $user         The WP_User object.
+		 *
+		 * @since 2.4.14
+		 */
+		$redirect_url = apply_filters('wu_cancelled_membership_redirect_url', $redirect_url, $cancelled_membership, $user);
+
+		wp_safe_redirect($redirect_url);
+
+		exit;
 	}
 
 	/**

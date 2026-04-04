@@ -713,18 +713,8 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			return new \WP_Error('invalid-date', __('Swap Cart is invalid.', 'ultimate-multisite'));
 		}
 
-		/*
-		 * For addon-only carts, we merge new addons with existing ones.
-		 * For plan changes (upgrade/downgrade), we replace all products.
-		 *
-		 * @since 2.0.12
-		 */
-		$is_addon_cart = 'addon' === $order->get_cart_type();
-
-		if ( ! $is_addon_cart) {
-			// Clear the current addons for plan changes.
-			$this->addon_products = [];
-		}
+		// clear the current addons.
+		$this->addon_products = [];
 
 		/*
 		 * We'll do that based on the line items,
@@ -762,19 +752,14 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		}
 
 		/*
-		 * For addon carts, don't update the recurring amount/duration
-		 * since we're not changing the plan, just adding products.
-		 *
-		 * @since 2.0.12
+		 * Finally, we have a couple of other parameters to set.
 		 */
-		if ( ! $is_addon_cart) {
-			$this->set_amount($order->get_recurring_total());
-			$this->set_initial_amount($order->get_total());
-			$this->set_recurring($order->has_recurring());
+		$this->set_amount($order->get_recurring_total());
+		$this->set_initial_amount($order->get_total());
+		$this->set_recurring($order->has_recurring());
 
-			$this->set_duration($order->get_duration());
-			$this->set_duration_unit($order->get_duration_unit());
-		}
+		$this->set_duration($order->get_duration());
+		$this->set_duration_unit($order->get_duration_unit());
 
 		/*
 		 * Returns self for chaining.
@@ -984,10 +969,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 */
 	public function get_currency() {
 
-		if (! empty($this->currency)) {
-			return $this->currency;
-		}
-
+		// return $this->currency; For now, multi-currency is not yet supported.
 		return wu_get_setting('currency_symbol', 'USD');
 	}
 
@@ -2010,7 +1992,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 
 		if (is_wp_error($result)) {
 			// translators: %s full error message.
-			wu_log_add("membership-{$this->get_id()}", sprintf(__('Failed to trigger async site creation. The site will not be created until the next cron run which is much slower: %s', 'ultimate-multisite'), $result->get_error_message()));
+			wu_log_add("membership-{$this->get_id()}", sprintf(__('Failed to trigger async site creation. The site will not be created until the next cron run which is much slower: %s'), $result->get_error_message()));
 		}
 
 		wu_enqueue_async_action('wu_async_publish_pending_site', ['membership_id' => $this->get_id()], 'membership');
@@ -2046,38 +2028,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 
 		$pending_site->set_type('customer_owned');
 
-		/*
-		 * Ensure the template ID is set when the product uses
-		 * "Assign Site Template" mode. During checkout the
-		 * wu_checkout_template_id filter sets this on the pending
-		 * site data, but if the checkout form has no template
-		 * selection field the value may still be empty. Re-apply
-		 * the filter here as a safety net so the assigned template
-		 * is always honoured.
-		 *
-		 * @since 2.5.0
-		 */
-		$template_id = apply_filters('wu_checkout_template_id', (int) $pending_site->get_template_id(), $this, null);
-
-		if ($template_id && $template_id !== (int) $pending_site->get_template_id()) {
-			$pending_site->set_template_id($template_id);
-		}
-
-		try {
-			$saved = $pending_site->save();
-		} catch (\Throwable $e) {
-			/*
-			 * Reset is_publishing when Site::save() or a downstream hook throws,
-			 * so the cron/manual retry path is not stuck in "Creating" state.
-			 *
-			 * @since 2.4.13
-			 */
-			$pending_site->set_publishing(false);
-
-			$this->update_pending_site($pending_site);
-
-			return new \WP_Error('pending_site_publish_failed', $e->getMessage());
-		}
+		$saved = $pending_site->save();
 
 		if (is_wp_error($saved)) {
 			if ($saved->get_error_code() === 'site_taken') {
@@ -2091,13 +2042,9 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 				return true;
 			}
 
-			/*
-			 * Reset is_publishing on failure so the retry mechanism
-			 * (cron / manual) can try again instead of staying stuck
-			 * in a "Creating" state forever.
-			 *
-			 * @since 2.4.13-beta.12
-			 */
+			// FIX v2.4.13-beta.12: Reset is_publishing on failure so the
+			// retry mechanism (cron / manual) can try again instead of
+			// staying stuck in "Creando" forever.
 			$pending_site->set_publishing(false);
 
 			$this->update_pending_site($pending_site);
@@ -2193,22 +2140,6 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		}
 
 		return $sum;
-	}
-
-	/**
-	 * Serialize model to array, ensuring meta-stored fields are loaded.
-	 *
-	 * @since 2.0.0
-	 * @return array
-	 */
-	public function to_array() {
-
-		if ($this->get_id()) {
-			$this->get_cancellation_reason();
-			$this->get_discount_code();
-		}
-
-		return parent::to_array();
 	}
 
 	/**
@@ -2381,6 +2312,79 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		 * @since 2.0
 		 */
 		do_action('wu_membership_post_cancel', $this->get_id(), $this);
+	}
+
+	/**
+	 * Checks if the membership is cancelled.
+	 *
+	 * @since 2.4.14
+	 * @return bool
+	 */
+	public function is_cancelled(): bool {
+
+		return $this->get_status() === Membership_Status::CANCELLED;
+	}
+
+	/**
+	 * Reactivates a cancelled membership.
+	 *
+	 * This reuses the existing renewal logic to set a new expiration date
+	 * and restore the membership to active status.
+	 *
+	 * @since 2.4.14
+	 * @return bool True on success, false if not cancelled or on failure.
+	 */
+	public function reactivate(): bool {
+
+		if ( ! $this->is_cancelled()) {
+			return false;
+		}
+
+		$id = $this->get_id();
+
+		wu_log_add("membership-{$id}", sprintf('Starting membership reactivation for membership #%d.', $id));
+
+		/**
+		 * Triggers before the membership is reactivated.
+		 *
+		 * @param int            $membership_id The ID of the membership.
+		 * @param \WP_Ultimo\Models\Membership $membership Membership object.
+		 *
+		 * @since 2.4.14
+		 */
+		do_action('wu_membership_pre_reactivate', $this->get_id(), $this);
+
+		$renewed = $this->renew(false, 'active');
+
+		if ( ! $renewed) {
+			wu_log_add("membership-{$id}", sprintf('Membership reactivation failed for membership #%d: renewal returned false.', $id));
+
+			return false;
+		}
+
+		$this->set_date_cancellation(null);
+
+		$status = $this->save();
+
+		if (is_wp_error($status)) {
+			wu_log_add("membership-{$id}", sprintf('Membership reactivation failed for membership #%d: %s', $id, $status->get_error_message()));
+
+			return false;
+		}
+
+		/**
+		 * Triggers after the membership is reactivated.
+		 *
+		 * @param int            $membership_id The ID of the membership.
+		 * @param \WP_Ultimo\Models\Membership $membership Membership object.
+		 *
+		 * @since 2.4.14
+		 */
+		do_action('wu_membership_post_reactivate', $this->get_id(), $this);
+
+		wu_log_add("membership-{$id}", sprintf('Completed membership reactivation for membership #%d. New Status: %s', $id, $this->get_status()));
+
+		return true;
 	}
 
 	/**

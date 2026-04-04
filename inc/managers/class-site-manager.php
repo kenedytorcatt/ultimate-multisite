@@ -26,13 +26,10 @@ defined('ABSPATH') || exit;
  */
 class Site_Manager extends Base_Manager {
 
+	use \WP_Ultimo\Apis\Rest_Api;
 	use \WP_Ultimo\Apis\WP_CLI;
 	use \WP_Ultimo\Apis\MCP_Abilities;
-	use \WP_Ultimo\Apis\Command_Palette;
 	use \WP_Ultimo\Traits\Singleton;
-	use \WP_Ultimo\Apis\Rest_Api {
-		\WP_Ultimo\Apis\Rest_Api::get_collection_params as trait_get_collection_params;
-	}
 
 	/**
 	 * The manager slug.
@@ -63,8 +60,6 @@ class Site_Manager extends Base_Manager {
 		$this->enable_wp_cli();
 
 		$this->enable_mcp_abilities();
-
-		$this->enable_command_palette();
 
 		add_action('after_setup_theme', [$this, 'additional_thumbnail_sizes']);
 
@@ -107,69 +102,6 @@ class Site_Manager extends Base_Manager {
 		add_filter('wpmu_validate_blog_signup', [$this, 'allow_hyphens_in_site_name'], 10, 1);
 
 		add_action('wu_daily', [$this, 'delete_pending_sites']);
-
-		// Demo site cleanup - runs hourly to check for expired demo sites.
-		add_action('wu_hourly', [$this, 'check_expired_demo_sites']);
-
-		// Demo site expiring notification - runs hourly to send warning emails.
-		add_action('wu_hourly', [$this, 'check_expiring_demo_sites']);
-
-		// Async handler for demo site deletion.
-		add_action('wu_async_delete_demo_site', [$this, 'async_delete_demo_site'], 10, 1);
-
-		// Admin bar notice for keep-until-live demo sites.
-		add_action('admin_bar_menu', [$this, 'add_demo_admin_bar_menu'], 999);
-
-		// Handle "go live" action requests from site admins.
-		add_action('wp', [$this, 'handle_go_live_action']);
-	}
-
-	/**
-	 * Returns the query params for the site collection endpoint.
-	 *
-	 * Extends the base pagination params with site-specific filters for
-	 * meta-stored fields (type, customer_id, membership_id, template_id).
-	 * These params are converted to meta_query clauses by Site_Query::query().
-	 *
-	 * @since 2.5.0
-	 * @return array
-	 */
-	public function get_collection_params() {
-
-		$params = $this->trait_get_collection_params();
-
-		$params['type'] = [
-			'description'       => __('Filter sites by type (e.g. customer_owned, site_template, pending, external).', 'ultimate-multisite'),
-			'type'              => 'string',
-			'sanitize_callback' => 'sanitize_text_field',
-			'validate_callback' => 'rest_validate_request_arg',
-		];
-
-		$params['customer_id'] = [
-			'description'       => __('Filter sites by the ID of the owning customer.', 'ultimate-multisite'),
-			'type'              => 'integer',
-			'sanitize_callback' => 'absint',
-			'validate_callback' => 'rest_validate_request_arg',
-			'minimum'           => 1,
-		];
-
-		$params['membership_id'] = [
-			'description'       => __('Filter sites by the ID of the associated membership.', 'ultimate-multisite'),
-			'type'              => 'integer',
-			'sanitize_callback' => 'absint',
-			'validate_callback' => 'rest_validate_request_arg',
-			'minimum'           => 1,
-		];
-
-		$params['template_id'] = [
-			'description'       => __('Filter sites by the ID of the template used to create them.', 'ultimate-multisite'),
-			'type'              => 'integer',
-			'sanitize_callback' => 'absint',
-			'validate_callback' => 'rest_validate_request_arg',
-			'minimum'           => 1,
-		];
-
-		return $params;
 	}
 
 	/**
@@ -242,25 +174,11 @@ class Site_Manager extends Base_Manager {
 				if ($errors->has_errors() === false) {
 					$d = wu_get_site_domain_and_path(wu_request('site_url', ''), $checkout->request_or_session('site_domain'));
 
-					/*
-					 * Apply the wu_checkout_template_id filter so that
-					 * "Assign Site Template" mode is honoured when adding
-					 * a new site to an existing membership.
-					 *
-					 * @since 2.5.0
-					 */
-					$template_id = apply_filters(
-						'wu_checkout_template_id',
-						(int) $checkout->request_or_session('template_id'),
-						$membership,
-						$checkout
-					);
-
 					$pending_site = $membership->create_pending_site(
 						[
 							'domain'        => $d->domain,
 							'path'          => $d->path,
-							'template_id'   => $template_id,
+							'template_id'   => $checkout->request_or_session('template_id'),
 							'title'         => $checkout->request_or_session('site_title'),
 							'customer_id'   => $customer->get_id(),
 							'membership_id' => $membership->get_id(),
@@ -331,35 +249,6 @@ class Site_Manager extends Base_Manager {
 	 * @return void
 	 */
 	public function handle_site_published($site, $membership): void {
-		/*
-		 * If this is a demo site, set the expiration time.
-		 * Skip if the demo product is configured to keep until the customer goes live.
-		 */
-		if ($site->is_demo()) {
-			if ($site->is_keep_until_live()) {
-				wu_log_add(
-					'demo-sites',
-					sprintf(
-						// translators: %d is the site ID.
-						__('Demo site #%d created in keep-until-live mode (no expiration set).', 'ultimate-multisite'),
-						$site->get_id()
-					)
-				);
-			} else {
-				$expires_at = $site->calculate_demo_expiration();
-				$site->set_demo_expires_at($expires_at);
-
-				wu_log_add(
-					'demo-sites',
-					sprintf(
-						// translators: %1$d is site ID, %2$s is expiration datetime.
-						__('Demo site #%1$d created, expires at %2$s', 'ultimate-multisite'),
-						$site->get_id(),
-						$expires_at
-					)
-				);
-			}
-		}
 
 		$payload = array_merge(
 			wu_generate_event_payload('site', $site),
@@ -389,32 +278,6 @@ class Site_Manager extends Base_Manager {
 		$redirect_url = null;
 
 		$site = wu_get_current_site();
-
-		/*
-		 * Block frontend for keep-until-live demo sites.
-		 *
-		 * These sites remain accessible in wp-admin (the admin can still build
-		 * their site) but the public-facing frontend is blocked until the customer
-		 * explicitly activates the site. Site administrators are allowed through
-		 * so they can preview their work.
-		 */
-		if ($site->is_keep_until_live()) {
-			if (current_user_can('manage_options') || is_super_admin()) {
-				// Site admins can see the frontend — let them through.
-				return;
-			}
-
-			wp_die(
-				wp_kses_post(
-					sprintf(
-						// translators: %s: link to the login page
-						__('This site is currently in demo mode and is not yet available to the public.<br><small>If you are the site owner, <a href="%s">log in</a> to access your dashboard.</small>', 'ultimate-multisite'),
-						esc_url(wp_login_url(get_permalink()))
-					)
-				),
-				esc_html__('Site in Demo Mode', 'ultimate-multisite'),
-			);
-		}
 
 		if ( ! $site->is_active()) {
 			$can_access = false;
@@ -452,11 +315,96 @@ class Site_Manager extends Base_Manager {
 				exit;
 			}
 
-			wp_die(
-				// translators: %s: link to the login page
-				sprintf(wp_kses_post(__('This site is not available at the moment.<br><small>If you are the site admin, click <a href="%s">here</a> to login.</small>', 'ultimate-multisite')), esc_attr(wp_login_url())),
-				esc_html__('Site not available', 'ultimate-multisite'),
-			);
+			/*
+			 * Build a reactivation URL for cancelled memberships.
+			 *
+			 * Instead of a dead-end wp_die, we show a friendly page
+			 * with a button to renew the subscription.
+			 *
+			 * @since 2.4.14
+			 */
+			$reactivation_url = '';
+
+			if ($membership && $membership->is_cancelled()) {
+				$checkout_pages = \WP_Ultimo\Checkout\Checkout_Pages::get_instance();
+				$checkout_url   = $checkout_pages->get_page_url('register');
+
+				if ($checkout_url) {
+					$reactivation_url = add_query_arg(
+						[
+							'plan_id'       => $membership->get_plan_id(),
+							'membership_id' => $membership->get_id(),
+						],
+						$checkout_url
+					);
+
+					/**
+					 * Filters the reactivation URL shown on blocked sites.
+					 *
+					 * @param string                           $reactivation_url The reactivation checkout URL.
+					 * @param \WP_Ultimo\Models\Membership     $membership       The cancelled membership.
+					 * @param \WP_Ultimo\Models\Site           $site             The blocked site.
+					 *
+					 * @since 2.4.14
+					 */
+					$reactivation_url = apply_filters('wu_blocked_site_reactivation_url', $reactivation_url, $membership, $site);
+				}
+			}
+
+			$login_url   = wp_login_url();
+			$site_name   = get_bloginfo('name');
+			$support_url = apply_filters('wu_blocked_site_support_url', '', $membership, $site);
+
+			$html = '<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
+			$html .= '<title>' . esc_html__('Site not available', 'ultimate-multisite') . '</title>';
+			$html .= '<style>';
+			$html .= 'body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background:#f0f0f1;color:#3c434a;display:flex;align-items:center;justify-content:center;min-height:100vh;}';
+			$html .= '.wu-blocked{background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:40px;max-width:480px;width:90%;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04);}';
+			$html .= '.wu-blocked h1{font-size:22px;margin:0 0 12px;color:#1d2327;}';
+			$html .= '.wu-blocked p{font-size:14px;line-height:1.6;margin:0 0 24px;color:#646970;}';
+			$html .= '.wu-blocked .wu-btn{display:inline-block;padding:10px 24px;font-size:14px;font-weight:600;text-decoration:none;border-radius:3px;margin:4px;}';
+			$html .= '.wu-blocked .wu-btn-primary{background:#2271b1;color:#fff;border:1px solid #2271b1;}';
+			$html .= '.wu-blocked .wu-btn-primary:hover{background:#135e96;}';
+			$html .= '.wu-blocked .wu-btn-secondary{background:#f0f0f1;color:#2271b1;border:1px solid #c3c4c7;}';
+			$html .= '.wu-blocked .wu-btn-secondary:hover{background:#e0e0e0;}';
+			$html .= '.wu-blocked .wu-links{margin-top:16px;font-size:13px;}';
+			$html .= '.wu-blocked .wu-links a{color:#2271b1;text-decoration:none;}';
+			$html .= '.wu-blocked .wu-links a:hover{text-decoration:underline;}';
+			$html .= '</style></head><body>';
+			$html .= '<div class="wu-blocked">';
+			$html .= '<h1>' . esc_html__('This site is not available', 'ultimate-multisite') . '</h1>';
+			$html .= '<p>' . esc_html__('The subscription for this site has expired or been cancelled. To restore access, please renew your subscription.', 'ultimate-multisite') . '</p>';
+
+			if ( ! empty($reactivation_url)) {
+				$html .= '<a class="wu-btn wu-btn-primary" href="' . esc_url($reactivation_url) . '">' . esc_html__('Renew your subscription', 'ultimate-multisite') . '</a>';
+			}
+
+			$html .= '<div class="wu-links">';
+			$html .= '<a href="' . esc_url($login_url) . '">' . esc_html__('Log in', 'ultimate-multisite') . '</a>';
+
+			if ( ! empty($support_url)) {
+				$html .= ' &middot; <a href="' . esc_url($support_url) . '">' . esc_html__('Contact support', 'ultimate-multisite') . '</a>';
+			}
+
+			$html .= '</div></div></body></html>';
+
+			/**
+			 * Filters the full HTML template for blocked sites.
+			 *
+			 * @param string                           $html       The HTML template.
+			 * @param \WP_Ultimo\Models\Membership     $membership The membership (may be null).
+			 * @param \WP_Ultimo\Models\Site           $site       The blocked site.
+			 *
+			 * @since 2.4.14
+			 */
+			$html = apply_filters('wu_blocked_site_template', $html, $membership, $site);
+
+			status_header(403);
+			nocache_headers();
+
+			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+
+			exit;
 		}
 	}
 
@@ -1012,427 +960,5 @@ class Site_Manager extends Base_Manager {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Check for expired demo sites and schedule their deletion.
-	 *
-	 * This method runs hourly via the wu_hourly cron hook.
-	 * It finds all demo sites that have passed their expiration time
-	 * and schedules async deletion for each one.
-	 *
-	 * @since 2.5.0
-	 * @return void
-	 */
-	public function check_expired_demo_sites(): void {
-
-		$demo_sites = Site::get_all_by_type(Site_Type::DEMO);
-
-		if (empty($demo_sites)) {
-			return;
-		}
-
-		$current_time = wu_get_current_time('mysql', true);
-
-		foreach ($demo_sites as $site) {
-			// Skip keep-until-live sites — they never auto-expire.
-			if ($site->is_keep_until_live()) {
-				continue;
-			}
-
-			$expires_at = $site->get_meta('wu_demo_expires_at');
-
-			// Skip sites without expiration set.
-			if (empty($expires_at)) {
-				continue;
-			}
-
-			// Check if the demo has expired.
-			if ($expires_at <= $current_time) {
-				wu_enqueue_async_action(
-					'wu_async_delete_demo_site',
-					['site_id' => $site->get_id()],
-					'wu_demo_cleanup'
-				);
-			}
-		}
-	}
-
-	/**
-	 * Check for demo sites that are about to expire and send notification emails.
-	 *
-	 * This method runs hourly via the wu_hourly cron hook.
-	 * It finds all demo sites that will expire within the configured warning window
-	 * and fires the demo_site_expiring event for each one.
-	 *
-	 * @since 2.5.0
-	 * @return void
-	 */
-	public function check_expiring_demo_sites(): void {
-
-		// Check if expiration notifications are enabled.
-		if ( ! wu_get_setting('demo_expiring_notification', false)) {
-			return;
-		}
-
-		$demo_sites = Site::get_all_by_type(Site_Type::DEMO);
-
-		if (empty($demo_sites)) {
-			return;
-		}
-
-		// Get the warning time in hours.
-		$warning_hours = (int) wu_get_setting('demo_expiring_warning_time', 24);
-
-		// Calculate warning threshold based on current time.
-		$current_time    = wu_get_current_time('timestamp', true);
-		$warning_seconds = $warning_hours * HOUR_IN_SECONDS;
-
-		foreach ($demo_sites as $site) {
-			// Skip keep-until-live sites — they don't have an expiration.
-			if ($site->is_keep_until_live()) {
-				continue;
-			}
-
-			$expires_at = $site->get_meta('wu_demo_expires_at');
-
-			// Skip sites without expiration set.
-			if (empty($expires_at)) {
-				continue;
-			}
-
-			// Skip sites already notified.
-			if ($site->get_meta('wu_demo_expiring_notified')) {
-				continue;
-			}
-
-			// Convert expiration to timestamp for comparison.
-			$expires_timestamp = strtotime($expires_at);
-
-			// Skip if already expired (handled by check_expired_demo_sites).
-			if ($expires_timestamp <= $current_time) {
-				continue;
-			}
-
-			// Calculate time remaining until expiration.
-			$time_remaining = $expires_timestamp - $current_time;
-
-			// Check if site is within the warning window.
-			if ($time_remaining > $warning_seconds) {
-				continue;
-			}
-
-			// Get associated data for the event payload.
-			$membership = $site->get_membership();
-			$customer   = $membership ? $membership->get_customer() : null;
-
-			// Skip if no customer to notify.
-			if (empty($customer)) {
-				continue;
-			}
-
-			// Build human-readable time remaining.
-			$time_remaining_human = human_time_diff($current_time, $expires_timestamp);
-
-			// Build the event payload.
-			$payload = [
-				'site'                => $site->to_array(),
-				'membership'          => $membership ? $membership->to_array() : [],
-				'customer'            => $customer->to_array(),
-				'demo_expires_at'     => $expires_at,
-				'demo_time_remaining' => $time_remaining_human,
-				'site_admin_url'      => get_admin_url($site->get_blog_id()),
-				'site_url'            => $site->get_active_site_url(),
-			];
-
-			// Fire the demo_site_expiring event.
-			wu_do_event('demo_site_expiring', $payload);
-
-			// Mark the site as notified to prevent duplicate emails.
-			$site->update_meta('wu_demo_expiring_notified', 1);
-		}
-	}
-
-	/**
-	 * Async handler to delete a demo site.
-	 *
-	 * This method handles the actual deletion of a demo site,
-	 * including the WordPress blog and associated membership/customer
-	 * data if configured to do so.
-	 *
-	 * @since 2.5.0
-	 *
-	 * @param int $site_id The site ID to delete.
-	 * @return void
-	 */
-	public function async_delete_demo_site($site_id): void {
-
-		$site = wu_get_site($site_id);
-
-		if (empty($site)) {
-			return;
-		}
-
-		// Verify it's still a demo site (could have been converted).
-		if ($site->get_type() !== Site_Type::DEMO) {
-			return;
-		}
-
-		// Get associated data before deletion.
-		$membership = $site->get_membership();
-		$customer   = $site->get_customer();
-		$blog_id    = $site->get_blog_id();
-
-		// Fire pre-deletion hook for extensibility.
-		do_action('wu_before_demo_site_deleted', $site, $membership, $customer);
-
-		// Delete the site record (wp_delete_site handles the underlying blog removal).
-		$result = $site->delete();
-
-		if (true !== $result) {
-			wu_log_add(
-				'demo-cleanup',
-				sprintf(
-					// translators: %d is the site ID.
-					__('Failed to delete demo site #%d; skipping related cleanup.', 'ultimate-multisite'),
-					$site_id
-				)
-			);
-
-			return;
-		}
-
-		// Optionally delete the membership if it only has this demo site.
-		$delete_membership = apply_filters('wu_demo_site_delete_membership', true, $membership, $site);
-
-		if ($delete_membership && $membership) {
-			$membership_sites = $membership->get_sites();
-
-			// Only delete if this was the only site on the membership.
-			if (empty($membership_sites) || count($membership_sites) === 0) {
-				$membership->delete();
-			}
-		}
-
-		// Optionally delete the customer if they only had this demo.
-		$delete_customer = apply_filters('wu_demo_site_delete_customer', wu_get_setting('demo_delete_customer', false), $customer, $site);
-
-		if ($delete_customer && $customer) {
-			$customer_memberships = $customer->get_memberships();
-
-			// Only delete if this was their only membership.
-			if (empty($customer_memberships) || count($customer_memberships) === 0) {
-				$user_id = $customer->get_user_id();
-
-				$customer->delete();
-
-				// Delete the WordPress user as well.
-				if ($user_id && apply_filters('wu_demo_site_delete_user', true, $user_id)) {
-					require_once ABSPATH . 'wp-admin/includes/user.php';
-					wpmu_delete_user($user_id);
-				}
-			}
-		}
-
-		// Fire post-deletion hook.
-		do_action('wu_after_demo_site_deleted', $site_id, $blog_id, $membership, $customer);
-
-		// Log the deletion.
-		wu_log_add(
-			'demo-cleanup',
-			sprintf(
-				// translators: %1$d is site ID, %2$d is blog ID.
-				__('Deleted expired demo site #%1$d (blog_id: %2$d)', 'ultimate-multisite'),
-				$site_id,
-				$blog_id ?: 0
-			)
-		);
-	}
-
-	/**
-	 * Add an admin bar notice for keep-until-live demo sites.
-	 *
-	 * When a site administrator views the frontend of a site that is in
-	 * "keep until live" demo mode, this adds an admin bar item informing
-	 * them that the site is in demo mode and providing a "Go Live" link.
-	 *
-	 * @since 2.5.0
-	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar The WP_Admin_Bar instance.
-	 * @return void
-	 */
-	public function add_demo_admin_bar_menu(\WP_Admin_Bar $wp_admin_bar): void {
-
-		if (is_admin()) {
-			return;
-		}
-
-		$site = wu_get_current_site();
-
-		if ( ! $site || ! $site->is_keep_until_live()) {
-			return;
-		}
-
-		// Only show to users who have admin access to this site.
-		if ( ! current_user_can('manage_options') && ! is_super_admin()) {
-			return;
-		}
-
-		$go_live_url = wu_get_setting('demo_go_live_url', '');
-
-		if (empty($go_live_url)) {
-			// Fall back to the direct go-live action URL.
-			$go_live_url = wp_nonce_url(
-				add_query_arg(
-					[
-						'wu_go_live' => $site->get_id(),
-					],
-					get_home_url()
-				),
-				'wu_go_live_' . $site->get_id()
-			);
-		}
-
-		$go_live_url = apply_filters('wu_demo_go_live_url', $go_live_url, $site);
-
-		// Parent node: "Demo Mode" label.
-		$wp_admin_bar->add_node(
-			[
-				'id'    => 'wu-demo-mode',
-				'title' => '<span style="color: #f0b849; font-weight: 600;">&#9733; ' . esc_html__('Demo Mode', 'ultimate-multisite') . '</span>',
-				'href'  => false,
-				'meta'  => [
-					'title' => __('This site is in demo mode. The frontend is not visible to visitors.', 'ultimate-multisite'),
-				],
-			]
-		);
-
-		// Child node: "Go Live" link.
-		$wp_admin_bar->add_node(
-			[
-				'parent' => 'wu-demo-mode',
-				'id'     => 'wu-demo-go-live',
-				'title'  => esc_html__('Go Live &rarr;', 'ultimate-multisite'),
-				'href'   => esc_url($go_live_url),
-				'meta'   => [
-					'title' => __('Activate your site and make it visible to visitors.', 'ultimate-multisite'),
-				],
-			]
-		);
-
-		// Child node: informational note.
-		$wp_admin_bar->add_node(
-			[
-				'parent' => 'wu-demo-mode',
-				'id'     => 'wu-demo-mode-info',
-				'title'  => esc_html__('Visitors cannot see this site yet.', 'ultimate-multisite'),
-				'href'   => false,
-			]
-		);
-	}
-
-	/**
-	 * Handle the "go live" direct action when no external URL is configured.
-	 *
-	 * Listens for `?wu_go_live=SITE_ID` on the frontend. Verifies the nonce,
-	 * checks permissions, and converts the demo site to a customer-owned site.
-	 *
-	 * @since 2.5.0
-	 * @return void
-	 */
-	public function handle_go_live_action(): void {
-
-		$site_id = wu_request('wu_go_live');
-
-		if ( ! $site_id) {
-			return;
-		}
-
-		$site_id = absint($site_id);
-
-		if ( ! wp_verify_nonce(wu_request('_wpnonce'), 'wu_go_live_' . $site_id)) {
-			wp_die(esc_html__('Security check failed. Please try again.', 'ultimate-multisite'));
-		}
-
-		if ( ! current_user_can('manage_options') && ! is_super_admin()) {
-			wp_die(esc_html__('You do not have permission to activate this site.', 'ultimate-multisite'));
-		}
-
-		$result = $this->convert_demo_to_live($site_id);
-
-		if (is_wp_error($result)) {
-			wp_die(esc_html($result->get_error_message()));
-		}
-
-		// Redirect back to the home page without the query arg.
-		wp_safe_redirect(remove_query_arg(['wu_go_live', '_wpnonce']));
-
-		exit;
-	}
-
-	/**
-	 * Convert a keep-until-live demo site to a fully live customer-owned site.
-	 *
-	 * Changes the site type from DEMO to CUSTOMER_OWNED, clears demo meta,
-	 * and fires before/after hooks for extensibility.
-	 *
-	 * @since 2.5.0
-	 *
-	 * @param int $site_id The WP Ultimo site ID.
-	 * @return true|\WP_Error True on success, WP_Error on failure.
-	 */
-	public function convert_demo_to_live(int $site_id) {
-
-		$site = wu_get_site($site_id);
-
-		if ( ! $site) {
-			return new \WP_Error('site_not_found', __('Demo site not found.', 'ultimate-multisite'));
-		}
-
-		if ( ! $site->is_keep_until_live()) {
-			return new \WP_Error('not_demo_site', __('This site is not a keep-until-live demo site.', 'ultimate-multisite'));
-		}
-
-		/**
-		 * Fires before a keep-until-live demo site is converted to live.
-		 *
-		 * @since 2.5.0
-		 *
-		 * @param \WP_Ultimo\Models\Site $site The site being converted.
-		 */
-		do_action('wu_before_demo_site_converted', $site);
-
-		// Convert site type from demo to customer-owned.
-		$site->set_type(Site_Type::CUSTOMER_OWNED);
-
-		// Clear demo-specific meta.
-		$site->delete_meta(Site::META_DEMO_EXPIRES_AT);
-		$site->delete_meta('wu_demo_expiring_notified');
-
-		$saved = $site->save();
-
-		if ( ! $saved) {
-			return new \WP_Error('save_failed', __('Failed to activate the demo site. Please try again.', 'ultimate-multisite'));
-		}
-
-		wu_log_add(
-			'demo-sites',
-			sprintf(
-				// translators: %d is the site ID.
-				__('Demo site #%d converted to live (customer-owned).', 'ultimate-multisite'),
-				$site_id
-			)
-		);
-
-		/**
-		 * Fires after a keep-until-live demo site has been successfully converted to live.
-		 *
-		 * @since 2.5.0
-		 *
-		 * @param \WP_Ultimo\Models\Site $site The site that was converted.
-		 */
-		do_action('wu_after_demo_site_converted', $site);
-
-		return true;
 	}
 }
