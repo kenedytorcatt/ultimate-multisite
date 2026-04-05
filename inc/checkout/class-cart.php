@@ -2498,6 +2498,13 @@ class Cart implements \JsonSerializable {
 		/*
 		 * Set extremely high value at first to prevent any change of errors.
 		 */
+		// Reactivations never get a trial — the customer already used it.
+		// Without this, WC Subscriptions shows "with 15-day free trial" and
+		// charges $0 today, even though the user is reactivating a cancelled plan.
+		if ($this->get_cart_type() === 'reactivation') {
+			return null;
+		}
+
 		$smallest_trial = 300 * YEAR_IN_SECONDS;
 
 		if ($this->get_cart_type() === 'downgrade') {
