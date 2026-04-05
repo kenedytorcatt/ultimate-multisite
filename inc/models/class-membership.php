@@ -2392,6 +2392,79 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	}
 
 	/**
+	 * Checks if the membership is cancelled.
+	 *
+	 * @since 2.4.14
+	 * @return bool
+	 */
+	public function is_cancelled(): bool {
+
+		return $this->get_status() === Membership_Status::CANCELLED;
+	}
+
+	/**
+	 * Reactivates a cancelled membership.
+	 *
+	 * This reuses the existing renewal logic to set a new expiration date
+	 * and restore the membership to active status.
+	 *
+	 * @since 2.4.14
+	 * @return bool True on success, false if not cancelled or on failure.
+	 */
+	public function reactivate(): bool {
+
+		if ( ! $this->is_cancelled()) {
+			return false;
+		}
+
+		$id = $this->get_id();
+
+		wu_log_add("membership-{$id}", sprintf('Starting membership reactivation for membership #%d.', $id));
+
+		/**
+		 * Triggers before the membership is reactivated.
+		 *
+		 * @param int                          $membership_id The ID of the membership.
+		 * @param \WP_Ultimo\Models\Membership $membership Membership object.
+		 *
+		 * @since 2.4.14
+		 */
+		do_action('wu_membership_pre_reactivate', $this->get_id(), $this);
+
+		$renewed = $this->renew(false, 'active');
+
+		if ( ! $renewed) {
+			wu_log_add("membership-{$id}", sprintf('Membership reactivation failed for membership #%d: renewal returned false.', $id));
+
+			return false;
+		}
+
+		$this->set_date_cancellation(null);
+
+		$status = $this->save();
+
+		if (is_wp_error($status)) {
+			wu_log_add("membership-{$id}", sprintf('Membership reactivation failed for membership #%d: %s', $id, $status->get_error_message()));
+
+			return false;
+		}
+
+		/**
+		 * Triggers after the membership is reactivated.
+		 *
+		 * @param int                          $membership_id The ID of the membership.
+		 * @param \WP_Ultimo\Models\Membership $membership Membership object.
+		 *
+		 * @since 2.4.14
+		 */
+		do_action('wu_membership_post_reactivate', $this->get_id(), $this);
+
+		wu_log_add("membership-{$id}", sprintf('Completed membership reactivation for membership #%d. New Status: %s', $id, $this->get_status()));
+
+		return true;
+	}
+
+	/**
 	 * Returns the number of days still left in the cycle.
 	 *
 	 * @since 2.0.0

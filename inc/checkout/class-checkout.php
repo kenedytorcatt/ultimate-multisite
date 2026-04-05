@@ -467,6 +467,27 @@ class Checkout {
 
 			$this->step['fields'] ??= [];
 
+			/*
+			 * For reactivation carts, skip site-creation fields.
+			 *
+			 * Users reactivating a cancelled membership already have a site,
+			 * so we remove fields related to site URL, title, and template selection.
+			 *
+			 * @since 2.4.14
+			 */
+			$cart_type = $this->request_or_session('cart_type', 'new');
+
+			if ('reactivation' === $cart_type || (isset($this->order) && $this->order && $this->order->get_cart_type() === 'reactivation')) {
+				$site_field_types = ['site_url', 'template_selection', 'site_title'];
+
+				$this->step['fields'] = array_filter(
+					$this->step['fields'],
+					function ($field) use ($site_field_types) {
+						return ! in_array(wu_get_isset($field, 'type', ''), $site_field_types, true);
+					}
+				);
+			}
+
 			$this->auto_submittable_field = $this->contains_auto_submittable_field($this->step['fields']);
 
 			$this->step['fields'] = wu_create_checkout_fields($this->step['fields']);
@@ -1313,6 +1334,18 @@ class Checkout {
 	 * @return bool|\WP_Ultimo\Models\Site|\WP_Error
 	 */
 	protected function maybe_create_site() {
+		/*
+		 * Reactivation carts should not create a new site.
+		 * The user already has an existing site attached to the membership.
+		 *
+		 * @since 2.4.14
+		 */
+		if ($this->order && $this->order->get_cart_type() === 'reactivation') {
+			$sites = $this->membership->get_sites();
+
+			return ! empty($sites) ? current($sites) : false;
+		}
+
 		/*
 		 * Let's get a list of membership sites.
 		 * This list includes pending sites as well.

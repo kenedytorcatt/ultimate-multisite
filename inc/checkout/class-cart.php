@@ -795,17 +795,6 @@ class Cart implements \JsonSerializable {
 		}
 
 		/*
-		 * We got here, that means
-		 * the intend behind this cart was to actually
-		 * change a membership.
-		 *
-		 * We can set the cart type provisionally.
-		 * This assignment might change in the future, as we make
-		 * additional assertions about the contents of the cart.
-		 */
-		$this->cart_type = 'upgrade';
-
-		/*
 		 * Now, let's try to fetch the membership in question.
 		 */
 		$membership = wu_get_membership($membership_id);
@@ -815,6 +804,60 @@ class Cart implements \JsonSerializable {
 
 			return true;
 		}
+
+		/*
+		 * Reactivation flow.
+		 *
+		 * If the membership is cancelled and the cart contains the same plan
+		 * (or no products, meaning we rebuild from the membership), we treat
+		 * this as a reactivation rather than an upgrade/downgrade. Reactivations
+		 * charge the full plan price immediately with no trial and no signup fee.
+		 *
+		 * @since 2.4.14
+		 */
+		if (method_exists($membership, 'is_cancelled') && $membership->is_cancelled()) {
+			$plan_matches = ! empty($this->attributes->products)
+				&& in_array($membership->get_plan_id(), (array) $this->attributes->products, false);
+
+			if ($plan_matches || empty($this->attributes->products)) {
+				$this->cart_type  = 'reactivation';
+				$this->membership = $membership;
+
+				$this->country = $this->country ?: ($this->customer ? $this->customer->get_country() : '');
+				$this->set_currency($membership->get_currency());
+
+				if (empty($this->attributes->products)) {
+					$this->add_product($membership->get_plan_id());
+				} else {
+					foreach ($this->attributes->products as $product_id) {
+						$this->add_product($product_id);
+					}
+				}
+
+				$plan_product = $membership->get_plan();
+
+				if ($plan_product) {
+					$this->duration      = $plan_product->get_duration();
+					$this->duration_unit = $plan_product->get_duration_unit();
+				}
+
+				// Skip signup fee for reactivations — they already paid it.
+				add_filter('wu_apply_signup_fee', '__return_false');
+
+				return true;
+			}
+		}
+
+		/*
+		 * We got here, that means
+		 * the intend behind this cart was to actually
+		 * change a membership.
+		 *
+		 * We can set the cart type provisionally.
+		 * This assignment might change in the future, as we make
+		 * additional assertions about the contents of the cart.
+		 */
+		$this->cart_type = 'upgrade';
 
 		/*
 		 * The membership exists, set it globally.
@@ -2573,6 +2616,17 @@ class Cart implements \JsonSerializable {
 	public function get_billing_start_date() {
 
 		if ($this->is_free() && ! $this->has_recurring()) {
+			return null;
+		}
+
+		/*
+		 * Reactivations never get a trial — the customer already used it
+		 * when they originally signed up. Giving them another trial would
+		 * let anyone cancel + re-signup to extend their trial indefinitely.
+		 *
+		 * @since 2.4.14
+		 */
+		if ($this->get_cart_type() === 'reactivation') {
 			return null;
 		}
 

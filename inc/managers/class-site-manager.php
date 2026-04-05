@@ -452,11 +452,93 @@ class Site_Manager extends Base_Manager {
 				exit;
 			}
 
-			wp_die(
-				// translators: %s: link to the login page
-				sprintf(wp_kses_post(__('This site is not available at the moment.<br><small>If you are the site admin, click <a href="%s">here</a> to login.</small>', 'ultimate-multisite')), esc_attr(wp_login_url())),
-				esc_html__('Site not available', 'ultimate-multisite'),
-			);
+			/*
+			 * Build a reactivation URL for cancelled memberships.
+			 *
+			 * Instead of a dead-end wp_die, we show a friendly page
+			 * with a button to renew the subscription.
+			 *
+			 * @since 2.4.14
+			 */
+			$reactivation_url = '';
+
+			if ($membership && method_exists($membership, 'is_cancelled') && $membership->is_cancelled()) {
+				$checkout_pages = \WP_Ultimo\Checkout\Checkout_Pages::get_instance();
+				$checkout_url   = $checkout_pages->get_page_url('register');
+
+				if ($checkout_url) {
+					$reactivation_url = add_query_arg(
+						[
+							'plan_id'       => $membership->get_plan_id(),
+							'membership_id' => $membership->get_id(),
+						],
+						$checkout_url
+					);
+
+					/**
+					 * Filters the reactivation URL shown on blocked sites.
+					 *
+					 * @param string                       $reactivation_url The reactivation checkout URL.
+					 * @param \WP_Ultimo\Models\Membership $membership       The cancelled membership.
+					 * @param \WP_Ultimo\Models\Site       $site             The blocked site.
+					 *
+					 * @since 2.4.14
+					 */
+					$reactivation_url = apply_filters('wu_blocked_site_reactivation_url', $reactivation_url, $membership, $site);
+				}
+			}
+
+			$login_url   = wp_login_url();
+			$support_url = apply_filters('wu_blocked_site_support_url', '', $membership, $site);
+
+			$html  = '<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
+			$html .= '<title>' . esc_html__('Site not available', 'ultimate-multisite') . '</title>';
+			$html .= '<style>';
+			$html .= 'body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background:#f0f0f1;color:#3c434a;display:flex;align-items:center;justify-content:center;min-height:100vh;}';
+			$html .= '.wu-blocked{background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:40px;max-width:480px;width:90%;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04);}';
+			$html .= '.wu-blocked h1{font-size:22px;margin:0 0 12px;color:#1d2327;}';
+			$html .= '.wu-blocked p{font-size:14px;line-height:1.6;margin:0 0 24px;color:#646970;}';
+			$html .= '.wu-blocked .wu-btn{display:inline-block;padding:10px 24px;font-size:14px;font-weight:600;text-decoration:none;border-radius:3px;margin:4px;}';
+			$html .= '.wu-blocked .wu-btn-primary{background:#2271b1;color:#fff;border:1px solid #2271b1;}';
+			$html .= '.wu-blocked .wu-btn-primary:hover{background:#135e96;}';
+			$html .= '.wu-blocked .wu-links{margin-top:16px;font-size:13px;}';
+			$html .= '.wu-blocked .wu-links a{color:#2271b1;text-decoration:none;}';
+			$html .= '.wu-blocked .wu-links a:hover{text-decoration:underline;}';
+			$html .= '</style></head><body>';
+			$html .= '<div class="wu-blocked">';
+			$html .= '<h1>' . esc_html__('This site is not available', 'ultimate-multisite') . '</h1>';
+			$html .= '<p>' . esc_html__('The subscription for this site has expired or been cancelled. To restore access, please renew your subscription.', 'ultimate-multisite') . '</p>';
+
+			if ( ! empty($reactivation_url)) {
+				$html .= '<a class="wu-btn wu-btn-primary" href="' . esc_url($reactivation_url) . '">' . esc_html__('Renew your subscription', 'ultimate-multisite') . '</a>';
+			}
+
+			$html .= '<div class="wu-links">';
+			$html .= '<a href="' . esc_url($login_url) . '">' . esc_html__('Log in', 'ultimate-multisite') . '</a>';
+
+			if ( ! empty($support_url)) {
+				$html .= ' &middot; <a href="' . esc_url($support_url) . '">' . esc_html__('Contact support', 'ultimate-multisite') . '</a>';
+			}
+
+			$html .= '</div></div></body></html>';
+
+			/**
+			 * Filters the full HTML template for blocked sites.
+			 *
+			 * @param string                       $html       The HTML template.
+			 * @param \WP_Ultimo\Models\Membership $membership The membership (may be null).
+			 * @param \WP_Ultimo\Models\Site       $site       The blocked site.
+			 *
+			 * @since 2.4.14
+			 */
+			$html = apply_filters('wu_blocked_site_template', $html, $membership, $site);
+
+			status_header(403);
+			nocache_headers();
+
+			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+
+			exit;
 		}
 	}
 
