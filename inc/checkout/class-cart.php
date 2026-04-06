@@ -882,37 +882,46 @@ class Cart implements \JsonSerializable {
 			 */
 			$plan_id = $membership->get_plan_id();
 
-			if ($plan_id) {
-				$this->attributes->products = [$plan_id];
-
-				$addon_ids = $membership->get_addon_ids();
-
-				if (! empty($addon_ids)) {
-					$this->attributes->products = array_merge($this->attributes->products, $addon_ids);
-				}
-			}
-
-			// Set up country and currency, then add products and return
+			// Set up country and currency before building products
 			$this->country = $this->country ?: $this->customer->get_country();
 
 			$this->set_currency($membership->get_currency());
 
-			if (empty($this->attributes->products)) {
-				$this->errors->add('no_plan', __('This membership has no plan to reactivate.', 'ultimate-multisite'));
-
-				return true;
-			}
-
-			foreach ($this->attributes->products as $product_id) {
-				$this->add_product($product_id);
-			}
-
-			// Set duration from the plan
+			/*
+			 * Set duration from the plan BEFORE calling add_product() so that
+			 * line items are created with the correct billing period. Previously
+			 * this was set after add_product(), meaning products were added with
+			 * the default/empty duration and the correct values were never used.
+			 *
+			 * @since 2.5.0
+			 */
 			$plan_product = $membership->get_plan();
 
 			if ($plan_product && ! $membership->is_free()) {
 				$this->duration      = $plan_product->get_duration();
 				$this->duration_unit = $plan_product->get_duration_unit();
+			}
+
+			if (! $plan_id) {
+				$this->errors->add('no_plan', __('This membership has no plan to reactivate.', 'ultimate-multisite'));
+
+				return true;
+			}
+
+			/*
+			 * Rebuild the product list from the membership, preserving addon
+			 * quantities. get_addon_ids() discards quantities; get_addon_products()
+			 * returns the full product_id => quantity map so each addon is added
+			 * with the correct quantity.
+			 *
+			 * @since 2.5.0
+			 */
+			$this->add_product($plan_id);
+
+			$addon_products = $membership->get_addon_products();
+
+			foreach ($addon_products as $addon_id => $quantity) {
+				$this->add_product((int) $addon_id, (int) $quantity);
 			}
 
 			return true;

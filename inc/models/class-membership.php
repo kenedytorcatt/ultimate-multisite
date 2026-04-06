@@ -2304,6 +2304,16 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		 */
 		do_action('wu_membership_pre_renew', $expiration, $this->get_id(), $this);
 
+		/*
+		 * Capture the current status BEFORE calling set_status() so the
+		 * cancellation-clear guard below can compare against the previous
+		 * state. After set_status() runs, get_status() returns the new value
+		 * and the CANCELLED check would never be true.
+		 *
+		 * @since 2.5.0
+		 */
+		$previous_status = $this->get_status();
+
 		$this->set_date_expiration($expiration);
 
 		if ( ! empty($status)) {
@@ -2312,13 +2322,14 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 
 		/*
 		 * Clear the cancellation date only when reactivating a previously
-		 * cancelled membership. Checks the current status (before the update)
-		 * to avoid clearing historical cancellation data on regular recurring
-		 * renewals where the membership was never in a cancelled state.
+		 * cancelled membership. Uses $previous_status (captured before the
+		 * set_status() call above) to avoid clearing historical cancellation
+		 * data on regular recurring renewals where the membership was never
+		 * in a cancelled state.
 		 *
 		 * @since 2.5.0
 		 */
-		if ('active' === $status && Membership_Status::CANCELLED === $this->get_status() && ! empty($this->get_date_cancellation())) {
+		if (Membership_Status::ACTIVE === $status && Membership_Status::CANCELLED === $previous_status && ! empty($this->get_date_cancellation())) {
 			$this->set_date_cancellation(null);
 		}
 
@@ -2363,9 +2374,9 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 *
 	 * @param bool   $auto_renew Whether to auto-renew.
 	 * @param string $expiration Optional expiration date in MySQL format.
-	 * @return bool Whether the reactivation was successful.
+	 * @return bool|\WP_Error True on success, WP_Error if renew()/save() fails.
 	 */
-	public function reactivate($auto_renew = false, $expiration = ''): bool {
+	public function reactivate($auto_renew = false, $expiration = '') {
 
 		$id = $this->get_id();
 
@@ -2394,7 +2405,7 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 
 		$result = $this->renew($auto_renew, 'active', $expiration);
 
-		if ($result) {
+		if (true === $result) {
 			wu_log_add("membership-{$id}", sprintf('Membership #%d reactivated successfully. Old cancel date: %s', $id, $old_cancel_date ?: 'none'));
 
 			/**
