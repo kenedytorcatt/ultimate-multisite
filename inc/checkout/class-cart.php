@@ -858,6 +858,21 @@ class Cart implements \JsonSerializable {
 			$this->cart_type = 'reactivation';
 
 			/*
+			 * Mark the customer as having trialed, so any checkout path
+			 * (including normal /register/) will not offer a free trial.
+			 *
+			 * This covers the case where the customer's site was deleted
+			 * and they go through the standard registration flow instead
+			 * of the reactivation cart.
+			 *
+			 * @since 2.5.0
+			 */
+			if ($this->customer && method_exists($this->customer, 'has_trialed') && ! $this->customer->has_trialed()) {
+				$this->customer->set_has_trialed(true);
+				$this->customer->save();
+			}
+
+			/*
 			 * Ensure products are populated from the membership when not explicitly
 			 * provided. This preserves the full product list (plan + addons) so the
 			 * customer gets exactly what they had before cancellation.
