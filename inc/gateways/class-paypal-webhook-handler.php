@@ -321,12 +321,23 @@ class PayPal_Webhook_Handler {
 			 * so that wu_membership_pre_reactivate / wu_membership_post_reactivate
 			 * hooks fire and cancellation metadata is cleared correctly.
 			 *
+			 * Check the transition result so PayPal retries on failure
+			 * instead of silently losing the state change.
+			 *
 			 * @since 2.5.0
 			 */
 			if (Membership_Status::CANCELLED === $membership->get_status() || Membership_Status::EXPIRED === $membership->get_status()) {
-				$membership->reactivate(true);
+				$result = $membership->reactivate(true);
 			} else {
-				$membership->renew(true);
+				$result = $membership->renew(true);
+			}
+
+			if (true !== $result) {
+				$message = is_wp_error($result) ? $result->get_error_message() : 'Unknown membership activation error';
+
+				$this->log(sprintf('Membership %d activation via webhook failed: %s', $membership->get_id(), $message), LogLevel::ERROR);
+
+				return;
 			}
 
 			$this->log(sprintf('Membership %d activated via webhook', $membership->get_id()));

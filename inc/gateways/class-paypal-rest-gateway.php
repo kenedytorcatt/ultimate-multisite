@@ -1295,19 +1295,31 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 			 * so that wu_membership_pre_reactivate / wu_membership_post_reactivate
 			 * hooks fire and cancellation metadata is cleared correctly.
 			 *
+			 * Pass true to preserve auto-renew (set on line 1281).
+			 * Gate the success redirect on a successful transition.
+			 *
 			 * @since 2.5.0
 			 */
 			$inactive_statuses = [Membership_Status::CANCELLED, Membership_Status::EXPIRED];
 
 			if (in_array($membership->get_status(), $inactive_statuses, true)) {
-				$membership->reactivate(false);
+				$result = $membership->reactivate(true);
 			} else {
-				$membership->renew(false);
+				$result = $membership->renew(true);
+			}
+
+			if (true !== $result) {
+				$error_msg = is_wp_error($result) ? $result->get_error_message() : __('Membership transition failed.', 'ultimate-multisite');
+
+				$this->log(sprintf('Subscription %s: membership %d transition failed: %s', $subscription_id, $membership->get_id(), $error_msg));
+
+				$this->redirect_with_error($error_msg);
+
+				return;
 			}
 
 			$payment->set_gateway('paypal-rest');
 			$payment->save();
-			$membership->save();
 
 			$this->log(sprintf('Subscription confirmed: %s, Status: %s', $subscription_id, $subscription['status']));
 
@@ -1383,14 +1395,26 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 		 * so that wu_membership_pre_reactivate / wu_membership_post_reactivate
 		 * hooks fire and cancellation metadata is cleared correctly.
 		 *
+		 * Gate the success redirect on a successful transition.
+		 *
 		 * @since 2.5.0
 		 */
 		$inactive_statuses = [Membership_Status::CANCELLED, Membership_Status::EXPIRED];
 
 		if (in_array($membership->get_status(), $inactive_statuses, true)) {
-			$membership->reactivate(false);
+			$result = $membership->reactivate(false);
 		} else {
-			$membership->renew(false);
+			$result = $membership->renew(false);
+		}
+
+		if (true !== $result) {
+			$error_msg = is_wp_error($result) ? $result->get_error_message() : __('Membership transition failed.', 'ultimate-multisite');
+
+			$this->log(sprintf('Order %s: membership %d transition failed: %s', $token, $membership->get_id(), $error_msg));
+
+			$this->redirect_with_error($error_msg);
+
+			return;
 		}
 
 		$this->log(sprintf('Order captured: %s, Transaction: %s', $token, $transaction_id));

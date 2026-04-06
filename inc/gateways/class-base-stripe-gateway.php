@@ -3252,13 +3252,20 @@ class Base_Stripe_Gateway extends Base_Gateway {
 						$new_status = 'trialing' === $stripe_status ? Membership_Status::TRIALING : Membership_Status::ACTIVE;
 
 							/*
-							 * Use reactivate() for expired memberships so that
+							 * Use reactivate() for expired/cancelled memberships so that
 							 * wu_membership_pre_reactivate / wu_membership_post_reactivate
 							 * hooks fire and cancellation metadata is cleared.
 							 *
+							 * When Stripe reports 'trialing', use renew() with the trialing
+							 * status so the local membership mirrors Stripe's state.
+							 *
 							 * @since 2.5.0
 							 */
-							$membership->reactivate($membership->is_recurring(), $expiration);
+							if (Membership_Status::ACTIVE === $new_status) {
+								$membership->reactivate($membership->is_recurring(), $expiration);
+							} else {
+								$membership->renew($membership->is_recurring(), $new_status, $expiration);
+							}
 
 							$membership->add_note(
 								[

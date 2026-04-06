@@ -1412,9 +1412,22 @@ class PayPal_Gateway extends Base_PayPal_Gateway {
 					 * wu_membership_pre_reactivate / wu_membership_post_reactivate
 					 * hooks fire and cancellation metadata is cleared correctly.
 					 *
+					 * Gate the success redirect on a successful transition to
+					 * prevent charged-but-inactive memberships.
+					 *
 					 * @since 2.5.0
 					 */
-					$membership->reactivate(true);
+					$result = $membership->reactivate(true);
+
+					if (true !== $result) {
+						$error_msg = is_wp_error($result) ? $result->get_error_message() : __('Membership reactivation failed.', 'ultimate-multisite');
+
+						wu_log_add('paypal', sprintf('Reactivation failed for membership %d: %s', $membership->get_id(), $error_msg));
+
+						$this->redirect_with_error($error_msg);
+
+						return;
+					}
 				} elseif ( ! $is_trial_setup) {
 					$membership->renew(true);
 				} else {
@@ -1560,9 +1573,22 @@ class PayPal_Gateway extends Base_PayPal_Gateway {
 				 * wu_membership_pre_reactivate / wu_membership_post_reactivate
 				 * hooks fire and cancellation metadata is cleared correctly.
 				 *
+				 * Gate the success redirect on a successful transition to
+				 * prevent charged-but-inactive memberships.
+				 *
 				 * @since 2.5.0
 				 */
-				$membership->reactivate(false);
+				$result = $membership->reactivate(false);
+
+				if (true !== $result) {
+					$error_msg = is_wp_error($result) ? $result->get_error_message() : __('Membership reactivation failed.', 'ultimate-multisite');
+
+					wu_log_add('paypal', sprintf('Reactivation failed for membership %d (IPN): %s', $membership->get_id(), $error_msg));
+
+					$this->redirect_with_error($error_msg);
+
+					return;
+				}
 			} elseif ( ! $is_trial_setup) {
 				$membership->renew(false);
 			} else {
