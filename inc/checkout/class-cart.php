@@ -858,18 +858,18 @@ class Cart implements \JsonSerializable {
 			$this->cart_type = 'reactivation';
 
 			/*
-			 * Mark the customer as having trialed, so any checkout path
-			 * (including normal /register/) will not offer a free trial.
+			 * Mark the customer as having trialed in memory only.
 			 *
-			 * This covers the case where the customer's site was deleted
-			 * and they go through the standard registration flow instead
-			 * of the reactivation cart.
+			 * This prevents has_trial() from returning true during THIS
+			 * checkout session. The flag is NOT persisted to the database
+			 * here — it will be saved when the membership is renewed after
+			 * payment completes. This avoids permanently removing trial
+			 * eligibility if the user abandons checkout.
 			 *
 			 * @since 2.5.0
 			 */
-			if ($this->customer && method_exists($this->customer, 'has_trialed') && ! $this->customer->has_trialed()) {
+			if ($this->customer && method_exists($this->customer, 'set_has_trialed')) {
 				$this->customer->set_has_trialed(true);
-				$this->customer->save();
 			}
 
 			/*
@@ -2134,7 +2134,7 @@ class Cart implements \JsonSerializable {
 			return true;
 		}
 
-		$add_signup_fee = 'renewal' !== $this->get_cart_type();
+		$add_signup_fee = ! in_array($this->get_cart_type(), ['renewal', 'reactivation'], true);
 
 		/**
 		 * Filters whether or not the signup fee should be applied.
@@ -2667,6 +2667,18 @@ class Cart implements \JsonSerializable {
 	public function get_billing_start_date() {
 
 		if ($this->is_free() && ! $this->has_recurring()) {
+			return null;
+		}
+
+		/*
+		 * Reactivation carts have no trial period, so billing starts now.
+		 *
+		 * Return null so downstream consumers (Stripe subscription setup,
+		 * date_trial_end, etc.) don't receive a trial-derived start date.
+		 *
+		 * @since 2.5.0
+		 */
+		if ('reactivation' === $this->cart_type) {
 			return null;
 		}
 
