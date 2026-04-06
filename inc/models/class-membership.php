@@ -2311,14 +2311,14 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		}
 
 		/*
-		 * Clear the cancellation date when renewing a previously cancelled
-		 * membership. Only runs when the status was explicitly set to 'active'
-		 * (i.e., a reactivation), not for regular recurring renewals where
-		 * preserving the cancellation history is important.
+		 * Clear the cancellation date only when reactivating a previously
+		 * cancelled membership. Checks the current status (before the update)
+		 * to avoid clearing historical cancellation data on regular recurring
+		 * renewals where the membership was never in a cancelled state.
 		 *
 		 * @since 2.5.0
 		 */
-		if ('active' === $status && ! empty($this->get_date_cancellation())) {
+		if ('active' === $status && Membership_Status::CANCELLED === $this->get_status() && ! empty($this->get_date_cancellation())) {
 			$this->set_date_cancellation(null);
 		}
 
