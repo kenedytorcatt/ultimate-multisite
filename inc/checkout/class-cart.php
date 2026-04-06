@@ -883,7 +883,9 @@ class Cart implements \JsonSerializable {
 			$plan_id = $membership->get_plan_id();
 
 			// Set up country and currency before building products
-			$this->country = $this->country ?: $this->customer->get_country();
+			if (! $this->country && $this->customer) {
+				$this->country = $this->customer->get_country();
+			}
 
 			$this->set_currency($membership->get_currency());
 
@@ -911,8 +913,8 @@ class Cart implements \JsonSerializable {
 			/*
 			 * Rebuild the product list from the membership, preserving addon
 			 * quantities. get_addon_ids() discards quantities; get_addon_products()
-			 * returns the full product_id => quantity map so each addon is added
-			 * with the correct quantity.
+			 * returns [['product' => $obj, 'quantity' => N], ...] so each addon
+			 * is added with the correct quantity.
 			 *
 			 * @since 2.5.0
 			 */
@@ -920,8 +922,13 @@ class Cart implements \JsonSerializable {
 
 			$addon_products = $membership->get_addon_products();
 
-			foreach ($addon_products as $addon_id => $quantity) {
-				$this->add_product((int) $addon_id, (int) $quantity);
+			foreach ($addon_products as $addon_item) {
+				$addon_product = wu_get_isset($addon_item, 'product');
+				$addon_qty     = (int) wu_get_isset($addon_item, 'quantity', 1);
+
+				if ($addon_product && method_exists($addon_product, 'get_id')) {
+					$this->add_product($addon_product->get_id(), $addon_qty);
+				}
 			}
 
 			return true;
