@@ -1290,9 +1290,20 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 				$payment->set_status(Payment_Status::PENDING);
 			}
 
-			// Always renew regardless of ACTIVE vs APPROVED — this activates the membership
-			// and fires wu_membership_post_renew which triggers site creation.
-			$membership->renew(false);
+			/*
+			 * Use reactivate() when the membership is currently cancelled or expired
+			 * so that wu_membership_pre_reactivate / wu_membership_post_reactivate
+			 * hooks fire and cancellation metadata is cleared correctly.
+			 *
+			 * @since 2.5.0
+			 */
+			$inactive_statuses = [Membership_Status::CANCELLED, Membership_Status::EXPIRED];
+
+			if (in_array($membership->get_status(), $inactive_statuses, true)) {
+				$membership->reactivate(false);
+			} else {
+				$membership->renew(false);
+			}
 
 			$payment->set_gateway('paypal-rest');
 			$payment->save();
@@ -1366,7 +1377,21 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 		$membership->set_gateway('paypal-rest');
 		$membership->set_gateway_customer_id($capture['payer']['payer_id'] ?? '');
 		$membership->add_to_times_billed(1);
-		$membership->renew(false);
+
+		/*
+		 * Use reactivate() when the membership is currently cancelled or expired
+		 * so that wu_membership_pre_reactivate / wu_membership_post_reactivate
+		 * hooks fire and cancellation metadata is cleared correctly.
+		 *
+		 * @since 2.5.0
+		 */
+		$inactive_statuses = [Membership_Status::CANCELLED, Membership_Status::EXPIRED];
+
+		if (in_array($membership->get_status(), $inactive_statuses, true)) {
+			$membership->reactivate(false);
+		} else {
+			$membership->renew(false);
+		}
 
 		$this->log(sprintf('Order captured: %s, Transaction: %s', $token, $transaction_id));
 

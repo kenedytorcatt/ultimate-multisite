@@ -3061,11 +3061,22 @@ class Base_Stripe_Gateway extends Base_Gateway {
 					}
 				}
 
-				/**
-				 * Renewals the membership
+				/*
+				 * Renew or reactivate the membership depending on its current state.
+				 *
+				 * Use reactivate() when the membership is currently cancelled or expired
+				 * so that wu_membership_pre_reactivate / wu_membership_post_reactivate
+				 * hooks fire and cancellation metadata is cleared correctly.
+				 *
+				 * @since 2.5.0
 				 */
 				$membership->add_to_times_billed(1);
-				$membership->renew($membership->is_recurring(), 'active', $expiration);
+
+				if (Membership_Status::CANCELLED === $membership->get_status() || Membership_Status::EXPIRED === $membership->get_status()) {
+					$membership->reactivate($membership->is_recurring(), $expiration);
+				} else {
+					$membership->renew($membership->is_recurring(), 'active', $expiration);
+				}
 
 				/**
 				 * We need to save here to ensure that we are not saving more than once.
@@ -3238,9 +3249,16 @@ class Base_Stripe_Gateway extends Base_Gateway {
 								$expiration = '';
 							}
 
-							$new_status = 'trialing' === $stripe_status ? Membership_Status::TRIALING : Membership_Status::ACTIVE;
+						$new_status = 'trialing' === $stripe_status ? Membership_Status::TRIALING : Membership_Status::ACTIVE;
 
-							$membership->renew($membership->is_recurring(), $new_status, $expiration);
+							/*
+							 * Use reactivate() for expired memberships so that
+							 * wu_membership_pre_reactivate / wu_membership_post_reactivate
+							 * hooks fire and cancellation metadata is cleared.
+							 *
+							 * @since 2.5.0
+							 */
+							$membership->reactivate($membership->is_recurring(), $expiration);
 
 							$membership->add_note(
 								[

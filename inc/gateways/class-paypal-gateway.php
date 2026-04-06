@@ -1387,41 +1387,50 @@ class PayPal_Gateway extends Base_PayPal_Gateway {
 				$membership->set_gateway_customer_id($details['PAYERID']);
 				$membership->set_gateway('paypal');
 
-				if (Payment_Status::COMPLETED === $payment_status) {
-					$membership->add_to_times_billed(1);
+			if (Payment_Status::COMPLETED === $payment_status) {
+				$membership->add_to_times_billed(1);
 
+				/*
+				 * Lets deal with upgrades, downgrades and addons
+				 *
+				 * Here, we just need to make sure we process
+				 * a membership swap.
+				 */
+				if ('upgrade' === $cart->get_cart_type() || 'addon' === $cart->get_cart_type()) {
+					$membership->swap($cart);
+
+					$membership->renew(true);
+				} elseif ('downgrade' === $cart->get_cart_type()) {
+					$membership->set_auto_renew(true);
+
+					$membership->schedule_swap($cart);
+
+					$membership->save();
+				} elseif ('reactivation' === $cart->get_cart_type()) {
 					/*
-					* Lets deal with upgrades, downgrades and addons
-					*
-					* Here, we just need to make sure we process
-					* a membership swap.
-					*/
-					if ($cart->get_cart_type() === 'upgrade' || $cart->get_cart_type() === 'addon') {
-						$membership->swap($cart);
-
-						$membership->renew(true);
-					} elseif ($cart->get_cart_type() === 'downgrade') {
-						$membership->set_auto_renew(true);
-
-						$membership->schedule_swap($cart);
-
-						$membership->save();
-					} elseif ( ! $is_trial_setup) {
-						$membership->renew(true);
-					} else {
-						$membership->save();
-					}
+					 * Use reactivate() for reactivation carts so that the
+					 * wu_membership_pre_reactivate / wu_membership_post_reactivate
+					 * hooks fire and cancellation metadata is cleared correctly.
+					 *
+					 * @since 2.5.0
+					 */
+					$membership->reactivate(true);
+				} elseif ( ! $is_trial_setup) {
+					$membership->renew(true);
 				} else {
 					$membership->save();
 				}
-
-				$this->payment = $payment;
-				$redirect_url  = $this->get_return_url();
-
-				wp_safe_redirect($redirect_url);
-
-				exit;
+			} else {
+				$membership->save();
 			}
+
+			$this->payment = $payment;
+			$redirect_url  = $this->get_return_url();
+
+			wp_safe_redirect($redirect_url);
+
+			exit;
+		}
 		} else {
 			wp_die(
 				esc_html__('Something has gone wrong, please try again', 'ultimate-multisite'),
@@ -1531,27 +1540,36 @@ class PayPal_Gateway extends Base_PayPal_Gateway {
 
 				$is_trial_setup = $membership->is_trialing() && empty($payment->get_total());
 
+			/*
+			 * Lets deal with upgrades, downgrades and addons
+			 *
+			 * Here, we just need to make sure we process
+			 * a membership swap.
+			 */
+			if ('upgrade' === $cart->get_cart_type() || 'addon' === $cart->get_cart_type()) {
+				$membership->swap($cart);
+
+				$membership->renew(false);
+			} elseif ('downgrade' === $cart->get_cart_type()) {
+				$membership->schedule_swap($cart);
+
+				$membership->save();
+			} elseif ('reactivation' === $cart->get_cart_type()) {
 				/*
-				 * Lets deal with upgrades, downgrades and addons
+				 * Use reactivate() for reactivation carts so that the
+				 * wu_membership_pre_reactivate / wu_membership_post_reactivate
+				 * hooks fire and cancellation metadata is cleared correctly.
 				 *
-				 * Here, we just need to make sure we process
-				 * a membership swap.
+				 * @since 2.5.0
 				 */
-				if ($cart->get_cart_type() === 'upgrade' || $cart->get_cart_type() === 'addon') {
-					$membership->swap($cart);
+				$membership->reactivate(false);
+			} elseif ( ! $is_trial_setup) {
+				$membership->renew(false);
+			} else {
+				$membership->save();
+			}
 
-					$membership->renew(false);
-				} elseif ($cart->get_cart_type() === 'downgrade') {
-					$membership->schedule_swap($cart);
-
-					$membership->save();
-				} elseif ( ! $is_trial_setup) {
-					$membership->renew(false);
-				} else {
-					$membership->save();
-				}
-
-				$this->payment = $payment;
+			$this->payment = $payment;
 				$redirect_url  = $this->get_return_url();
 
 				wp_safe_redirect($redirect_url);

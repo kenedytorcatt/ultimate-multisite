@@ -314,10 +314,20 @@ class PayPal_Webhook_Handler {
 			return;
 		}
 
-		// Update membership status if needed — use renew() so wu_membership_post_renew
-		// fires and triggers site creation / all post-activation hooks.
-		if ($membership->get_status() !== Membership_Status::ACTIVE) {
-			$membership->renew(true);
+		// Update membership status if needed.
+		if (Membership_Status::ACTIVE !== $membership->get_status()) {
+			/*
+			 * Use reactivate() when the membership is currently cancelled or expired
+			 * so that wu_membership_pre_reactivate / wu_membership_post_reactivate
+			 * hooks fire and cancellation metadata is cleared correctly.
+			 *
+			 * @since 2.5.0
+			 */
+			if (Membership_Status::CANCELLED === $membership->get_status() || Membership_Status::EXPIRED === $membership->get_status()) {
+				$membership->reactivate(true);
+			} else {
+				$membership->renew(true);
+			}
 
 			$this->log(sprintf('Membership %d activated via webhook', $membership->get_id()));
 		}
