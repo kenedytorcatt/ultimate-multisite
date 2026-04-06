@@ -2256,9 +2256,9 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 * @param bool   $auto_renew  Whether or not the membership is recurring.
 	 * @param string $status     Membership status.
 	 * @param string $expiration Membership expiration date in MySQL format.
-	 * @return bool Whether or not the renewal was successful.
+	 * @return bool|\WP_Error Whether the renewal was successful, or WP_Error on failure.
 	 */
-	public function renew($auto_renew = false, $status = 'active', $expiration = ''): bool {
+	public function renew($auto_renew = false, $status = 'active', $expiration = '') {
 
 		$id = $this->get_id();
 
@@ -2311,15 +2311,14 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		}
 
 		/*
-		 * Clear the cancellation date when renewing a cancelled membership.
-		 *
-		 * When a membership is renewed (either through manual renewal, gateway
-		 * webhook, or reactivation), the cancellation date should be cleared
-		 * in the same save operation to avoid a double-save race condition.
+		 * Clear the cancellation date when renewing a previously cancelled
+		 * membership. Only runs when the status was explicitly set to 'active'
+		 * (i.e., a reactivation), not for regular recurring renewals where
+		 * preserving the cancellation history is important.
 		 *
 		 * @since 2.5.0
 		 */
-		if (! empty($this->get_date_cancellation())) {
+		if ('active' === $status && ! empty($this->get_date_cancellation())) {
 			$this->set_date_cancellation(null);
 		}
 

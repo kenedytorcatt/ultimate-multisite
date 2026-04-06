@@ -1341,13 +1341,13 @@ class Checkout {
 			 * @since 2.5.0
 			 */
 			foreach ($sites as $site) {
-				if ($site && method_exists($site, 'get_id') && $site->get_id() > 0) {
+				if ($site && method_exists($site, 'get_id') && 0 < $site->get_id()) {
 					return $site;
 				}
 			}
 
-			// Fallback to first entry if no valid site found
-			return current($sites);
+			// Fallback to actual first entry if no valid site found
+			return reset($sites);
 		}
 
 		$site_url   = $this->request_or_session('site_url');

@@ -458,7 +458,7 @@ class Site_Manager extends Base_Manager {
 			 * @since 2.5.0
 			 *
 			 * @param string|null $reactivation_url URL to redirect to, or null to skip.
-			 * @param object      $membership       The membership object.
+			 * @param object|null $membership       The membership object, or null if not found.
 			 * @param object      $site             The site object.
 			 */
 			$reactivation_url = apply_filters('wu_blocked_site_reactivation_url', null, $membership, $site);

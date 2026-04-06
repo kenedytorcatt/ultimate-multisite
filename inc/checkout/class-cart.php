@@ -2219,7 +2219,7 @@ class Cart implements \JsonSerializable {
 		 *
 		 * @since 2.5.0
 		 */
-		if ($this->cart_type === 'reactivation') {
+		if ('reactivation' === $this->cart_type) {
 			return false;
 		}
 
