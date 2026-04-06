@@ -148,7 +148,13 @@
             "deploy.sh",
             ".vscode",
             "coverage.xml",
-            "coverage-html"
+            "coverage-html",
+            "AGENTS.md",
+            "TODO.md",
+            "todo",
+            "docs",
+            ".intelephense",
+            ".task-counter"
         ]
     },
     "extra": {
