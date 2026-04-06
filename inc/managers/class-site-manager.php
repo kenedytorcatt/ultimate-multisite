@@ -446,6 +446,29 @@ class Site_Manager extends Base_Manager {
 		}
 
 		if (false === $can_access) {
+
+			/*
+			 * Allow plugins to provide a reactivation URL for blocked sites.
+			 *
+			 * This filter fires for ALL inactive membership states (cancelled,
+			 * expired, on-hold, suspended) so that a custom reactivation page
+			 * can intercept the user before they see the generic "site not
+			 * available" message.
+			 *
+			 * @since 2.5.0
+			 *
+			 * @param string|null $reactivation_url URL to redirect to, or null to skip.
+			 * @param object      $membership       The membership object.
+			 * @param object      $site             The site object.
+			 */
+			$reactivation_url = apply_filters('wu_blocked_site_reactivation_url', null, $membership, $site);
+
+			if ($reactivation_url) {
+				wp_safe_redirect($reactivation_url);
+
+				exit;
+			}
+
 			if ($redirect_url) {
 				wp_safe_redirect($redirect_url);
 

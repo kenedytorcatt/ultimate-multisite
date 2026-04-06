@@ -837,6 +837,73 @@ class Cart implements \JsonSerializable {
 		}
 
 		/*
+		 * Reactivation flow: detect cancelled/expired memberships.
+		 *
+		 * When a customer with a cancelled or expired membership submits a checkout,
+		 * this is a reactivation — not an upgrade. We set the cart_type accordingly
+		 * and ensure the product list includes the full plan + any addons from the
+		 * original membership.
+		 *
+		 * @since 2.5.0
+		 */
+		$inactive_statuses = [
+			Membership_Status::CANCELLED,
+			Membership_Status::EXPIRED,
+			'on-hold',
+			'suspended',
+		];
+
+		if (in_array($membership->get_status(), $inactive_statuses, true)) {
+
+			$this->cart_type = 'reactivation';
+
+			/*
+			 * Ensure products are populated from the membership when not explicitly
+			 * provided. This preserves the full product list (plan + addons) so the
+			 * customer gets exactly what they had before cancellation.
+			 */
+			if (empty($this->attributes->products)) {
+				$plan_id = $membership->get_plan_id();
+
+				if ($plan_id) {
+					$this->attributes->products = [$plan_id];
+
+					// Include addon products from the original membership
+					$addon_ids = $membership->get_addon_ids();
+
+					if (! empty($addon_ids)) {
+						$this->attributes->products = array_merge($this->attributes->products, $addon_ids);
+					}
+				}
+			}
+
+			// Set up country and currency, then add products and return
+			$this->country = $this->country ?: $this->customer->get_country();
+
+			$this->set_currency($membership->get_currency());
+
+			if (empty($this->attributes->products)) {
+				$this->errors->add('no_plan', __('This membership has no plan to reactivate.', 'ultimate-multisite'));
+
+				return true;
+			}
+
+			foreach ($this->attributes->products as $product_id) {
+				$this->add_product($product_id);
+			}
+
+			// Set duration from the plan
+			$plan_product = $membership->get_plan();
+
+			if ($plan_product && ! $membership->is_free()) {
+				$this->duration      = $plan_product->get_duration();
+				$this->duration_unit = $plan_product->get_duration_unit();
+			}
+
+			return true;
+		}
+
+		/*
 		 * Adds the country to calculate taxes.
 		 */
 		$this->country = $this->country ?: $this->customer->get_country();
@@ -2143,6 +2210,18 @@ class Cart implements \JsonSerializable {
 	 * @return bool
 	 */
 	public function has_trial() {
+
+		/*
+		 * Reactivation carts never get a trial period.
+		 *
+		 * A customer reactivating a cancelled membership has already used
+		 * their trial. Offering another trial would be a revenue loss.
+		 *
+		 * @since 2.5.0
+		 */
+		if ($this->cart_type === 'reactivation') {
+			return false;
+		}
 
 		$products = $this->get_all_products();
 

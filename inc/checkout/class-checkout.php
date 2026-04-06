@@ -1332,10 +1332,21 @@ class Checkout {
 		 */
 		if ( ! empty($sites)) {
 			/*
-			 * Returns the first site on that list.
-			 * This is not ideal, but since we'll usually only have
-			 * one site here, it's ok. for now.
+			 * Return the first site that has a valid blog ID.
+			 *
+			 * We explicitly check for a site with a positive ID rather
+			 * than blindly using current($sites), which could return a
+			 * pending or stale entry if the array pointer was moved.
+			 *
+			 * @since 2.5.0
 			 */
+			foreach ($sites as $site) {
+				if ($site && method_exists($site, 'get_id') && $site->get_id() > 0) {
+					return $site;
+				}
+			}
+
+			// Fallback to first entry if no valid site found
 			return current($sites);
 		}
 

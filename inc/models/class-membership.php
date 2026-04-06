@@ -2310,6 +2310,19 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 			$this->set_status($status);
 		}
 
+		/*
+		 * Clear the cancellation date when renewing a cancelled membership.
+		 *
+		 * When a membership is renewed (either through manual renewal, gateway
+		 * webhook, or reactivation), the cancellation date should be cleared
+		 * in the same save operation to avoid a double-save race condition.
+		 *
+		 * @since 2.5.0
+		 */
+		if (! empty($this->get_date_cancellation())) {
+			$this->set_date_cancellation(null);
+		}
+
 		$this->set_auto_renew($auto_renew);
 
 		$this->set_date_renewed(wu_get_current_time('mysql')); // Current time.
@@ -2338,6 +2351,65 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		wu_log_add("membership-{$id}", sprintf('Completed membership renewal for membership #%d. Membership Level ID: %d; New Expiration Date: %s; New Status: %s', $id, $plan_id, $expiration, $this->get_status()));
 
 		return true;
+	}
+
+	/**
+	 * Reactivate a cancelled or expired membership.
+	 *
+	 * Clears the cancellation date BEFORE calling renew() so the membership
+	 * is saved in a single pass, avoiding race conditions where listeners
+	 * on the first save see stale "cancelled" state.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param bool   $auto_renew Whether to auto-renew.
+	 * @param string $expiration Optional expiration date in MySQL format.
+	 * @return bool Whether the reactivation was successful.
+	 */
+	public function reactivate($auto_renew = false, $expiration = ''): bool {
+
+		$id = $this->get_id();
+
+		wu_log_add("membership-{$id}", sprintf('Starting membership reactivation for membership #%d. Current status: %s', $id, $this->get_status()));
+
+		/*
+		 * Clear the cancellation date BEFORE renew() saves.
+		 * This ensures a single save path (M3 fix) and prevents
+		 * listeners from seeing stale "cancelled" state.
+		 */
+		$old_cancel_date = $this->get_date_cancellation();
+
+		if (! empty($old_cancel_date)) {
+			$this->set_date_cancellation(null);
+		}
+
+		/**
+		 * Fires before a membership is reactivated.
+		 *
+		 * @since 2.5.0
+		 *
+		 * @param int        $membership_id The membership ID.
+		 * @param Membership $membership    The membership object.
+		 */
+		do_action('wu_membership_pre_reactivate', $this->get_id(), $this);
+
+		$result = $this->renew($auto_renew, 'active', $expiration);
+
+		if ($result) {
+			wu_log_add("membership-{$id}", sprintf('Membership #%d reactivated successfully. Old cancel date: %s', $id, $old_cancel_date ?: 'none'));
+
+			/**
+			 * Fires after a membership is successfully reactivated.
+			 *
+			 * @since 2.5.0
+			 *
+			 * @param int        $membership_id The membership ID.
+			 * @param Membership $membership    The membership object.
+			 */
+			do_action('wu_membership_post_reactivate', $this->get_id(), $this);
+		}
+
+		return $result;
 	}
 
 	/**
