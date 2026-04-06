@@ -873,22 +873,22 @@ class Cart implements \JsonSerializable {
 			}
 
 			/*
-			 * Ensure products are populated from the membership when not explicitly
-			 * provided. This preserves the full product list (plan + addons) so the
-			 * customer gets exactly what they had before cancellation.
+			 * Always rebuild products from the membership, ignoring any
+			 * user-supplied products in the request. This prevents a
+			 * malicious user from injecting arbitrary product IDs into
+			 * a reactivation cart.
+			 *
+			 * @since 2.5.0
 			 */
-			if (empty($this->attributes->products)) {
-				$plan_id = $membership->get_plan_id();
+			$plan_id = $membership->get_plan_id();
 
-				if ($plan_id) {
-					$this->attributes->products = [$plan_id];
+			if ($plan_id) {
+				$this->attributes->products = [$plan_id];
 
-					// Include addon products from the original membership
-					$addon_ids = $membership->get_addon_ids();
+				$addon_ids = $membership->get_addon_ids();
 
-					if (! empty($addon_ids)) {
-						$this->attributes->products = array_merge($this->attributes->products, $addon_ids);
-					}
+				if (! empty($addon_ids)) {
+					$this->attributes->products = array_merge($this->attributes->products, $addon_ids);
 				}
 			}
 
