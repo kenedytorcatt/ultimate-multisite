@@ -108,7 +108,7 @@ class Site extends Base_Model implements Limitable, Notable {
 	 * @since 2.0.0
 	 * @var int
 	 */
-	protected $site_id = 1;
+	protected $site_id = 0;
 
 	/**
 	 * Domain name used by this site.
@@ -331,9 +331,10 @@ class Site extends Base_Model implements Limitable, Notable {
 		return [
 			'categories'        => 'default:',
 			'featured_image_id' => 'integer|default:',
-			// site_id is the network id; defaults to 1 (the main network) in
-			// the model, so it's optional for a regular WordPress subsite.
-			'site_id'           => 'integer|default:1',
+			// site_id is the network id; no hard default here — save() falls
+			// back to get_current_network_id() so multi-network installs route
+			// to the correct network instead of always using network 1.
+			'site_id'           => 'integer|default:',
 			'title'             => 'required',
 			'name'              => 'required',
 			// description is optional metadata. A regular WordPress subsite
