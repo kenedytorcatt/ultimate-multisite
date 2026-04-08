@@ -237,8 +237,17 @@ function wu_create_site($site_data) {
 	// prefix instead so the site is reachable. Callers that pass an
 	// explicit non-root domain are respected as-is so subdomain/subdir
 	// mixing still works.
-	$path_supplied   = isset($site_data['path']) && '' !== $site_data['path'] && '/' !== $site_data['path'];
-	$domain_supplied = isset($site_data['domain']) && '' !== $site_data['domain'] && $site_data['domain'] !== $network_domain;
+	//
+	// Normalise both sides before comparing so that www-prefix and case
+	// differences (e.g. www.example.com vs example.com, or EXAMPLE.COM)
+	// do not cause a root domain to be misclassified as an explicit
+	// non-root domain, which would skip the subdomain conversion path.
+	$path_supplied             = isset($site_data['path']) && '' !== $site_data['path'] && '/' !== $site_data['path'];
+	$normalized_network_domain = strtolower((string) preg_replace('/^www\./i', '', (string) $network_domain));
+	$normalized_input_domain   = isset($site_data['domain'])
+		? strtolower((string) preg_replace('/^www\./i', '', (string) $site_data['domain']))
+		: '';
+	$domain_supplied           = '' !== $normalized_input_domain && $normalized_input_domain !== $normalized_network_domain;
 
 	if (is_multisite() && is_subdomain_install() && $path_supplied && ! $domain_supplied) {
 		$slug                 = trim((string) $site_data['path'], '/');
