@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.5.0
+Stable tag: 2.5.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -247,6 +247,16 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.5.1] - Released on 2026-04-09
+- Fix: Dashboard activity-stream widget CSS not loading on network admin dashboard.
+- Fix: Multi-network site routing failure caused by hard-coded site_id default.
+- Fix: Domain normalization before root-domain comparison in wu_create_site.
+- Fix: Client-side checkout validation no longer flags fields on other steps.
+- Fix: Over-strict validation_rules() rejecting minimal abilities input.
+- Fix: Template selection blocked when product uses default (allow all) mode.
+- Improved: SVN deploy now downloads artifact instead of rebuilding with --no-dev.
+- Improved: Dev files excluded from release archive.
+
 Version [2.5.0] - Released on 2026-04-06
 - New: Simple checkout form template with auto-generated credentials for streamlined signups.
 - New: PayPal PPCP (PayPal Commerce Platform) integration with full compliance review.
