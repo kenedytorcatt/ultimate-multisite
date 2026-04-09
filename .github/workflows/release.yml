@@ -180,8 +180,30 @@ jobs:
 
           # Stage changes in trunk only
           cd "${SVN_DIR}"
-          svn add --force trunk --auto-props --parents --depth infinity -q 2>/dev/null || true
-          svn status trunk | grep '^\!' | awk '{print $2}' | xargs -r svn delete --force -q
+
+          # Add new files in batches of 500 to avoid arg list / memory limits
+          svn status trunk | grep '^\?' | awk '{print $2}' > /tmp/svn-new-files.txt
+          NEW_COUNT=$(wc -l < /tmp/svn-new-files.txt)
+          echo "New files to add: ${NEW_COUNT}"
+          if [ "${NEW_COUNT}" -gt 0 ]; then
+            split -l 500 /tmp/svn-new-files.txt /tmp/svn-batch-add-
+            for batch in /tmp/svn-batch-add-*; do
+              echo "Adding batch: $(wc -l < "$batch") files"
+              xargs -r svn add --parents -q < "$batch"
+            done
+          fi
+
+          # Remove deleted files in batches
+          svn status trunk | grep '^\!' | awk '{print $2}' > /tmp/svn-del-files.txt
+          DEL_COUNT=$(wc -l < /tmp/svn-del-files.txt)
+          echo "Deleted files to remove: ${DEL_COUNT}"
+          if [ "${DEL_COUNT}" -gt 0 ]; then
+            split -l 500 /tmp/svn-del-files.txt /tmp/svn-batch-del-
+            for batch in /tmp/svn-batch-del-*; do
+              echo "Deleting batch: $(wc -l < "$batch") files"
+              xargs -r svn delete --force -q < "$batch"
+            done
+          fi
 
           echo "=== SVN Status (trunk) ==="
           svn status trunk | head -50
