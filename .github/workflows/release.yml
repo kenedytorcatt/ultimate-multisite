@@ -152,6 +152,9 @@ jobs:
         run: |
           unzip -o build/ultimate-multisite-${{ env.VERSION }}.zip -d .
 
+      - name: Install SVN
+        run: sudo apt-get update && sudo apt-get install -y subversion
+
       - name: Deploy to WordPress.org SVN (shallow)
         env:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
