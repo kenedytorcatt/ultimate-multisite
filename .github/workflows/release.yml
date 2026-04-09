@@ -155,7 +155,7 @@ jobs:
       - name: Install SVN
         run: sudo apt-get update && sudo apt-get install -y subversion
 
-      - name: Deploy to WordPress.org SVN (shallow)
+      - name: Deploy trunk to WordPress.org SVN
         env:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
@@ -167,53 +167,64 @@ jobs:
           SVN_URL="https://plugins.svn.wordpress.org/${SLUG}"
           SVN_DIR="${HOME}/svn-${SLUG}"
 
-          # Shallow checkout: only trunk and assets (no tags history)
+          # Step 1: Shallow checkout — only trunk (no tags, no history)
           svn checkout --depth=immediates "${SVN_URL}" "${SVN_DIR}"
           svn update --set-depth=infinity "${SVN_DIR}/trunk"
-          svn update --set-depth=immediates "${SVN_DIR}/tags"
 
-          # If assets dir exists in SVN, pull it too
-          if svn info "${SVN_URL}/assets" > /dev/null 2>&1; then
-            svn update --set-depth=infinity "${SVN_DIR}/assets"
-          fi
-
-          # Sync build artifact into trunk (the unzipped plugin files are in ./ultimate-multisite/)
+          # Sync build artifact into trunk
           rsync -rc --delete ./ultimate-multisite/ "${SVN_DIR}/trunk/" \
             --exclude='.svn' --exclude='.git' --exclude='.github'
 
-          # Create the new tag from trunk
-          if svn info "${SVN_URL}/tags/${VERSION}" > /dev/null 2>&1; then
-            echo "Tag ${VERSION} already exists in SVN — skipping tag creation"
-          else
-            svn copy "${SVN_DIR}/trunk" "${SVN_DIR}/tags/${VERSION}"
-          fi
-
-          # Copy readme.txt to trunk for wp.org metadata
+          # Ensure readme.txt is in trunk for wp.org metadata
           cp readme.txt "${SVN_DIR}/trunk/readme.txt"
 
-          # Stage all changes
+          # Stage changes in trunk only
           cd "${SVN_DIR}"
-          svn add --force . --auto-props --parents --depth infinity -q 2>/dev/null || true
-          # Remove deleted files from SVN tracking
-          svn status | grep '^\!' | awk '{print $2}' | xargs -r svn delete --force -q
+          svn add --force trunk --auto-props --parents --depth infinity -q 2>/dev/null || true
+          svn status trunk | grep '^\!' | awk '{print $2}' | xargs -r svn delete --force -q
 
-          # Show what will be committed
-          echo "=== SVN Status ==="
-          svn status | head -50
-          CHANGES=$(svn status | wc -l)
-          echo "Total changes: ${CHANGES}"
+          echo "=== SVN Status (trunk) ==="
+          svn status trunk | head -50
+          CHANGES=$(svn status trunk | wc -l)
+          echo "Total trunk changes: ${CHANGES}"
 
           if [ "${CHANGES}" -eq 0 ]; then
-            echo "No changes to commit to WordPress.org SVN"
+            echo "No changes to commit to trunk"
+          else
+            svn commit \
+              --username "${SVN_USERNAME}" \
+              --password "${SVN_PASSWORD}" \
+              --no-auth-cache \
+              --non-interactive \
+              -m "Update trunk to ${VERSION}"
+            echo "Trunk committed successfully"
+          fi
+
+      - name: Tag release on WordPress.org SVN (server-side copy)
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: ultimate-multisite
+          VERSION: ${{ env.VERSION }}
+        run: |
+          set -euo pipefail
+
+          SVN_URL="https://plugins.svn.wordpress.org/${SLUG}"
+
+          # Check if tag already exists
+          if svn info "${SVN_URL}/tags/${VERSION}" > /dev/null 2>&1; then
+            echo "Tag ${VERSION} already exists in SVN — skipping"
             exit 0
           fi
 
-          # Commit with timeout-friendly settings
-          svn commit \
+          # Server-side copy: no download/upload, runs entirely on wp.org SVN server
+          svn copy \
+            "${SVN_URL}/trunk" \
+            "${SVN_URL}/tags/${VERSION}" \
             --username "${SVN_USERNAME}" \
             --password "${SVN_PASSWORD}" \
             --no-auth-cache \
             --non-interactive \
-            -m "Release ${VERSION}"
+            -m "Tag ${VERSION}"
 
-          echo "Successfully deployed ${VERSION} to WordPress.org"
+          echo "Successfully tagged ${VERSION} on WordPress.org"
