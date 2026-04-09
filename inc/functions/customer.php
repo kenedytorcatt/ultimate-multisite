@@ -464,7 +464,7 @@ function wu_username_from_email($email, $new_user_args = [], $suffix = '') {
 		$username_parts[] = sanitize_user($email_username, true);
 	}
 
-	$username = strtolower(implode('', $username_parts));
+	$username = strtolower(implode('.', $username_parts));
 
 	if ($suffix) {
 		$username .= $suffix;

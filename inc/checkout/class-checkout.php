@@ -1053,7 +1053,13 @@ class Checkout {
 			 * Handles auto-generation based on the email address.
 			 */
 			if ($this->request_or_session('auto_generate_username') === 'email') {
-				$username = wu_username_from_email($this->request_or_session('email_address'));
+				$username = wu_username_from_email(
+					$this->request_or_session('email_address'),
+					[
+						'first_name' => $this->request_or_session('first_name', ''),
+						'last_name'  => $this->request_or_session('last_name', ''),
+					]
+				);
 			}
 
 			/*
