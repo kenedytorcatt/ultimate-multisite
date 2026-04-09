@@ -29,7 +29,7 @@
  * @author   Arindo Duque, NextPress, WPMUDEV, and the Ultimate Multisite Community
  * @category Core
  * @package  Ultimate_Multisite
- * @version 2.4.13-beta.1
+ * @version 2.5.1
  */
 
 // Exit if accessed directly
