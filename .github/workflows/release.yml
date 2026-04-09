@@ -206,8 +206,9 @@ jobs:
           fi
 
           echo "=== SVN Status (trunk) ==="
-          svn status trunk | head -50
-          CHANGES=$(svn status trunk | wc -l)
+          svn status trunk > /tmp/svn-status.txt
+          head -50 /tmp/svn-status.txt
+          CHANGES=$(wc -l < /tmp/svn-status.txt)
           echo "Total trunk changes: ${CHANGES}"
 
           if [ "${CHANGES}" -eq 0 ]; then
