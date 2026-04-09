@@ -138,6 +138,8 @@ function wu_create_customer($customer_data) {
 			'date_modified'      => wu_get_current_time('mysql', true),
 			'last_login'         => wu_get_current_time('mysql', true),
 			'signup_form'        => 'by-admin',
+			'first_name'         => '',
+			'last_name'          => '',
 			'billing_address'    => [],
 		]
 	);
@@ -176,6 +178,25 @@ function wu_create_customer($customer_data) {
 
 		if (false === $user_id) {
 			return new \WP_Error('user', __('We were not able to create a new user with the provided username and email address combination.', 'ultimate-multisite'), $customer_data);
+		}
+
+		/*
+		 * Set display_name and nickname from first/last name.
+		 * WordPress defaults these to user_login which is not user-friendly.
+		 */
+		$first_name = trim($customer_data['first_name']);
+		$last_name  = trim($customer_data['last_name']);
+
+		if ($first_name || $last_name) {
+			$display_name = trim("$first_name $last_name");
+
+			wp_update_user([
+				'ID'           => $user_id,
+				'display_name' => $display_name,
+				'nickname'     => $display_name,
+				'first_name'   => $first_name,
+				'last_name'    => $last_name,
+			]);
 		}
 	} else {
 		$user_id = $user->ID;

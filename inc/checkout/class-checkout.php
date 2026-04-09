@@ -1084,6 +1084,8 @@ class Checkout {
 				'password'           => $password,
 				'email_verification' => $this->get_customer_email_verification_status(),
 				'signup_form'        => $form_slug,
+				'first_name'         => $this->request_or_session('first_name', ''),
+				'last_name'          => $this->request_or_session('last_name', ''),
 				'meta'               => [],
 			];
 
