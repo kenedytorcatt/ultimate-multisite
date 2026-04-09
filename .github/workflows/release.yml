@@ -152,11 +152,65 @@ jobs:
         run: |
           unzip -o build/ultimate-multisite-${{ env.VERSION }}.zip -d .
 
-      - name: Deploy to WordPress.org SVN
-        uses: 10up/action-wordpress-plugin-deploy@stable
-        with:
-          generate-zip: false
+      - name: Deploy to WordPress.org SVN (shallow)
         env:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           SLUG: ultimate-multisite
+          VERSION: ${{ env.VERSION }}
+        run: |
+          set -euo pipefail
+
+          SVN_URL="https://plugins.svn.wordpress.org/${SLUG}"
+          SVN_DIR="${HOME}/svn-${SLUG}"
+
+          # Shallow checkout: only trunk and assets (no tags history)
+          svn checkout --depth=immediates "${SVN_URL}" "${SVN_DIR}"
+          svn update --set-depth=infinity "${SVN_DIR}/trunk"
+          svn update --set-depth=immediates "${SVN_DIR}/tags"
+
+          # If assets dir exists in SVN, pull it too
+          if svn info "${SVN_URL}/assets" > /dev/null 2>&1; then
+            svn update --set-depth=infinity "${SVN_DIR}/assets"
+          fi
+
+          # Sync build artifact into trunk (the unzipped plugin files are in ./ultimate-multisite/)
+          rsync -rc --delete ./ultimate-multisite/ "${SVN_DIR}/trunk/" \
+            --exclude='.svn' --exclude='.git' --exclude='.github'
+
+          # Create the new tag from trunk
+          if svn info "${SVN_URL}/tags/${VERSION}" > /dev/null 2>&1; then
+            echo "Tag ${VERSION} already exists in SVN — skipping tag creation"
+          else
+            svn copy "${SVN_DIR}/trunk" "${SVN_DIR}/tags/${VERSION}"
+          fi
+
+          # Copy readme.txt to trunk for wp.org metadata
+          cp readme.txt "${SVN_DIR}/trunk/readme.txt"
+
+          # Stage all changes
+          cd "${SVN_DIR}"
+          svn add --force . --auto-props --parents --depth infinity -q 2>/dev/null || true
+          # Remove deleted files from SVN tracking
+          svn status | grep '^\!' | awk '{print $2}' | xargs -r svn delete --force -q
+
+          # Show what will be committed
+          echo "=== SVN Status ==="
+          svn status | head -50
+          CHANGES=$(svn status | wc -l)
+          echo "Total changes: ${CHANGES}"
+
+          if [ "${CHANGES}" -eq 0 ]; then
+            echo "No changes to commit to WordPress.org SVN"
+            exit 0
+          fi
+
+          # Commit with timeout-friendly settings
+          svn commit \
+            --username "${SVN_USERNAME}" \
+            --password "${SVN_PASSWORD}" \
+            --no-auth-cache \
+            --non-interactive \
+            -m "Release ${VERSION}"
+
+          echo "Successfully deployed ${VERSION} to WordPress.org"
