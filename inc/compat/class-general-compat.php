@@ -130,6 +130,17 @@ class General_Compat {
 		add_filter('wp_initialize_site_args', [$this, 'fix_new_site_url_scheme'], 10, 3);
 
 		/**
+		 * Flush rewrite rules after site duplication.
+		 *
+		 * Cloned sites inherit the template's rewrite_rules option verbatim.
+		 * If CPT permalink slugs were changed after the template was created,
+		 * the cloned site will 404 on those CPT URLs until rules are regenerated.
+		 *
+		 * @since 2.0.24
+		 */
+		add_action('wu_duplicate_site', [$this, 'flush_rewrite_rules_on_new_site'], 20);
+
+		/**
 		 * Rank Math (Free and Pro)
 		 *
 		 * 1. Remove rankmath auto activation hook to prevent database errors on site creation process
@@ -499,6 +510,32 @@ class General_Compat {
 		}
 
 		return $args;
+	}
+
+	/**
+	 * Flush rewrite rules after site duplication.
+	 *
+	 * Cloned sites inherit the template's rewrite_rules option verbatim.
+	 * If CPT permalink slugs were changed after the template was created,
+	 * the cloned site will 404 on those CPT URLs until rules are regenerated.
+	 *
+	 * @since 2.0.24
+	 * @param int|object $new_site The new site ID or data object.
+	 * @return void
+	 */
+	public function flush_rewrite_rules_on_new_site($new_site): void {
+
+		$blog_id = is_object($new_site) && isset($new_site->blog_id)
+			? (int) $new_site->blog_id
+			: (int) $new_site;
+
+		if ($blog_id < 2) {
+			return;
+		}
+
+		switch_to_blog($blog_id);
+		flush_rewrite_rules(true);
+		restore_current_blog();
 	}
 
 	/**
