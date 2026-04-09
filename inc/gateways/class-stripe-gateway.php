@@ -715,7 +715,18 @@ class Stripe_Gateway extends Base_Stripe_Gateway {
 
 				$expiration = $renewal_date->format('Y-m-d H:i:s');
 
-				$membership->renew(true, $membership_status, $expiration);
+				/*
+				 * Use reactivate() for reactivation carts so that the
+				 * wu_membership_pre_reactivate / wu_membership_post_reactivate
+				 * hooks fire and cancellation metadata is cleared correctly.
+				 *
+				 * @since 2.5.0
+				 */
+				if ('reactivation' === $type) {
+					$membership->reactivate(true, $expiration);
+				} else {
+					$membership->renew(true, $membership_status, $expiration);
+				}
 			} else {
 				$membership->save();
 			}

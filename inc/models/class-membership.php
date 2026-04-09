@@ -2256,9 +2256,9 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 	 * @param bool   $auto_renew  Whether or not the membership is recurring.
 	 * @param string $status     Membership status.
 	 * @param string $expiration Membership expiration date in MySQL format.
-	 * @return bool Whether or not the renewal was successful.
+	 * @return bool|\WP_Error Whether the renewal was successful, or WP_Error on failure.
 	 */
-	public function renew($auto_renew = false, $status = 'active', $expiration = ''): bool {
+	public function renew($auto_renew = false, $status = 'active', $expiration = '') {
 
 		$id = $this->get_id();
 
@@ -2304,10 +2304,33 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		 */
 		do_action('wu_membership_pre_renew', $expiration, $this->get_id(), $this);
 
+		/*
+		 * Capture the current status BEFORE calling set_status() so the
+		 * cancellation-clear guard below can compare against the previous
+		 * state. After set_status() runs, get_status() returns the new value
+		 * and the CANCELLED check would never be true.
+		 *
+		 * @since 2.5.0
+		 */
+		$previous_status = $this->get_status();
+
 		$this->set_date_expiration($expiration);
 
 		if ( ! empty($status)) {
 			$this->set_status($status);
+		}
+
+		/*
+		 * Clear the cancellation date only when reactivating a previously
+		 * cancelled membership. Uses $previous_status (captured before the
+		 * set_status() call above) to avoid clearing historical cancellation
+		 * data on regular recurring renewals where the membership was never
+		 * in a cancelled state.
+		 *
+		 * @since 2.5.0
+		 */
+		if (Membership_Status::ACTIVE === $status && Membership_Status::CANCELLED === $previous_status && ! empty($this->get_date_cancellation())) {
+			$this->set_date_cancellation(null);
 		}
 
 		$this->set_auto_renew($auto_renew);
@@ -2338,6 +2361,65 @@ class Membership extends Base_Model implements Limitable, Billable, Notable {
 		wu_log_add("membership-{$id}", sprintf('Completed membership renewal for membership #%d. Membership Level ID: %d; New Expiration Date: %s; New Status: %s', $id, $plan_id, $expiration, $this->get_status()));
 
 		return true;
+	}
+
+	/**
+	 * Reactivate a cancelled or expired membership.
+	 *
+	 * Clears the cancellation date BEFORE calling renew() so the membership
+	 * is saved in a single pass, avoiding race conditions where listeners
+	 * on the first save see stale "cancelled" state.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param bool   $auto_renew Whether to auto-renew.
+	 * @param string $expiration Optional expiration date in MySQL format.
+	 * @return bool|\WP_Error True on success, WP_Error if renew()/save() fails.
+	 */
+	public function reactivate($auto_renew = false, $expiration = '') {
+
+		$id = $this->get_id();
+
+		wu_log_add("membership-{$id}", sprintf('Starting membership reactivation for membership #%d. Current status: %s', $id, $this->get_status()));
+
+		/*
+		 * Clear the cancellation date BEFORE renew() saves.
+		 * This ensures a single save path (M3 fix) and prevents
+		 * listeners from seeing stale "cancelled" state.
+		 */
+		$old_cancel_date = $this->get_date_cancellation();
+
+		if (! empty($old_cancel_date)) {
+			$this->set_date_cancellation(null);
+		}
+
+		/**
+		 * Fires before a membership is reactivated.
+		 *
+		 * @since 2.5.0
+		 *
+		 * @param int        $membership_id The membership ID.
+		 * @param Membership $membership    The membership object.
+		 */
+		do_action('wu_membership_pre_reactivate', $this->get_id(), $this);
+
+		$result = $this->renew($auto_renew, 'active', $expiration);
+
+		if (true === $result) {
+			wu_log_add("membership-{$id}", sprintf('Membership #%d reactivated successfully. Old cancel date: %s', $id, $old_cancel_date ?: 'none'));
+
+			/**
+			 * Fires after a membership is successfully reactivated.
+			 *
+			 * @since 2.5.0
+			 *
+			 * @param int        $membership_id The membership ID.
+			 * @param Membership $membership    The membership object.
+			 */
+			do_action('wu_membership_post_reactivate', $this->get_id(), $this);
+		}
+
+		return $result;
 	}
 
 	/**

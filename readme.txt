@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.4.12
+Stable tag: 2.5.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -247,6 +247,44 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.5.0] - Released on 2026-04-06
+- New: Simple checkout form template with auto-generated credentials for streamlined signups.
+- New: PayPal PPCP (PayPal Commerce Platform) integration with full compliance review.
+- New: WordPress Command Palette replaces legacy Jumper navigation.
+- New: Addon management infrastructure with manifest and CI workflow.
+- New: WP REST API standard pagination on all wu/v2 collection endpoints.
+- New: Resubscription flow for cancelled memberships.
+- New: Reactivation flow for cancelled memberships.
+- New: Client-side JavaScript validation on checkout forms.
+- New: Cloudflare for SaaS Custom Hostnames API integration.
+- New: DNS record management for mapped domains.
+- New: Template Library behind WU_TEMPLATE_LIBRARY_ENABLED feature flag.
+- New: External Cron Service behind WU_EXTERNAL_CRON_ENABLED feature flag.
+- New: Amazon SES transactional email integration.
+- New: WordPress.org SVN deploy in release workflow.
+- New: Downgrade handling in four limit classes.
+- New: WP Performance Action in CI workflow with regression detection.
+- New: Signup flow metrics and post-signup activity tracking.
+- New: Plesk and Laravel Forge hosting integrations.
+- New: Demo product support.
+- New: Comprehensive unit test coverage across 90+ files (admin pages, gateways, models, managers, signup fields, list tables, API schemas).
+- Fix: GlotPress compatibility for cross-domain SSO.
+- Fix: PayPal merchant_id in purchase_units, debug header logging, and merchant status validation.
+- Fix: Safari/iOS autofill not triggering password strength check on checkout.
+- Fix: Pay-what-you-want product pricing bugs.
+- Fix: Coupon removal button and duplicate field ID on checkout form.
+- Fix: Site_Manager::get_collection_params() fatal error.
+- Fix: REST API serialization bugs for Notes, Limitations, and Membership meta.
+- Fix: Currency precision defaults to 2 to prevent wizard failures and NaN prices.
+- Fix: Cookie domain scoped to most specific subdomain for subsite auth.
+- Fix: Stripe deprecated redirectToCheckout replaced with direct URL redirect.
+- Fix: Password reset stays on subsite domain.
+- Fix: Addon pricing now only charges for new products during upgrades.
+- Fix: Widen jetpack-autoloader constraint and fix paragonie/random_compat replace.
+- Fix: PHP 8.2 compatibility improvements.
+- Fix: Numerous admin UI, checkout, and SSO stability improvements.
+- Revert: FrankenPHP integration removed pending further testing.
+
 Version [2.4.13] - Released on 2026-XX-XX
 - Fix: Selectize dropdowns with more than 1000 options (e.g. TLD lists) were silently truncated due to the library's default maxOptions limit.
 - Fix: Returning to checkout after an abandoned signup no longer charges full price instead of the trial price.

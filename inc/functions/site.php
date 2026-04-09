@@ -228,10 +228,38 @@ function wu_create_site($site_data) {
 
 	$current_site = get_current_site();
 
+	$network_domain = $current_site->domain;
+
+	// Mode-aware domain/path normalisation. When the caller passes a path
+	// but no explicit domain (or only the network root domain) on a
+	// subdomain multisite install, the path is meaningless — WordPress
+	// won't route to it. Convert the supplied path into a subdomain
+	// prefix instead so the site is reachable. Callers that pass an
+	// explicit non-root domain are respected as-is so subdomain/subdir
+	// mixing still works.
+	//
+	// Normalise both sides before comparing so that www-prefix and case
+	// differences (e.g. www.example.com vs example.com, or EXAMPLE.COM)
+	// do not cause a root domain to be misclassified as an explicit
+	// non-root domain, which would skip the subdomain conversion path.
+	$path_supplied             = isset($site_data['path']) && '' !== $site_data['path'] && '/' !== $site_data['path'];
+	$normalized_network_domain = strtolower((string) preg_replace('/^www\./i', '', (string) $network_domain));
+	$normalized_input_domain   = isset($site_data['domain'])
+		? strtolower((string) preg_replace('/^www\./i', '', (string) $site_data['domain']))
+		: '';
+	$domain_supplied           = '' !== $normalized_input_domain && $normalized_input_domain !== $normalized_network_domain;
+
+	if (is_multisite() && is_subdomain_install() && $path_supplied && ! $domain_supplied) {
+		$slug                 = trim((string) $site_data['path'], '/');
+		$bare_network_domain  = preg_replace('/^www\./i', '', (string) $network_domain);
+		$site_data['domain']  = "{$slug}.{$bare_network_domain}";
+		$site_data['path']    = '/';
+	}
+
 	$site_data = wp_parse_args(
 		$site_data,
 		[
-			'domain'                => $current_site->domain,
+			'domain'                => $network_domain,
 			'path'                  => '/',
 			'title'                 => false,
 			'type'                  => false,

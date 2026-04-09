@@ -1332,11 +1332,22 @@ class Checkout {
 		 */
 		if ( ! empty($sites)) {
 			/*
-			 * Returns the first site on that list.
-			 * This is not ideal, but since we'll usually only have
-			 * one site here, it's ok. for now.
+			 * Return the first site that has a valid blog ID.
+			 *
+			 * We explicitly check for a site with a positive ID rather
+			 * than blindly using current($sites), which could return a
+			 * pending or stale entry if the array pointer was moved.
+			 *
+			 * @since 2.5.0
 			 */
-			return current($sites);
+			foreach ($sites as $site) {
+				if ($site && method_exists($site, 'get_id') && 0 < $site->get_id()) {
+					return $site;
+				}
+			}
+
+			// Fallback to actual first entry if no valid site found
+			return reset($sites);
 		}
 
 		$site_url   = $this->request_or_session('site_url');
@@ -2108,6 +2119,28 @@ class Checkout {
 		}
 
 		$variables['field_labels'] = $field_labels;
+
+		/*
+		 * Build a step_fields map (step_id => [field_ids]) so the JS validator
+		 * can restrict client-side validation to only the fields on the current
+		 * step. Without this, required fields on later steps (e.g. email/username
+		 * on step 4) would block submission of earlier steps (e.g. a plan-only
+		 * step 1). Mirrors the server-side logic in get_validation_rules() which
+		 * filters rules to $this->step['fields'] for non-final steps.
+		 */
+		$step_fields = [];
+
+		if ($this->checkout_form) {
+			foreach ($this->checkout_form->get_steps_to_show() as $step) {
+				if ( ! empty($step['id']) && ! empty($step['fields'])) {
+					$step_fields[ $step['id'] ] = array_values(
+						array_filter(array_column($step['fields'], 'id'))
+					);
+				}
+			}
+		}
+
+		$variables['step_fields'] = $step_fields;
 
 		/**
 		 * Allow plugin developers to filter the pre-sets of a checkout page.

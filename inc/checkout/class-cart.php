@@ -837,6 +837,104 @@ class Cart implements \JsonSerializable {
 		}
 
 		/*
+		 * Reactivation flow: detect cancelled/expired memberships.
+		 *
+		 * When a customer with a cancelled or expired membership submits a checkout,
+		 * this is a reactivation — not an upgrade. We set the cart_type accordingly
+		 * and ensure the product list includes the full plan + any addons from the
+		 * original membership.
+		 *
+		 * @since 2.5.0
+		 */
+		$inactive_statuses = [
+			Membership_Status::CANCELLED,
+			Membership_Status::EXPIRED,
+			'on-hold',
+			'suspended',
+		];
+
+		if (in_array($membership->get_status(), $inactive_statuses, true)) {
+
+			$this->cart_type = 'reactivation';
+
+			/*
+			 * Mark the customer as having trialed in memory only.
+			 *
+			 * This prevents has_trial() from returning true during THIS
+			 * checkout session. The flag is NOT persisted to the database
+			 * here — it will be saved when the membership is renewed after
+			 * payment completes. This avoids permanently removing trial
+			 * eligibility if the user abandons checkout.
+			 *
+			 * @since 2.5.0
+			 */
+			if ($this->customer && method_exists($this->customer, 'set_has_trialed')) {
+				$this->customer->set_has_trialed(true);
+			}
+
+			/*
+			 * Always rebuild products from the membership, ignoring any
+			 * user-supplied products in the request. This prevents a
+			 * malicious user from injecting arbitrary product IDs into
+			 * a reactivation cart.
+			 *
+			 * @since 2.5.0
+			 */
+			$plan_id = $membership->get_plan_id();
+
+			// Set up country and currency before building products
+			if (! $this->country && $this->customer) {
+				$this->country = $this->customer->get_country();
+			}
+
+			$this->set_currency($membership->get_currency());
+
+			/*
+			 * Set duration from the plan BEFORE calling add_product() so that
+			 * line items are created with the correct billing period. Previously
+			 * this was set after add_product(), meaning products were added with
+			 * the default/empty duration and the correct values were never used.
+			 *
+			 * @since 2.5.0
+			 */
+			$plan_product = $membership->get_plan();
+
+			if ($plan_product && ! $membership->is_free()) {
+				$this->duration      = $plan_product->get_duration();
+				$this->duration_unit = $plan_product->get_duration_unit();
+			}
+
+			if (! $plan_id) {
+				$this->errors->add('no_plan', __('This membership has no plan to reactivate.', 'ultimate-multisite'));
+
+				return true;
+			}
+
+			/*
+			 * Rebuild the product list from the membership, preserving addon
+			 * quantities. get_addon_ids() discards quantities; get_addon_products()
+			 * returns [['product' => $obj, 'quantity' => N], ...] so each addon
+			 * is added with the correct quantity.
+			 *
+			 * @since 2.5.0
+			 */
+			$this->add_product($plan_id);
+
+			$addon_products = $membership->get_addon_products();
+
+			foreach ($addon_products as $addon_item) {
+				$addon_product = wu_get_isset($addon_item, 'product');
+				$addon_qty     = (int) wu_get_isset($addon_item, 'quantity', 1);
+
+				if ($addon_product && method_exists($addon_product, 'get_id')) {
+					$this->add_product($addon_product->get_id(), $addon_qty);
+				}
+			}
+
+			return true;
+		}
+
+		/*
 		 * Adds the country to calculate taxes.
 		 */
 		$this->country = $this->country ?: $this->customer->get_country();
@@ -2052,7 +2150,7 @@ class Cart implements \JsonSerializable {
 			return true;
 		}
 
-		$add_signup_fee = 'renewal' !== $this->get_cart_type();
+		$add_signup_fee = ! in_array($this->get_cart_type(), ['renewal', 'reactivation'], true);
 
 		/**
 		 * Filters whether or not the signup fee should be applied.
@@ -2143,6 +2241,18 @@ class Cart implements \JsonSerializable {
 	 * @return bool
 	 */
 	public function has_trial() {
+
+		/*
+		 * Reactivation carts never get a trial period.
+		 *
+		 * A customer reactivating a cancelled membership has already used
+		 * their trial. Offering another trial would be a revenue loss.
+		 *
+		 * @since 2.5.0
+		 */
+		if ('reactivation' === $this->cart_type) {
+			return false;
+		}
 
 		$products = $this->get_all_products();
 
@@ -2573,6 +2683,18 @@ class Cart implements \JsonSerializable {
 	public function get_billing_start_date() {
 
 		if ($this->is_free() && ! $this->has_recurring()) {
+			return null;
+		}
+
+		/*
+		 * Reactivation carts have no trial period, so billing starts now.
+		 *
+		 * Return null so downstream consumers (Stripe subscription setup,
+		 * date_trial_end, etc.) don't receive a trial-derived start date.
+		 *
+		 * @since 2.5.0
+		 */
+		if ('reactivation' === $this->cart_type) {
 			return null;
 		}
 

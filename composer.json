@@ -2,7 +2,7 @@
     "name": "devstone/ultimate-multisite",
     "homepage": "https://UltimateMultisite.com",
     "description": "The Multisite Website as a Service (WaaS) plugin.",
-    "version": "2.4.13-beta.1",
+    "version": "2.5.0",
     "authors": [
         {
             "name": "Arindo Duque",
@@ -148,7 +148,13 @@
             "deploy.sh",
             ".vscode",
             "coverage.xml",
-            "coverage-html"
+            "coverage-html",
+            "AGENTS.md",
+            "TODO.md",
+            "todo",
+            "docs",
+            ".intelephense",
+            ".task-counter"
         ]
     },
     "extra": {
