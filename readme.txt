@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.5.1
+Stable tag: 2.5.2
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -247,6 +247,12 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.5.2] - Released on 2026-04-10
+- Fix: Command palette icons missing and console errors on WordPress 7.
+- Fix: Menu icon not rendering on all admin pages (now uses SVG data URI).
+- Improved: GitHub Actions CI upgraded to Node.js 24.
+- Improved: Release workflow now validates WP_Ultimo::VERSION constant.
+
 Version [2.5.1] - Released on 2026-04-09
 - Fix: Dashboard activity-stream widget CSS not loading on network admin dashboard.
 - Fix: Multi-network site routing failure caused by hard-coded site_id default.
