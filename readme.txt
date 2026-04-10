@@ -248,6 +248,9 @@ No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
 Version [2.5.2] - Released on 2026-04-10
+- Fix: Return type declarations removed from base classes to restore addon compatibility.
+- Fix: Return type declarations removed from Base_Gateway abstract methods for PHP compatibility.
+- Fix: DejaVuSansMono.ttf missing exception when viewing invoices.
 - Fix: Command palette icons missing and console errors on WordPress 7.
 - Fix: Menu icon not rendering on all admin pages (now uses SVG data URI).
 - Improved: GitHub Actions CI upgraded to Node.js 24.
