@@ -186,7 +186,8 @@ jobs:
           cd "${SVN_DIR}"
 
           # Add new files in batches of 500 to avoid arg list / memory limits
-          svn status trunk | grep '^\?' | awk '{print $2}' > /tmp/svn-new-files.txt
+          # Use '|| true' to prevent grep returning exit 1 (no match) from killing the script under pipefail
+          svn status trunk | grep '^\?' | awk '{print $2}' > /tmp/svn-new-files.txt || true
           NEW_COUNT=$(wc -l < /tmp/svn-new-files.txt)
           echo "New files to add: ${NEW_COUNT}"
           if [ "${NEW_COUNT}" -gt 0 ]; then
@@ -198,7 +199,7 @@ jobs:
           fi
 
           # Remove deleted files in batches
-          svn status trunk | grep '^\!' | awk '{print $2}' > /tmp/svn-del-files.txt
+          svn status trunk | grep '^\!' | awk '{print $2}' > /tmp/svn-del-files.txt || true
           DEL_COUNT=$(wc -l < /tmp/svn-del-files.txt)
           echo "Deleted files to remove: ${DEL_COUNT}"
           if [ "${DEL_COUNT}" -gt 0 ]; then
@@ -210,7 +211,7 @@ jobs:
           fi
 
           echo "=== SVN Status (trunk) ==="
-          svn status trunk > /tmp/svn-status.txt
+          svn status trunk > /tmp/svn-status.txt || true
           head -50 /tmp/svn-status.txt
           CHANGES=$(wc -l < /tmp/svn-status.txt)
           echo "Total trunk changes: ${CHANGES}"
@@ -218,12 +219,16 @@ jobs:
           if [ "${CHANGES}" -eq 0 ]; then
             echo "No changes to commit to trunk"
           else
+            echo "Committing ${CHANGES} changes to WordPress.org SVN..."
             svn commit \
               --username "${SVN_USERNAME}" \
               --password "${SVN_PASSWORD}" \
               --no-auth-cache \
               --non-interactive \
-              -m "Update trunk to ${VERSION}"
+              -m "Update trunk to ${VERSION}" 2>&1 || {
+              echo "::error::SVN commit failed. Check SVN_USERNAME and SVN_PASSWORD secrets."
+              exit 1
+            }
             echo "Trunk committed successfully"
           fi
 
