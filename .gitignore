@@ -40,3 +40,4 @@ tests/simple-performance-results-*.json
 opencode.json
 
 .aidevops.json
+kp-cyberpanel-integration.php
