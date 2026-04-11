@@ -38,3 +38,5 @@ tests/simple-performance-results-*.json
 
 # OpenCode AI local config
 opencode.json
+
+.aidevops.json
