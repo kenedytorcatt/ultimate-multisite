@@ -117,3 +117,6 @@ Overall coverage: **35%** (20,720 / 59,212 statements). 90 files at 0% coverage.
 - [x] t523 feat(paypal): PayPal PPCP integration review compliance — disconnect disclaimer, onboarding failure UI, merchant status validation, payee field, debug ID logging @superdav42 #paypal #compliance ~8h ref:GH#725 pr:#726 completed:2026-04-01
 - [x] t524 feat(checkout): add simple checkout form template with auto-generated credentials (re-implement PR #740 which was closed due to merge conflicts) #enhancement #auto-dispatch ~4h ref:GH#746 pr:#737 completed:2026-04-04
 - [x] t525 fix(dashboard): enqueue wu-styling on network admin dashboard for activity-stream widget #bug #auto-dispatch ~1h ref:GH#767 pr:#768 completed:2026-04-08
+- [x] GH#808 test: add autoload-order regression tests for mpdf PSR HTTP message shim ref:GH#808 pr:#818 completed:2026-04-13
+- [x] GH#813 fix: guard false return from get_available_site_templates() in switch_template() — TypeError on PHP 8.0+ ref:GH#813 pr:#819 completed:2026-04-13
+- [x] GH#814 test(reactivation): add unit tests verifying all PR #751 review findings were addressed ref:GH#814 pr:#817 completed:2026-04-13
