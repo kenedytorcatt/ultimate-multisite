@@ -1962,8 +1962,13 @@ class Checkout {
 
 		/*
 		 * Get the default gateway.
+		 *
+		 * Only pre-select when there is exactly one active gateway so
+		 * the user is not surprised by branded buttons (e.g. PayPal)
+		 * before they have made a choice.
 		 */
-		$default_gateway = current(array_keys(wu_get_active_gateway_as_options()));
+		$active_gateways = array_keys(wu_get_active_gateway_as_options());
+		$default_gateway = count($active_gateways) === 1 ? current($active_gateways) : '';
 
 		$d = wu_get_site_domain_and_path('replace');
 
@@ -2011,7 +2016,7 @@ class Checkout {
 			'site_url'           => $this->request_or_session('site_url') === 'autogenerate' ? '' : $this->request_or_session('site_url'),
 			'site_domain'        => $this->request_or_session('site_domain', preg_replace('#^https?://#', '', $site_domain)),
 			'is_subdomain'       => is_subdomain_install(),
-			'gateway'            => wu_request('gateway', $default_gateway),
+			'gateway'            => $this->request_or_session('gateway', $default_gateway),
 			'needs_billing_info' => true,
 			'auto_renew'         => true,
 			'products'           => array_unique($products),
@@ -2214,7 +2219,7 @@ class Checkout {
 		 * validator does not block submission on a field that is never shown.
 		 */
 		if ($this->form_has_auto_generate_password()) {
-			unset($raw_rules['password'], $raw_rules['password_conf'], $raw_rules['valid_password']);
+			unset($raw_rules['password'], $raw_rules['password_conf']);
 		}
 
 		/*
@@ -2360,7 +2365,6 @@ class Checkout {
 			'template_id'                => 'integer|site_template',
 			'products'                   => 'products',
 			'gateway'                    => '',
-			'valid_password'             => $auto_generate_password ? '' : 'accepted',
 			'billing_country'            => 'country|required_with:billing_country',
 			'billing_zip_code'           => 'required_with:billing_zip_code',
 			'billing_state'              => 'state',
@@ -2536,7 +2540,6 @@ class Checkout {
 				'password_conf'              => __('Password confirmation', 'ultimate-multisite'),
 				'email_address_confirmation' => __('Email confirmation', 'ultimate-multisite'),
 				'template_id'                => __('Template Selection', 'ultimate-multisite'),
-				'valid_password'             => __('Valid password', 'ultimate-multisite'),
 				'products'                   => __('Products', 'ultimate-multisite'),
 				'gateway'                    => __('Payment Gateway', 'ultimate-multisite'),
 			],
@@ -2555,11 +2558,7 @@ class Checkout {
 		$validator->validate($stack, $rules, $validation_aliases);
 
 		if ($validator->fails()) {
-			$errors = $validator->get_errors();
-
-			$errors->remove('valid_password');
-
-			return $errors;
+			return $validator->get_errors();
 		}
 
 		return true;
