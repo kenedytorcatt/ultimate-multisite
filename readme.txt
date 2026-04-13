@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.5.2
+Stable tag: 2.6.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -247,6 +247,23 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.6.0] - Released on 2026-04-13
+- New: CyberPanel hosting integration with domain mapping and auto-SSL.
+- Fix: Redirect loop and 403 error when accessing subsite wp-admin.
+- Fix: PHP 8.1+ TypeError that hides Save button on Domain Mapping settings.
+- Fix: Subdomain slug sanitization in wu_create_site to prevent malformed hostnames.
+- Fix: Missing postmeta for nav_menu_item, attachment, and Elementor posts on site clone.
+- Fix: Elementor Kit postmeta preserved across all URL replacement passes during duplication.
+- Fix: Template switch guard when get_available_site_templates returns false.
+- Fix: Stale is_publishing flag auto-reset to prevent infinite 'Creating' spinner.
+- Fix: PayPal button branding skipped when checkout does not require payment.
+- Fix: AJAX search_models and selectize templates restored after accidental removal.
+- Fix: Default gateway pre-selection removed and dead valid_password validation cleaned up.
+- Fix: mpdf psr-http-message-shim patch updated for v2 interface compatibility.
+- Fix: Activity-stream assets skipped on non-network admin dashboard.
+- Improved: Cloudflare integration loop guard, UI void types, and static analysis fixes.
+- Improved: Checkout pending site creation dual retry path removed for reliability.
+
 Version [2.5.2] - Released on 2026-04-10
 - Fix: PHP return type declarations removed from base/abstract classes to restore addon compatibility.
 - Improved: SVN deploy reliability in release workflow.
