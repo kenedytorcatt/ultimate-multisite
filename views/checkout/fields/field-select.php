@@ -42,7 +42,7 @@ defined('ABSPATH') || exit;
 
 	<?php if ($field->placeholder) : ?>
 
-	<option <?php checked(! $field->value); ?> class="wu-opacity-75"><?php echo esc_html($field->placeholder); ?></option>
+	<option <?php selected(! $field->value); ?> class="wu-opacity-75"><?php echo esc_html($field->placeholder); ?></option>
 
 	<?php endif; ?>
 
@@ -50,7 +50,7 @@ defined('ABSPATH') || exit;
 
 		<option
 		value="<?php echo esc_attr($key); ?>"
-		<?php checked($key, $field->value); ?>
+		<?php selected($key, $field->value); ?>
 		>
 		<?php echo esc_html($label); ?>
 	</option>
