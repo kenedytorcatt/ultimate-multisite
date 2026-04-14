@@ -73,8 +73,16 @@ if ( ! defined('MULTISITE_ULTIMATE_UPDATE_URL')) {
 require_once __DIR__ . '/constants.php';
 
 try {
-	// Skip plugin autoloader if Bedrock's root autoloader already loaded dependencies.
-	if ( ! class_exists( 'BerlinDB\Database\Table', false ) ) {
+	// Skip the Jetpack autoloader only when a root-level autoloader (e.g. Bedrock/Composer
+	// roots) has already mapped ALL plugin dependencies including our own classes.
+	// Checking BerlinDB\Database\Table alone is insufficient: class-sunrise.php manually
+	// requires BerlinDB files without registering our classmap, causing a false-positive
+	// that leaves WP_Ultimo classes unmapped. We therefore also verify that the main
+	// WP_Ultimo class is discoverable before deciding the autoloader can be skipped.
+	$berlin_db_loaded       = class_exists( 'BerlinDB\Database\Table', false );
+	$wu_autoloader_present  = interface_exists( 'WP_Ultimo\Traits\Singleton', false ) ||
+	                          class_exists( 'WP_Ultimo', false );
+	if ( ! $berlin_db_loaded || ! $wu_autoloader_present ) {
 		require_once __DIR__ . '/vendor/autoload_packages.php';
 	}
 } catch ( \Error $exception ) {
