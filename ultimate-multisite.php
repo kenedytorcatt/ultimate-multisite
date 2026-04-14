@@ -73,7 +73,10 @@ if ( ! defined('MULTISITE_ULTIMATE_UPDATE_URL')) {
 require_once __DIR__ . '/constants.php';
 
 try {
-	require_once __DIR__ . '/vendor/autoload_packages.php';
+	// Skip plugin autoloader if Bedrock's root autoloader already loaded dependencies.
+	if ( ! class_exists( 'BerlinDB\Database\Table', false ) ) {
+		require_once __DIR__ . '/vendor/autoload_packages.php';
+	}
 } catch ( \Error $exception ) {
 	if ( defined('WP_DEBUG') && WP_DEBUG ) {
 		// This message is not translated as at this point it's too early to load translations.
