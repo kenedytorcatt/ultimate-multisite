@@ -17,7 +17,7 @@ jQuery(function($) {
 
 		var $btn      = $(this);
 		var $wrapper  = $btn.closest('div');
-		var nonce     = $btn.data('nonce');
+		var nonce     = $btn.data('ajax-nonce');
 		var $spinner  = $wrapper.find('.wu-network-activate-spinner');
 		var $message  = $wrapper.find('.wu-network-activate-message');
 		var $fallback = $wrapper.find('.wu-network-activate-fallback');
@@ -30,7 +30,7 @@ jQuery(function($) {
 			ajaxurl,
 			{
 				action: 'wu_setup_network_activate',
-				nonce: nonce,
+				_ajax_nonce: nonce,
 			},
 			function(response) {
 

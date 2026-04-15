@@ -77,7 +77,7 @@ defined('ABSPATH') || exit;
 						<button
 							type="button"
 							class="button button-primary wu-network-activate-btn"
-							data-nonce="<?php echo esc_attr($req['network_activate_nonce']); ?>"
+							data-ajax-nonce="<?php echo esc_attr($req['network_activate_nonce']); ?>"
 						>
 							<?php esc_html_e('Network Activate', 'ultimate-multisite'); ?>
 						</button>

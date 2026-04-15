@@ -164,10 +164,14 @@ class Setup_Wizard_Admin_Page extends Wizard_Admin_Page {
 	 */
 	public function ajax_network_activate(): void {
 
-		check_ajax_referer('wu_setup_network_activate', 'nonce');
-
 		if ( ! current_user_can('manage_network')) {
 			wp_send_json_error(new \WP_Error('not-allowed', __('Permission denied.', 'ultimate-multisite')));
+
+			exit;
+		}
+
+		if ( ! check_ajax_referer('wu_setup_network_activate', false, false)) {
+			wp_send_json_error(new \WP_Error('bad-nonce', __('Security check failed. Please reload the page and try again.', 'ultimate-multisite')));
 
 			exit;
 		}
