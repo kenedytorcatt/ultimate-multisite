@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.6.1
+Stable tag: 2.6.2
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -247,6 +247,13 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.6.2] - Released on 2026-04-16
+- Fix: Switching a membership from a longer billing period (e.g. yearly) to a shorter one (e.g. monthly) is now scheduled as a downgrade for the next renewal instead of being blocked with an "active agreement" error.
+- Fix: Encrypted OAuth client secrets are now always regenerated during release builds, so connecting to ultimatemultisite.com no longer fails with "invalid_client / No client id supplied".
+- Fix: Standardised GitHub owner slug to Ultimate-Multisite so badge URLs, installation links, and update checks all resolve correctly.
+- Fix: Network activation error handler now shows the real WP_Error message when WordPress returns an array payload, instead of the generic fallback.
+- Improved: GitHub releases are now published immediately instead of as drafts, so the zip is available right after tagging.
+
 Version [2.6.1] - Released on 2026-04-15
 - New: Template selection field added to single-step and multi-step checkout form templates.
 - New: Network Activate button in setup wizard for non-network-active plugin installs.
