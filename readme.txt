@@ -270,6 +270,8 @@ Version [2.6.1] - Released on 2026-04-15
 - Fix: Remove extra padding-right on number inputs and fix flex group overflow.
 - Fix: Placeholder option falsy comparison corrected with explicit value attribute.
 - Fix: Select list 'checked' attribute corrected to 'selected' for option elements.
+- Fix: Success banner now shows immediately on multisite wizard complete page.
+- Fix: Button type and data-ajax-nonce added to kses allowlist for AJAX buttons.
 
 Version [2.6.0] - Released on 2026-04-13
 - New: CyberPanel hosting integration with domain mapping and auto-SSL.
