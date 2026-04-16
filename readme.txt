@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.6.0
+Stable tag: 2.6.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -247,6 +247,30 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.6.1] - Released on 2026-04-15
+- New: Template selection field added to single-step and multi-step checkout form templates.
+- New: Network Activate button in setup wizard for non-network-active plugin installs.
+- New: Atomic increment_item() method on BerlinDB Query class for safe concurrent updates.
+- New: CyberPanel host icon SVG added.
+- Improved: Renamed Cloudflare for SaaS to Cloudflare Custom Hostnames in user-facing strings.
+- Improved: WordPress.org plugin directory listed as recommended installation method.
+- Improved: Better guidance for users who install the wrong ZIP file.
+- Improved: Renamed Composer package from devstone/ to ultimate-multisite/.
+- Improved: Skip plugin autoloader when Bedrock root autoloader has already loaded dependencies.
+- Fix: Default role in Login & Registration settings no longer incorrectly shows Administrator.
+- Fix: Old WP Ultimo logo replaced with dashicons-networking SVG for menu icon.
+- Fix: Network-activate handler moved to external JS file for reliable loading.
+- Fix: Remaining network activation reliability gaps closed.
+- Fix: Redirect integration wizard finish button to integrations settings tab.
+- Fix: Replace missing Tailwind classes with WP button classes on setup wizard complete step.
+- Fix: Write directly to sitemeta for reliable network activation during install.
+- Fix: Autoloader no longer skips WP_Ultimo\Hooks when sunrise pre-loads BerlinDB.
+- Fix: Preserve saved gateway and skip paid gateways on free carts at checkout.
+- Fix: Prevent PWYW pricing type from being reset to free on save.
+- Fix: Remove extra padding-right on number inputs and fix flex group overflow.
+- Fix: Placeholder option falsy comparison corrected with explicit value attribute.
+- Fix: Select list 'checked' attribute corrected to 'selected' for option elements.
+
 Version [2.6.0] - Released on 2026-04-13
 - New: CyberPanel hosting integration with domain mapping and auto-SSL.
 - Fix: Redirect loop and 403 error when accessing subsite wp-admin.
