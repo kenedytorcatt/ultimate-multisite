@@ -1319,14 +1319,6 @@ class Cart implements \JsonSerializable {
 		$old_price_per_day = $days_in_old_cycle > 0 ? $membership->get_amount() / $days_in_old_cycle : $membership->get_amount();
 		$new_price_per_day = $days_in_new_cycle > 0 ? $this->get_recurring_total() / $days_in_new_cycle : $this->get_recurring_total();
 
-		/*
-		 * Preserve the true per-day rates before search_for_same_period_plans()
-		 * may normalise them. The shorter-period override must compare the raw
-		 * membership vs. cart rates, not the normalised plan-variation rates.
-		 */
-		$orig_old_price_per_day = $old_price_per_day;
-		$orig_new_price_per_day = $new_price_per_day;
-
 		$is_same_product = $membership->get_plan_id() === $this->plan_id;
 
 		/**
@@ -1352,35 +1344,30 @@ class Cart implements \JsonSerializable {
 			}
 		}
 
-		/*
-		 * Detect a billing-period switch to a shorter cycle (e.g. yearly → monthly).
-		 *
-		 * Previously this was an outright block ("You already have an active yearly
-		 * agreement."), which prevented customers from legitimately changing their
-		 * billing period. Instead, we schedule the change for the next renewal date,
-		 * exactly like every other downgrade.
-		 *
-		 * Condition: the existing plan's cycle is longer than the new one AND the
-		 * existing per-day rate is cheaper (e.g. yearly discount). Any change that
-		 * fits this profile is treated as a scheduled downgrade regardless of
-		 * whether the nominal per-period amounts suggest an "upgrade".
-		 *
-		 * We use the original rates ($orig_*) captured before search_for_same_period_plans()
-		 * may have normalised them, so we compare the actual membership vs. cart rates.
-		 *
-		 * @since 2.6.2
-		 */
-		$is_period_switch_to_shorter = ! $membership->is_free()
-			&& $days_in_old_cycle > $days_in_new_cycle
-			&& $orig_old_price_per_day < $orig_new_price_per_day;
+		if ( ! $membership->is_free() && $old_price_per_day < $new_price_per_day && $days_in_old_cycle > $days_in_new_cycle && $membership->get_status() === Membership_Status::ACTIVE) {
+			$this->products   = [];
+			$this->line_items = [];
+
+			$description = sprintf(
+				1 === $membership->get_duration() ? '%2$s' : '%1$s %2$s',
+				$membership->get_duration(),
+				wu_get_translatable_string(($membership->get_duration() <= 1 ? $membership->get_duration_unit() : $membership->get_duration_unit() . 's'))
+			);
+
+			// Translators: Placeholder receives the recurring period description
+			$message = sprintf(__('You already have an active %s agreement. To change your billing period, please use a plan variation with the desired billing cycle.', 'ultimate-multisite'), $description);
+
+			$this->errors->add('no_changes', $message);
+
+			return true;
+		}
 
 		/*
-		 * If is the same product and the customer will start to pay less,
-		 * or if is not the same product and the price per day is smaller,
-		 * or if the customer is switching to a shorter billing cycle,
-		 * this is a downgrade.
+		 * If is the same product and the customer will start to pay less
+		 * or if is not the same product and the price per day is smaller
+		 * this is a downgrade
 		 */
-		if (($is_same_product && $membership->get_amount() > $this->get_recurring_total()) || (! $is_same_product && $old_price_per_day > $new_price_per_day) || $is_period_switch_to_shorter) {
+		if (($is_same_product && $membership->get_amount() > $this->get_recurring_total()) || (! $is_same_product && $old_price_per_day > $new_price_per_day)) {
 			$this->cart_type = 'downgrade';
 
 			// If membership is active or trialing we will schedule the swap
@@ -2719,7 +2706,7 @@ class Cart implements \JsonSerializable {
 		if ($this->get_cart_type() === 'downgrade') {
 			$membership = $this->membership;
 
-			if ($membership && ($membership->is_active() || $membership->get_status() === Membership_Status::TRIALING)) {
+			if ($membership->is_active() || $membership->get_status() === Membership_Status::TRIALING) {
 				return strtotime($membership->get_date_expiration());
 			}
 		}
@@ -2760,7 +2747,7 @@ class Cart implements \JsonSerializable {
 		if ($this->get_cart_type() === 'downgrade') {
 			$membership = $this->membership;
 
-			if ($membership && ($membership->is_active() || $membership->get_status() === Membership_Status::TRIALING)) {
+			if ($membership->is_active() || $membership->get_status() === Membership_Status::TRIALING) {
 				$next_charge = strtotime($membership->get_date_expiration());
 
 				return $next_charge;
