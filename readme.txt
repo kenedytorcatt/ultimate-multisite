@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.6.2
+Stable tag: 2.6.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -247,6 +247,12 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.6.3] - Released on 2026-04-17
+- Fix: Reverted billing-period switch scheduling as a downgrade — the feature introduced in 2.6.2 caused unexpected renewal behaviour and has been rolled back for further refinement.
+- Fix: Site duplication now falls back to subdomain for blogname when the site title is empty, preventing malformed hostnames.
+- Fix: Core wp_blogs and wp_blogmeta tables are now protected from accidental DROP TABLE during site table management.
+- Fix: Admin styles for wu-form modals now load correctly on addon pages.
+
 Version [2.6.2] - Released on 2026-04-16
 - Fix: Switching a membership from a longer billing period (e.g. yearly) to a shorter one (e.g. monthly) is now scheduled as a downgrade for the next renewal instead of being blocked with an "active agreement" error.
 - Fix: Encrypted OAuth client secrets are now always regenerated during release builds, so connecting to ultimatemultisite.com no longer fails with "invalid_client / No client id supplied".
