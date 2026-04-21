@@ -297,7 +297,7 @@ class Broadcast_Manager extends Base_Manager {
 	 *
 	 * @param string $object_id The broadcast object id.
 	 * @param string $type The broadcast target type.
-	 * @return string Return the broadcast targets for the specific type.
+	 * @return int[]|string[] Return the broadcast targets for the specific type.
 	 */
 	public function get_broadcast_targets($object_id, $type) {
 
@@ -328,30 +328,16 @@ class Broadcast_Manager extends Base_Manager {
 
 		$customers_targets = $this->get_broadcast_targets($object_id, 'customers');
 
-		$products = $this->get_broadcast_targets($object_id, 'products');
-
 		$product_customers = [];
 
-		if (is_array($products) && $products[0]) {
-			foreach ($products as $product_key => $product) {
-				$membership_customers = wu_get_membership_customers($product);
+		foreach ($this->get_broadcast_targets($object_id, 'products') as $product) {
+			$membership_customers = wu_get_membership_customers($product);
 
-				if ($membership_customers) {
-					if (is_array($membership_customers)) {
-						$product_customers = array_merge($membership_customers, $product_customers);
-					} else {
-						array_push($product_customers, $membership_customers);
-					}
-				}
+			if ($membership_customers) {
+				$product_customers = array_merge((array) $membership_customers, $product_customers);
 			}
 		}
 
-		if (isset($product_customers) ) {
-			$targets = array_merge($product_customers, $customers_targets);
-		} else {
-			$targets = $customers_targets;
-		}
-
-		return array_map('absint', array_filter(array_unique($targets)));
+		return array_map('absint', array_filter(array_unique(array_merge($product_customers, $customers_targets))));
 	}
 }

@@ -143,8 +143,8 @@ function wu_create_membership($membership_data) {
  *
  * @since 2.0.0
  *
- * @param array $product_id Membership product.
- * @return array    With all users within the membership.
+ * @param int|string $product_id Membership product.
+ * @return int[]    With all users within the membership.
  */
 function wu_get_membership_customers($product_id) {
 
