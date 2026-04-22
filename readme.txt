@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.6.3
+Stable tag: 2.7.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -247,6 +247,16 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.7.0] - Released on 2026-04-22
+- New: Inline login hooks for smoother user experience during checkout and signup
+- Fix: Reclaim orphan pending_site on WooCommerce order completion
+- Fix: Prevent duplicate WordPress users on checkout retry
+- Fix: Preserve pending_site in transient when membership is cancelled
+- Fix: Add null-guard for $this->membership in downgrade cart type paths
+- Fix: Fix set_demo_behavior fatal TypeError on PHP 8 when null passed via attributes()
+- Fix: Fix various PHP warnings
+- Improved: Replace captcha-specific code with generic JavaScript hooks
+
 Version [2.6.3] - Released on 2026-04-17
 - Fix: Reverted billing-period switch scheduling as a downgrade — the feature introduced in 2.6.2 caused unexpected renewal behaviour and has been rolled back for further refinement.
 - Fix: Site duplication now falls back to subdomain for blogname when the site title is empty, preventing malformed hostnames.
