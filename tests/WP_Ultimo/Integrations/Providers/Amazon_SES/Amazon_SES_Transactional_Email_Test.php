@@ -137,7 +137,7 @@ class Amazon_SES_Transactional_Email_Test extends WP_UnitTestCase {
 
 		$this->integration->expects($this->once())
 			->method('ses_api_call')
-			->with('email-identities', 'POST', $this->anything())
+			->with('identities', 'POST', $this->anything())
 			->willReturn([
 				'IdentityType'             => 'DOMAIN',
 				'VerifiedForSendingStatus' => false,
@@ -171,7 +171,7 @@ class Amazon_SES_Transactional_Email_Test extends WP_UnitTestCase {
 
 		$this->integration->expects($this->once())
 			->method('ses_api_call')
-			->with('email-identities/example.com')
+			->with('identities/example.com')
 			->willReturn([
 				'VerifiedForSendingStatus' => true,
 				'DkimAttributes'           => ['Status' => 'SUCCESS'],
@@ -265,15 +265,13 @@ class Amazon_SES_Transactional_Email_Test extends WP_UnitTestCase {
 
 		$this->integration->expects($this->once())
 			->method('ses_api_call')
-			->with('account/sending-statistics')
+			->with('account')
 			->willReturn([
-				'SendingStatistics' => [
-					[
-						'DeliveryAttempts' => 100,
-						'Bounces'          => 5,
-						'Complaints'       => 2,
-						'Rejects'          => 1,
-					],
+				'SendingEnabled' => true,
+				'SendQuota'      => [
+					'Max24HourSend'    => 50000,
+					'MaxSendRate'      => 14,
+					'SentLast24Hours'  => 100,
 				],
 			]);
 
@@ -281,15 +279,15 @@ class Amazon_SES_Transactional_Email_Test extends WP_UnitTestCase {
 
 		$this->assertTrue($result['success']);
 		$this->assertSame(100, $result['sent']);
-		$this->assertSame(5, $result['bounced']);
-		$this->assertSame(2, $result['complaints']);
+		$this->assertSame(0, $result['bounced']);
+		$this->assertSame(0, $result['complaints']);
 	}
 
 	public function test_on_domain_added_calls_verify_domain(): void {
 
 		$this->integration->expects($this->once())
 			->method('ses_api_call')
-			->with('email-identities', 'POST', $this->anything())
+			->with('identities', 'POST', $this->anything())
 			->willReturn([
 				'DkimAttributes' => ['Tokens' => ['tok1', 'tok2', 'tok3']],
 			]);
@@ -311,7 +309,7 @@ class Amazon_SES_Transactional_Email_Test extends WP_UnitTestCase {
 
 		$this->integration->expects($this->once())
 			->method('ses_api_call')
-			->with('email-identities/example.com', 'DELETE')
+			->with('identities/example.com', 'DELETE')
 			->willReturn([]);
 
 		$this->module->on_domain_removed('example.com', 1);
