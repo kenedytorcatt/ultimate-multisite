@@ -1,5 +1,7 @@
 # Ultimate Multisite
 
+[![Download Plugin Now](https://img.shields.io/github/v/release/Ultimate-Multisite/ultimate-multisite?style=for-the-badge&label=Download+Plugin+Now&color=0073aa)](https://github.com/Ultimate-Multisite/ultimate-multisite/releases/latest/download/ultimate-multisite.zip) &nbsp; Upload the zip to WordPress like any other plugin
+
 <p align="center">
   <img src="https://github.com/Ultimate-Multisite/ultimate-multisite/blob/main/assets/img/logo.png" alt="Ultimate Multisite Logo" width="300">
 </p>
