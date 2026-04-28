@@ -79,14 +79,16 @@ class Base_Installer {
 
 		$callable = [$this, "_install_{$installer}"];
 
-		$callable = apply_filters("wu_installer_{$installer}_callback", $callable, $installer);
-
 		/*
-		* No installer on this class.
-		*/
+		 * No installer on this class — bail before firing the
+		 * callback filter so add-ons that type-hint `callable`
+		 * never receive a non-callable array.
+		 */
 		if ( ! is_callable($callable)) {
 			return $status;
 		}
+
+		$callable = apply_filters("wu_installer_{$installer}_callback", $callable, $installer);
 
 		try {
 			$wpdb->query('START TRANSACTION'); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
