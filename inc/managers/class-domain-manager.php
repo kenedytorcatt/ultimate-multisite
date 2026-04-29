@@ -156,6 +156,8 @@ class Domain_Manager extends Base_Manager {
 
 		add_action('wu_transition_domain_domain', [$this, 'send_domain_to_host'], 10, 3);
 
+		add_action('wu_transition_domain_stage', [$this, 'maybe_auto_promote_primary_domain'], 10, 3);
+
 		add_action('wu_settings_domain_mapping', [$this, 'add_domain_mapping_settings']);
 
 		add_action('wu_settings_sso', [$this, 'add_sso_settings']);
@@ -1083,6 +1085,142 @@ class Domain_Manager extends Base_Manager {
 				$domain->save();
 			}
 		}
+	}
+
+	/**
+	 * Auto-promote a custom domain to primary when it reaches done/done-without-ssl stage.
+	 *
+	 * When a non-subdomain mapping transitions to done or done-without-ssl stage
+	 * for a blog that has no other primary custom domain, auto-promote it. This is
+	 * the behaviour customers expect: "I verified my domain's DNS, it's now primary
+	 * and the network subdomain redirects to it."
+	 *
+	 * Hooked into wu_transition_domain_stage so it fires only on an actual stage
+	 * change — not on every save. This avoids the recursive-promotion bug where
+	 * async_remove_old_primary_domains would strip the primary flag, triggering a
+	 * post_save hook that immediately re-promoted the domain.
+	 *
+	 * @since 2.7.1
+	 * @since 2.7.2 Switched from wu_domain_post_save to wu_transition_domain_stage;
+	 *              replaced is_main_domain() TLD heuristic with a network-host check.
+	 *
+	 * @param string $old_stage The previous stage value.
+	 * @param string $new_stage The new stage value.
+	 * @param int    $domain_id The domain record ID.
+	 * @return void
+	 */
+	public function maybe_auto_promote_primary_domain($old_stage, $new_stage, $domain_id): void {
+
+		$done_stages = [
+			Domain_Stage::DONE,
+			Domain_Stage::DONE_WITHOUT_SSL,
+		];
+
+		/*
+		 * Only act when the stage just transitioned TO done/done-without-ssl
+		 * from a non-done stage. This is the "DNS verified" moment.
+		 */
+		if ( ! in_array($new_stage, $done_stages, true)) {
+			return;
+		}
+
+		if (in_array($old_stage, $done_stages, true)) {
+			return; // Already was in a done stage — not a new verification.
+		}
+
+		$domain = wu_get_domain($domain_id);
+
+		if ( ! $domain) {
+			return;
+		}
+
+		/*
+		 * Already primary — nothing to do.
+		 */
+		if ($domain->is_primary_domain()) {
+			return;
+		}
+
+		$domain_url = $domain->get_domain();
+
+		/*
+		 * Only skip auto-promotion for WP multisite native subdomains
+		 * (e.g. site.kursopro.com when the network host is kursopro.com).
+		 *
+		 * WP multisite native subdomains live in wp_blogs and should not
+		 * normally appear in the UM domains table, but we guard explicitly by
+		 * comparing against the actual network host. This is more precise
+		 * than the old is_main_domain() TLD-counting heuristic, which
+		 * incorrectly blocked legitimate 3-part custom domains such as
+		 * shop.mybrand.com or prosite.example.com.
+		 *
+		 * @since 2.7.2
+		 */
+		$network_host = strtolower( (string) wp_parse_url( network_home_url(), PHP_URL_HOST ) );
+		$network_host = (string) preg_replace( '/:\d+$/', '', $network_host ); // strip port
+
+		if ( $network_host && substr( strtolower( $domain_url ), -(strlen( $network_host ) + 1) ) === '.' . $network_host ) {
+			return; // WP multisite native subdomain — skip auto-promotion.
+		}
+
+		$blog_id = $domain->get_blog_id();
+
+		/*
+		 * Check if the blog already has a primary custom domain (not a WP network
+		 * subdomain). If so, don't override — let the admin manage it manually.
+		 */
+		$existing_primaries = wu_get_domains(
+			[
+				'blog_id'        => $blog_id,
+				'primary_domain' => true,
+				'id__not_in'     => [$domain->get_id()],
+			]
+		);
+
+		foreach ($existing_primaries as $existing) {
+			$existing_host = strtolower( $existing->get_domain() );
+
+			if ( ! $network_host || substr( $existing_host, -(strlen( $network_host ) + 1) ) !== '.' . $network_host ) {
+				/*
+				 * Another custom (non-network-subdomain) domain is already
+				 * primary for this blog. Do not auto-promote.
+				 */
+				return;
+			}
+		}
+
+		/*
+		 * Promote this domain to primary. Domain::save() schedules
+		 * wu_async_remove_old_primary_domains to demote other primaries.
+		 */
+		$domain->set_primary_domain(true);
+
+		$save_result = $domain->save();
+
+		if (is_wp_error($save_result)) {
+			wu_log_add(
+				"domain-{$domain_url}",
+				sprintf(
+					// translators: %1$s is the domain name, %2$d is the blog ID, %3$s is the error message.
+					__('Failed to auto-promote %1$s as primary domain for site %2$d: %3$s', 'ultimate-multisite'),
+					$domain_url,
+					$blog_id,
+					$save_result->get_error_message()
+				),
+				LogLevel::ERROR
+			);
+			return;
+		}
+
+		wu_log_add(
+			"domain-{$domain_url}",
+			sprintf(
+				// translators: %1$s is the domain name, %2$d is the blog ID.
+				__('Auto-promoted %1$s as primary domain for site %2$d.', 'ultimate-multisite'),
+				$domain_url,
+				$blog_id
+			)
+		);
 	}
 
 	/**

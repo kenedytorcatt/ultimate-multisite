@@ -72,6 +72,12 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 
 		add_filter('site_option_menu_items', [$this, 'force_plugins_menu'], 10, 3);
 		add_filter('default_site_option_menu_items', [$this, 'force_plugins_menu'], 10, 3);
+
+		// Persist the registration state into the WP core site option so the
+		// Network Admin Settings page reflects reality and registration survives
+		// plugin deactivation in the correct state.
+		add_action('wu_activation', [$this, 'sync_wp_registration_option']);
+		add_action('wu_after_save_settings', [$this, 'sync_wp_registration_option']);
 	}
 
 	/**
@@ -95,6 +101,28 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 		$status = wu_get_setting('enable_registration', true) ? 'all' : $status;
 
 		return $status;
+	}
+
+	/**
+	 * Persist the registration state into the WordPress core site option.
+	 *
+	 * The pre_site_option_registration filter already overrides the value at
+	 * read-time, but the stored WP core option stays 'none' (the WP default).
+	 * This causes the Network Admin Settings page to show "No registrations
+	 * allowed" and means registration goes dark if the plugin is deactivated.
+	 *
+	 * Hooked to wu_activation (one-time on plugin activation) and to
+	 * wu_after_save_settings (whenever the settings form is saved) so the
+	 * stored value always matches the plugin setting.
+	 *
+	 * @since 2.0.11
+	 * @return void
+	 */
+	public function sync_wp_registration_option() {
+
+		$enabled = wu_get_setting('enable_registration', true);
+
+		update_site_option('registration', $enabled ? 'all' : 'none');
 	}
 
 	/**
@@ -704,22 +732,6 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 				'min'     => 0,
 			],
 			120
-		);
-
-		$this->add_field(
-			'general',
-			'enable_error_reporting',
-			[
-				'title'   => __('Help Improve Ultimate Multisite', 'ultimate-multisite'),
-				'desc'    => sprintf(
-				/* translators: %s is a link to the privacy policy */
-					__('Allow Ultimate Multisite to collect anonymous usage data and error reports to help us improve the plugin. We collect: PHP version, WordPress version, plugin version, network type (subdomain/subdirectory), aggregate counts (sites, memberships), active gateways, and error logs. We never collect personal data, customer information, or domain names. <a href="%s" target="_blank" rel="noopener noreferrer">Learn more</a>.', 'ultimate-multisite'),
-					esc_url('https://ultimatemultisite.com/privacy-policy/')
-				),
-				'type'    => 'toggle',
-				'default' => 0,
-			],
-			130
 		);
 
 		$this->add_field(
@@ -1862,6 +1874,17 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 
 		$this->add_field(
 			'other',
+			'enable_jumper',
+			[
+				'title'   => __('Enable Jumper', 'ultimate-multisite'),
+				'desc'    => __('The Jumper is a command-palette overlay that lets network admins quickly navigate to any site or admin page. Disable it here if you prefer not to show it.', 'ultimate-multisite'),
+				'type'    => 'toggle',
+				'default' => 1,
+			]
+		);
+
+		$this->add_field(
+			'other',
 			'error_reporting_header',
 			[
 				'title' => __('Logging', 'ultimate-multisite'),
@@ -1985,7 +2008,6 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 			'decimal_separator'                  => '.',
 			'thousand_separator'                 => ',',
 			'precision'                          => '2',
-			'enable_error_reporting'             => 0,
 			'enable_beta_updates'                => 0,
 
 			// Login & Registration
@@ -2043,6 +2065,7 @@ class Settings implements \WP_Ultimo\Interfaces\Singleton {
 			// Other
 			'hide_tours'                         => 0,
 			'disable_image_zoom'                 => 0,
+			'enable_jumper'                      => 1,
 			'error_logging_level'                => 'default',
 			'security_mode'                      => 0,
 			'uninstall_wipe_tables'              => 0,

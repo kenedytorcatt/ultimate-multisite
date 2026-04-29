@@ -3510,6 +3510,90 @@ class Checkout_Test extends WP_UnitTestCase {
 		$order_prop->setValue($checkout, null);
 	}
 
+	/**
+	 * Test maybe_create_membership sets null expiration for free products.
+	 *
+	 * Free, non-recurring products should produce a lifetime membership
+	 * (date_expiration = null). Before the fix, gmdate() was called with
+	 * null which resolved to "today 23:59:59", causing the membership to
+	 * expire at end-of-day.
+	 */
+	public function test_maybe_create_membership_free_product_has_null_expiration(): void {
+
+		$customer = self::$customer;
+
+		$free_plan = wu_create_product([
+			'name'          => 'Free Test Plan',
+			'slug'          => 'free-test-plan-' . wp_rand(1000, 9999),
+			'amount'        => 0,
+			'recurring'     => false,
+			'duration'      => 1,
+			'duration_unit' => 'month',
+			'type'          => 'plan',
+			'pricing_type'  => 'free',
+			'active'        => true,
+		]);
+
+		if (is_wp_error($free_plan)) {
+			$this->markTestSkipped('Product creation failed: ' . $free_plan->get_error_message());
+		}
+
+		$checkout   = Checkout::get_instance();
+		$reflection = new \ReflectionClass($checkout);
+		$method     = $reflection->getMethod('maybe_create_membership');
+
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+
+		$cart = new Cart(['products' => [$free_plan->get_id()]]);
+
+		// Verify the cart recognises this as free
+		$this->assertTrue($cart->is_free(), 'Cart should be free for a zero-cost plan');
+		$this->assertNull($cart->get_billing_start_date(), 'Billing start date should be null for free plan');
+
+		$order_prop = $this->get_order_prop($reflection);
+		$order_prop->setValue($checkout, $cart);
+
+		$customer_prop = $reflection->getProperty('customer');
+		if (PHP_VERSION_ID < 80100) {
+			$customer_prop->setAccessible(true);
+		}
+		$customer_prop->setValue($checkout, $customer);
+
+		$gateway_prop = $reflection->getProperty('gateway_id');
+		if (PHP_VERSION_ID < 80100) {
+			$gateway_prop->setAccessible(true);
+		}
+		$gateway_prop->setValue($checkout, 'free');
+
+		$result = $method->invoke($checkout);
+
+		if (is_wp_error($result)) {
+			$this->markTestSkipped('Membership creation failed: ' . $result->get_error_message());
+		}
+
+		$this->assertInstanceOf(\WP_Ultimo\Models\Membership::class, $result);
+
+		// The critical assertion: free membership must NOT have an expiration date
+		$this->assertNull(
+			$result->get_date_expiration(),
+			'Free membership must have null date_expiration (lifetime). ' .
+			'Got: ' . var_export($result->get_date_expiration(), true)
+		);
+
+		// Consequently, the membership should be identified as lifetime
+		$this->assertTrue(
+			$result->is_lifetime(),
+			'Free membership must be recognised as lifetime'
+		);
+
+		// Cleanup
+		$result->delete();
+		$free_plan->delete();
+		$order_prop->setValue($checkout, null);
+	}
+
 	// -------------------------------------------------------------------------
 	// maybe_create_payment — create new payment path
 	// -------------------------------------------------------------------------
@@ -4750,6 +4834,423 @@ class Checkout_Test extends WP_UnitTestCase {
 		$this->assertStringContainsString('required', $rules['site_title']);
 		// min:1 should NOT be added to non-template fields
 		$this->assertStringNotContainsString('min:1', $rules['site_title']);
+	}
+
+	// -------------------------------------------------------------------------
+	// login_customer_after_checkout
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Helper: get the login_customer_after_checkout method via reflection.
+	 */
+	private function get_login_method(\ReflectionClass $reflection): \ReflectionMethod {
+		$method = $reflection->getMethod('login_customer_after_checkout');
+		if (PHP_VERSION_ID < 80100) {
+			$method->setAccessible(true);
+		}
+		return $method;
+	}
+
+	/**
+	 * Helper: inject a customer object into the checkout singleton.
+	 */
+	private function inject_customer(Checkout $checkout, \ReflectionClass $reflection, $customer): void {
+		$prop = $reflection->getProperty('customer');
+		if (PHP_VERSION_ID < 80100) {
+			$prop->setAccessible(true);
+		}
+		$prop->setValue($checkout, $customer);
+	}
+
+	/**
+	 * Test login_customer_after_checkout is a no-op when already logged in.
+	 *
+	 * If the user is already authenticated, wp_login should never fire.
+	 */
+	public function test_login_customer_after_checkout_noop_when_logged_in(): void {
+
+		$user_id = self::factory()->user->create(['role' => 'subscriber']);
+		wp_set_current_user($user_id);
+
+		$checkout   = Checkout::get_instance();
+		$reflection = new \ReflectionClass($checkout);
+		$method     = $this->get_login_method($reflection);
+
+		$login_fired = false;
+		add_action('wp_login', function() use (&$login_fired) {
+			$login_fired = true;
+		});
+
+		$method->invoke($checkout);
+
+		remove_all_actions('wp_login');
+
+		$this->assertFalse($login_fired, 'wp_login must not fire when user is already logged in');
+
+		wp_set_current_user(0);
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user($user_id);
+	}
+
+	/**
+	 * Test login_customer_after_checkout fires wp_login via auth cookie
+	 * when no password is available (simple-preset / auto_generate_password).
+	 *
+	 * This is the bug scenario: email-only checkout form → no password in
+	 * session or request → wp_signon() would silently fail → user ends up
+	 * logged out on the finish-checkout page.
+	 */
+	public function test_login_customer_after_checkout_no_password_fires_wp_login(): void {
+
+		$unique    = uniqid('nopw_', true);
+		$user_id   = self::factory()->user->create([
+			'user_login' => $unique,
+			'user_pass'  => wp_generate_password(),
+			'user_email' => $unique . '@example.com',
+		]);
+
+		wp_set_current_user(0);
+		wp_clear_auth_cookie();
+
+		$customer = wu_create_customer([
+			'user_id'  => $user_id,
+			'username' => $unique,
+			'email'    => $unique . '@example.com',
+		]);
+
+		if (is_wp_error($customer)) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+			wp_delete_user($user_id);
+			$this->markTestSkipped('Customer creation failed: ' . $customer->get_error_message());
+		}
+
+		$checkout   = Checkout::get_instance();
+		$reflection = new \ReflectionClass($checkout);
+
+		$this->inject_customer($checkout, $reflection, $customer);
+		$this->ensure_session($checkout);
+
+		// No password in request or session.
+		unset($_REQUEST['password']);
+
+		$login_fired    = false;
+		$login_user_arg = null;
+		add_action('wp_login', function($user_login, $user) use (&$login_fired, &$login_user_arg) {
+			$login_fired    = true;
+			$login_user_arg = $user;
+		}, 10, 2);
+
+		$method = $this->get_login_method($reflection);
+		$method->invoke($checkout);
+
+		remove_all_actions('wp_login');
+
+		$this->assertTrue($login_fired, 'wp_login must fire when auto-logging in via auth cookie (no password path)');
+		$this->assertInstanceOf(\WP_User::class, $login_user_arg);
+		$this->assertEquals($user_id, $login_user_arg->ID);
+
+		// Cleanup.
+		wp_set_current_user(0);
+		$customer->delete();
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user($user_id);
+	}
+
+	/**
+	 * Test login_customer_after_checkout uses wp_signon when a password is provided.
+	 *
+	 * wp_signon() internally fires wp_login on success.
+	 */
+	public function test_login_customer_after_checkout_with_password_fires_wp_login(): void {
+
+		$unique   = uniqid('withpw_', true);
+		$password = 'TestP@ssw0rd!';
+		$user_id  = self::factory()->user->create([
+			'user_login' => $unique,
+			'user_pass'  => $password,
+			'user_email' => $unique . '@example.com',
+		]);
+
+		wp_set_current_user(0);
+		wp_clear_auth_cookie();
+
+		$customer = wu_create_customer([
+			'user_id'  => $user_id,
+			'username' => $unique,
+			'email'    => $unique . '@example.com',
+		]);
+
+		if (is_wp_error($customer)) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+			wp_delete_user($user_id);
+			$this->markTestSkipped('Customer creation failed: ' . $customer->get_error_message());
+		}
+
+		$checkout   = Checkout::get_instance();
+		$reflection = new \ReflectionClass($checkout);
+
+		$this->inject_customer($checkout, $reflection, $customer);
+		$this->ensure_session($checkout);
+
+		$_REQUEST['password'] = $password;
+
+		$login_fired = false;
+		add_action('wp_login', function() use (&$login_fired) {
+			$login_fired = true;
+		});
+
+		$method = $this->get_login_method($reflection);
+		$method->invoke($checkout);
+
+		remove_all_actions('wp_login');
+		unset($_REQUEST['password']);
+
+		$this->assertTrue($login_fired, 'wp_login must fire when logging in via wp_signon (password path)');
+
+		// Cleanup.
+		wp_set_current_user(0);
+		$customer->delete();
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user($user_id);
+	}
+
+	/**
+	 * Test login_customer_after_checkout handles a customer with user_id = 0 gracefully.
+	 *
+	 * If get_user_id() returns 0 (no linked WP user), the method must not
+	 * throw and must not fire wp_login.  We simulate this by setting the
+	 * customer's user_id to 0 via its public setter rather than deleting a
+	 * real user (WP caches users in-process making deletion unreliable in
+	 * a unit-test context).
+	 */
+	public function test_login_customer_after_checkout_missing_wp_user_is_safe(): void {
+
+		wp_set_current_user(0);
+		wp_clear_auth_cookie();
+
+		// Build a real customer so inject_customer has a valid object to work
+		// with, then point its user_id at 0 so get_user_by('ID', 0) returns false.
+		$unique   = uniqid('orphan_', true);
+		$user_id  = self::factory()->user->create([
+			'user_login' => $unique,
+			'user_pass'  => wp_generate_password(),
+			'user_email' => $unique . '@example.com',
+		]);
+		$customer = wu_create_customer([
+			'user_id'  => $user_id,
+			'username' => $unique,
+			'email'    => $unique . '@example.com',
+		]);
+
+		if (is_wp_error($customer)) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+			wp_delete_user($user_id);
+			$this->markTestSkipped('Customer creation failed: ' . $customer->get_error_message());
+		}
+
+		// Point the customer at user 0 (guaranteed to not exist).
+		$customer->set_user_id(0);
+
+		$checkout   = Checkout::get_instance();
+		$reflection = new \ReflectionClass($checkout);
+
+		$this->inject_customer($checkout, $reflection, $customer);
+		$this->ensure_session($checkout);
+		unset($_REQUEST['password']);
+
+		$login_fired = false;
+		add_action('wp_login', function() use (&$login_fired) {
+			$login_fired = true;
+		});
+
+		// Must not throw.
+		$method = $this->get_login_method($reflection);
+		$method->invoke($checkout);
+
+		remove_all_actions('wp_login');
+
+		$this->assertFalse($login_fired, 'wp_login must not fire when the customer has no linked WP user');
+
+		// Cleanup.
+		$customer->delete();
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user($user_id);
+	}
+
+	// -------------------------------------------------------------------------
+	// cleanup_expired_drafts — GH#982 membership cancellation regression
+	// -------------------------------------------------------------------------
+
+	/**
+	 * GH#982: cleanup_expired_drafts must also cancel the associated membership
+	 * when it is still in `pending` state, so the pending_site metadata is
+	 * cleaned up via the wu_transition_membership_status hook chain.
+	 */
+	public function test_cleanup_expired_drafts_cancels_pending_membership(): void {
+
+		$checkout = Checkout::get_instance();
+
+		$customer = self::$customer;
+
+		$membership = wu_create_membership([
+			'customer_id' => $customer->get_id(),
+			'plan_id'     => 0,
+			'status'      => Membership_Status::PENDING,
+		]);
+
+		$this->assertNotWPError($membership);
+
+		$payment = wu_create_payment([
+			'customer_id'   => $customer->get_id(),
+			'membership_id' => $membership->get_id(),
+			'status'        => Payment_Status::PENDING,
+			'total'         => 10,
+		]);
+
+		$this->assertNotWPError($payment);
+
+		// Backdate the payment so the cron watchdog picks it up.
+		global $wpdb;
+		$old_date = gmdate('Y-m-d H:i:s', strtotime('-31 days'));
+		$wpdb->update(
+			"{$wpdb->prefix}wu_payments",
+			['date_created' => $old_date],
+			['id' => $payment->get_id()]
+		);
+
+		$checkout->cleanup_expired_drafts();
+
+		// Payment should be cancelled.
+		$found_payment = wu_get_payment($payment->get_id());
+		$this->assertNotFalse($found_payment, 'Payment should still exist after cleanup (cancelled, not deleted).');
+		$this->assertEquals(Payment_Status::CANCELLED, $found_payment->get_status(), 'Expired pending payment should be cancelled.');
+
+		// Membership should also be cancelled (GH#982 fix).
+		$found_membership = wu_get_membership($membership->get_id());
+		$this->assertNotFalse($found_membership, 'Membership should still exist after cleanup.');
+		$this->assertEquals(
+			Membership_Status::CANCELLED,
+			$found_membership->get_status(),
+			'Membership associated with an expired pending payment must be cancelled to prevent orphaned pending_site records (GH#982).'
+		);
+
+		$found_payment->delete();
+		$found_membership->delete();
+	}
+
+	/**
+	 * GH#982: cleanup_expired_drafts must NOT cancel the membership when it is
+	 * already active (e.g. the payment expired but the membership was activated
+	 * via a different payment or gateway). Only `pending` memberships are targets.
+	 */
+	public function test_cleanup_expired_drafts_does_not_cancel_active_membership(): void {
+
+		$checkout = Checkout::get_instance();
+
+		$customer = self::$customer;
+
+		$membership = wu_create_membership([
+			'customer_id' => $customer->get_id(),
+			'plan_id'     => 0,
+			'status'      => Membership_Status::ACTIVE,
+		]);
+
+		$this->assertNotWPError($membership);
+
+		$payment = wu_create_payment([
+			'customer_id'   => $customer->get_id(),
+			'membership_id' => $membership->get_id(),
+			'status'        => Payment_Status::PENDING,
+			'total'         => 10,
+		]);
+
+		$this->assertNotWPError($payment);
+
+		global $wpdb;
+		$old_date = gmdate('Y-m-d H:i:s', strtotime('-31 days'));
+		$wpdb->update(
+			"{$wpdb->prefix}wu_payments",
+			['date_created' => $old_date],
+			['id' => $payment->get_id()]
+		);
+
+		$checkout->cleanup_expired_drafts();
+
+		// Membership should remain active — it is not in `pending` state.
+		$found_membership = wu_get_membership($membership->get_id());
+		$this->assertNotFalse($found_membership);
+		$this->assertEquals(
+			Membership_Status::ACTIVE,
+			$found_membership->get_status(),
+			'Active memberships must not be cancelled by cleanup_expired_drafts (GH#982).'
+		);
+
+		$found_payment = wu_get_payment($payment->get_id());
+		if ($found_payment) {
+			$found_payment->delete();
+		}
+		$found_membership->delete();
+	}
+
+	/**
+	 * GH#982: when cleanup_expired_drafts cancels a pending membership that has
+	 * a pending_site, the pending_site must be removed from membership meta
+	 * (via the wu_transition_membership_status hook chain).
+	 */
+	public function test_cleanup_expired_drafts_cleans_up_pending_site(): void {
+
+		$checkout = Checkout::get_instance();
+
+		$customer = self::$customer;
+
+		$membership = wu_create_membership([
+			'customer_id' => $customer->get_id(),
+			'plan_id'     => 0,
+			'status'      => Membership_Status::PENDING,
+		]);
+
+		$this->assertNotWPError($membership);
+
+		// Simulate the checkout creating a pending_site in membership meta.
+		$membership->create_pending_site([
+			'title' => 'Orphan Pending Site',
+			'path'  => '/orphan/',
+		]);
+
+		$this->assertNotFalse($membership->get_pending_site(), 'pending_site should exist before cleanup.');
+
+		$payment = wu_create_payment([
+			'customer_id'   => $customer->get_id(),
+			'membership_id' => $membership->get_id(),
+			'status'        => Payment_Status::PENDING,
+			'total'         => 10,
+		]);
+
+		$this->assertNotWPError($payment);
+
+		global $wpdb;
+		$old_date = gmdate('Y-m-d H:i:s', strtotime('-31 days'));
+		$wpdb->update(
+			"{$wpdb->prefix}wu_payments",
+			['date_created' => $old_date],
+			['id' => $payment->get_id()]
+		);
+
+		$checkout->cleanup_expired_drafts();
+
+		// pending_site must be gone from the membership meta after cancellation.
+		$found_membership = wu_get_membership($membership->get_id());
+		$this->assertNotFalse($found_membership);
+		$this->assertFalse(
+			$found_membership->get_pending_site(),
+			'pending_site must be removed from membership meta after cleanup_expired_drafts cancels the membership (GH#982).'
+		);
+
+		$found_payment = wu_get_payment($payment->get_id());
+		if ($found_payment) {
+			$found_payment->delete();
+		}
+		$found_membership->delete();
 	}
 
 	// -------------------------------------------------------------------------

@@ -730,6 +730,90 @@ class Checkout {
 		$this->type = $cart->get_cart_type();
 
 		/*
+		 * Block duplicate signup for logged-in users with active memberships.
+		 *
+		 * When a customer with an active subscription goes through the
+		 * registration form again as a "new" checkout (rather than
+		 * upgrade/downgrade), the new subscription replaces the old one
+		 * and any applied coupons or custom pricing are lost.
+		 *
+		 * This guard fires early — before any customer, membership, or
+		 * payment records are created — so there are no orphaned records
+		 * to clean up when the checkout is blocked.
+		 *
+		 * Filterable via `wu_allow_duplicate_signup` for sites that
+		 * intentionally permit re-registration (e.g. multi-membership).
+		 *
+		 * @since 2.5.1
+		 */
+		if ('new' === $this->type && is_user_logged_in()) {
+			$existing_customer = wu_get_current_customer();
+
+			if ($existing_customer) {
+				$active_memberships = wu_get_memberships([
+					'customer_id' => $existing_customer->get_id(),
+					'status__in'  => [
+						Membership_Status::ACTIVE,
+						Membership_Status::TRIALING,
+						Membership_Status::ON_HOLD,
+					],
+					'number'      => 1,
+				]);
+
+				if ( ! empty($active_memberships)) {
+					$existing_membership = reset($active_memberships);
+
+					/**
+					 * Filters whether to allow a duplicate signup when the
+					 * customer already has an active membership.
+					 *
+					 * Return `true` to allow the checkout to proceed. The
+					 * default is `false` (block the signup).
+					 *
+					 * @since 2.5.1
+					 *
+					 * @param bool                          $allow     Whether to allow the duplicate signup.
+					 * @param \WP_Ultimo\Models\Membership  $membership The existing active membership.
+					 * @param \WP_Ultimo\Models\Customer    $customer   The current customer.
+					 * @param \WP_Ultimo\Checkout\Cart      $cart       The cart being processed.
+					 */
+					$allow = apply_filters(
+						'wu_allow_duplicate_signup',
+						false,
+						$existing_membership,
+						$existing_customer,
+						$cart
+					);
+
+					if ( ! $allow) {
+						/*
+						 * Build the account URL on the customer's own subsite
+						 * rather than the main network site. The "account" admin
+						 * page lives in each subsite's wp-admin. Using
+						 * wu_get_main_site_id() would force the main-site domain
+						 * which breaks when domain mapping is active.
+						 *
+						 * Falls back to the main site only if the membership has
+						 * no published sites yet (pending site scenario).
+						 */
+						$membership_sites = $existing_membership->get_sites();
+						$account_blog_id  = ! empty($membership_sites) ? $membership_sites[0]->get_id() : wu_get_main_site_id();
+						$account_url      = get_admin_url($account_blog_id, 'admin.php?page=account');
+
+						return new \WP_Error(
+							'duplicate_signup',
+							sprintf(
+								/* translators: %s is a link to the account page. */
+								__('You already have an active subscription. To manage your existing subscription, <a href="%s">visit your account page</a>. If you need help, please contact support.', 'ultimate-multisite'),
+								esc_url($account_url)
+							)
+						);
+					}
+				}
+			}
+		}
+
+		/*
 		 * Gets the gateway object we want to use.
 		 *
 		 * This will have been set on a previous step (session)
@@ -899,20 +983,7 @@ class Checkout {
 		 * let's check if the user is logged in,
 		 * and if not, let's do that.
 		 */
-		if ( ! is_user_logged_in()) {
-			wp_clear_auth_cookie();
-
-			$user_credentials = array(
-				'user_login'    => $this->customer->get_username(),
-				'user_password' => $this->request_or_session('password'),
-			);
-
-			// Remove the pending payment check action so the customer is not prompted to pay for the payment when they are already on the checkout page.
-			remove_action('wp_login', array(Payment_Manager::get_instance(), 'check_pending_payments'), 10);
-
-			// Sign in the user as if they used the login form.
-			wp_signon($user_credentials, is_ssl());
-		}
+		$this->login_customer_after_checkout();
 
 		/*
 		 * Action time.
@@ -1129,6 +1200,17 @@ class Checkout {
 		}
 
 		/*
+		 * Store the current blog ID so the verification email
+		 * links back to the same domain the customer used to
+		 * check out. Without this, the verification URL would
+		 * always point to the main site, where the customer's
+		 * auth cookie may not be valid.
+		 *
+		 * @since 2.5.0
+		 */
+		$customer->set_checkout_blog_id(get_current_blog_id());
+
+		/*
 		 * Updates IP, and country
 		 */
 		$customer->update_last_login(true, true);
@@ -1312,8 +1394,18 @@ class Checkout {
 
 		/*
 		 * Important dates.
+		 *
+		 * For free, non-recurring products the billing start date is null,
+		 * meaning there is no next charge — the membership should be
+		 * treated as lifetime. Passing null into gmdate() silently uses
+		 * the current timestamp, which sets the expiration to *today*
+		 * and causes the membership to expire within hours/days.
 		 */
-		$membership_data['date_expiration'] = gmdate('Y-m-d 23:59:59', $this->order->get_billing_start_date());
+		$billing_start_date = $this->order->get_billing_start_date();
+
+		$membership_data['date_expiration'] = null !== $billing_start_date
+			? gmdate('Y-m-d 23:59:59', (int) $billing_start_date)
+			: null;
 
 		$membership = wu_create_membership($membership_data);
 
@@ -2218,6 +2310,72 @@ class Checkout {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Logs the customer in immediately after a successful checkout submission.
+	 *
+	 * When a password was collected by the form (standard flow) we call
+	 * wp_signon() so WordPress performs its normal credential round-trip.
+	 * When no password was collected — e.g. the form uses
+	 * auto_generate_password or has no password field at all (the simple
+	 * preset with email-only) — wp_signon() would receive an empty credential
+	 * and silently fail, leaving the user logged-out and triggering the
+	 * "You need to be logged in" error on the finish-checkout page. In that
+	 * case we set the auth cookie directly, since the customer record was
+	 * just created in this very request and the credential is not available.
+	 *
+	 * @since 2.6.0
+	 * @return void
+	 */
+	protected function login_customer_after_checkout() {
+
+		if (is_user_logged_in()) {
+			return;
+		}
+
+		wp_clear_auth_cookie();
+
+		// Remove the pending payment check action so the customer is not
+		// prompted to pay for the payment when they are already on the
+		// checkout page.
+		remove_action('wp_login', array(Payment_Manager::get_instance(), 'check_pending_payments'), 10);
+
+		$password = $this->request_or_session('password');
+
+		if ($password) {
+			$user_credentials = array(
+				'user_login'    => $this->customer->get_username(),
+				'user_password' => $password,
+			);
+
+			// Sign in the user as if they used the login form.
+			wp_signon($user_credentials, is_ssl());
+
+			return;
+		}
+
+		/*
+		 * No password was collected (e.g. the form uses auto_generate_password
+		 * or has no password field at all — the simple preset). We just
+		 * created this user, so log them in directly via the auth cookie
+		 * rather than a credential round-trip that would fail with an empty
+		 * password and silently leave the user logged out.
+		 */
+		$user_id = $this->customer->get_user_id();
+
+		if ( ! $user_id) {
+			return;
+		}
+
+		$user = get_user_by('ID', $user_id);
+
+		if ( ! $user) {
+			return;
+		}
+
+		wp_set_auth_cookie($user_id, false, is_ssl());
+		do_action('wp_login', $user->user_login, $user);
 	}
 
 	/**
@@ -3158,6 +3316,13 @@ class Checkout {
 	/**
 	 * Cleans up expired draft and pending payments (older than 30 days).
 	 *
+	 * When a pending payment is cancelled, the associated membership is also
+	 * cancelled if it is still in the `pending` state. This ensures that any
+	 * `pending_site` record stored in membership meta is cleaned up via the
+	 * `wu_transition_membership_status` → `handle_pending_site_on_cancellation`
+	 * chain, preventing orphaned pending_site rows from accumulating in the
+	 * database. Fixes: GH#982.
+	 *
 	 * @since 2.1.4
 	 * @return void
 	 */
@@ -3185,6 +3350,23 @@ class Checkout {
 			if ($payment->get_status() === Payment_Status::PENDING) {
 				$payment->set_status(Payment_Status::CANCELLED);
 				$payment->save();
+
+				/*
+				 * Also cancel the associated membership if it is still in
+				 * `pending` state. A 30-day-old unconfirmed payment means the
+				 * customer never completed the signup; keeping the membership
+				 * in `pending` would leave any pending_site meta orphaned
+				 * because no active membership owns it. Cancelling via
+				 * cancel() fires wu_transition_membership_status, which
+				 * invokes handle_pending_site_on_cancellation() to move the
+				 * pending_site to a 24-hour transient for potential reclaim
+				 * before deleting it from membership meta. GH#982.
+				 */
+				$membership = $payment->get_membership();
+
+				if ($membership && Membership_Status::PENDING === $membership->get_status()) {
+					$membership->cancel();
+				}
 			} else {
 				$payment->delete();
 			}

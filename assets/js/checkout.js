@@ -1229,6 +1229,25 @@
 
 						this.logging_in = false;
 						this.login_error = (err && err.message) ? err.message : (wu_checkout.i18n.login_failed || 'Login failed. Please try again.');
+
+						/**
+						 * Fires when an inline login attempt fails due to a rejected
+						 * wu_before_inline_login_submitted promise.
+						 *
+						 * Mirrors the failure hook emitted by the AJAX error path so that
+						 * addons (e.g. captcha widgets) can reset themselves regardless of
+						 * which failure path was taken.
+						 *
+						 * @param {Object} error      Object containing the error message and originalError.
+						 * @param {string} field_type The field type ('email' or 'username').
+						 */
+						hooks.doAction('wu_inline_login_error', {
+							data: {
+								message: this.login_error,
+							},
+							originalError: err,
+						}, field_type);
+
 						return false;
 
 					}
@@ -1543,9 +1562,28 @@
 					// Setup inline login handlers if prompt is visible
 					this.setup_inline_login_handlers();
 
-					// Re-initialize password strength if field appeared after mount
-					if (! this.password_strength_checker && jQuery('#field-password').length) {
-						this.init_password_strength();
+					// Re-initialize password strength when:
+					// (a) checker was never created, or
+					// (b) the checker's DOM element no longer matches the current
+					//     #field-password element.
+					//
+					// Case (b) occurs when the inline login prompt is shown then
+					// hidden: Vue 2 recycles the adjacent sibling DOM node (the
+					// login-prompt wrapper <div>) for the password field wrapper,
+					// creating a fresh #field-password <input> that the old
+					// jQuery .on() bindings never touch.
+					const passEl = jQuery('#field-password');
+					if (passEl.length) {
+						const checkerEl = this.password_strength_checker &&
+							this.password_strength_checker.options.pass1 &&
+							this.password_strength_checker.options.pass1[ 0 ];
+						if (! this.password_strength_checker || checkerEl !== passEl[ 0 ]) {
+							if (this.password_strength_checker) {
+								this.password_strength_checker.destroy();
+								this.password_strength_checker = null;
+							}
+							this.init_password_strength();
+						}
 					}
 
 				});
