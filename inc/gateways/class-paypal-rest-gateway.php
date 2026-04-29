@@ -1203,7 +1203,7 @@ class PayPal_REST_Gateway extends Base_PayPal_Gateway {
 		foreach ($cart->get_line_items() as $line_item) {
 			$items[] = [
 				'name'        => substr($line_item->get_title(), 0, 127),
-				'description' => substr($line_item->get_description(), 0, 127) ?: null,
+				'description' => substr($line_item->get_description(), 0, 127) ?: 'Website Product',
 				'unit_amount' => [
 					'currency_code' => $currency,
 					'value'         => $this->format_amount($line_item->get_unit_price(), $currency),
