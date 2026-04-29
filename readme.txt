@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.7.0
+Stable tag: 2.8.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -154,23 +154,9 @@ For a private server with a dedicated IP, the webserver can be setup to serve th
 
 = Site screenshots show a Cloudflare challenge page instead of the actual site =
 
-Ultimate Multisite uses [thum.io](https://www.thum.io/) to generate site screenshots. If your network is behind Cloudflare with Bot Fight Mode or similar protections enabled, thum.io's screenshot bot may be blocked and return a Cloudflare challenge page instead of your site screenshot.
+Ultimate Multisite uses [WordPress.com mShots](https://mshots.wordpress.com/) to generate site screenshots. If your network is behind Cloudflare with Bot Fight Mode or similar protections enabled, the screenshot service may be blocked and return a Cloudflare challenge page instead of your site screenshot.
 
-**Solution:** Create a Cloudflare WAF exception rule to allow thum.io's bot:
-
-1. Log in to your [Cloudflare dashboard](https://dash.cloudflare.com/)
-2. Select your domain
-3. Go to **Security → WAF → Custom rules**
-4. Click **Create rule**
-5. Configure the rule:
-   - **Rule name:** `Allow thum.io screenshot bot`
-   - **Field:** `User Agent`
-   - **Operator:** `contains`
-   - **Value:** `Thum.io`
-   - **Action:** `Skip` → Select all skip options (WAF, Rate Limiting, etc.)
-6. Click **Deploy**
-
-Alternatively, if you use Cloudflare's Super Bot Fight Mode, you can add an exception in **Security → Bots → Configure Super Bot Fight Mode** to allow verified bots or specific user agents.
+**Solution:** Create a Cloudflare WAF exception rule to allow the mShots crawler, or temporarily disable Bot Fight Mode for screenshot generation.
 
 **Note:** Screenshots require sites to be publicly accessible. Local development environments cannot generate screenshots regardless of Cloudflare settings.
 
@@ -247,6 +233,34 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.8.0] - Released on 2026-04-29
+- New: Enable Jumper toggle added to Other Options settings UI
+- New: Status column added to the checkout forms list table
+- New: Addon sunrise file loader for custom MU-plugin sunrise extensions
+- Improved: Removed error-reporting opt-in setting from settings page
+- Fix: Thank-you page site card — image now constrained and links styled correctly
+- Fix: Screenshot provider switched from thum.io to WordPress.com mShots
+- Fix: Enable Registration and Default Role now set correct defaults on fresh install
+- Fix: get_site_url() no longer returns empty when domain includes a port
+- Fix: Clone media files now copied correctly when copy_media setting was empty
+- Fix: Object cache invalidated correctly after network-activate sitemeta write
+- Fix: Custom domain auto-promoted to primary on DNS verification for 3-part domains
+- Fix: Pending membership cancelled when expired payment is cleaned up
+- Fix: Password strength checker rebound after inline login prompt dismissed
+- Fix: Infinite page reload stopped on thank-you page when site already created
+- Fix: WP core registration option synced on plugin activation and settings save
+- Fix: Null expiration guard added in calculate_expiration for PHP 8.4 compatibility
+- Fix: Duplicate signups blocked when customer already has an active membership
+- Fix: Null check added for date_expiration in checkout
+- Fix: Site provisioning hardened — limitations, membership inference, domain promotion
+- Fix: Pre-install check status label corrected to NOT Activated when check fails
+- Fix: Checkout domain used for email verification URLs
+- Fix: Auto-login after checkout when no password field is present
+- Fix: Free memberships no longer expire — treated as lifetime
+- Fix: Email verification gate holds site publish until customer verifies email
+- Fix: SES v2 API endpoint base path and identity route corrected
+- Fix: wu_inline_login_error hook emitted in pre-submit catch block
+
 Version [2.7.0] - Released on 2026-04-22
 - New: Inline login hooks for smoother user experience during checkout and signup
 - Fix: Reclaim orphan pending_site on WooCommerce order completion
