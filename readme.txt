@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.8.0
+Stable tag: 2.9.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -233,6 +233,19 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.9.0] - Released on 2026-04-30
+- New: Single-site export and import added under Tools > Export & Import
+- Fix: Export ZIP files now served through an authenticated download endpoint
+- Fix: SQL injection risk and query issues in pending export/import queries corrected
+- Fix: Pending site not published when admin manually verifies customer email
+- Fix: Orphaned pending_site records cleaned up when membership is missing
+- Fix: Settings nav padding and search anchor navigation corrected
+- Fix: Pending sites now shown first in the All Sites view
+- Fix: Screenshot provider (mShots) User-Agent header added to prevent 403 errors
+- Fix: Import cron schedule circular dependency resolved
+- Fix: Tour IDs normalised to underscores in user settings keys
+- Improved: ZipArchive now used instead of Alchemy/Zippy for better compatibility
+
 Version [2.8.0] - Released on 2026-04-29
 - New: Enable Jumper toggle added to Other Options settings UI
 - New: Status column added to the checkout forms list table
