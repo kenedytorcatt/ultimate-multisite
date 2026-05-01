@@ -68,7 +68,7 @@ defined('ABSPATH') || exit;
 
 		<div class="sm:wu-col-span-4 lg:wu-col-span-2">
 
-		<div class="wu-py-4 wu-relative">
+		<div id="wu-settings-search-box" class="wu-py-4 wu-relative">
 
 			<input
 			data-model='setting'
@@ -82,6 +82,15 @@ defined('ABSPATH') || exit;
 			>
 
 		</div>
+
+		<style>
+		#wu-settings-search-box .selectize-dropdown {
+			width: max-content !important;
+		}
+		#wu-settings-search-box .selectize-dropdown-content {
+			max-height: 70vh;
+		}
+		</style>
 
 		<div data-wu-app="settings_menu" data-state="{}">
 
@@ -141,7 +150,7 @@ defined('ABSPATH') || exit;
 				<a
 					id="tab-selector-<?php echo esc_attr($section_name); ?>-link"
 					href="<?php echo esc_url($page->get_section_link($section_name)); ?>" 
-					class="wu-block wu-py-2 wu-px-4 wu-no-underline wu-text-sm wu-rounded <?php echo ! $clickable_navigation && ! $is_pre_current_section ? 'wu-pointer-events-none' : ''; ?> <?php echo $current_section === $section_name ? 'wu-bg-gray-300 wu-text-gray-800' : 'wu-text-gray-600 hover:wu-text-gray-700'; ?>"
+					class="wu-block wu-py-2 wu-no-underline wu-text-sm wu-rounded <?php echo ! $clickable_navigation && ! $is_pre_current_section ? 'wu-pointer-events-none' : ''; ?> <?php echo $current_section === $section_name ? 'wu-bg-gray-300 wu-text-gray-800' : 'wu-text-gray-600 hover:wu-text-gray-700'; ?>"
 				>
 
 					<span class="<?php echo esc_attr($section['icon']); ?> wu-align-text-bottom wu-mr-1"></span>
@@ -205,7 +214,7 @@ defined('ABSPATH') || exit;
 				<li class="wu-sticky">
 
 					<!-- Menu Link -->
-					<a href="<?php echo esc_url($page->get_section_link($section_name)); ?>" class="wu-block wu-py-2 wu-px-4 wu-no-underline wu-text-sm wu-rounded <?php echo ! $clickable_navigation && ! $is_pre_current_section ? 'wu-pointer-events-none' : ''; ?> <?php echo $current_section === $section_name ? 'wu-bg-gray-300 wu-text-gray-800' : 'wu-text-gray-600 hover:wu-text-gray-700'; ?>">
+					<a href="<?php echo esc_url($page->get_section_link($section_name)); ?>" class="wu-block wu-py-2 wu-no-underline wu-text-sm wu-rounded <?php echo ! $clickable_navigation && ! $is_pre_current_section ? 'wu-pointer-events-none' : ''; ?> <?php echo $current_section === $section_name ? 'wu-bg-gray-300 wu-text-gray-800' : 'wu-text-gray-600 hover:wu-text-gray-700'; ?>">
 
 					<span class="<?php echo esc_attr($section['icon']); ?> wu-align-text-bottom wu-mr-1"></span>
 
@@ -268,7 +277,7 @@ defined('ABSPATH') || exit;
 
 		</div>
 
-		<div class="sm:wu-col-span-8 sm:wu-col-start-5 lg:wu-col-span-3 lg:wu-col-start-10 metabox-holder">
+		<div class="sm:wu-col-span-8 sm:wu-col-start-5 lg:wu-col-span-4 lg:wu-col-start-9 metabox-holder wu-min-w-0">
 
 		<?php
 		/**
