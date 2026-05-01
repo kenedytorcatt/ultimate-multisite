@@ -227,9 +227,11 @@ class Sunrise {
 	 */
 	protected static function load_addon_sunrise_files(): void {
 
-		$plugins_dir = defined( 'WP_PLUGIN_DIR' )
-			? WP_PLUGIN_DIR
-			: WP_CONTENT_DIR . '/plugins';
+		// Always resolve relative to WP_CONTENT_DIR — NOT WP_PLUGIN_DIR.
+		// The multi-tenancy overlay may redefine WP_PLUGIN_DIR to a
+		// tenant-specific path before this runs. Addon sunrise files
+		// live alongside the host plugin, not in tenant directories.
+		$plugins_dir = WP_CONTENT_DIR . '/plugins';
 
 		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		$candidates = @glob( $plugins_dir . '/ultimate-multisite-*/sunrise.php' );
