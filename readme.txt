@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.9.0
+Stable tag: 2.9.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -233,6 +233,13 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.9.1] - Released on 2026-05-01
+- New: Checkout Forms added to admin bar quick links
+- Fix: Trial period now correctly applied for returning customers whose cancelled subscription had zero renewals
+- Fix: Site import no longer fails when the target URL has no http:// scheme
+- Fix: Export modal now downloads the ZIP file immediately on synchronous export
+- Fix: mShots screenshot capture now retries when the service returns a loading placeholder
+
 Version [2.9.0] - Released on 2026-04-30
 - New: Single-site export and import added under Tools > Export & Import
 - Fix: Export ZIP files now served through an authenticated download endpoint
