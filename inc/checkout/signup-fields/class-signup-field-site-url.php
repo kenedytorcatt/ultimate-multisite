@@ -240,6 +240,17 @@ class Signup_Field_Site_Url extends Base_Signup_Field {
 			],
 			'available_domains'             => [
 				'order'             => 30,
+				'type'              => 'text',
+				'title'             => __('Available Domain', 'ultimate-multisite'),
+				'desc'              => __('The domain used as the base for auto-generated subsite URLs.', 'ultimate-multisite'),
+				'value'             => $current_site->domain,
+				'tab'               => 'content',
+				'wrapper_html_attr' => [
+					'v-show' => 'auto_generate_site_url',
+				],
+			],
+			'available_domains_multi'       => [
+				'order'             => 30,
 				'type'              => 'textarea',
 				'title'             => __('Available Domains', 'ultimate-multisite'),
 				'desc'              => __('Enter one domain option per line.', 'ultimate-multisite'),
@@ -295,6 +306,23 @@ class Signup_Field_Site_Url extends Base_Signup_Field {
 					'value' => 'autogenerate',
 				],
 			];
+
+			/*
+			 * When available_domains is configured, inject a hidden site_domain
+			 * field so the checkout session uses the correct base domain instead
+			 * of falling back to $current_site->domain (the network primary).
+			 *
+			 */
+			$domain = trim(wu_get_isset($attributes, 'available_domains', ''));
+
+			if (! empty($domain)) {
+				$checkout_fields['site_domain'] = [
+					'type'  => 'hidden',
+					'id'    => 'site_domain',
+					'value' => $domain,
+				];
+			}
+
 			if (! empty($attributes['display_url_preview_with_auto'])) {
 				$content = wu_get_template_contents('legacy/signup/steps/step-domain-url-preview');
 
@@ -350,8 +378,8 @@ class Signup_Field_Site_Url extends Base_Signup_Field {
 			];
 		}
 
-		if ($attributes['available_domains'] && $attributes['enable_domain_selection']) {
-			$options = $this->get_domain_options($attributes['available_domains']);
+		if (! empty($attributes['available_domains_multi']) && $attributes['enable_domain_selection']) {
+			$options = $this->get_domain_options($attributes['available_domains_multi']);
 
 			$checkout_fields['site_domain'] = [
 				'name'              => __('Domain', 'ultimate-multisite'),
