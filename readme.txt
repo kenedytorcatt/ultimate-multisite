@@ -5,7 +5,7 @@ Tags: multisite, domain mapping, wordpress multisite, multisite saas, waas
 Requires at least: 5.3
 Requires PHP: 7.4.30
 Tested up to: 6.9
-Stable tag: 2.9.1
+Stable tag: 2.9.2
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -246,6 +246,10 @@ Data collected includes:
 No personal data, domains, IP addresses, or payment information are collected.
 
 == Changelog ==
+Version [2.9.2] - Released on 2026-05-01
+- Fix: Screenshot URLs no longer contain a doubled https:// scheme when the site URL already includes a protocol
+- Fix: Add-on sunrise.php path now resolved relative to WP_CONTENT_DIR instead of WP_PLUGIN_DIR, fixing add-on activation on non-standard WordPress installs
+
 Version [2.9.1] - Released on 2026-05-01
 - New: Checkout Forms added to admin bar quick links
 - Fix: Trial period now correctly applied for returning customers whose cancelled subscription had zero renewals
