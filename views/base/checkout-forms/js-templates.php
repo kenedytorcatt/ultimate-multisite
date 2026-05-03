@@ -15,7 +15,7 @@ defined('ABSPATH') || exit;
 
 		<tr>
 
-			<th v-for="(header_label, header) in headers" :key="header" scope="col" v-html="header_label" :class="'manage-column column-' + header"></th>
+			<th v-for="(header_label, header) in headers" :key="header" scope="col" v-html="header_label" :class="'manage-column column-' + header + (header === 'name' ? ' column-primary' : '')"></th>
 
 		</tr>
 
@@ -42,20 +42,16 @@ defined('ABSPATH') || exit;
 
 		<tr v-for="(field, idx) in list" :key="field.id" :id="'wp-ultimo-field-' + field.id">
 
-			<td class="order column-order has-row-actions column-primary" data-colname="<?php esc_html_e('Order', 'ultimate-multisite'); ?>">
+			<td class="order column-order" data-colname="<?php esc_html_e('Order', 'ultimate-multisite'); ?>">
 
 				<span
 					class="wu-inline-block wu-bg-gray-100 wu-text-center wu-align-middle wu-p-1 wu-font-mono wu-px-3 wu-border wu-border-gray-300 wu-border-solid wu-rounded">
 					{{ parseInt(idx, 10) + 1 }}
 				</span>
 
-				<button type="button" class="toggle-row">
-					<span class="screen-reader-text"><?php esc_html_e('Show more details', 'ultimate-multisite'); ?></span>
-				</button>
-
 			</td>
 
-			<td class="name column-name" data-colname="<?php esc_html_e('Name', 'ultimate-multisite'); ?>">
+			<td class="name column-name has-row-actions column-primary" data-colname="<?php esc_html_e('Name', 'ultimate-multisite'); ?>">
 
 				<span class="wu-inline-block wu-font-medium">
 
@@ -120,7 +116,7 @@ defined('ABSPATH') || exit;
 					</span>
 				</div>
 
-				<button type="button" class="toggle-row">
+				<button type="button" class="toggle-row" @click.prevent="$event.target.closest('tr').classList.toggle('is-expanded')">
 					<span class="screen-reader-text">
 						<?php esc_html_e('Show more details', 'ultimate-multisite'); ?>
 					</span>
